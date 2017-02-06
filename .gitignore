@@ -1,0 +1,11 @@
+*.pyc
+*.pyo
+*~
+test/integration/test_values.conf
+.DS_Store
+*.pyc
+__pycache__
+dist
+build
+docs/build
+*.egg-info
