@@ -1,12 +1,14 @@
-"""Test suite for aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider"""
+"""Test suite for aws_encryption_sdk.key_providers.base.MasterKeyProvider"""
 import unittest
+
 import attr
 from mock import MagicMock, sentinel, call, PropertyMock, patch
 import six
+
 from aws_encryption_sdk.exceptions import (
     DecryptKeyError, InvalidKeyIdError, IncorrectMasterKeyError, MasterKeyProviderError
 )
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProvider, MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 
 
 @attr.s

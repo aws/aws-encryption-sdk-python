@@ -1,25 +1,23 @@
-"""
-    Functional test suite for aws_encryption_sdk.kms_thick_client
-"""
+"""Functional test suite for aws_encryption_sdk.kms_thick_client"""
 import io
 import unittest
 
 import attr
 import botocore.client
 import cryptography.exceptions
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from mock import MagicMock
 import six
 
 import aws_encryption_sdk
 from aws_encryption_sdk import KMSMasterKeyProvider
 from aws_encryption_sdk.internal.crypto import WrappingKey
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProviderConfig
-from aws_encryption_sdk.internal.crypto.providers.raw import RawMasterKeyProvider
-from aws_encryption_sdk.internal.identifiers import WrappingAlgorithm, EncryptionKeyType
+from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
+from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
 VALUES = {
     'data_key_256': (
@@ -216,6 +214,16 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
             encryption_key_type=EncryptionKeyType.PUBLIC
         )
         self.fake_raw_key_provider_rsa_oaep_sha256_public_key.add_master_key('asym1')
+
+    def test_no_infinite_encryption_cycle_on_empty_source(self):
+        """This catches a race condition where when calling encrypt with
+            an empty byte string, encrypt would enter an infinite loop.
+            If this test does not hang, the race condition is not present.
+        """
+        aws_encryption_sdk.encrypt(
+            source=b'',
+            key_provider=self.mock_kms_key_provider
+        )
 
     def test_encryption_cycle_default_algorithm_single_block(self):
         """Test that the enrypt/decrypt cycle completes

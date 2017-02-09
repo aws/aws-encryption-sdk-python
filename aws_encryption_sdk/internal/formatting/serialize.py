@@ -6,9 +6,9 @@ from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.internal.crypto
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
-from aws_encryption_sdk.internal.identifiers import SequenceIdentifier, ContentAADString, EncryptionType
+from aws_encryption_sdk.identifiers import SequenceIdentifier, ContentAADString, EncryptionType
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.internal.structures import EncryptedDataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ def serialize_header(
     """Serializes a header object.
 
     :param header: Header to serialize
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :param signer: Cryptographic signer object (optional)
     :type signer: aws_encryption_sdk.internal.crypto.Signer
     :returns: Serialized header
@@ -100,12 +100,12 @@ def serialize_header_auth(algorithm, header, message_id, encryption_data_key, si
     """Creates serialized header authentication data.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes header: Serialized message header
     :param bytes message_id: Message ID
     :param encryption_data_key: Data key with which to encrypt message
-    :type encryption_data_key: :class:`aws_encryption_sdk.internal.structures.DataKey`
-        or :class:`aws_encryption_sdk.internal.structures.RawDataKey`
+    :type encryption_data_key: :class:`aws_encryption_sdk.structures.DataKey`
+        or :class:`aws_encryption_sdk.structure.RawDataKey`
     :param signer: Cryptographic signer object (optional)
     :type signer: aws_encryption_sdk.Signer
     :returns: Serialized header authentication data
@@ -135,7 +135,7 @@ def serialize_single_block_open(algorithm, iv, plaintext_length, signer=None):
     """Serializes the opening block for a non-framed message body.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes iv: IV value used to encrypt body
     :param int plaintext_length: Length of plaintext (and thus ciphertext) in body
     :param signer: Cryptographic signer object (optional)
@@ -192,12 +192,12 @@ def serialize_frame(
     the frame, and returns the encrypted frame and the remaining plaintext.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes plaintext: Source plaintext to encrypt and serialize
     :param bytes message_id: Message ID
     :param encryption_data_key: Data key with which to encrypt message
-    :type encryption_data_key: :class:`aws_encryption_sdk.internal.structures.DataKey`
-        or :class:`aws_encryption_sdk.internal.structures.RawDataKey`
+    :type encryption_data_key: :class:`aws_encryption_sdk.structure.DataKey`
+        or :class:`aws_encryption_sdk.structure.RawDataKey`
     :param int frame_length: Length of the framed data
     :param int sequence_number: Sequence number for frame to be generated
     :param bool is_final_frame: Boolean stating whether or not this frame is a final frame
@@ -285,7 +285,7 @@ def serialize_raw_master_key_prefix(raw_master_key):
     key_info value of keys which require additional information.
 
     :param raw_master_key: RawMasterKey for which to produce a prefix
-    :type raw_master_key: aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKey
+    :type raw_master_key: aws_encryption_sdk.key_providers.raw.RawMasterKey
     :returns: Serialized key_info prefix
     :rtype: bytes
     """
@@ -303,14 +303,14 @@ def serialize_wrapped_key(key_provider, wrapping_algorithm, wrapping_key_id, enc
     """Serializes EncryptedData into a Wrapped EncryptedDataKey.
 
     :param key_provider: Info for Wrapping MasterKey
-    :type key_provider: aws_encryption_sdk.internal.structures.MasterKeyInfo
+    :type key_provider: aws_encryption_sdk.structure.MasterKeyInfo
     :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext_data_key
-    :type wrapping_algorithm: aws_encryption_sdk.internal.identifiers.WrappingAlgorithm
+    :type wrapping_algorithm: aws_encryption_sdk.identifiers.WrappingAlgorithm
     :param bytes wrapping_key_id: Key ID of wrapping MasterKey
     :param encrypted_wrapped_key: Encrypted data key
     :type encrypted_wrapped_key: aws_encryption_sdk.internal.structures.EncryptedData
     :returns: Wrapped EncryptedDataKey
-    :rtype: aws_encryption_sdk.internal.structures.EncryptedDataKey
+    :rtype: aws_encryption_sdk.structure.EncryptedDataKey
     """
     if encrypted_wrapped_key.iv is None:
         key_info = wrapping_key_id

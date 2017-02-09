@@ -1,10 +1,12 @@
-"""Test suite for aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKeyProvider"""
+"""Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKeyProvider"""
 import unittest
+
 import attr
 from mock import MagicMock, sentinel, patch
 import six
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProviderConfig, MasterKeyProvider
-from aws_encryption_sdk.internal.crypto.providers.raw import RawMasterKeyProvider
+
+from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig, MasterKeyProvider
+from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from .test_values import VALUES
 
 
@@ -40,7 +42,7 @@ class TestRawMasterKeyProvider(unittest.TestCase):
             TestProvider()
 
     @patch(
-        'aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKeyConfig',
+        'aws_encryption_sdk.key_providers.raw.RawMasterKeyConfig',
         return_value=sentinel.raw_master_key_config_instance
     )
     def test_new_master_key(self, mock_raw_master_key_config):

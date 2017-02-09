@@ -13,7 +13,7 @@ def read(*args):
 
 
 def get_version():
-    init = read('aws_encryption_sdk', 'internal', 'identifiers.py')
+    init = read('aws_encryption_sdk', 'identifiers.py')
     return VERSION_RE.search(init).group(1)
 
 

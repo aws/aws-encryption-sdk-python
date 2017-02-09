@@ -2,16 +2,18 @@
     Test suite for aws_encryption_sdk.internal.utils
 """
 import unittest
+
 from mock import MagicMock, patch, sentinel
 import six
+
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError, NotSupportedError, SerializationError,
     UnknownIdentityError, InvalidDataKeyError, MasterKeyProviderError
 )
 import aws_encryption_sdk.internal.defaults
-import aws_encryption_sdk.internal.identifiers
-from aws_encryption_sdk.internal.structures import RawDataKey, DataKey, EncryptedDataKey, MasterKeyInfo
+import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.structures import RawDataKey, DataKey, EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
 
 
@@ -187,30 +189,30 @@ class TestUtils(unittest.TestCase):
             as expected when called with NO_FRAMING.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
-            aws_encryption_sdk.internal.identifiers.ContentType.NO_FRAMING,
+            aws_encryption_sdk.identifiers.ContentType.NO_FRAMING,
             False
         )
-        assert test == aws_encryption_sdk.internal.identifiers.ContentAADString.SINGLE_BLOCK_STRING_ID
+        assert test == aws_encryption_sdk.identifiers.ContentAADString.SINGLE_BLOCK_STRING_ID
 
     def test_get_aad_content_string_framing(self):
         """Validate that the get_aad_content_string function behaves
             as expected when called with FRAMED_DATA.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
-            aws_encryption_sdk.internal.identifiers.ContentType.FRAMED_DATA,
+            aws_encryption_sdk.identifiers.ContentType.FRAMED_DATA,
             False
         )
-        assert test == aws_encryption_sdk.internal.identifiers.ContentAADString.FRAME_STRING_ID
+        assert test == aws_encryption_sdk.identifiers.ContentAADString.FRAME_STRING_ID
 
     def test_get_aad_content_string_framing_final_frame(self):
         """Validate that the get_aad_content_string function behaves as
             expected when called with FRAMED_DATA and final frame.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
-            aws_encryption_sdk.internal.identifiers.ContentType.FRAMED_DATA,
+            aws_encryption_sdk.identifiers.ContentType.FRAMED_DATA,
             True
         )
-        assert test == aws_encryption_sdk.internal.identifiers.ContentAADString.FINAL_FRAME_STRING_ID
+        assert test == aws_encryption_sdk.identifiers.ContentAADString.FINAL_FRAME_STRING_ID
 
     def test_get_aad_content_string_framing_bad_type(self):
         """Validate that the get_aad_content_string function behaves as

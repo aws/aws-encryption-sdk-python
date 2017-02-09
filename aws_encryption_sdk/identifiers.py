@@ -116,7 +116,7 @@ class Algorithm(Enum):
         :param algorithm_id: Value of algorithm_id field with which to retrieve Algorithm
         :type algorithm_id: int
         :returns: Algorithm with ID algorithm_id
-        :rtype: aws_encryption_sdk.internal.identifiers.Algorithm
+        :rtype: aws_encryption_sdk.identifiers.Algorithm
         """
         return cls.__rlookup__[algorithm_id]
 
@@ -138,7 +138,7 @@ class WrappingAlgorithm(Enum):
     """Wrapping Algorithms for use by RawMasterKey objects.
 
     :param algorithm: Encryption algorithm to use for encryption of data keys
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param padding_type: Padding type to use for encryption of data keys
     :type padding_type:
     :param padding_algorithm: Padding algorithm to use for encryption of data keys

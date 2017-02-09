@@ -10,9 +10,9 @@ from aws_encryption_sdk.exceptions import (
     UnknownIdentityError, InvalidDataKeyError, MasterKeyProviderError
 )
 import aws_encryption_sdk.internal.defaults
-from aws_encryption_sdk.internal.identifiers import ContentAADString, ContentType
+from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.internal.structures import RawDataKey, DataKey
+from aws_encryption_sdk.structures import RawDataKey, DataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def content_type(frame_length):
 
     :param int frame_length: Message frame length
     :returns: Appropriate content type based on frame length
-    :rtype: aws_encryption_sdk.internal.identifiers.ContentType
+    :rtype: aws_encryption_sdk.identifiers.ContentType
     """
     if frame_length == 0:
         return ContentType.NO_FRAMING
@@ -35,7 +35,7 @@ def validate_frame_length(frame_length, algorithm):
 
     :param int frame_length: Frame size in bytes
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :raises SerializationError: if frame size is negative or not a multiple of the algorithm block size
     :raises SerializationError: if frame size is larger than the maximum allowed frame size
     """
@@ -65,7 +65,7 @@ def get_aad_content_string(content_type, is_final_frame):
     """Prepares the appropriate Body AAD Value for a message body.
 
     :param content_type: Defines the type of content for which to prepare AAD String
-    :type content_type: aws_encryption_sdk.internal.identifiers.ContentType
+    :type content_type: aws_encryption_sdk.identifiers.ContentType
     :param bool is_final_frame: Boolean stating whether this is the final frame in a body
     :returns: Appropriate AAD Content String
     :rtype: str
@@ -125,18 +125,18 @@ def prepare_data_keys(
     of EncryptedDataKey objects to be serialized into header.
 
     :param key_provider: Master Key Provider to use
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param dict encryption_context: Encryption context to use when generating data key
     :param plaintext_stream: Source plaintext read-only stream
     :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
     :param int plaintext_length: Length of source plaintext (optional)
     :param data_key: Object containing data key to use (if not supplied, a new key will be generated)
-    :type data_key: :class:`aws_encryption_sdk.internal.structures.DataKey`
-        or :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-    :rtype: tuple containing :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-        and set of :class:`aws_encryption_sdk.internal.structures.EncryptedDataKey`
+    :type data_key: :class:`aws_encryption_sdk.structure.DataKey`
+        or :class:`aws_encryption_sdk.structure.RawDataKey`
+    :rtype: tuple containing :class:`aws_encryption_sdk.structure.RawDataKey`
+        and set of :class:`aws_encryption_sdk.structure.EncryptedDataKey`
     :raises SerializationError: if primary master key is not a member of supplied MasterKeyProvider
     :raises NotSupportedError: if data_key is not a supported data type
     :raises MasterKeyProviderError: if no Master Keys are returned from key_provider
@@ -206,8 +206,8 @@ def source_data_key_length_check(source_data_key, algorithm):
     correct length for the supplied algorithm's kdf_input_len value.
 
     :param source_data_key: Source data key object received from MasterKey decrypt or generate data_key methods
-    :type source_data_key: :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-        or :class:`aws_encryption_sdk.internal.structures.DataKey`
+    :type source_data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
+        or :class:`aws_encryption_sdk.structure.DataKey`
     :param algorithm: Algorithm object which directs how this data key will be used
     :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
     :raises InvalidDataKeyError: if data key length does not match required kdf input length

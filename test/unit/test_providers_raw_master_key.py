@@ -1,11 +1,13 @@
-"""Test suite for aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKey"""
+"""Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKey"""
 import unittest
+
 from mock import MagicMock, sentinel, patch
-from aws_encryption_sdk.internal.structures import DataKey, EncryptedDataKey, RawDataKey, MasterKeyInfo
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKey
-from aws_encryption_sdk.internal.crypto.providers.raw import RawMasterKey, RawMasterKeyConfig
-from aws_encryption_sdk.internal.identifiers import WrappingAlgorithm, Algorithm
+
 from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.identifiers import WrappingAlgorithm, Algorithm
+from aws_encryption_sdk.key_providers.base import MasterKey
+from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyConfig
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, RawDataKey, MasterKeyInfo
 from .test_values import VALUES
 
 
@@ -55,8 +57,8 @@ class TestRawMasterKey(unittest.TestCase):
         assert test.provider_id == VALUES['provider_id']
 
     @patch('aws_encryption_sdk.internal.utils.source_data_key_length_check')
-    @patch('aws_encryption_sdk.internal.crypto.providers.raw.os.urandom')
-    @patch('aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKey._encrypt_data_key')
+    @patch('aws_encryption_sdk.key_providers.raw.os.urandom')
+    @patch('aws_encryption_sdk.key_providers.raw.RawMasterKey._encrypt_data_key')
     def test_generate_data_key(self, mock_encrypt_data_key, mock_urandom, mock_key_len_check):
         mock_urandom.return_value = VALUES['data_key']
         mock_encrypt_data_key.return_value = self.mock_encrypted_data_key

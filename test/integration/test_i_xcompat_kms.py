@@ -6,6 +6,8 @@ import pytest
 import aws_encryption_sdk
 
 from .test_i_aws_encrytion_sdk_client import setup_kms_master_key_provider, skip_tests, skip_message
+
+
 # Environment-specific test file locator.  May not always exist.
 def _file_root():
     return '.'

@@ -11,14 +11,14 @@ import six
 
 from aws_encryption_sdk.exceptions import SerializationError, NotSupportedError
 import aws_encryption_sdk.internal.crypto
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProvider
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.encryption_context
 import aws_encryption_sdk.internal.formatting.serialize
-from aws_encryption_sdk.internal.identifiers import Algorithm, ContentType
-from aws_encryption_sdk.internal.structures import MessageHeader
+from aws_encryption_sdk.identifiers import Algorithm, ContentType
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.structures import MessageHeader
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class _ClientConfig(object):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -151,7 +151,7 @@ class _EncryptionStream(io.IOBase):
         else:
             output = b''
             while not self.source_stream.closed:
-                b = self.stream_length
+                b = self.stream_length if self.stream_length else 1  # Edge case to handle empty source streams.
                 self._read_bytes(b)
                 output += self.output_buffer
                 self.output_buffer = b''
@@ -217,7 +217,7 @@ class EncryptorConfig(_ClientConfig):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -230,7 +230,7 @@ class EncryptorConfig(_ClientConfig):
             context it defines the number of bytes returned by readline().
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption (optional)
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes (optional)
     """
     encryption_context = attr.ib(
@@ -260,7 +260,7 @@ class StreamEncryptor(_EncryptionStream):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -273,7 +273,7 @@ class StreamEncryptor(_EncryptionStream):
             context it defines the number of bytes returned by readline().
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
     """
     _config_class = EncryptorConfig
@@ -485,7 +485,7 @@ class DecryptorConfig(_ClientConfig):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -511,7 +511,7 @@ class StreamDecryptor(_EncryptionStream):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for decryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -539,7 +539,7 @@ class StreamDecryptor(_EncryptionStream):
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects
-        :rtype: tuple of aws_encryption_sdk.internal.structures.MessageHeader
+        :rtype: tuple of aws_encryption_sdk.structure.MessageHeader
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
         """
         header_start = self.source_stream.tell()

@@ -1,15 +1,15 @@
-"""
-    Unit test suite for aws_encryption_sdk.deserialize
-"""
+"""Unit test suite for aws_encryption_sdk.deserialize"""
 import io
-import unittest
+
 from cryptography.exceptions import InvalidTag
+import unittest
 from mock import MagicMock, patch, sentinel
 import six
+
 from aws_encryption_sdk.exceptions import SerializationError, UnknownIdentityError, NotSupportedError
-from aws_encryption_sdk.internal.identifiers import Algorithm
-from aws_encryption_sdk.internal.structures import EncryptedData
+from aws_encryption_sdk.identifiers import Algorithm
 import aws_encryption_sdk.internal.formatting.deserialize
+from aws_encryption_sdk.internal.structures import EncryptedData
 from .test_values import VALUES
 
 

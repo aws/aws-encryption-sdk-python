@@ -1,12 +1,12 @@
-"""
-    Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context
-"""
+"""Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context"""
 import unittest
+
 import six
+
 from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
-from aws_encryption_sdk.internal.identifiers import ContentAADString
+from aws_encryption_sdk.identifiers import ContentAADString
 from .test_values import VALUES
 
 

@@ -1,8 +1,10 @@
 """Unit test suite to validate aws_encryption_sdk.streaming_client._ClientConfig"""
 import unittest
+
 import attr
+
 import aws_encryption_sdk.internal.utils
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProvider
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import _ClientConfig
 
 

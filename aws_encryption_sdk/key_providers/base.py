@@ -12,8 +12,8 @@ from aws_encryption_sdk.exceptions import (
     MasterKeyProviderError, InvalidKeyIdError, DecryptKeyError, IncorrectMasterKeyError, ConfigMismatchError
 )
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.internal.structures import MasterKeyInfo
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.structures import MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class MasterKeyProvider(object):
     """Parent interface for Master Key Provider classes.
 
     :param config: Configuration object
-    :type config: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProviderConfig
+    :type config: aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig
     """
 
     #: Determines whether a MasterKeyProvider attempts to add a MasterKey on decrypt_data_key call.
@@ -89,8 +89,8 @@ class MasterKeyProvider(object):
         :param int plaintext_length: Length of source plaintext (optional)
         :returns: Tuple containing Primary Master Key and List of all Master Keys added to
             this Provider and any member Providers
-        :rtype: tuple containing :class:`aws_encryption_sdk.internal.crypto.providers.base.MasterKey`
-            and list of :class:`aws_encryption_sdk.internal.crypto.providers.base.MasterKey`
+        :rtype: tuple containing :class:`aws_encryption_sdk.key_providers.base.MasterKey`
+            and list of :class:`aws_encryption_sdk.key_providers.base.MasterKey`
         """
         primary = None
         master_keys = []
@@ -116,7 +116,7 @@ class MasterKeyProvider(object):
 
         :param bytes key_id: Key ID with which to create MasterKey
         :returns: Master Key based on key_id
-        :rtype: aws_encryption_sdk.internal.crypto.providers.base.MasterKey
+        :rtype: aws_encryption_sdk.key_providers.base.MasterKey
         :raises MasterKeyProviderError: if invalid key id format
         """
 
@@ -142,7 +142,7 @@ class MasterKeyProvider(object):
         """Adds a single Master Key Provider to this provider.
 
         :param key_provider: Master Key Provider to add to this provider
-        :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
         """
         self._members.append(key_provider)
 
@@ -150,7 +150,7 @@ class MasterKeyProvider(object):
         """Adds multiple Master Key Providers to this provider.
 
         :param key_provider: List of Master Key Providers to add to this provider
-        :type key_provider: list of :class:`aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider`
+        :type key_provider: list of :class:`aws_encryption_sdk.key_providers.base.MasterKeyProvider`
         """
         for key_provider in key_providers:
             self.add_master_key_provider(key_provider)
@@ -160,7 +160,7 @@ class MasterKeyProvider(object):
 
         :param bytes key_id:  Key ID with which to find or create Master Key
         :returns: Master Key based on key_id
-        :rtype: aws_encryption_sdk.internal.crypto.providers.base.MasterKey
+        :rtype: aws_encryption_sdk.key_providers.base.MasterKey
         """
         self.add_master_key(key_id)
         return self._key_index[key_id]
@@ -170,12 +170,12 @@ class MasterKeyProvider(object):
         to attempt to decrypt data key.
 
         :param encrypted_data_key: Encrypted data key to decrypt
-        :type encrypted_data_key: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :type encrypted_data_key: aws_encryption_sdk.structure.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         :raises DecryptKeyError: if unable to decrypt encrypted data key
         """
         data_key = None
@@ -221,12 +221,12 @@ class MasterKeyProvider(object):
         """Receives a list of encrypted data keys and returns the first one which this provider is able to decrypt.
 
         :param encrypted_data_keys: List of encrypted data keys
-        :type encrypted_data_keys: list of :class:`aws_encryption_sdk.internal.structures.EncryptedDataKey`
+        :type encrypted_data_keys: list of :class:`aws_encryption_sdk.structure.EncryptedDataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         :raises DecryptKeyError: if unable to decrypt any of the supplied encrypted data keys
         """
         data_key = None
@@ -278,7 +278,7 @@ class MasterKey(MasterKeyProvider):
 
     :param str key_id: Key ID for Master Key
     :param config: Configuration object
-    :type config: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyConfig
+    :type config: aws_encryption_sdk.key_providers.base.MasterKeyConfig
     """
 
     def __new__(cls, **kwargs):
@@ -313,7 +313,7 @@ class MasterKey(MasterKeyProvider):
         """MasterKey equality check: key_id value must match.
 
         :param other: Object to which to compare this object
-        :type other: aws_encryption_sdk.internal.crypto.providers.base.MasterKey
+        :type other: aws_encryption_sdk.key_providers.base.MasterKey
         :returns: Boolean equality value
         :rtype: bool
         """
@@ -324,7 +324,7 @@ class MasterKey(MasterKeyProvider):
         """Provides the MasterKeyInfo object identifying this MasterKey.
 
         :returns: This MasterKey's Identifying Information
-        :rtype: aws_encryption_sdk.internal.structures.MasterKeyInfo
+        :rtype: aws_encryption_sdk.structure.MasterKeyInfo
         """
         return MasterKeyInfo(self.provider_id, self.key_id)
 
@@ -332,9 +332,9 @@ class MasterKey(MasterKeyProvider):
         """Determines if data_key object is owned by this MasterKey.
 
         :param data_key: Data key to evaluate
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.DataKey`,
-            :class:`aws_encryption_sdk.internal.structures.RawDataKey`,
-            or :class:`aws_encryption_sdk.internal.structures.EncryptedDataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.DataKey`,
+            :class:`aws_encryption_sdk.structure.RawDataKey`,
+            or :class:`aws_encryption_sdk.structure.EncryptedDataKey`
         :returns: Boolean statement of ownership
         :rtype: bool
         """
@@ -353,8 +353,8 @@ class MasterKey(MasterKeyProvider):
         :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
         :param int plaintext_length: Length of source plaintext (optional)
         :returns: Tuple containing self and a list of self
-        :rtype: tuple containing :class:`aws_encryption_sdk.internal.crypto.providers.base.MasterKey`
-            and list of :class:`aws_encryption_sdk.internal.crypto.providers.base.MasterKey`
+        :rtype: tuple containing :class:`aws_encryption_sdk.key_providers.base.MasterKey`
+            and list of :class:`aws_encryption_sdk.key_providers.base.MasterKey`
         """
         return self, [self]
 
@@ -378,9 +378,9 @@ class MasterKey(MasterKeyProvider):
         """Verifies that supplied Data Key's key provider matches this Master Key.
 
         :param data_key: Data Key to verify
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.RawDataKey`,
-            :class:`aws_encryption_sdk.internal.structures.DataKey`,
-            or :class:`aws_encryption_sdk.internal.structures.EncryptedDataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.RawDataKey`,
+            :class:`aws_encryption_sdk.structure.DataKey`,
+            or :class:`aws_encryption_sdk.structure.EncryptedDataKey`
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
         if not self.owns_data_key(data_key):
@@ -398,10 +398,10 @@ class MasterKey(MasterKeyProvider):
             Must be implemented by specific MasterKey implementations.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         """
         _LOGGER.info('generating data key with encryption context: %s', encryption_context)
         generated_data_key = self._generate_data_key(algorithm, encryption_context)
@@ -419,23 +419,23 @@ class MasterKey(MasterKeyProvider):
             Must be implemented by specific MasterKey implementations.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         """
 
     def encrypt_data_key(self, data_key, algorithm, encryption_context):
         """Encrypts a supplied data key.
 
         :param data_key: Unencrypted data key
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-            or :class:`aws_encryption_sdk.internal.structures.DataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
+            or :class:`aws_encryption_sdk.structure.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Data key containing encrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :rtype: aws_encryption_sdk.structure.EncryptedDataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
         _LOGGER.info('encrypting data key with encryption context: %s', encryption_context)
@@ -449,13 +449,13 @@ class MasterKey(MasterKeyProvider):
             Must be implemented by specific MasterKey implementations.
 
         :param data_key: Unencrypted data key
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-            or :class:`aws_encryption_sdk.internal.structures.DataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
+            or :class:`aws_encryption_sdk.structure.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
         :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :rtype: aws_encryption_sdk.structure.EncryptedDataKey
         :raises EncryptKeyError: if Master Key is unable to encrypt data key
         """
 
@@ -463,12 +463,12 @@ class MasterKey(MasterKeyProvider):
         """Decrypts an encrypted data key and returns the plaintext.
 
         :param data_key: Encrypted data key
-        :type data_key: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :type data_key: aws_encryption_sdk.structure.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
         _LOGGER.info('decrypting data key with encryption context: %s', encryption_context)
@@ -488,11 +488,11 @@ class MasterKey(MasterKeyProvider):
             Must be implemented by specific MasterKey implementations.
 
         :param data_key: Encrypted data key
-        :type data_key: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :type data_key: aws_encryption_sdk.structure.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
         :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         :raises DecryptKeyError: if Master Key is unable to decrypt data key
         """

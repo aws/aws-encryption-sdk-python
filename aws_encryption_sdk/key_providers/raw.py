@@ -7,13 +7,13 @@ import attr
 import six
 
 from aws_encryption_sdk.internal.crypto import WrappingKey
-from aws_encryption_sdk.internal.crypto.providers.base import (
-    MasterKeyProvider, MasterKeyProviderConfig, MasterKey, MasterKeyConfig
-)
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
-from aws_encryption_sdk.internal.identifiers import EncryptionType
-from aws_encryption_sdk.internal.structures import RawDataKey, DataKey
+from aws_encryption_sdk.identifiers import EncryptionType
+from aws_encryption_sdk.key_providers.base import (
+    MasterKeyProvider, MasterKeyProviderConfig, MasterKey, MasterKeyConfig
+)
+from aws_encryption_sdk.structures import RawDataKey, DataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class RawMasterKey(MasterKey):
     """Raw Master Key.
 
     :param config: Configuration object (config or individual parameters required)
-    :type config: aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKeyConfig
+    :type config: aws_encryption_sdk.key_providers.raw.RawMasterKeyConfig
     :param bytes key_id: Key ID for Master Key
     :param str provider_id: String defining provider ID
     :param wrapping_key: Encryption key with which to wrap plaintext_data_key
@@ -63,9 +63,9 @@ class RawMasterKey(MasterKey):
         """Determines if data_key object is owned by this RawMasterKey.
 
         :param data_key: Data key to evaluate
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.DataKey`,
-            :class:`aws_encryption_sdk.internal.structures.RawDataKey`,
-            or :class:`aws_encryption_sdk.internal.structures.EncryptedDataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.DataKey`,
+            :class:`aws_encryption_sdk.structure.RawDataKey`,
+            or :class:`aws_encryption_sdk.structure.EncryptedDataKey`
         :returns: Boolean statement of ownership
         :rtype: bool
         """
@@ -98,13 +98,13 @@ class RawMasterKey(MasterKey):
         return False
 
     def _generate_data_key(self, algorithm, encryption_context):
-        """Generates data key and returns :class:`aws_encryption_sdk.internal.structures.DataKey`.
+        """Generates data key and returns :class:`aws_encryption_sdk.structure.DataKey`.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         """
         plaintext_data_key = os.urandom(algorithm.kdf_input_len)
         encrypted_data_key = self._encrypt_data_key(
@@ -125,13 +125,13 @@ class RawMasterKey(MasterKey):
         """Performs the provider-specific key encryption actions.
 
         :param data_key: Unencrypted data key
-        :type data_key: :class:`aws_encryption_sdk.internal.structures.RawDataKey`
-            or :class:`aws_encryption_sdk.internal.structures.DataKey`
+        :type data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
+            or :class:`aws_encryption_sdk.structure.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
         :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :rtype: aws_encryption_sdk.structure.EncryptedDataKey
         :raises EncryptKeyError: if Master Key is unable to encrypt data key
         """
         # Raw key string to EncryptedData
@@ -151,12 +151,12 @@ class RawMasterKey(MasterKey):
         """Decrypts an encrypted data key and returns the plaintext.
 
         :param data_key: Encrypted data key
-        :type data_key: aws_encryption_sdk.internal.structures.EncryptedDataKey
+        :type data_key: aws_encryption_sdk.structure.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
         :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
-        :rtype: aws_encryption_sdk.internal.structures.DataKey
+        :rtype: aws_encryption_sdk.structure.DataKey
         :raises DecryptKeyError: if Master Key is unable to decrypt data key
         """
         # Wrapped EncryptedDataKey to deserialized EncryptedData
@@ -183,7 +183,7 @@ class RawMasterKeyProvider(MasterKeyProvider):
     """Raw Master Key Provider.
 
     :param config: Configuration object (optional)
-    :type config: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProviderConfig
+    :type config: aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig
     """
 
     #: Used to override the class MasterKey class returned by a RawMasterKeyProvider.
@@ -207,7 +207,7 @@ class RawMasterKeyProvider(MasterKeyProvider):
 
         :param bytes key_id: Key ID to use
         :returns: RawMasterKey based on retrieved wrapping key
-        :rtype: aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKey
+        :rtype: aws_encryption_sdk.key_providers.raw.RawMasterKey
         """
         _LOGGER.debug('Retrieving wrapping key with id: %s', key_id)
         wrapping_key = self._get_raw_key(key_id)

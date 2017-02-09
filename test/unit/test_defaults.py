@@ -1,5 +1,6 @@
 """Test suite to verify calculated values in aws_encryption_sdk.internal.defaults"""
 import unittest
+
 import aws_encryption_sdk.internal.defaults
 
 

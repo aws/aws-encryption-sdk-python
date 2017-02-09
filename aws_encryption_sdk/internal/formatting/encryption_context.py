@@ -8,7 +8,7 @@ import struct
 
 from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.internal.defaults
-import aws_encryption_sdk.internal.identifiers
+import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.str_ops
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     :param message_id: Message ID
     :type message_id: str
     :param aad_content_string: ContentAADString object for frame type
-    :type aad_content_string: aws_encryption_sdk.internal.identifiers.ContentAADString
+    :type aad_content_string: aws_encryption_sdk.identifiers.ContentAADString
     :param seq_num: Sequence number of frame
     :type seq_num: int
     :param length: Content Length
@@ -29,7 +29,7 @@ def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     :rtype: bytes
     :raises SerializationError: if aad_content_string is not known
     """
-    if not isinstance(aad_content_string, aws_encryption_sdk.internal.identifiers.ContentAADString):
+    if not isinstance(aad_content_string, aws_encryption_sdk.identifiers.ContentAADString):
         raise SerializationError('Unknown aad_content_string')
     fmt = '>16s{}sIQ'.format(len(aad_content_string.value))
     return struct.pack(fmt, message_id, aad_content_string.value, seq_num, length)

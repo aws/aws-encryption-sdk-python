@@ -8,10 +8,12 @@ import attr
 import pytest
 
 import aws_encryption_sdk
-from aws_encryption_sdk.internal.identifiers import WrappingAlgorithm, EncryptionKeyType
+from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
 from aws_encryption_sdk.internal.str_ops import to_bytes
 
 from .test_f_aws_encryption_sdk_client import FakeRawMasterKeyProvider, FakeRawMasterKeyProviderConfig
+
+
 # Environment-specific test file locator.  May not always exist.
 def _file_root():
     return '.'

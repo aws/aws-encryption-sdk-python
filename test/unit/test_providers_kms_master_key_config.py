@@ -1,9 +1,11 @@
-"""Unit test suite to validate aws_encryption_sdk.internal.crypto.providers.kms.KMSMasterKeyConfig"""
+"""Unit test suite to validate aws_encryption_sdk.key_providers.kms.KMSMasterKeyConfig"""
 import unittest
+
 import attr
 import botocore.client
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyConfig
-from aws_encryption_sdk.internal.crypto.providers.kms import KMSMasterKeyConfig, _PROVIDER_ID
+
+from aws_encryption_sdk.key_providers.base import MasterKeyConfig
+from aws_encryption_sdk.key_providers.kms import KMSMasterKeyConfig, _PROVIDER_ID
 
 
 class TestKMSMasterKeyConfig(unittest.TestCase):

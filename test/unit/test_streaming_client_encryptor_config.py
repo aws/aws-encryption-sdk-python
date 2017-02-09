@@ -1,8 +1,10 @@
 """Unit test suite to validate aws_encryption_sdk.streaming_client.EncryptorConfig"""
 import unittest
+
 import attr
+
 import aws_encryption_sdk.internal.defaults
-from aws_encryption_sdk.internal.identifiers import Algorithm
+from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.streaming_client import EncryptorConfig, _ClientConfig
 
 

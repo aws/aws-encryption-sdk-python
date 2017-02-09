@@ -1,13 +1,14 @@
-"""
-    Unit test suite for aws_encryption_sdk.internal.formatting.serialize
-"""
+"""Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
 import unittest
+
 from mock import MagicMock, patch
 import six
+
 from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.internal.formatting.serialize
-from aws_encryption_sdk.internal.identifiers import ContentAADString
-from aws_encryption_sdk.internal.structures import EncryptedDataKey, EncryptedData, MasterKeyInfo
+from aws_encryption_sdk.identifiers import ContentAADString
+from aws_encryption_sdk.internal.structures import EncryptedData
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
 
 

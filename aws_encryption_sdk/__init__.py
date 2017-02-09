@@ -1,8 +1,8 @@
 """High level AWS Encryption SDK client functions."""
 from aws_encryption_sdk.streaming_client import StreamEncryptor, StreamDecryptor, EncryptorConfig, DecryptorConfig
 # Below are imported for ease of use by implementors
-from aws_encryption_sdk.internal.crypto.providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig
-from aws_encryption_sdk.internal.identifiers import Algorithm, __version__
+from aws_encryption_sdk.identifiers import Algorithm, __version__
+from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig
 
 
 def encrypt(**kwargs):
@@ -23,7 +23,7 @@ def encrypt(**kwargs):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -36,10 +36,10 @@ def encrypt(**kwargs):
             context it defines the number of bytes returned by readline().
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
     :returns: Tuple containing the encrypted ciphertext and the message header object
-    :rtype: tuple of str and :class:`aws_encryption_sdk.internal.structures.MessageHeader`
+    :rtype: tuple of str and :class:`aws_encryption_sdk.structure.MessageHeader`
     """
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
@@ -64,7 +64,7 @@ def decrypt(**kwargs):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param key_provider: MasterKeyProvider from which to obtain data keys for decryption
-    :type key_provider: aws_encryption_sdk.internal.crypto.providers.base.MasterKeyProvider
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -76,7 +76,7 @@ def decrypt(**kwargs):
             The concept of "lines" is used to match Python file-like-object terminology.  In this
             context it defines the number of bytes returned by readline().
     :returns: Tuple containing the decrypted plaintext and the message header object
-    :rtype: tuple of str and :class:`aws_encryption_sdk.internal.structures.MessageHeader`
+    :rtype: tuple of str and :class:`aws_encryption_sdk.structure.MessageHeader`
     """
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()

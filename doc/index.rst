@@ -27,16 +27,18 @@ _______
 
     aws_encryption_sdk
     aws_encryption_sdk.exceptions
+    aws_encryption_sdk.identifiers
+    aws_encryption_sdk.key_providers.base
+    aws_encryption_sdk.key_providers.kms
+    aws_encryption_sdk.key_providers.raw
     aws_encryption_sdk.streaming_client
+    aws_encryption_sdk.structures
+    aws_encryption_sdk.internal
     aws_encryption_sdk.internal.crypto
-    aws_encryption_sdk.internal.crypto.providers.base
-    aws_encryption_sdk.internal.crypto.providers.kms
-    aws_encryption_sdk.internal.crypto.providers.raw
     aws_encryption_sdk.internal.defaults
     aws_encryption_sdk.internal.formatting.deserialize
     aws_encryption_sdk.internal.formatting.encryption_context
     aws_encryption_sdk.internal.formatting.serialize
-    aws_encryption_sdk.internal.identifiers
     aws_encryption_sdk.internal.str_ops
     aws_encryption_sdk.internal.structures
     aws_encryption_sdk.internal.utils

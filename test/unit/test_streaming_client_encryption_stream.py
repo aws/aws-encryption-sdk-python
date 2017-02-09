@@ -1,12 +1,14 @@
 """Unit test suite for aws_encryption_sdk.streaming_client._EncryptionStream"""
 import io
 import unittest
+
 import attr
 from mock import MagicMock, PropertyMock, sentinel, call, patch
 import six
+
 import aws_encryption_sdk.exceptions
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import _EncryptionStream, _ClientConfig
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProvider
 from .test_values import VALUES
 
 
@@ -201,6 +203,20 @@ class TestEncryptionStream(unittest.TestCase):
         type(mock_stream.source_stream).closed = PropertyMock(side_effect=(False, False, True))
         test = mock_stream.read()
         assert test == b'1234567890'
+
+    def test_read_all_empty_source(self):
+        mock_stream = MockEncryptionStream(
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes
+        )
+        mock_stream._stream_length = 0
+        mock_stream.output_buffer = b''
+        mock_stream.source_stream = MagicMock()
+        mock_stream._read_bytes = MagicMock()
+        type(mock_stream.source_stream).closed = PropertyMock(side_effect=(False, True))
+        mock_stream.read()
+        mock_stream._read_bytes.assert_called_once_with(1)
 
     def test_tell(self):
         mock_stream = MockEncryptionStream(

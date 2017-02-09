@@ -14,7 +14,7 @@ import six
 
 from aws_encryption_sdk.exceptions import NotSupportedError, InvalidDataKeyError, IncorrectMasterKeyError
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
-from aws_encryption_sdk.internal.identifiers import EncryptionType, EncryptionKeyType
+from aws_encryption_sdk.identifiers import EncryptionType, EncryptionKeyType
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.internal.structures import EncryptedData
 import aws_encryption_sdk.internal.utils
@@ -24,7 +24,7 @@ class Encryptor(object):
     """Abstract encryption handler.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes key: Raw source key
     :param bytes associated_data: Associated Data to send to encryption subsystem
     :param bytes message_id: Message ID
@@ -82,7 +82,7 @@ def encrypt(algorithm, key, plaintext, associated_data, message_id):
     """Encrypts a frame body.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes key: Encryption key
     :param bytes plaintext: Body plaintext
     :param bytes associated_data: Body AAD Data
@@ -99,7 +99,7 @@ class Decryptor(object):
     """Abstract decryption handler.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes key: Raw source key
     :param bytes associated_data: Associated Data to send to decryption subsystem
     :param bytes message_id: Message ID
@@ -148,7 +148,7 @@ def decrypt(algorithm, key, encrypted_data, associated_data, message_id):
     """Decrypts a frame body.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes key: Plaintext data key
     :param encrypted_data: EncryptedData containing body data
     :type encrypted_data: :class:`aws_encryption_sdk.internal.structures.EncryptedData`,
@@ -169,7 +169,7 @@ def _derive_data_encryption_key(source_key, algorithm, message_id):
 
     :param bytes source_key: Raw source key
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param bytes message_id: Message ID
     :returns: Derived data encryption key
     :rtype: bytes
@@ -190,7 +190,7 @@ class Signer(object):
     """Abstract signing handler.
 
     :param algorithm: Algorithm on which to base signer
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param key: Pre-existing private key from which a signer can be generated.
     :type key: currently only EC Curves are supported
     """
@@ -248,7 +248,7 @@ class Verifier(object):
         For ECC curves, the signature must be DER encoded as specified in RFC 3279.
 
     :param algorithm: Algorithm on which to base verifier
-    :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param public_key: Appropriate public key object for algorithm
     :type public_key: may vary
     :param signature: The signature to verify (optional)
@@ -265,7 +265,7 @@ class Verifier(object):
         """Creates a Verifier object based on the supplied algorithm and encoded compressed ECC curve point.
 
         :param algorithm: Algorithm on which to base verifier
-        :type algorithm: aws_encryption_sdk.internal.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param bytes encoded_point: ECC public point compressed and encoded with _ecc_encode_compressed_point
         :param bytes signature: The signature to verify (optional)
         :returns: Instance of Verifier generated from encoded point
@@ -436,13 +436,13 @@ def _ecc_public_numbers_from_compressed_point(curve, compressed_point):
 class WrappingKey(object):
     """Creates a wrapping encryption key object to encrypt and decrypt data keys.
 
-    For use inside :class:`aws_encryption_sdk.internal.crypto.providers.raw.RawMasterKeyProvider` objects.
+    For use inside :class:`aws_encryption_sdk.key_providers.raw.RawMasterKeyProvider` objects.
 
     :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext_data_key
-    :type wrapping_algorithm: aws_encryption_sdk.internal.identifiers.WrappingAlgorithm
+    :type wrapping_algorithm: aws_encryption_sdk.identifiers.WrappingAlgorithm
     :param bytes wrapping_key: Encryption key with which to wrap plaintext_data_key
     :param wrapping_key_type: Type of encryption key with which to wrap plaintext_data_key
-    :type wrapping_key_type: aws_encryption_sdk.internal.identifiers.EncryptionKeyType
+    :type wrapping_key_type: aws_encryption_sdk.identifiers.EncryptionKeyType
     :param str password: Password to decrypt wrapping_key (optional, currently only relevant for RSA)
     """
 

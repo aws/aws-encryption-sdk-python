@@ -19,7 +19,7 @@ There are three main concepts that need to be understood for use of this library
 
 ###Master Key Providers
 Master Key Providers are resources which provide Master Keys.
-An example of a Master Key Provider is [AWS KMS][3].
+An example of a Master Key Provider is [AWS KMS][2].
 
 In the context of this client, a MasterKeyProvider object must contain at least one MasterKey object in order to encrypt data.
 
@@ -27,7 +27,7 @@ MasterKeyProvider objects can also contain other MasterKeyProviders.
 
 ###Master Keys
 Master Keys provide data keys.
-An example of a Master Key is a [KMS Customer Master Key][4].
+An example of a Master Key is a [KMS Customer Master Key][3].
 
 ###Data Keys
 Data Keys are the actual encryption keys which are used to encrypt your data.
@@ -37,8 +37,8 @@ In order to use this client, an instance of a Master Key Provider must be provid
 For the examples in this readme, the KMSMasterKeyProvider class will be used as an example.
 
 ##KMSMasterKeyProvider
-The KMSMasterKeyProvider uses the [boto3 SDK][5] to interact with [AWS KMS][3], and as such requires AWS Credentials.
-These can be provided either in the [standard means by which boto3 locates credentials][6], or by providing the KMSMasterKeyProvider a pre-existing instance of a botocore session.
+The KMSMasterKeyProvider uses the [boto3 SDK][4] to interact with [AWS KMS][2], and as such requires AWS Credentials.
+These can be provided either in the [standard means by which boto3 locates credentials][5], or by providing the KMSMasterKeyProvider a pre-existing instance of a botocore session.
 This later option can be useful if you have some alternate means of storing your AWS credentials or
 you would like to re-use an existing instance of a botocore session in order to decrease startup costs.
 
@@ -54,7 +54,7 @@ kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(botocore_session=exis
 
 If desired, the KMSMasterKeyProvider can be pre-loaded with one or more CMKs.
 At least one CMK is required to be loaded into a KMSMasterKeyProvider in order to encrypt data.
-If multiple CMKs are added, a copy of the data key encrypted by each added CMK will be included in the [final message][8].
+If multiple CMKs are added, a copy of the data key encrypted by each added CMK will be included in the [final message][6].
 
 ```python
 import aws_encryption_sdk
@@ -104,7 +104,7 @@ assert my_plaintext == decrypted_plaintext
 assert encryptor_header.encryption_context == decryptor_header.encryption_context
 ```
 
-If desired, additional authenticating information can be provided in the form of an [encryption context][9].
+If desired, additional authenticating information can be provided in the form of an [encryption context][7].
 
 ```python
 import aws_encryption_sdk
@@ -201,10 +201,9 @@ single block body, 102400 byte line: 5.744s
 
 
 [1]: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
-[3]: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
-[4]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
-[5]: https://boto3.readthedocs.io/en/latest/
-[6]: https://boto3.readthedocs.io/en/latest/guide/configuration.html
-[7]: https://boto3.readthedocs.io/en/latest/guide/resources.html#multithreading
-[8]: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
-[9]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
+[2]: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
+[3]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+[4]: https://boto3.readthedocs.io/en/latest/
+[5]: https://boto3.readthedocs.io/en/latest/guide/configuration.html
+[6]: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
+[7]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context

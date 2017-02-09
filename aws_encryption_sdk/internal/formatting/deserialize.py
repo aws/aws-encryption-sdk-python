@@ -8,15 +8,15 @@ from cryptography.exceptions import InvalidTag
 from aws_encryption_sdk.exceptions import SerializationError, UnknownIdentityError, NotSupportedError
 import aws_encryption_sdk.internal.crypto
 from aws_encryption_sdk.internal.formatting.encryption_context import deserialize_encryption_context
-from aws_encryption_sdk.internal.identifiers import (
+from aws_encryption_sdk.identifiers import (
     Algorithm, ObjectType, SerializationVersion, ContentType, SequenceIdentifier
 )
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.internal.structures import (
-    MasterKeyInfo, MessageHeader, EncryptedDataKey,
     MessageHeaderAuthentication, MessageFrameBody,
     MessageFooter, EncryptedData
 )
+from aws_encryption_sdk.structures import MasterKeyInfo, MessageHeader, EncryptedDataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def verifier_from_header(header):
     """Builds a verifier from a header.
 
     :param header: Header from which to build verifier
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :returns: verifier built from information in header
     :rtype: aws_encryption_sdk.internal.crypto.Verifier
     :raises SerializationError: if no public key is found in header for ECDSA algorithm
@@ -55,7 +55,7 @@ def validate_header(header, header_auth, stream, header_start, header_end, data_
     """Validates the header using the header authentication data.
 
     :param header: Deserialized header
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :param header_auth: Deserialized header auth
     :type header_auth: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
     :param stream: Stream containing serialized message
@@ -63,7 +63,7 @@ def validate_header(header, header_auth, stream, header_start, header_end, data_
     :param int header_start: Position in stream of start of serialized header
     :param int header_end: Position in stream of end of serialized header
     :param data_key: Data key with which to perform validation
-    :type data_key: aws_encryption_sdk.internal.structures.DataKey
+    :type data_key: aws_encryption_sdk.structure.DataKey
     :raises SerializationError: if header authorization fails
     """
     _LOGGER.debug('Starting header validation')
@@ -88,7 +88,7 @@ def deserialize_header(stream):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :returns: Deserialized MessageHeader object
-    :rtype: aws_encryption_sdk.internal.structures.MessageHeader
+    :rtype: aws_encryption_sdk.structure.MessageHeader
     :raises NotSupportedError: if unsupported data types are found
     :raises UnknownIdentityError: if unknown data types are found
     :raises SerializationError: if IV length does not match algorithm
@@ -186,7 +186,7 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :param algorithm: The Algorithm object type contained in the header
-    :type algorith: aws_encryption_sdk.internal.identifiers.Algorithm
+    :type algorith: aws_encryption_sdk.identifiers.Algorithm
     :param verifier: Signature verifier object (optional)
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
     :returns: Deserialized MessageHeaderAuthentication object
@@ -206,7 +206,7 @@ def deserialize_single_block_values(stream, header, verifier=None):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :param header: Deserialized header
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :param verifier: Signature verifier object (optional)
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
     :returns: IV, Tag, and Data Length values for body
@@ -239,7 +239,7 @@ def update_verifier_with_tag(stream, header, verifier):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :param header: Deserialized header
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :param verifier: Signature verifier object
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
     :returns: Data authentication tag value
@@ -258,7 +258,7 @@ def deserialize_frame(stream, header, verifier=None):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :param header: Deserialized header
-    :type header: aws_encryption_sdk.internal.structures.MessageHeader
+    :type header: aws_encryption_sdk.structure.MessageHeader
     :param verifier: Signature verifier object (optional)
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
     :returns: Deserialized frame and a boolean stating if this is the final frame
@@ -350,10 +350,10 @@ def deserialize_wrapped_key(wrapping_algorithm, wrapping_key_id, wrapped_encrypt
     """Extracts and deserializes EncryptedData from a Wrapped EncryptedDataKey.
 
     :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext_data_key
-    :type wrapping_algorithm: aws_encryption_sdk.internal.identifiers.WrappingAlgorithm
+    :type wrapping_algorithm: aws_encryption_sdk.identifiers.WrappingAlgorithm
     :param str wrapping_key_id: Key ID of wrapping MasterKey
     :param wrapped_encrypted_key: Raw Wrapped EncryptedKey
-    :type wrapped_encrypted_key: aws_encryption_sdk.internal.structures.EncryptedDataKey
+    :type wrapped_encrypted_key: aws_encryption_sdk.structure.EncryptedDataKey
     :returns: EncryptedData of deserialized Wrapped EncryptedKey
     :rtype: aws_encryption_sdk.internal.structures.EncryptedData
     :raises SerializationError: if wrapping_key_id does not match deserialized wrapping key id

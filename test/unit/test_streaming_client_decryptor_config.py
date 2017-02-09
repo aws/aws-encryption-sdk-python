@@ -1,5 +1,6 @@
 """Unit test suite to validate aws_encryption_sdk.streaming_client.DecryptorConfig"""
 import unittest
+
 from aws_encryption_sdk.streaming_client import DecryptorConfig, _ClientConfig
 
 

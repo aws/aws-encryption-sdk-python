@@ -2,6 +2,7 @@
 """Test suite for aws_encryption_sdk.internal.str_ops"""
 import codecs
 import unittest
+
 import aws_encryption_sdk.internal.str_ops
 
 

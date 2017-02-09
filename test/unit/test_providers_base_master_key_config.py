@@ -1,9 +1,11 @@
-"""Unit test suite to validate aws_encryption_sdk.internal.crypto.providers.base.MasterKeyConfig"""
+"""Unit test suite to validate aws_encryption_sdk.key_providers.base.MasterKeyConfig"""
 import unittest
+
 import attr
 import six
+
 import aws_encryption_sdk.internal.str_ops
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyConfig
+from aws_encryption_sdk.key_providers.base import MasterKeyConfig
 
 
 class TestMasterKeyProviderConfig(unittest.TestCase):

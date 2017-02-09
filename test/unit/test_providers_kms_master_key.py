@@ -1,15 +1,17 @@
-"""Unit test suite for aws_encryption_sdk.internal.crypto.providers.kms.KMSMasterKey"""
+"""Unit test suite for aws_encryption_sdk.key_providers.kms.KMSMasterKey"""
 import unittest
+
 import botocore
-from botocore.exceptions import ClientError
 import botocore.client
+from botocore.exceptions import ClientError
 from mock import MagicMock, sentinel, patch
 import six
-from aws_encryption_sdk.internal.identifiers import Algorithm
+
 from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError, DecryptKeyError
-from aws_encryption_sdk.internal.structures import DataKey, EncryptedDataKey
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKey
-from aws_encryption_sdk.internal.crypto.providers.kms import KMSMasterKey, KMSMasterKeyConfig
+from aws_encryption_sdk.identifiers import Algorithm, __version__
+from aws_encryption_sdk.key_providers.base import MasterKey
+from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
 from .test_values import VALUES
 
 
@@ -80,7 +82,10 @@ class TestKMSMasterKey(unittest.TestCase):
     def test_init(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
         assert test._key_id == VALUES['arn'].decode('utf-8')
-        assert self.mock_client.meta.config.user_agent == 'Botocore-KMSMasterKey/1.2/{}'.format(botocore.__version__)
+        assert self.mock_client.meta.config.user_agent == 'Botocore-KMSMasterKey/{}/{}'.format(
+            __version__,
+            botocore.__version__
+        )
 
     def test_generate_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)

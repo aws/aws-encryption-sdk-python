@@ -1,15 +1,15 @@
-"""
-    Unit test suite for aws_encryption_sdk.internal.crypto
-"""
+"""Unit test suite for aws_encryption_sdk.internal.crypto"""
 import unittest
-from mock import MagicMock, patch, sentinel
-import six
-from aws_encryption_sdk.exceptions import NotSupportedError, InvalidDataKeyError, IncorrectMasterKeyError
-import aws_encryption_sdk.internal.crypto
-from aws_encryption_sdk.internal.structures import EncryptedData
-from aws_encryption_sdk.internal.identifiers import EncryptionType, EncryptionKeyType
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+from mock import MagicMock, patch, sentinel
+import six
+
+from aws_encryption_sdk.exceptions import NotSupportedError, InvalidDataKeyError, IncorrectMasterKeyError
+import aws_encryption_sdk.internal.crypto
+from aws_encryption_sdk.identifiers import EncryptionType, EncryptionKeyType
+from aws_encryption_sdk.internal.structures import EncryptedData
 
 VALUES = {
     'iv': b'asdfzxcvqwer',

@@ -1,16 +1,19 @@
 """Values to use in various unit test suites."""
 import copy
 import struct
+
 from mock import MagicMock
 import six
+
 import aws_encryption_sdk.internal.defaults
-from aws_encryption_sdk.internal.identifiers import (
+from aws_encryption_sdk.identifiers import (
     Algorithm, ContentType, ObjectType, SerializationVersion
 )
 from aws_encryption_sdk.internal.structures import (
-    DataKey, EncryptedData, MessageHeader, MessageHeaderAuthentication,
-    MessageNoFrameBody, MessageFrameBody, MessageFooter, EncryptedDataKey, MasterKeyInfo
+    EncryptedData, MessageHeaderAuthentication,
+    MessageNoFrameBody, MessageFrameBody, MessageFooter
 )
+from aws_encryption_sdk.structures import DataKey, MessageHeader, EncryptedDataKey, MasterKeyInfo
 
 
 def array_byte(source):

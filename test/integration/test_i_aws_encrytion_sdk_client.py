@@ -10,8 +10,8 @@ import six
 from six.moves.configparser import ConfigParser
 
 import aws_encryption_sdk
-from aws_encryption_sdk.internal.identifiers import Algorithm
-from aws_encryption_sdk.internal.crypto.providers.kms import KMSMasterKeyProvider
+from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
 skip_message = 'Skipping tests due to blocking environment variable'
 

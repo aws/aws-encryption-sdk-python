@@ -1,11 +1,13 @@
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamDecryptor"""
 import io
 import unittest
+
 from mock import MagicMock, patch, sentinel, call
 import six
+
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError
-from aws_encryption_sdk.internal.crypto.providers.base import MasterKeyProvider
-from aws_encryption_sdk.internal.identifiers import ContentType
+from aws_encryption_sdk.identifiers import ContentType
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import StreamDecryptor
 from .test_values import VALUES
 
