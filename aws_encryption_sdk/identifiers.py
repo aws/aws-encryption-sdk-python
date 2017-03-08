@@ -197,4 +197,4 @@ class ContentAADString(Enum):
     """Body Additional Authenticated Data values for building the AAD for a message body."""
     FRAME_STRING_ID = b'AWSKMSEncryptionClient Frame'
     FINAL_FRAME_STRING_ID = b'AWSKMSEncryptionClient Final Frame'
-    SINGLE_BLOCK_STRING_ID = b'AWSKMSEncryptionClient Single Block'
+    NON_FRAMED_STRING_ID = b'AWSKMSEncryptionClient Single Block'

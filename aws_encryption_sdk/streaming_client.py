@@ -9,7 +9,7 @@ import math
 import attr
 import six
 
-from aws_encryption_sdk.exceptions import SerializationError, NotSupportedError
+from aws_encryption_sdk.exceptions import SerializationError, CustomMaximumValueExceeded, NotSupportedError
 import aws_encryption_sdk.internal.crypto
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.deserialize
@@ -118,6 +118,17 @@ class _EncryptionStream(io.IOBase):
             self._stream_length = self.source_stream.tell()
             self.source_stream.seek(current_position, 0)
         return self._stream_length
+
+    @property
+    def header(self):
+        """Returns the message header, reading it if it is not already read.
+
+        :returns: Parsed message header
+        :rtype: aws_encryption_sdk.structures.MessageHeader
+        """
+        if not self._message_prepped:
+            self._prep_message()
+        return self._header
 
     def __enter__(self):
         """Handles entry to with block."""
@@ -253,6 +264,10 @@ class StreamEncryptor(_EncryptionStream):
     Behaves as a standard file-like object.
 
     .. note::
+        Take care when encrypting framed messages with large frame length and large non-framed
+        messages.  See :class:`aws_encryption_sdk.stream` for more details.
+
+    .. note::
         If config is provided, all other parameters are ignored.
 
     :param config: Client configuration object (config or individual parameters required)
@@ -288,10 +303,10 @@ class StreamEncryptor(_EncryptionStream):
             self.config.frame_length == 0
             and (
                 self.config.source_length is not None
-                and self.config.source_length > aws_encryption_sdk.internal.defaults.MAX_SINGLE_BLOCK_SIZE
+                and self.config.source_length > aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
             )
         ):
-            raise SerializationError('Source too large for single block message')
+            raise SerializationError('Source too large for non-framed message')
 
     def _prep_message(self):
         """Performs initial message setup."""
@@ -315,7 +330,7 @@ class StreamEncryptor(_EncryptionStream):
             plaintext_length=self.config.source_length,
             data_key=self.config.data_key
         )
-        self.header = MessageHeader(
+        self._header = MessageHeader(
             version=aws_encryption_sdk.internal.defaults.VERSION,
             type=aws_encryption_sdk.internal.defaults.TYPE,
             algorithm=self.config.algorithm,
@@ -329,31 +344,31 @@ class StreamEncryptor(_EncryptionStream):
         )
         self._write_header()
         if self.content_type == ContentType.NO_FRAMING:
-            self._prep_single_block()
+            self._prep_non_framed()
         self._message_prepped = True
 
     def _write_header(self):
         """Builds the message header and writes it to the output stream."""
         self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_header(
-            header=self.header,
+            header=self._header,
             signer=self.signer
         )
         self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
             algorithm=self.config.algorithm,
             header=self.output_buffer,
-            message_id=self.header.message_id,
+            message_id=self._header.message_id,
             encryption_data_key=self.encryption_data_key,
             signer=self.signer
         )
 
-    def _prep_single_block(self):
-        """Prepare the opening data for a single block message."""
+    def _prep_non_framed(self):
+        """Prepare the opening data for a non-framed message."""
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self.content_type,
             is_final_frame=True
         )
         associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
-            message_id=self.header.message_id,
+            message_id=self._header.message_id,
             aad_content_string=aad_content_string,
             seq_num=1,
             length=self.stream_length
@@ -362,17 +377,17 @@ class StreamEncryptor(_EncryptionStream):
             algorithm=self.config.algorithm,
             key=self.encryption_data_key.data_key,
             associated_data=associated_data,
-            message_id=self.header.message_id
+            message_id=self._header.message_id
         )
-        self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_open(
+        self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
             algorithm=self.config.algorithm,
             iv=self.encryptor.iv,
             plaintext_length=self.stream_length,
             signer=self.signer
         )
 
-    def _read_bytes_to_single_block_body(self, b):
-        """Reads the requested number of bytes from source to a streaming single block message body.
+    def _read_bytes_to_non_framed_body(self, b):
+        """Reads the requested number of bytes from source to a streaming non-framed message body.
 
         :param int b: Number of bytes to read
         :returns: Encrypted bytes from source stream
@@ -380,8 +395,8 @@ class StreamEncryptor(_EncryptionStream):
         """
         _LOGGER.debug('Reading %s bytes', b)
         plaintext = self.source_stream.read(b)
-        if self.tell() + len(plaintext) > aws_encryption_sdk.internal.defaults.MAX_SINGLE_BLOCK_SIZE:
-            raise SerializationError('Source too large for single block message')
+        if self.tell() + len(plaintext) > aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE:
+            raise SerializationError('Source too large for non-framed message')
         ciphertext = self.encryptor.update(plaintext)
         if self.signer:
             self.signer.update(ciphertext)
@@ -391,7 +406,7 @@ class StreamEncryptor(_EncryptionStream):
             closing = self.encryptor.finalize()
             if self.signer:
                 self.signer.update(closing)
-            closing += aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_close(
+            closing += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
                 tag=self.encryptor.tag,
                 signer=self.signer
             )
@@ -434,7 +449,7 @@ class StreamEncryptor(_EncryptionStream):
             ciphertext, plaintext = aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
                 algorithm=self.config.algorithm,
                 plaintext=plaintext,
-                message_id=self.header.message_id,
+                message_id=self._header.message_id,
                 encryption_data_key=self.encryption_data_key,
                 frame_length=self.config.frame_length,
                 sequence_number=self.sequence_number,
@@ -467,8 +482,8 @@ class StreamEncryptor(_EncryptionStream):
             _LOGGER.debug('Reading to framed body')
             self.output_buffer += self._read_bytes_to_framed_body(b)
         elif self.content_type == ContentType.NO_FRAMING:
-            _LOGGER.debug('Reading to single block body')
-            self.output_buffer += self._read_bytes_to_single_block_body(b)
+            _LOGGER.debug('Reading to non-framed body')
+            self.output_buffer += self._read_bytes_to_non_framed_body(b)
         else:
             raise NotSupportedError('Unsupported content type')
 
@@ -496,12 +511,22 @@ class DecryptorConfig(_ClientConfig):
         .. note::
             The concept of "lines" is used to match Python file-like-object terminology.  In this
             context it defines the number of bytes returned by readline().
+    :param int max_body_length: Maximum frame size (or content length for non-framed messages)
+    in bytes to read from ciphertext message.
     """
+    max_body_length = attr.ib(
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(int))
+    )
 
 
 class StreamDecryptor(_EncryptionStream):
     """Provides a streaming encryptor for encrypting a stream source.
     Behaves as a standard file-like object.
+
+    .. note::
+        Take care when decrypting framed messages with large frame length and large non-framed
+        messages.  See :class:`aws_encryption_sdk.stream` for more details.
 
     .. note::
         If config is provided, all other parameters are ignored.
@@ -522,6 +547,8 @@ class StreamDecryptor(_EncryptionStream):
         .. note::
             The concept of "lines" is used to match Python file-like-object terminology.  In this
             context it defines the number of bytes returned by readline().
+    :param int max_body_length: Maximum frame size (or content length for non-framed messages)
+    in bytes to read from ciphertext message.
     """
     _config_class = DecryptorConfig
 
@@ -530,9 +557,9 @@ class StreamDecryptor(_EncryptionStream):
 
     def _prep_message(self):
         """Performs initial message setup."""
-        self.header, self.header_auth = self._read_header()
-        if self.header.content_type == ContentType.NO_FRAMING:
-            self._prep_single_block()
+        self._header, self.header_auth = self._read_header()
+        if self._header.content_type == ContentType.NO_FRAMING:
+            self._prep_non_framed()
         self._message_prepped = True
 
     def _read_header(self):
@@ -541,9 +568,23 @@ class StreamDecryptor(_EncryptionStream):
         :returns: tuple containing deserialized header and header_auth objects
         :rtype: tuple of aws_encryption_sdk.structure.MessageHeader
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
+        :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
         """
         header_start = self.source_stream.tell()
         header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(self.source_stream)
+
+        if (
+            self.config.max_body_length is not None
+            and header.content_type == ContentType.FRAMED_DATA
+            and header.frame_length > self.config.max_body_length
+        ):
+            raise CustomMaximumValueExceeded(
+                'Frame Size in header found larger than custom value: {found} > {custom}'.format(
+                    found=header.frame_length,
+                    custom=self.config.max_body_length
+                )
+            )
+
         header_end = self.source_stream.tell()
         self.verifier = aws_encryption_sdk.internal.formatting.deserialize.verifier_from_header(header)
         if self.verifier:
@@ -569,61 +610,71 @@ class StreamDecryptor(_EncryptionStream):
         )
         return header, header_auth
 
-    def _prep_single_block(self):
-        """Prepare the opening data for a single block message."""
-        iv, tag, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_single_block_values(
+    def _prep_non_framed(self):
+        """Prepare the opening data for a non-framed message."""
+        iv, tag, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
             stream=self.source_stream,
-            header=self.header,
+            header=self._header,
             verifier=self.verifier
         )
+
+        if self.config.max_body_length is not None and self.body_length > self.config.max_body_length:
+            raise CustomMaximumValueExceeded(
+                'Non-framed message content length found larger than custom value: {found} > {custom}'.format(
+                    found=self.body_length,
+                    custom=self.config.max_body_length
+                )
+            )
+
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
-            content_type=self.header.content_type,
+            content_type=self._header.content_type,
             is_final_frame=True
         )
         associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
-            message_id=self.header.message_id,
+            message_id=self._header.message_id,
             aad_content_string=aad_content_string,
             seq_num=1,
             length=self.body_length
         )
         self.decryptor = aws_encryption_sdk.internal.crypto.Decryptor(
-            algorithm=self.header.algorithm,
+            algorithm=self._header.algorithm,
             key=self.data_key.data_key,
             associated_data=associated_data,
-            message_id=self.header.message_id,
+            message_id=self._header.message_id,
             iv=iv,
             tag=tag
         )
         self.body_start = self.source_stream.tell()
         self.body_end = self.body_start + self.body_length
 
-    def _read_bytes_from_single_block_body(self, b):
-        """Reads the requested number of bytes from a streaming single block message body.
+    def _read_bytes_from_non_framed_body(self, b):
+        """Reads the requested number of bytes from a streaming non-framed message body.
 
         :param int b: Number of bytes to read
         :returns: Decrypted bytes from source stream
         :rtype: str
         """
-        _LOGGER.debug('starting single block body read')
-        bytes_to_read = min(b, self.body_end - self.source_stream.tell())
+        _LOGGER.debug('starting non-framed body read')
+        # Always read the entire message for non-framed message bodies.
+        bytes_to_read = self.body_end - self.source_stream.tell()
         _LOGGER.debug('%s bytes requested; reading %s bytes', b, bytes_to_read)
         ciphertext = self.source_stream.read(bytes_to_read)
+        if len(self.output_buffer) + len(ciphertext) < self.body_length:
+            raise SerializationError('Total message body contents less than specified in body description')
         if self.verifier:
             self.verifier.update(ciphertext)
         plaintext = self.decryptor.update(ciphertext)
-        # if bytes_to_read is less than the requested, then the end of the body has been reached
-        if bytes_to_read < b:
-            plaintext += self.decryptor.finalize()
-            aws_encryption_sdk.internal.formatting.deserialize.update_verifier_with_tag(
-                stream=self.source_stream,
-                header=self.header,
-                verifier=self.verifier
-            )
-            self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(
-                stream=self.source_stream,
-                verifier=self.verifier
-            )
-            self.source_stream.close()
+        plaintext += self.decryptor.finalize()
+        aws_encryption_sdk.internal.formatting.deserialize.update_verifier_with_tag(
+            stream=self.source_stream,
+            header=self._header,
+            verifier=self.verifier
+        )
+        self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(
+            stream=self.source_stream,
+            verifier=self.verifier
+        )
+        self.source_stream.close()
         return plaintext
 
     def _read_bytes_from_framed_body(self, b):
@@ -640,7 +691,7 @@ class StreamDecryptor(_EncryptionStream):
             _LOGGER.debug('Reading frame')
             frame_data, final_frame = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
                 stream=self.source_stream,
-                header=self.header,
+                header=self._header,
                 verifier=self.verifier
             )
             _LOGGER.debug('Read complete for frame %s'.format(frame_data.sequence_number))
@@ -648,21 +699,21 @@ class StreamDecryptor(_EncryptionStream):
                 raise SerializationError('Malformed message: frames out of order')
             self.last_sequence_number += 1
             aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
-                content_type=self.header.content_type,
+                content_type=self._header.content_type,
                 is_final_frame=frame_data.final_frame
             )
             associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
-                message_id=self.header.message_id,
+                message_id=self._header.message_id,
                 aad_content_string=aad_content_string,
                 seq_num=frame_data.sequence_number,
                 length=len(frame_data.ciphertext)
             )
             plaintext += aws_encryption_sdk.internal.crypto.decrypt(
-                algorithm=self.header.algorithm,
+                algorithm=self._header.algorithm,
                 key=self.data_key.data_key,
                 encrypted_data=frame_data,
                 associated_data=associated_data,
-                message_id=self.header.message_id
+                message_id=self._header.message_id
             )
             _LOGGER.debug('bytes collected: %s', len(plaintext))
         if final_frame:
@@ -692,10 +743,10 @@ class StreamDecryptor(_EncryptionStream):
             )
             return
 
-        if self.header.content_type == ContentType.FRAMED_DATA:
+        if self._header.content_type == ContentType.FRAMED_DATA:
             self.output_buffer += self._read_bytes_from_framed_body(b)
-        elif self.header.content_type == ContentType.NO_FRAMING:
-            self.output_buffer += self._read_bytes_from_single_block_body(b)
+        elif self._header.content_type == ContentType.NO_FRAMING:
+            self.output_buffer += self._read_bytes_from_non_framed_body(b)
         else:
             raise NotSupportedError('Unsupported content type')
 

@@ -192,7 +192,7 @@ class TestUtils(unittest.TestCase):
             aws_encryption_sdk.identifiers.ContentType.NO_FRAMING,
             False
         )
-        assert test == aws_encryption_sdk.identifiers.ContentAADString.SINGLE_BLOCK_STRING_ID
+        assert test == aws_encryption_sdk.identifiers.ContentAADString.NON_FRAMED_STRING_ID
 
     def test_get_aad_content_string_framing(self):
         """Validate that the get_aad_content_string function behaves

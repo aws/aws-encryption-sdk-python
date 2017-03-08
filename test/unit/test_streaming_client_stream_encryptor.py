@@ -112,16 +112,16 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_encryptor_instance = MagicMock()
         self.mock_encryptor_instance.iv = sentinel.iv
         self.mock_encryptor.return_value = self.mock_encryptor_instance
-        # Set up serialize_single_block_open patch
-        self.mock_serialize_single_block_open_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_open'
+        # Set up serialize_non_framed_open patch
+        self.mock_serialize_non_framed_open_patcher = patch(
+            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open'
         )
-        self.mock_serialize_single_block_open = self.mock_serialize_single_block_open_patcher.start()
-        # Set up serialize_single_block_close patch
-        self.mock_serialize_single_block_close_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_close'
+        self.mock_serialize_non_framed_open = self.mock_serialize_non_framed_open_patcher.start()
+        # Set up serialize_non_framed_close patch
+        self.mock_serialize_non_framed_close_patcher = patch(
+            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close'
         )
-        self.mock_serialize_single_block_close = self.mock_serialize_single_block_close_patcher.start()
+        self.mock_serialize_non_framed_close = self.mock_serialize_non_framed_close_patcher.start()
         # Set up serialize_footer patch
         self.mock_serialize_footer_patcher = patch(
             'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_footer'
@@ -145,8 +145,8 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_get_aad_content_string_patcher.stop()
         self.mock_assemble_content_aad_patcher.stop()
         self.mock_encryptor_patcher.stop()
-        self.mock_serialize_single_block_open_patcher.stop()
-        self.mock_serialize_single_block_close_patcher.stop()
+        self.mock_serialize_non_framed_open_patcher.stop()
+        self.mock_serialize_non_framed_close_patcher.stop()
         self.mock_serialize_footer_patcher.stop()
         self.mock_serialize_frame_patcher.stop()
 
@@ -162,20 +162,20 @@ class TestStreamEncryptor(unittest.TestCase):
         assert test_encryptor.content_type is sentinel.content_type
         self.mock_validate_frame_length.assert_called_once_with(self.mock_frame_length, self.mock_algorithm)
 
-    def test_init_single_block_message_too_large(self):
-        with six.assertRaisesRegex(self, SerializationError, 'Source too large for single block message'):
+    def test_init_non_framed_message_too_large(self):
+        with six.assertRaisesRegex(self, SerializationError, 'Source too large for non-framed message'):
             StreamEncryptor(
                 source=self.mock_input_stream,
                 key_provider=self.mock_key_provider,
                 frame_length=0,
                 algorithm=self.mock_algorithm,
-                source_length=aws_encryption_sdk.internal.defaults.MAX_SINGLE_BLOCK_SIZE + 1
+                source_length=aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE + 1
             )
 
     @patch('aws_encryption_sdk.internal.utils.ROStream')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_single_block')
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
-    def test_prep_message_framed_message(self, mock_write_header, mock_prep_single_block, mock_rostream):
+    def test_prep_message_framed_message(self, mock_write_header, mock_prep_non_framed, mock_rostream):
         mock_rostream.return_value = sentinel.plaintext_rostream
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
@@ -198,7 +198,7 @@ class TestStreamEncryptor(unittest.TestCase):
             plaintext_length=5,
             data_key=test_encryptor.config.data_key
         )
-        assert test_encryptor.header == MessageHeader(
+        assert test_encryptor._header == MessageHeader(
             version=aws_encryption_sdk.internal.defaults.VERSION,
             type=aws_encryption_sdk.internal.defaults.TYPE,
             algorithm=test_encryptor.config.algorithm,
@@ -211,12 +211,12 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=self.mock_frame_length
         )
         mock_write_header.assert_called_once_with()
-        assert not mock_prep_single_block.called
+        assert not mock_prep_non_framed.called
         assert test_encryptor._message_prepped
 
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_single_block')
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
-    def test_prep_message_single_block_message(self, mock_write_header, mock_prep_single_block):
+    def test_prep_message_non_framed_message(self, mock_write_header, mock_prep_non_framed):
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
             key_provider=self.mock_key_provider,
@@ -224,7 +224,7 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         test_encryptor.content_type = ContentType.NO_FRAMING
         test_encryptor._prep_message()
-        mock_prep_single_block.assert_called_once_with()
+        mock_prep_non_framed.assert_called_once_with()
 
     def test_prep_message_no_signer(self):
         test_encryptor = StreamEncryptor(
@@ -236,7 +236,7 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryptor._prep_message()
         assert not self.mock_signer.called
-        assert test_encryptor.header.encryption_context == {}
+        assert test_encryptor._header.encryption_context == {}
 
     def test_write_header(self):
         self.mock_serialize_header.return_value = b'12345'
@@ -249,41 +249,41 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=self.mock_frame_length
         )
         test_encryptor.content_type = sentinel.content_type
-        test_encryptor.header = MagicMock()
-        test_encryptor.header.message_id = VALUES['message_id']
+        test_encryptor._header = MagicMock()
+        test_encryptor._header.message_id = VALUES['message_id']
         test_encryptor.signer = sentinel.signer
         test_encryptor.output_buffer = b''
         test_encryptor.encryption_data_key = self.mock_encryption_data_key
         test_encryptor._write_header()
         self.mock_serialize_header.assert_called_once_with(
-            header=test_encryptor.header,
+            header=test_encryptor._header,
             signer=test_encryptor.signer
         )
         self.mock_serialize_header_auth.assert_called_once_with(
             algorithm=test_encryptor.config.algorithm,
             header=b'12345',
-            message_id=test_encryptor.header.message_id,
+            message_id=test_encryptor._header.message_id,
             encryption_data_key=test_encryptor.encryption_data_key,
             signer=test_encryptor.signer
         )
         assert test_encryptor.output_buffer == b'1234567890'
 
-    def test_prep_single_block(self):
-        self.mock_serialize_single_block_open.return_value = b'1234567890'
+    def test_prep_non_framed(self):
+        self.mock_serialize_non_framed_open.return_value = b'1234567890'
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
             key_provider=self.mock_key_provider
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
-        test_encryptor._prep_single_block()
+        test_encryptor._prep_non_framed()
         self.mock_get_aad_content_string.assert_called_once_with(
             content_type=test_encryptor.content_type,
             is_final_frame=True
         )
         self.mock_assemble_content_aad.assert_called_once_with(
-            message_id=test_encryptor.header.message_id,
+            message_id=test_encryptor._header.message_id,
             aad_content_string=sentinel.aad_content_string,
             seq_num=1,
             length=test_encryptor.stream_length
@@ -292,9 +292,9 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=test_encryptor.config.algorithm,
             key=test_encryptor.encryption_data_key.data_key,
             associated_data=sentinel.associated_data,
-            message_id=test_encryptor.header.message_id
+            message_id=test_encryptor._header.message_id
         )
-        self.mock_serialize_single_block_open.assert_called_once_with(
+        self.mock_serialize_non_framed_open.assert_called_once_with(
             algorithm=test_encryptor.config.algorithm,
             iv=sentinel.iv,
             plaintext_length=test_encryptor.stream_length,
@@ -302,7 +302,7 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         assert test_encryptor.output_buffer == b'1234567890'
 
-    def test_read_bytes_to_single_block_body(self):
+    def test_read_bytes_to_non_framed_body(self):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -311,23 +311,23 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.signer = MagicMock()
         test_encryptor.encryptor = MagicMock()
         test_encryptor.encryptor.update.return_value = sentinel.ciphertext
-        test = test_encryptor._read_bytes_to_single_block_body(5)
+        test = test_encryptor._read_bytes_to_non_framed_body(5)
         test_encryptor.encryptor.update.assert_called_once_with(self.plaintext[:5])
         test_encryptor.signer.update.assert_called_once_with(sentinel.ciphertext)
         assert not test_encryptor.source_stream.closed
         assert test is sentinel.ciphertext
 
-    def test_read_bytes_to_single_block_body_too_large(self):
+    def test_read_bytes_to_non_framed_body_too_large(self):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
             key_provider=self.mock_key_provider
         )
-        test_encryptor.bytes_read = aws_encryption_sdk.internal.defaults.MAX_SINGLE_BLOCK_SIZE
-        with six.assertRaisesRegex(self, SerializationError, 'Source too large for single block message'):
-            test_encryptor._read_bytes_to_single_block_body(5)
+        test_encryptor.bytes_read = aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
+        with six.assertRaisesRegex(self, SerializationError, 'Source too large for non-framed message'):
+            test_encryptor._read_bytes_to_non_framed_body(5)
 
-    def test_read_bytes_to_single_block_body_close(self):
+    def test_read_bytes_to_non_framed_body_close(self):
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
             key_provider=self.mock_key_provider
@@ -337,23 +337,23 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.encryptor.update.return_value = b'123'
         test_encryptor.encryptor.finalize.return_value = b'456'
         test_encryptor.encryptor.tag = sentinel.tag
-        self.mock_serialize_single_block_close.return_value = b'789'
+        self.mock_serialize_non_framed_close.return_value = b'789'
         self.mock_serialize_footer.return_value = b'0-='
-        test = test_encryptor._read_bytes_to_single_block_body(len(self.plaintext) + 1)
+        test = test_encryptor._read_bytes_to_non_framed_body(len(self.plaintext) + 1)
         test_encryptor.signer.update.assert_has_calls(
             calls=(call(b'123'), call(b'456')),
             any_order=False
         )
         assert test_encryptor.source_stream.closed
         test_encryptor.encryptor.finalize.assert_called_once_with()
-        self.mock_serialize_single_block_close.assert_called_once_with(
+        self.mock_serialize_non_framed_close.assert_called_once_with(
             tag=test_encryptor.encryptor.tag,
             signer=test_encryptor.signer
         )
         self.mock_serialize_footer.assert_called_once_with(test_encryptor.signer)
         assert test == b'1234567890-='
 
-    def test_read_bytes_to_single_block_body_no_signer(self):
+    def test_read_bytes_to_non_framed_body_no_signer(self):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -361,20 +361,20 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16
         )
         test_encryptor.signer = None
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test_encryptor.encryptor = MagicMock()
         test_encryptor.encryptor.update.return_value = b'123'
         test_encryptor.encryptor.finalize.return_value = b'456'
         test_encryptor.encryptor.tag = sentinel.tag
-        self.mock_serialize_single_block_close.return_value = b'789'
+        self.mock_serialize_non_framed_close.return_value = b'789'
         self.mock_serialize_footer.return_value = b'0-='
-        test_encryptor._read_bytes_to_single_block_body(len(self.plaintext) + 1)
+        test_encryptor._read_bytes_to_non_framed_body(len(self.plaintext) + 1)
         assert not self.mock_serialize_footer.called
 
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_single_block_body')
-    def test_read_bytes_less_than_buffer(self, mock_read_single_block, mock_read_framed):
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body')
+    def test_read_bytes_less_than_buffer(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -382,12 +382,12 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         test_encryptor.output_buffer = b'1234567'
         test_encryptor._read_bytes(5)
-        assert not mock_read_single_block.called
+        assert not mock_read_non_framed.called
         assert not mock_read_framed.called
 
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_single_block_body')
-    def test_read_bytes_closed(self, mock_read_single_block, mock_read_framed):
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body')
+    def test_read_bytes_closed(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -395,12 +395,12 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         test_encryptor.source_stream.close()
         test_encryptor._read_bytes(5)
-        assert not mock_read_single_block.called
+        assert not mock_read_non_framed.called
         assert not mock_read_framed.called
 
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_single_block_body')
-    def test_read_bytes_framed(self, mock_read_single_block, mock_read_framed):
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body')
+    def test_read_bytes_framed(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -408,12 +408,12 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryptor._read_bytes(5)
-        assert not mock_read_single_block.called
+        assert not mock_read_non_framed.called
         mock_read_framed.assert_called_once_with(5)
 
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_single_block_body')
-    def test_read_bytes_single_block(self, mock_read_single_block, mock_read_framed):
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body')
+    def test_read_bytes_non_framed(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
@@ -422,23 +422,23 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.content_type = ContentType.NO_FRAMING
         test_encryptor._read_bytes(5)
         assert not mock_read_framed.called
-        mock_read_single_block.assert_called_once_with(5)
+        mock_read_non_framed.assert_called_once_with(5)
 
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_single_block_body')
-    def test_read_bytes_unsupported_type(self, mock_read_single_block, mock_read_framed):
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body')
+    def test_read_bytes_unsupported_type(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
             key_provider=self.mock_key_provider
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test_encryptor.content_type = None
         with six.assertRaisesRegex(self, NotSupportedError, 'Unsupported content type'):
             test_encryptor._read_bytes(5)
-        assert not mock_read_single_block.called
+        assert not mock_read_non_framed.called
         assert not mock_read_framed.called
 
     def test_read_bytes_to_framed_body_single_frame_read(self):
@@ -450,13 +450,13 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=128
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test = test_encryptor._read_bytes_to_framed_body(128)
         self.mock_serialize_frame.assert_called_once_with(
             algorithm=test_encryptor.config.algorithm,
             plaintext=self.plaintext[:128],
-            message_id=test_encryptor.header.message_id,
+            message_id=test_encryptor._header.message_id,
             encryption_data_key=test_encryptor.encryption_data_key,
             frame_length=test_encryptor.config.frame_length,
             sequence_number=1,
@@ -480,7 +480,7 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=50
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test = test_encryptor._read_bytes_to_framed_body(51)
         self.mock_serialize_frame.assert_has_calls(
@@ -488,7 +488,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=self.plaintext[:50],
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=1,
@@ -498,7 +498,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=b'',
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=2,
@@ -527,7 +527,7 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=frame_length
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test = test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
         self.mock_serialize_frame.assert_has_calls(
@@ -535,7 +535,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=self.plaintext,
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=1,
@@ -545,7 +545,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=self.plaintext[frame_length:],
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=2,
@@ -555,7 +555,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=self.plaintext[frame_length * 2:],
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=3,
@@ -565,7 +565,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=self.plaintext[frame_length * 3:],
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=4,
@@ -575,7 +575,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 call(
                     algorithm=test_encryptor.config.algorithm,
                     plaintext=b'',
-                    message_id=test_encryptor.header.message_id,
+                    message_id=test_encryptor._header.message_id,
                     encryption_data_key=test_encryptor.encryption_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=5,
@@ -599,7 +599,7 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=len(self.plaintext)
         )
         test_encryptor.signer = MagicMock()
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
         self.mock_serialize_footer.assert_called_once_with(test_encryptor.signer)
@@ -615,7 +615,7 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16
         )
         test_encryptor.signer = None
-        test_encryptor.header = MagicMock()
+        test_encryptor._header = MagicMock()
         test_encryptor.encryption_data_key = MagicMock()
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
         assert not self.mock_serialize_footer.called

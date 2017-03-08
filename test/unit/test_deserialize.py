@@ -193,6 +193,32 @@ class TestDeserialize(unittest.TestCase):
             stream = io.BytesIO(VALUES['serialized_header_bad_iv_len'])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
 
+    def test_deserialize_header_framed_bad_frame_length(self):
+        """Validate that the deserialize_header function behaves
+            as expected for bad frame length values (greater than
+            the default maximum).
+        """
+        with six.assertRaisesRegex(
+            self,
+            SerializationError,
+            'Specified frame length larger than allowed maximum: *'
+        ):
+            stream = io.BytesIO(VALUES['serialized_header_bad_frame_len'])
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+
+    def test_deserialize_header_non_framed_bad_frame_length(self):
+        """Validate that the deserialize_header function behaves
+            as expected for bad frame length values for non-framed
+            messages (non-zero).
+        """
+        with six.assertRaisesRegex(
+            self,
+            SerializationError,
+            'Non-zero frame length found for non-framed message'
+        ):
+            stream = io.BytesIO(VALUES['serialized_non_framed_header_bad_frame_len'])
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+
     def test_deserialize_header_valid(self):
         """Validate that the deserialize_header function behaves
             as expected for a valid header.
@@ -231,10 +257,21 @@ class TestDeserialize(unittest.TestCase):
         stream = io.BytesIO(VALUES['serialized_final_frame'])
         test_body, test_final = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
             stream=stream,
-            header=VALUES['deserialized_header_frame']
+            header=VALUES['deserialized_header_frame_huge_frame']
         )
         assert test_body == VALUES['deserialized_body_final_frame_single']
         assert test_final
+
+    def test_deserialize_body_frame_final_invalid_final_frame_length(self):
+        """Validate that the deserialize_body_frame function
+            behaves as expected for a valid final body frame.
+        """
+        stream = io.BytesIO(VALUES['serialized_final_frame_bad_length'])
+        with six.assertRaisesRegex(self, SerializationError, 'Invalid final frame length: *'):
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
+                stream=stream,
+                header=VALUES['deserialized_header_frame']
+            )
 
     def test_deserialize_footer_no_verifier(self):
         """Vaidate that the deserialize_footer function behaves
@@ -242,16 +279,17 @@ class TestDeserialize(unittest.TestCase):
         """
         stream = io.BytesIO(VALUES['serialized_footer'])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream)
-        assert test == VALUES['deserialized_footer']
+        assert test == VALUES['deserialized_empty_footer']
 
     def test_deserialize_footer(self):
         """Vaidate that the deserialize_footer function behaves
             as expected when called with a verifier.
         """
         stream = io.BytesIO(VALUES['serialized_footer'])
-        aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream, self.mock_verifier)
+        test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream, self.mock_verifier)
         self.mock_verifier.set_signature.assert_called_once_with(VALUES['signature'])
         self.mock_verifier.verify.assert_called_once_with()
+        assert test == VALUES['deserialized_footer']
 
     def test_deserialize_footer_verifier_no_footer(self):
         """Vaidate that the deserialize_footer function behaves

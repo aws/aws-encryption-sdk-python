@@ -1,4 +1,5 @@
 To set up the integration test:
 1) Copy test_values_template.conf to test_values.conf
 2) Make sure that all fields in test_values.conf are populated with accurate values
+    * NOTE: AWS credentials are optional; if they are not found, the standard AWS credential sources are used.
 3) Set environment variable AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_CONTROL='RUN'

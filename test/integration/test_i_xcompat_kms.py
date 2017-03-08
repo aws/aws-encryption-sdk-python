@@ -1,11 +1,12 @@
 """Integration test suite testing decryption of known good test files encrypted using KMSMasterKeyProvider."""
+import json
 import os
 
 import pytest
 
 import aws_encryption_sdk
 
-from .test_i_aws_encrytion_sdk_client import setup_kms_master_key_provider, skip_tests, skip_message
+from .test_i_aws_encrytion_sdk_client import setup_kms_master_key_provider, skip_tests, SKIP_MESSAGE
 
 
 # Environment-specific test file locator.  May not always exist.
@@ -18,35 +19,44 @@ except ImportError:
 
 
 def _generate_test_cases():
-    base_dir = os.sep.join((file_root(), 'aws_encryption_sdk_resources'))
+    if skip_tests():
+        return []
+
+    kms_key_provider = setup_kms_master_key_provider()
+    base_dir = os.path.join(
+        os.path.abspath(file_root()),
+        'aws_encryption_sdk_resources'
+    )
+    ciphertext_manifest_path = os.path.join(
+        base_dir,
+        'manifests',
+        'ciphertext.manifest'
+    )
+
+    if not os.path.isfile(ciphertext_manifest_path):
+        # Make no test cases if the ciphertext file is not found
+        return []
+
+    with open(ciphertext_manifest_path) as f:
+        ciphertext_manifest = json.load(f)
     _test_cases = []
-    # Files are arranged in {algorithm_id}/{text_size}/{frame_size}/{run_description}
-    _ciphertext_dir = os.sep.join((base_dir, 'ciphertext'))
-    _plaintext_dir = os.sep.join((base_dir, 'plaintext'))
-    if not os.path.isdir(_ciphertext_dir) or not os.path.isdir(_plaintext_dir):
-        raise Exception('Specified ciphertext and plaintext directories do not exist: {} {}'.format(
-            _ciphertext_dir,
-            _plaintext_dir
-        ))
-    for alg_id in os.listdir(_ciphertext_dir):
-        _algset_dir = os.sep.join((_ciphertext_dir, alg_id))
-        for text_size in os.listdir(_algset_dir):
-            _size_dir = os.sep.join((_algset_dir, text_size))
-            ptfile = os.sep.join((_plaintext_dir, text_size))
-            for frame_length in os.listdir(_size_dir):
-                _frame_length_dir = os.sep.join((_size_dir, frame_length))
-                for ctfile in os.listdir(_frame_length_dir):
-                    if 'kms' in ctfile.lower():
-                        _test_cases.append((
-                            ptfile,
-                            os.sep.join((_frame_length_dir, ctfile))
-                        ))
+
+    # Collect test cases from ciphertext manifest
+    for test_case in ciphertext_manifest['test_cases']:
+        for key in test_case['master_keys']:
+            if key['provider_id'] == 'aws-kms' and key['decryptable']:
+                _test_cases.append((
+                    os.path.join(base_dir, test_case['plaintext']['filename']),
+                    os.path.join(base_dir, test_case['ciphertext']['filename']),
+                    kms_key_provider
+                ))
+                break
     return _test_cases
 
 
-@pytest.mark.skipif(skip_tests(), reason=skip_message)
-@pytest.mark.parametrize('plaintext_filename,ciphertext_filename', _generate_test_cases())
-def test_decrypt_from_file(plaintext_filename, ciphertext_filename):
+@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
+@pytest.mark.parametrize('plaintext_filename,ciphertext_filename,key_provider', _generate_test_cases())
+def test_decrypt_from_file(plaintext_filename, ciphertext_filename, key_provider):
     """Tests decrypt from known good files."""
     with open(ciphertext_filename, 'rb') as infile:
         ciphertext = infile.read()
@@ -54,6 +64,6 @@ def test_decrypt_from_file(plaintext_filename, ciphertext_filename):
         plaintext = infile.read()
     decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(
         source=ciphertext,
-        key_provider=setup_kms_master_key_provider()
+        key_provider=key_provider
     )
     assert decrypted_ciphertext == plaintext

@@ -11,7 +11,7 @@ from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError, Dec
 from aws_encryption_sdk.identifiers import Algorithm, __version__
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
 
 
@@ -22,13 +22,16 @@ class TestKMSMasterKey(unittest.TestCase):
         self.mock_client.__class__ = botocore.client.BaseClient
         self.mock_client.generate_data_key.return_value = {
             'Plaintext': VALUES['data_key'],
-            'CiphertextBlob': VALUES['encrypted_data_key']
+            'CiphertextBlob': VALUES['encrypted_data_key'],
+            'KeyId': VALUES['arn']
         }
         self.mock_client.encrypt.return_value = {
-            'CiphertextBlob': VALUES['encrypted_data_key']
+            'CiphertextBlob': VALUES['encrypted_data_key'],
+            'KeyId': VALUES['arn']
         }
         self.mock_client.decrypt.return_value = {
-            'Plaintext': VALUES['data_key']
+            'Plaintext': VALUES['data_key'],
+            'KeyId': VALUES['arn']
         }
         self.mock_algorithm = MagicMock()
         self.mock_algorithm.__class__ = Algorithm
@@ -88,14 +91,17 @@ class TestKMSMasterKey(unittest.TestCase):
         )
 
     def test_generate_data_key(self):
-        test = KMSMasterKey(config=self.mock_kms_mkc_1)
+        test = KMSMasterKey(config=self.mock_kms_mkc_3)
         generated_key = test._generate_data_key(self.mock_algorithm)
         self.mock_client.generate_data_key.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
+            KeyId='ex_key_info',
             NumberOfBytes=sentinel.kdf_input_len
         )
         assert generated_key == DataKey(
-            key_provider=test.key_provider,
+            key_provider=MasterKeyInfo(
+                provider_id=test.provider_id,
+                key_info=VALUES['arn']
+            ),
             data_key=VALUES['data_key'],
             encrypted_data_key=VALUES['encrypted_data_key']
         )
@@ -131,14 +137,17 @@ class TestKMSMasterKey(unittest.TestCase):
             test._generate_data_key(self.mock_algorithm)
 
     def test_encrypt_data_key(self):
-        test = KMSMasterKey(config=self.mock_kms_mkc_1)
+        test = KMSMasterKey(config=self.mock_kms_mkc_3)
         encrypted_key = test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
         self.mock_client.encrypt.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
+            KeyId='ex_key_info',
             Plaintext=VALUES['data_key']
         )
         assert encrypted_key == EncryptedDataKey(
-            key_provider=test.key_provider,
+            key_provider=MasterKeyInfo(
+                provider_id=test.provider_id,
+                key_info=VALUES['arn']
+            ),
             encrypted_data_key=VALUES['encrypted_data_key']
         )
 

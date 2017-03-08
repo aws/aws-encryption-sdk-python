@@ -131,7 +131,7 @@ def serialize_header_auth(algorithm, header, message_id, encryption_data_key, si
     return output
 
 
-def serialize_single_block_open(algorithm, iv, plaintext_length, signer=None):
+def serialize_non_framed_open(algorithm, iv, plaintext_length, signer=None):
     """Serializes the opening block for a non-framed message body.
 
     :param algorithm: Algorithm to use for encryption
@@ -160,7 +160,7 @@ def serialize_single_block_open(algorithm, iv, plaintext_length, signer=None):
     return body_start
 
 
-def serialize_single_block_close(tag, signer=None):
+def serialize_non_framed_close(tag, signer=None):
     """Serializes the closing block for a non-framed message body.
 
     :param bytes tag: Auth tag value from body encryptor

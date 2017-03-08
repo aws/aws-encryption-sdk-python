@@ -18,11 +18,11 @@ class TestEncryptionContext(unittest.TestCase):
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
             message_id=VALUES['message_id'],
-            aad_content_string=ContentAADString.SINGLE_BLOCK_STRING_ID,
+            aad_content_string=ContentAADString.NON_FRAMED_STRING_ID,
             seq_num=1,
             length=VALUES['content_len']
         )
-        assert test == VALUES['single_block_aac']
+        assert test == VALUES['non_framed_aac']
 
     def test_assemble_content_aad_unknown_type(self):
         with six.assertRaisesRegex(

@@ -9,6 +9,10 @@ class SerializationError(AWSEncryptionSDKClientError):
     """Exception class for serialization/deserialization errors."""
 
 
+class CustomMaximumValueExceeded(SerializationError):
+    """Exception class for use when values are found which exceed user-defined custom maximum values."""
+
+
 class UnknownIdentityError(AWSEncryptionSDKClientError):
     """Exception class for unknown identity errors."""
 

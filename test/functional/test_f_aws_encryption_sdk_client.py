@@ -15,6 +15,7 @@ import six
 import aws_encryption_sdk
 from aws_encryption_sdk import KMSMasterKeyProvider
 from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
 from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
@@ -168,13 +169,16 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         self.mock_kms_client.__class__ = botocore.client.BaseClient
         self.mock_kms_client.generate_data_key.return_value = {
             'Plaintext': six.b(''.join(VALUES['data_key_256'])),
-            'CiphertextBlob': VALUES['encrypted_data_key']
+            'CiphertextBlob': VALUES['encrypted_data_key'],
+            'KeyId': VALUES['arn']
         }
         self.mock_kms_client.encrypt.return_value = {
-            'CiphertextBlob': VALUES['encrypted_data_key']
+            'CiphertextBlob': VALUES['encrypted_data_key'],
+            'KeyId': VALUES['arn']
         }
         self.mock_kms_client.decrypt.return_value = {
-            'Plaintext': six.b(''.join(VALUES['data_key_256']))
+            'Plaintext': six.b(''.join(VALUES['data_key_256'])),
+            'KeyId': VALUES['arn']
         }
         self.mock_kms_key_provider = KMSMasterKeyProvider()
         self.mock_kms_key_provider._regional_clients['us-east-1'] = self.mock_kms_client
@@ -225,9 +229,50 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
             key_provider=self.mock_kms_key_provider
         )
 
-    def test_encryption_cycle_default_algorithm_single_block(self):
+    def test_encrypt_load_header(self):
+        """Test that StreamEncryptor can extract header without reading plaintext."""
+        # Using a non-signed algorithm to simplify header size calculation
+        algorithm = aws_encryption_sdk.Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256
+        header_length = len(serialize_encryption_context(VALUES['encryption_context']))
+        header_length += 34
+        header_length += algorithm.iv_len
+        header_length += algorithm.auth_len
+        header_length += 6 + 7 + len(VALUES['arn']) + len(VALUES['encrypted_data_key'])
+        with aws_encryption_sdk.stream(
+            mode='e',
+            source=VALUES['plaintext_128'],
+            key_provider=self.mock_kms_key_provider,
+            encryption_context=VALUES['encryption_context'],
+            algorithm=algorithm,
+            frame_length=1024
+        ) as encryptor:
+            encryptor_header = encryptor.header
+        # Ensure that only the header has been written into the output buffer
+        assert len(encryptor.output_buffer) == header_length
+        assert encryptor_header.encryption_context == VALUES['encryption_context']
+
+    def test_encrypt_decrypt_header_only(self):
+        """Test that StreamDecryptor can extract header without reading ciphertext."""
+        ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
+            source=VALUES['plaintext_128'],
+            key_provider=self.mock_kms_key_provider,
+            encryption_context=VALUES['encryption_context']
+        )
+        with aws_encryption_sdk.stream(
+            mode='d',
+            source=ciphertext,
+            key_provider=self.mock_kms_key_provider
+        ) as decryptor:
+            decryptor_header = decryptor.header
+        assert decryptor.output_buffer == b''
+        assert all(
+            pair in decryptor_header.encryption_context.items()
+            for pair in encryptor_header.encryption_context.items()
+        )
+
+    def test_encryption_cycle_default_algorithm_non_framed(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -242,9 +287,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_fake_aes(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_aes(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake AES-GCM
             key provider.
         """
@@ -261,9 +306,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_pkcs(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_pkcs(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-PKCS
             key provider.
         """
@@ -280,9 +325,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_pkcs_asymmetric(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_pkcs_asymmetric(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-PKCS
             key provider.
         """
@@ -298,9 +343,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_oaep_sha1(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_oaep_sha1(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-OAEP-SHA1
             key provider.
         """
@@ -317,9 +362,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_oaep_sha1_asymmetric(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_oaep_sha1_asymmetric(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-OAEP-SHA1
             key provider.
         """
@@ -336,9 +381,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         assert plaintext == VALUES['plaintext_128']
 
     @unittest.skipUnless(_mgf1_sha256_supported(), 'MGF1-SHA256 not supported by this backend')
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_oaep_sha256(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_oaep_sha256(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-OAEP-SHA256
             key provider.
         """
@@ -356,9 +401,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         assert plaintext == VALUES['plaintext_128']
 
     @unittest.skipUnless(_mgf1_sha256_supported(), 'MGF1-SHA256 not supported by this backend')
-    def test_encryption_cycle_default_algorithm_single_block_fake_rsa_oaep_sha256_asymmetric(self):
+    def test_encryption_cycle_default_algorithm_non_framed_fake_rsa_oaep_sha256_asymmetric(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm and the fake RSA-OAEP-SHA256
             key provider.
         """
@@ -374,9 +419,9 @@ class TestAwsEncryptionSdkFunctional(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_no_encryption_context(self):
+    def test_encryption_cycle_default_algorithm_non_framed_no_encryption_context(self):
         """Test that the enrypt/decrypt cycle completes
-            successfully for a single block message
+            successfully for a non-framed message
             using the default algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(

@@ -109,47 +109,47 @@ class TestSerialize(unittest.TestCase):
             encryption_data_key=VALUES['data_key_obj']
         )
 
-    def test_serialize_single_block_open(self):
-        """Validate that the serialize_single_block_open
+    def test_serialize_non_framed_open(self):
+        """Validate that the serialize_non_framed_open
             function behaves as expected.
         """
-        test = aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_open(
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
             algorithm=self.mock_algorithm,
             iv=VALUES['final_frame_base'].iv,
             plaintext_length=len(VALUES['data_128']),
             signer=self.mock_signer
         )
-        self.mock_signer.update.assert_called_once_with(VALUES['serialized_single_block_start'])
-        assert test == VALUES['serialized_single_block_start']
+        self.mock_signer.update.assert_called_once_with(VALUES['serialized_non_framed_start'])
+        assert test == VALUES['serialized_non_framed_start']
 
-    def test_serialize_single_block_open_no_signer(self):
-        """Validate that the serialize_single_block_open
+    def test_serialize_non_framed_open_no_signer(self):
+        """Validate that the serialize_non_framed_open
             function behaves as expected when called with
             no signer.
         """
-        aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_open(
+        aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
             algorithm=self.mock_algorithm,
             iv=VALUES['final_frame_base'].iv,
             plaintext_length=len(VALUES['data_128'])
         )
 
-    def test_serialize_single_block_close(self):
-        """Validate that the serialize_single_block_close
+    def test_serialize_non_framed_close(self):
+        """Validate that the serialize_non_framed_close
             function behaves as expected.
         """
-        test = aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_close(
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
             tag=VALUES['final_frame_base'].tag,
             signer=self.mock_signer
         )
-        self.mock_signer.update.assert_called_once_with(VALUES['serialized_single_block_close'])
-        assert test == VALUES['serialized_single_block_close']
+        self.mock_signer.update.assert_called_once_with(VALUES['serialized_non_framed_close'])
+        assert test == VALUES['serialized_non_framed_close']
 
-    def test_serialize_single_block_close_no_signer(self):
-        """Validate that the serialize_single_block_close
+    def test_serialize_non_framed_close_no_signer(self):
+        """Validate that the serialize_non_framed_close
             function behaves as expected when called with
             no signer.
         """
-        aws_encryption_sdk.internal.formatting.serialize.serialize_single_block_close(
+        aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
             tag=VALUES['final_frame_base'].tag
         )
 

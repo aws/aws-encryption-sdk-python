@@ -13,7 +13,7 @@ import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
-skip_message = 'Skipping tests due to blocking environment variable'
+SKIP_MESSAGE = 'Skipping tests due to blocking environment variable'
 
 
 def skip_tests():
@@ -40,24 +40,45 @@ VALUES = {
 }
 
 
-def setup_kms_master_key_provider():
-    """Reads the test_values config file and builds the requested KMS Master Key Provider."""
+def read_test_config():
+    """Reads the test_values config file."""
     config = ConfigParser()
     config_file = os.sep.join([os.path.dirname(__file__), 'test_values.conf'])
     config_readme = os.sep.join([os.path.dirname(__file__), 'README'])
     if not os.path.isfile(config_file):
         raise Exception('Integration test config file missing.  See setup instructions in {}'.format(config_readme))
     config.read(config_file)
-    cmk_arn = config.get('TestKMSThickClientIntegration', 'cmk_arn')
+    return config
+
+
+def get_cmk_arn(config):
+    """Retrieves the target CMK ARN from the received config."""
+    return config.get('TestKMSThickClientIntegration', 'cmk_arn')
+
+
+def setup_botocore_session(config):
+    """Configures a botocore session based on the received config."""
     aws_params = {}
     for key in ['aws_access_key_id', 'aws_secret_access_key', 'aws_session_token']:
-        aws_params[key] = config.get('TestKMSThickClientIntegration', key)
-    botocore_session = botocore.session.get_session()
-    botocore_session.set_credentials(
-        access_key=aws_params['aws_access_key_id'],
-        secret_key=aws_params['aws_secret_access_key'],
-        token=aws_params['aws_session_token']
-    )
+        try:
+            aws_params[key] = config.get('TestKMSThickClientIntegration', key)
+        except Exception:
+            pass
+    botocore_session = botocore.session.Session()
+    if aws_params:
+        botocore_session.set_credentials(
+            access_key=aws_params['aws_access_key_id'],
+            secret_key=aws_params['aws_secret_access_key'],
+            token=aws_params['aws_session_token']
+        )
+    return botocore_session
+
+
+def setup_kms_master_key_provider():
+    """Reads the test_values config file and builds the requested KMS Master Key Provider."""
+    config = read_test_config()
+    cmk_arn = get_cmk_arn(config)
+    botocore_session = setup_botocore_session(config)
     kms_master_key_provider = KMSMasterKeyProvider(botocore_session=botocore_session)
     kms_master_key_provider.add_master_key(cmk_arn)
     return kms_master_key_provider
@@ -67,7 +88,7 @@ class TestKMSThickClientIntegration(unittest.TestCase):
 
     def setUp(self):
         if skip_tests():
-            self.skipTest(skip_message)
+            self.skipTest(SKIP_MESSAGE)
         self.kms_master_key_provider = setup_kms_master_key_provider()
 
     def test_encryption_cycle_default_algorithm_framed_stream(self):
@@ -119,9 +140,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         assert plaintext == VALUES['plaintext_128'] * 10
         assert header_1.encryption_context == header_2.encryption_context
 
-    def test_encryption_cycle_default_algorithm_single_block(self):
+    def test_encryption_cycle_default_algorithm_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully
-            for a single block message using the default algorithm.
+            for a non-framed message using the default algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
             source=VALUES['plaintext_128'],
@@ -135,9 +156,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_default_algorithm_single_block_no_encryption_context(self):
+    def test_encryption_cycle_default_algorithm_non_framed_no_encryption_context(self):
         """Test that the enrypt/decrypt cycle completes successfully
-            for a single block message using the default algorithm.
+            for a non-framed message using the default algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
             source=VALUES['plaintext_128'],
@@ -201,9 +222,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_single_block(self):
+    def test_encryption_cycle_aes_128_gcm_iv12_tag16_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully
-            for a single block message using the aes_128_gcm_iv12_tag16
+            for a non-framed message using the aes_128_gcm_iv12_tag16
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -237,9 +258,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_single_block(self):
+    def test_encryption_cycle_aes_192_gcm_iv12_tag16_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully
-            for a single block message using the aes_192_gcm_iv12_tag16
+            for a non-framed message using the aes_192_gcm_iv12_tag16
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -273,9 +294,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_single_block(self):
+    def test_encryption_cycle_aes_256_gcm_iv12_tag16_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully
-            for a single block message using the aes_256_gcm_iv12_tag16
+            for a non-framed message using the aes_256_gcm_iv12_tag16
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -309,9 +330,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_single_block(self):
+    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a
-            single block message using the aes_128_gcm_iv12_tag16_hkdf_sha256
+            non-framed message using the aes_128_gcm_iv12_tag16_hkdf_sha256
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -345,9 +366,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_single_block(self):
+    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a
-            single block message using the aes_192_gcm_iv12_tag16_hkdf_sha256
+            non-framed message using the aes_192_gcm_iv12_tag16_hkdf_sha256
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -381,9 +402,9 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_single_block(self):
+    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a
-            single block message using the aes_256_gcm_iv12_tag16_hkdf_sha256
+            non-framed message using the aes_256_gcm_iv12_tag16_hkdf_sha256
             algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -417,7 +438,7 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_single_block(self):
+    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256
             algorithm.
@@ -453,7 +474,7 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_block(self):
+    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.
@@ -489,7 +510,7 @@ class TestKMSThickClientIntegration(unittest.TestCase):
         )
         assert plaintext == VALUES['plaintext_128']
 
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_block(self):
+    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.

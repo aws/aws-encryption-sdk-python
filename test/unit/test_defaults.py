@@ -14,9 +14,9 @@ class TestDefaults(unittest.TestCase):
         max_frame_size = pow(2, 31) - 1
         assert aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE == max_frame_size
 
-    def test_max_single_block_size(self):
-        max_single_block_size = pow(2, 36) - 32
-        assert aws_encryption_sdk.internal.defaults.MAX_SINGLE_BLOCK_SIZE == max_single_block_size
+    def test_max_non_framed_size(self):
+        max_non_framed_size = pow(2, 36) - 32
+        assert aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE == max_non_framed_size
 
     def test_max_byte_array_size(self):
         max_byte_array_size = pow(2, 16) - 1

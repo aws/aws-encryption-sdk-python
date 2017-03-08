@@ -26,8 +26,8 @@ ENCODED_SIGNER_KEY = 'aws-crypto-public-key'
 MAX_FRAME_COUNT = 4294967295  # 2 ** 32 - 1
 #: Maximum bytes allowed in a single frame as defined in specification
 MAX_FRAME_SIZE = 2147483647  # 2 ** 31 - 1
-#: Maximum bytes allowed in a single block message ciphertext as defined in specification
-MAX_SINGLE_BLOCK_SIZE = 68719476704  # 2 ** 36 - 32
+#: Maximum bytes allowed in a non-framed message ciphertext as defined in specification
+MAX_NON_FRAMED_SIZE = 68719476704  # 2 ** 36 - 32
 
 #: Maximum number of AAD bytes allowed as defined in specification
 MAX_BYTE_ARRAY_SIZE = 65535  # 2 ** 16 - 1

@@ -26,7 +26,7 @@ def array_byte(source):
 VALUES = {
     'header': b'serialized_header',
     'header_auth': b'serialized header auth',
-    'body_single_block': b'serialized single block body',
+    'body_non_framed': b'serialized single block body',
     'body_frame': b'frame body',
     'body_final_frame': b'final frame body',
     'footer': b'footer',
@@ -42,7 +42,7 @@ VALUES = {
     'key_info': b'ex-key-info',
     'key_info2': b'ex-key-info2',
     'ciphertext_len': b'\x00\x00\x00\x80',
-    'ciphertext_len_single_block': b'\x00\x00\x00\x00\x00\x00\x00\x80',
+    'ciphertext_len_non_framed': b'\x00\x00\x00\x00\x00\x00\x00\x80',
     'block_size': 128,
     'iv_len': 12,
     'tag_len': 16,
@@ -147,7 +147,7 @@ VALUES = {
         tag=b'\x91\xc5\xf7<\x7f\xc9\xb1k\x0e\xe2{\xe4\x97\x9d\xdbU'
     ),
     'serialized_header_auth': b's\x15<P\xaa\x94\xb8\x931P\xeb\xa0\x91\xc5\xf7<\x7f\xc9\xb1k\x0e\xe2{\xe4\x97\x9d\xdbU',
-    'single_block_aac': six.b(
+    'non_framed_aac': six.b(
         '_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8fAWSKMSEncryptionClient'
         ' Single Block\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00 '
     ),
@@ -182,16 +182,16 @@ VALUES = {
 }
 VALUES['updated_encryption_context'] = copy.deepcopy(VALUES['encryption_context'])
 VALUES['updated_encryption_context']['aws-crypto-public-key'] = VALUES['encoded_curve_point']
-VALUES['single_block_base'] = VALUES['final_frame_base']
-VALUES['serialized_single_block_start'] = b''.join([
+VALUES['non_framed_base'] = VALUES['final_frame_base']
+VALUES['serialized_non_framed_start'] = b''.join([
     VALUES['final_frame_base'].iv,
-    VALUES['ciphertext_len_single_block']
+    VALUES['ciphertext_len_non_framed']
 ])
-VALUES['serialized_single_block_close'] = VALUES['final_frame_base'].tag
-VALUES['serialized_single_block'] = b''.join([
-    VALUES['serialized_single_block_start'],
+VALUES['serialized_non_framed_close'] = VALUES['final_frame_base'].tag
+VALUES['serialized_non_framed'] = b''.join([
+    VALUES['serialized_non_framed_start'],
     VALUES['final_frame_base'].ciphertext,
-    VALUES['serialized_single_block_close']
+    VALUES['serialized_non_framed_close']
 ])
 VALUES['frame_base'] = EncryptedData(
     iv=VALUES['final_frame_base'].iv,
@@ -209,6 +209,14 @@ VALUES['serialized_final_frame'] = b''.join([
     b'\x00\x00\x00\x01',
     VALUES['final_frame_base'].iv,
     VALUES['ciphertext_len'],
+    VALUES['final_frame_base'].ciphertext,
+    VALUES['final_frame_base'].tag
+])
+VALUES['serialized_final_frame_bad_length'] = b''.join([
+    b'\xff\xff\xff\xff',
+    b'\x00\x00\x00\x01',
+    VALUES['final_frame_base'].iv,
+    struct.pack('>I', VALUES['small_frame_length'] + 1),
     VALUES['final_frame_base'].ciphertext,
     VALUES['final_frame_base'].tag
 ])
@@ -232,10 +240,10 @@ VALUES['encrypted_data_key_obj'] = EncryptedDataKey(
 VALUES['data_keys'] = [
     VALUES['data_key_obj']
 ]
-VALUES['message_single_block'] = b''.join([
+VALUES['message_non_framed'] = b''.join([
     VALUES['header'],
     VALUES['header_auth'],
-    VALUES['body_single_block'],
+    VALUES['body_non_framed'],
     VALUES['footer']
 ])
 VALUES['message_single_frame'] = b''.join([
@@ -321,6 +329,21 @@ VALUES['deserialized_header_frame'] = MessageHeader(
     header_iv_length=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384.iv_len,
     frame_length=VALUES['small_frame_length']
 )
+VALUES['deserialized_header_frame_huge_frame'] = MessageHeader(
+    version=SerializationVersion.V1,
+    type=ObjectType.CUSTOMER_AE_DATA,
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    message_id=VALUES['message_id'],
+    encryption_context=VALUES['updated_encryption_context'],
+    encrypted_data_keys=set([EncryptedDataKey(
+        key_provider=VALUES['data_keys'][0].key_provider,
+        encrypted_data_key=VALUES['data_keys'][0].encrypted_data_key
+    )]),
+    content_type=ContentType.FRAMED_DATA,
+    content_aad_length=0,
+    header_iv_length=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384.iv_len,
+    frame_length=2**16
+)
 VALUES['deserialized_header_small_frame'] = MessageHeader(
     version=SerializationVersion.V1,
     type=ObjectType.CUSTOMER_AE_DATA,
@@ -341,11 +364,12 @@ VALUES['deserialized_header_auth_block'] = MessageHeaderAuthentication(
     tag=VALUES['header_auth_base'].tag
 )
 VALUES['deserialized_body_block'] = MessageNoFrameBody(
-    iv=VALUES['single_block_base'].iv,
-    ciphertext=VALUES['single_block_base'].ciphertext,
-    tag=VALUES['single_block_base'].tag
+    iv=VALUES['non_framed_base'].iv,
+    ciphertext=VALUES['non_framed_base'].ciphertext,
+    tag=VALUES['non_framed_base'].tag
 )
 VALUES['deserialized_footer'] = MessageFooter(VALUES['signature'])
+VALUES['deserialized_empty_footer'] = MessageFooter(b'')
 VALUES['deserialized_body_final_frame_single'] = MessageFrameBody(
     iv=VALUES['final_frame_base'].iv,
     ciphertext=VALUES['final_frame_base'].ciphertext,
@@ -382,13 +406,16 @@ struct.pack_into('>B', VALUES['serialized_header_invalid_version'], 0, 0)
 VALUES['serialized_header_invalid_version'] = array_byte(VALUES['serialized_header_invalid_version'])
 VALUES['serialized_header_invalid_algorithm'] = VALUES['serialized_header']
 VALUES['serialized_header_disallowed_algorithm'] = VALUES['serialized_header']
-VALUES['serialized_header_unknown_content_type'] = bytearray(VALUES['serialized_header'])
 header_value_position = 22
 header_value_position += len(VALUES['serialized_encryption_context'])
 header_value_position += 2
 header_value_position += len(VALUES['serialized_encrypted_data_key'])
+VALUES['serialized_header_unknown_content_type'] = bytearray(VALUES['serialized_header'])
 struct.pack_into('>B', VALUES['serialized_header_unknown_content_type'], header_value_position, 0)
 VALUES['serialized_header_unknown_content_type'] = array_byte(VALUES['serialized_header_unknown_content_type'])
+VALUES['serialized_non_framed_header_bad_frame_len'] = bytearray(VALUES['serialized_header'])
+struct.pack_into('>B', VALUES['serialized_non_framed_header_bad_frame_len'], header_value_position, 1)
+VALUES['serialized_non_framed_header_bad_frame_len'] = array_byte(VALUES['serialized_non_framed_header_bad_frame_len'])
 header_value_position += 1
 VALUES['serialized_header_bad_reserved_space'] = bytearray(VALUES['serialized_header'])
 struct.pack_into('>I', VALUES['serialized_header_bad_reserved_space'], header_value_position, 5)
@@ -397,6 +424,15 @@ header_value_position += 4
 VALUES['serialized_header_bad_iv_len'] = bytearray(VALUES['serialized_header'])
 struct.pack_into('>B', VALUES['serialized_header_bad_iv_len'], header_value_position, 0)
 VALUES['serialized_header_bad_iv_len'] = array_byte(VALUES['serialized_header_bad_iv_len'])
+header_value_position += 1
+VALUES['serialized_header_bad_frame_len'] = bytearray(VALUES['serialized_header'])
+struct.pack_into(
+    '>I',
+    VALUES['serialized_header_bad_frame_len'],
+    header_value_position,
+    aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE + 1
+)
+VALUES['serialized_header_bad_frame_len'] = array_byte(VALUES['serialized_header_bad_frame_len'])
 VALUES['encryption_context_too_large'] = {
     str(i): str(i)
     for i in

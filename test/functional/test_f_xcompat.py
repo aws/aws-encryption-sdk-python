@@ -1,17 +1,22 @@
 """Functional test suite testing decryption of known good test files encrypted using static RawMasterKeyProvider."""
 from __future__ import print_function
-import binascii
+from collections import defaultdict
+import base64
+import json
+import logging
 import os
-import struct
+import sys
 
 import attr
 import pytest
+import six
 
 import aws_encryption_sdk
+from aws_encryption_sdk.exceptions import InvalidKeyIdError
 from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
+from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.internal.str_ops import to_bytes
-
-from .test_f_aws_encryption_sdk_client import FakeRawMasterKeyProvider, FakeRawMasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
 
 # Environment-specific test file locator.  May not always exist.
@@ -22,91 +27,142 @@ try:
 except ImportError:
     file_root = _file_root
 
+_LOGGER = logging.getLogger()
 
-_wrapping_values = {
-    'aes': {
-        16: WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-        24: WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
-        32: WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+
+_WRAPPING_ALGORITHM_MAP = {
+    'AES': {
+        128: {'': {'': WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING}},
+        192: {'': {'': WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING}},
+        256: {'': {'': WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING}}
     },
-    'rsa': {
-        'SHA-1': WrappingAlgorithm.RSA_OAEP_SHA1_MGF1
+    'RSA': {
+        2048: {
+            'PKCS1': {'': WrappingAlgorithm.RSA_PKCS1},
+            'OAEP-MGF1': {
+                'SHA-1': WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
+                'SHA-256': WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
+            }
+        }
     }
 }
+_KEY_TYPES_MAP = {
+    'AES': EncryptionKeyType.SYMMETRIC,
+    'RSA': EncryptionKeyType.PRIVATE
+}
+_STATIC_KEYS = defaultdict(dict)
+
+
+class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
+    """Provides static key"""
+    provider_id = 'static-aws-xcompat'
+
+    def _get_raw_key(self, key_id):
+        """"""
+        try:
+            algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split('.', 3)
+            key_bits = int(key_bits)
+            key_type = _KEY_TYPES_MAP[algorithm]
+            wrapping_algorithm = _WRAPPING_ALGORITHM_MAP[algorithm][key_bits][padding_algorithm][padding_hash]
+            static_key = _STATIC_KEYS[algorithm][key_bits]
+            return WrappingKey(
+                wrapping_algorithm=wrapping_algorithm,
+                wrapping_key=static_key,
+                wrapping_key_type=key_type
+            )
+        except KeyError:
+            _LOGGER.exception('Unknown Key ID: {}'.format(key_id))
+            raise InvalidKeyIdError('Unknown Key ID: {}'.format(key_id))
 
 
 @attr.s
-class KeyData(object):
-    key_name = attr.ib()
-    run_name = attr.ib()
-    provider_config = attr.ib()
+class RawKeyDescription(object):
+    """"""
+    encryption_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    key_bits = attr.ib(validator=attr.validators.instance_of(int))
+    padding_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    padding_hash = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
-    @classmethod
-    def from_filename_and_algorithm(cls, filename, algorithm):
-        run_name = filename
-        if 'asym' in run_name.lower():
-            key_name = 'asym1'
-            key_alg = 'rsa'
-            key_spec = run_name.split('-', 1)[1]
-            key_type = EncryptionKeyType.PRIVATE
-        else:
-            key_name = 'sym1'
-            key_alg = 'aes'
-            key_spec = algorithm.data_key_len
-            key_type = EncryptionKeyType.SYMMETRIC
-        print(run_name, key_name, key_alg, key_spec, key_type)
-        config = FakeRawMasterKeyProviderConfig(
-            wrapping_algorithm=_wrapping_values[key_alg][key_spec],
-            encryption_key_type=key_type
-        )
-        return KeyData(
-            key_name=key_name,
-            run_name=run_name,
-            provider_config=config
-        )
+    @property
+    def key_id(self):
+        """"""
+        return '.'.join([self.encryption_algorithm, str(self.key_bits), self.padding_algorithm, self.padding_hash])
+
+
+@attr.s
+class Scenario(object):
+    """Scenario details."""
+
+    plaintext_filename = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    ciphertext_filename = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    key_ids = attr.ib(validator=attr.validators.instance_of(list))
 
 
 def _generate_test_cases():
-    base_dir = os.sep.join((file_root(), 'aws_encryption_sdk_resources'))
+    base_dir = os.path.join(
+        os.path.abspath(file_root()),
+        'aws_encryption_sdk_resources'
+    )
+    ciphertext_manifest_path = os.path.join(
+        base_dir,
+        'manifests',
+        'ciphertext.manifest'
+    )
+
+    if not os.path.isfile(ciphertext_manifest_path):
+        # Make no test cases if the ciphertext file is not found
+        return []
+
+    with open(ciphertext_manifest_path) as f:
+        ciphertext_manifest = json.load(f)
     _test_cases = []
-    # Files are arranged in {algorithm_id}/{text_size}/{frame_size}/{run_description}
-    _ciphertext_dir = os.sep.join((base_dir, 'ciphertext'))
-    _plaintext_dir = os.sep.join((base_dir, 'plaintext'))
-    if not os.path.isdir(_ciphertext_dir) or not os.path.isdir(_plaintext_dir):
-        raise Exception('Specified ciphertext and plaintext directories do not exist: {} {}'.format(
-            _ciphertext_dir,
-            _plaintext_dir
-        ))
-    for alg_id in os.listdir(_ciphertext_dir):
-        (algorithm_id,) = struct.unpack('>H', binascii.unhexlify(to_bytes(alg_id)))
-        algorithm = aws_encryption_sdk.Algorithm.get_by_id(algorithm_id)
-        _algset_dir = os.sep.join((_ciphertext_dir, alg_id))
-        for text_size in os.listdir(_algset_dir):
-            _size_dir = os.sep.join((_algset_dir, text_size))
-            ptfile = os.sep.join((_plaintext_dir, text_size))
-            for frame_length in os.listdir(_size_dir):
-                _frame_length_dir = os.sep.join((_size_dir, frame_length))
-                for ctfile in os.listdir(_frame_length_dir):
-                    if 'kms' not in ctfile.lower():
-                        _test_cases.append((
-                            ptfile,
-                            os.sep.join((_frame_length_dir, ctfile)),
-                            KeyData.from_filename_and_algorithm(ctfile, algorithm)
-                        ))
+
+    # Collect keys from ciphertext manifest
+    for algorithm, keys in ciphertext_manifest['test_keys'].items():
+        algorithm = algorithm.upper()
+        for key_bits, key_desc in keys.items():
+            key_bits = int(key_bits)
+            raw_key = to_bytes(key_desc.get('line_separator', '').join(key_desc['key']))
+            if key_desc['encoding'].lower() in ('raw', 'pem'):
+                _STATIC_KEYS[algorithm][key_bits] = raw_key
+            elif key_desc['encoding'].lower() == 'base64':
+                _STATIC_KEYS[algorithm][key_bits] = base64.b64decode(raw_key)
+            else:
+                raise Exception('TODO' + 'Unknown key encoding')
+
+    # Collect test cases from ciphertext manifest
+    for test_case in ciphertext_manifest['test_cases']:
+        key_ids = []
+        algorithm = aws_encryption_sdk.Algorithm.get_by_id(int(test_case['algorithm'], 16))
+        for key in test_case['master_keys']:
+            sys.stderr.write('XC:: ' + json.dumps(key) + '\n')
+            if key['provider_id'] == StaticStoredMasterKeyProvider.provider_id:
+                key_ids.append(RawKeyDescription(
+                    key['encryption_algorithm'],
+                    key.get('key_bits', algorithm.data_key_len * 8),
+                    key.get('padding_algorithm', ''),
+                    key.get('padding_hash', '')
+                ).key_id)
+        if key_ids:
+            _test_cases.append(Scenario(
+                os.path.join(base_dir, test_case['plaintext']['filename']),
+                os.path.join(base_dir, test_case['ciphertext']['filename']),
+                key_ids
+            ))
     return _test_cases
 
 
-@pytest.mark.parametrize('plaintext_filename,ciphertext_filename,key_case', _generate_test_cases())
-def test_decrypt_from_file(plaintext_filename, ciphertext_filename, key_case):
+@pytest.mark.parametrize('scenario', _generate_test_cases())
+def test_decrypt_from_file(scenario):
     """Tests decrypt from known good files."""
-    with open(ciphertext_filename, 'rb') as infile:
+    with open(scenario.ciphertext_filename, 'rb') as infile:
         ciphertext = infile.read()
-    with open(plaintext_filename, 'rb') as infile:
+    with open(scenario.plaintext_filename, 'rb') as infile:
         plaintext = infile.read()
-    master_key_provider = FakeRawMasterKeyProvider(config=key_case.provider_config)
-    master_key_provider.add_master_key(key_case.key_name)
+    key_provider = StaticStoredMasterKeyProvider()
+    key_provider.add_master_keys_from_list(scenario.key_ids)
     decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(
         source=ciphertext,
-        key_provider=master_key_provider
+        key_provider=key_provider
     )
     assert decrypted_ciphertext == plaintext

@@ -72,7 +72,7 @@ def get_aad_content_string(content_type, is_final_frame):
     :raises UnknownIdentityError: if unknown content type
     """
     if content_type == ContentType.NO_FRAMING:
-        aad_content_string = ContentAADString.SINGLE_BLOCK_STRING_ID
+        aad_content_string = ContentAADString.NON_FRAMED_STRING_ID
     elif content_type == ContentType.FRAMED_DATA:
         if is_final_frame:
             aad_content_string = ContentAADString.FINAL_FRAME_STRING_ID

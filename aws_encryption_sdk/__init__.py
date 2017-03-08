@@ -8,6 +8,12 @@ from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMaster
 def encrypt(**kwargs):
     """Encrypts and serializes provided plaintext.
 
+    .. note::
+        When using this function, the entire ciphertext message is encrypted into memory before returning
+        any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
+
+    .. code:: python
+
         >>> import aws_encryption_sdk
         >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
         ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
@@ -49,6 +55,12 @@ def encrypt(**kwargs):
 def decrypt(**kwargs):
     """Deserializes and decrypts provided ciphertext.
 
+    .. note::
+        When using this function, the entire ciphertext message is decrypted into memory before returning
+        any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
+
+    .. code:: python
+
         >>> import aws_encryption_sdk
         >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
         ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
@@ -75,6 +87,8 @@ def decrypt(**kwargs):
         .. note::
             The concept of "lines" is used to match Python file-like-object terminology.  In this
             context it defines the number of bytes returned by readline().
+    :param int max_body_length: Maximum frame size (or content length for non-framed messages)
+    in bytes to read from ciphertext message.
     :returns: Tuple containing the decrypted plaintext and the message header object
     :rtype: tuple of str and :class:`aws_encryption_sdk.structure.MessageHeader`
     """
@@ -85,6 +99,22 @@ def decrypt(**kwargs):
 
 def stream(**kwargs):
     """Provides an :py:func:`open`-like interface to the streaming encryptor/decryptor classes.
+
+    .. note::
+        Take care when decrypting framed messages with large frame length and large non-framed
+        messages. In order to protect the authenticity of the encrypted data, no plaintext
+        is returned until it has been authenticated. Because of this, potentially large amounts
+        of data may be read into memory.  In the case of framed messages, the entire contents
+        of each frame are read into memory and authenticated before returning any plaintext.
+        In the case of non-framed messages, the entire message is read into memory and
+        authenticated before returning any plaintext.  The authenticated plaintext is held in
+        memory until it is requested.
+
+    .. note::
+        Consequently, keep the above decrypting consideration in mind when encrypting messages
+        to ensure that issues are not encountered when decrypting those messages.
+
+    .. code:: python
 
         >>> import aws_encryption_sdk
         >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[

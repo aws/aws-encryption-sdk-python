@@ -168,6 +168,34 @@ class TestEncryptionStream(unittest.TestCase):
         assert mock_stream._stream_length == 500
         assert test == 500
 
+    def test_header_property(self):
+        mock_prep_message = MagicMock()
+        mock_stream = MockEncryptionStream(
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes
+        )
+        mock_stream._prep_message = mock_prep_message
+        mock_stream._message_prepped = False
+        mock_stream._header = sentinel.header
+        test_header = mock_stream.header
+        mock_prep_message.assert_called_once_with()
+        assert test_header is sentinel.header
+
+    def test_header_property_already_parsed(self):
+        mock_prep_message = MagicMock()
+        mock_stream = MockEncryptionStream(
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes
+        )
+        mock_stream._prep_message = mock_prep_message
+        mock_stream._message_prepped = True
+        mock_stream._header = sentinel.header
+        test_header = mock_stream.header
+        assert not mock_prep_message.called
+        assert test_header is sentinel.header
+
     def test_read_closed(self):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream,

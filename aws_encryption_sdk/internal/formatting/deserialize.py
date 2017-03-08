@@ -175,6 +175,13 @@ def deserialize_header(stream):
     header['header_iv_length'] = iv_length
 
     (frame_length,) = unpack_values('>I', stream)
+    if content_type == ContentType.FRAMED_DATA and frame_length > aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE:
+        raise SerializationError('Specified frame length larger than allowed maximum: {found} > {max}'.format(
+            found=frame_length,
+            max=aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE
+        ))
+    elif content_type == ContentType.NO_FRAMING and frame_length != 0:
+        raise SerializationError('Non-zero frame length found for non-framed message')
     header['frame_length'] = frame_length
 
     return MessageHeader(**header)
@@ -200,8 +207,8 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
     return MessageHeaderAuthentication(*unpack_values(format_string, stream, verifier))
 
 
-def deserialize_single_block_values(stream, header, verifier=None):
-    """Deserializes the IV and Tag from a single block stream.
+def deserialize_non_framed_values(stream, header, verifier=None):
+    """Deserializes the IV and Tag from a non-framed stream.
 
     :param stream: Source data stream
     :type stream: io.BytesIO
@@ -212,7 +219,7 @@ def deserialize_single_block_values(stream, header, verifier=None):
     :returns: IV, Tag, and Data Length values for body
     :rtype: tuple of str, str, and int
     """
-    _LOGGER.debug('Starting single block body iv/tag deserialization')
+    _LOGGER.debug('Starting non-framed body iv/tag deserialization')
     (data_iv, data_length) = unpack_values(
         '>{}sQ'.format(header.algorithm.iv_len),
         stream,
@@ -233,7 +240,7 @@ def update_verifier_with_tag(stream, header, verifier):
     """Updates verifier with data for authentication tag.
 
     .. note::
-        This is meant to be used in conjunction with deserialize_single_block_values
+        This is meant to be used in conjunction with deserialize_non_framed_values
         to update the verifier over information which has already been retrieved.
 
     :param stream: Source data stream
@@ -284,6 +291,11 @@ def deserialize_frame(stream, header, verifier=None):
     frame_data['iv'] = frame_iv
     if final_frame is True:
         (content_length,) = unpack_values('>I', stream, verifier)
+        if content_length >= header.frame_length:
+            raise SerializationError('Invalid final frame length: {final} >= {normal}'.format(
+                final=content_length,
+                normal=header.frame_length
+            ))
     else:
         content_length = header.frame_length
     (frame_content, frame_tag) = unpack_values(
@@ -312,19 +324,19 @@ def deserialize_footer(stream, verifier=None):
     """
     _LOGGER.debug('Starting footer deserialization')
     signature = b''
+    if verifier is None:
+        return MessageFooter(signature=signature)
     try:
         (sig_len,) = unpack_values('>H', stream)
         (signature,) = unpack_values(
             '>{sig_len}s'.format(sig_len=sig_len),
             stream
         )
-        if verifier:
-            verifier.set_signature(signature)
-            verifier.verify()
-    except struct.error:
-        # If there is a struct error, assume that there is no footer to read.
-        if verifier:
-            raise SerializationError('No signature found in message')
+    except SerializationError:
+        raise SerializationError('No signature found in message')
+    if verifier:
+        verifier.set_signature(signature)
+        verifier.verify()
     return MessageFooter(signature=signature)
 
 
@@ -340,10 +352,14 @@ def unpack_values(format_string, stream, verifier=None):
     :returns: Unpacked values
     :rtype: tuple
     """
-    message_bytes = stream.read(struct.calcsize(format_string))
-    if verifier:
-        verifier.update(message_bytes)
-    return struct.unpack(format_string, message_bytes)
+    try:
+        message_bytes = stream.read(struct.calcsize(format_string))
+        if verifier:
+            verifier.update(message_bytes)
+        values = struct.unpack(format_string, message_bytes)
+    except struct.error as e:
+        raise SerializationError('Unexpected deserialization error', type(e), e.args)
+    return values
 
 
 def deserialize_wrapped_key(wrapping_algorithm, wrapping_key_id, wrapped_encrypted_key):

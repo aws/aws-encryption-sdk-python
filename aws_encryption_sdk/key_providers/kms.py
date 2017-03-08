@@ -13,7 +13,7 @@ from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.key_providers.base import (
     MasterKeyProvider, MasterKeyProviderConfig, MasterKey, MasterKeyConfig
 )
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -203,10 +203,14 @@ class KMSMasterKey(MasterKey):
             response = self.config.client.generate_data_key(**kms_params)
             plaintext = response['Plaintext']
             ciphertext = response['CiphertextBlob']
+            key_id = response['KeyId']
         except (ClientError, KeyError):
             raise GenerateKeyError('Master Key {key_id} unable to generate data key'.format(key_id=self._key_id))
         return DataKey(
-            key_provider=self.key_provider,
+            key_provider=MasterKeyInfo(
+                provider_id=self.provider_id,
+                key_info=key_id
+            ),
             data_key=plaintext,
             encrypted_data_key=ciphertext
         )
@@ -235,10 +239,14 @@ class KMSMasterKey(MasterKey):
         try:
             response = self.config.client.encrypt(**kms_params)
             ciphertext = response['CiphertextBlob']
+            key_id = response['KeyId']
         except (ClientError, KeyError):
             raise EncryptKeyError('Master Key {key_id} unable to encrypt data key'.format(key_id=self._key_id))
         return EncryptedDataKey(
-            key_provider=self.key_provider,
+            key_provider=MasterKeyInfo(
+                provider_id=self.provider_id,
+                key_info=key_id
+            ),
             encrypted_data_key=ciphertext
         )
 
