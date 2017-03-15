@@ -14,10 +14,10 @@ This client is a fully compliant, native Python implementation of the [AWS Encry
 $ pip install aws-encryption-sdk
 ```
 
-##Concepts
+## Concepts
 There are three main concepts that need to be understood for use of this library:
 
-###Master Key Providers
+### Master Key Providers
 Master Key Providers are resources which provide Master Keys.
 An example of a Master Key Provider is [AWS KMS][2].
 
@@ -25,18 +25,18 @@ In the context of this client, a MasterKeyProvider object must contain at least 
 
 MasterKeyProvider objects can also contain other MasterKeyProviders.
 
-###Master Keys
+### Master Keys
 Master Keys provide data keys.
 An example of a Master Key is a [KMS Customer Master Key][3].
 
-###Data Keys
+### Data Keys
 Data Keys are the actual encryption keys which are used to encrypt your data.
 
-#Usage
+# Usage
 In order to use this client, an instance of a Master Key Provider must be provided.
 For the examples in this readme, the KMSMasterKeyProvider class will be used as an example.
 
-##KMSMasterKeyProvider
+## KMSMasterKeyProvider
 The KMSMasterKeyProvider uses the [boto3 SDK][4] to interact with [AWS KMS][2], and as such requires AWS Credentials.
 These can be provided either in the [standard means by which boto3 locates credentials][5], or by providing the KMSMasterKeyProvider a pre-existing instance of a botocore session.
 This later option can be useful if you have some alternate means of storing your AWS credentials or
@@ -78,7 +78,7 @@ kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
 ```
 
 
-##Encryption and Decryption
+## Encryption and Decryption
 Once you have an instance of a MasterKeyProvider, you can simply use one of the two high-level encrypt/decrypt functions to encrypt and decrypt your data.
 
 ```python
@@ -133,7 +133,7 @@ assert my_plaintext == decrypted_plaintext
 assert encryptor_header.encryption_context == decryptor_header.encryption_context
 ```
 
-##Streaming
+## Streaming
 If you are handling large files or simply do not want to put the entire plaintext or ciphertext in memory at once, this library also provides streaming clients.
 The streaming clients are file-like objects, and behave exactly as you would expect a Python file object to behave, supporting context managers and iteration.
 Rather than accepting a string as input, the streaming clients expect an existing file-like object.
@@ -175,7 +175,7 @@ assert filecmp.cmp(plaintext_filename, new_plaintext_filename)
 assert encryptor.header.encryption_context == decryptor.header.encryption_context
 ```
 
-##Performance Considerations
+## Performance Considerations
 Two things will significantly improve the performance of encrypt/decrypt operations with this library:
 
 1. The line length (chunk size) (default: 8192 bytes).
