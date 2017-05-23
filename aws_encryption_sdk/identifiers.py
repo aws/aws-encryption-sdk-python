@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.kdf import hkdf
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
-__version__ = '1.2.0'
+__version__ = '1.2.2'
 
 
 def _kdf_input_len_check(data_key_len, kdf_type, kdf_input_len):
