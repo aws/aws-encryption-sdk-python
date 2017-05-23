@@ -31,7 +31,7 @@ setup(
     install_requires=[
         'boto3>=1.4.4',
         'cryptography>=1.4.0',
-        'attrs>=16.3.0'
+        'attrs==16.3.0'
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
