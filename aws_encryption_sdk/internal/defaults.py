@@ -22,12 +22,16 @@ ALGORITHM = aws_encryption_sdk.identifiers.Algorithm.AES_256_GCM_IV12_TAG16_HKDF
 #: Key to add encoded signing key to encryption context dictionary as defined in specification
 ENCODED_SIGNER_KEY = 'aws-crypto-public-key'
 
+#: Maximum number of messages which are allowed to be encrypted under a single cached data key
+MAX_MESSAGES_PER_KEY = 4294967296  # 2 ** 32
+#: Maximum number of bytes which are allowed to be encrypted under a single cached data key
+MAX_BYTES_PER_KEY = 9223372036854775807  # 2 ** 63 - 1
 #: Maximum number of frames allowed in one message as defined in specification
 MAX_FRAME_COUNT = 4294967295  # 2 ** 32 - 1
 #: Maximum bytes allowed in a single frame as defined in specification
 MAX_FRAME_SIZE = 2147483647  # 2 ** 31 - 1
 #: Maximum bytes allowed in a non-framed message ciphertext as defined in specification
-MAX_NON_FRAMED_SIZE = 68719476704  # 2 ** 36 - 32
+MAX_GCM_CONTENT_SIZE = MAX_NON_FRAMED_SIZE = 68719476704  # 2 ** 36 - 32
 
 #: Maximum number of AAD bytes allowed as defined in specification
 MAX_BYTE_ARRAY_SIZE = 65535  # 2 ** 16 - 1

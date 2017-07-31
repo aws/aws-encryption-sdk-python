@@ -69,7 +69,7 @@ class TestRawMasterKey(unittest.TestCase):
         )
         test = test_master_key.generate_data_key(
             algorithm=self.mock_algorithm,
-            encryption_context=sentinel.encryption_context
+            encryption_context=VALUES['encryption_context']
         )
         mock_urandom.assert_called_once_with(sentinel.kdf_input_len)
         mock_encrypt_data_key.assert_called_once_with(
@@ -78,7 +78,7 @@ class TestRawMasterKey(unittest.TestCase):
                 data_key=VALUES['data_key']
             ),
             algorithm=self.mock_algorithm,
-            encryption_context=sentinel.encryption_context
+            encryption_context=VALUES['encryption_context']
         )
         assert test == self.mock_data_key
 

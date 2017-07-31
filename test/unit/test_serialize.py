@@ -1,15 +1,36 @@
 """Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
 import unittest
 
-from mock import MagicMock, patch
-import six
+from mock import MagicMock, patch, sentinel
+import pytest
 
 from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.identifiers import ContentAADString
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_COUNT
 from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
+
+
+@pytest.mark.parametrize('sequence_number, error_message', (
+    (-1, r'Frame sequence number must be greater than 0'),
+    (0, r'Frame sequence number must be greater than 0'),
+    (MAX_FRAME_COUNT + 1, r'Max frame count exceeded')
+))
+def test_serialize_frame_invalid_sequence_number(sequence_number, error_message):
+    with pytest.raises(SerializationError) as excinfo:
+        aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
+            algorithm=None,
+            plaintext=None,
+            message_id=None,
+            data_encryption_key=None,
+            frame_length=None,
+            sequence_number=sequence_number,
+            is_final_frame=None
+        )
+
+    excinfo.match(error_message)
 
 
 class TestSerialize(unittest.TestCase):
@@ -20,6 +41,11 @@ class TestSerialize(unittest.TestCase):
         self.mock_algorithm.algorithm_id = VALUES['algorithm_id']
         self.mock_algorithm.iv_len = VALUES['iv_len']
         self.mock_algorithm.tag_len = self.mock_algorithm.auth_len = VALUES['tag_len']
+
+        self.mock_valid_sequence_number = MagicMock(
+            __lt__=MagicMock(return_value=False),
+            __gt__=MagicMock(return_value=False)
+        )
 
         self.mock_key_provider = MasterKeyInfo(
             provider_id=VALUES['provider_id'],
@@ -75,7 +101,8 @@ class TestSerialize(unittest.TestCase):
             header=VALUES['deserialized_header_small_frame']
         )
 
-    def test_serialize_header_auth(self):
+    @patch('aws_encryption_sdk.internal.formatting.serialize.header_auth_iv')
+    def test_serialize_header_auth(self, mock_header_auth_iv):
         """Validate that the _create_header_auth function
             behaves as expected.
         """
@@ -83,16 +110,15 @@ class TestSerialize(unittest.TestCase):
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
             algorithm=self.mock_algorithm,
             header=VALUES['serialized_header'],
-            message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj'],
+            data_encryption_key=sentinel.encryption_key,
             signer=self.mock_signer
         )
         self.mock_crypto.encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
-            key=VALUES['data_key'],
+            key=sentinel.encryption_key,
             plaintext=b'',
             associated_data=VALUES['serialized_header'],
-            message_id=VALUES['message_id']
+            iv=mock_header_auth_iv.return_value
         )
         self.mock_signer.update.assert_called_once_with(VALUES['serialized_header_auth'])
         assert test == VALUES['serialized_header_auth']
@@ -105,8 +131,7 @@ class TestSerialize(unittest.TestCase):
         aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
             algorithm=self.mock_algorithm,
             header=VALUES['serialized_header'],
-            message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj']
+            data_encryption_key=VALUES['data_key_obj']
         )
 
     def test_serialize_non_framed_open(self):
@@ -153,7 +178,8 @@ class TestSerialize(unittest.TestCase):
             tag=VALUES['final_frame_base'].tag
         )
 
-    def test_encrypt_and_serialize_frame(self):
+    @patch('aws_encryption_sdk.internal.formatting.serialize.frame_iv')
+    def test_encrypt_and_serialize_frame(self, mock_frame_iv):
         """Validate that the _encrypt_and_serialize_frame
             function behaves as expected for a normal frame.
         """
@@ -164,24 +190,25 @@ class TestSerialize(unittest.TestCase):
             algorithm=self.mock_algorithm,
             plaintext=source_plaintext,
             message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj'],
+            data_encryption_key=sentinel.encryption_key,
             frame_length=VALUES['small_frame_length'],
-            sequence_number=1,
+            sequence_number=self.mock_valid_sequence_number,
             is_final_frame=False,
             signer=self.mock_signer
         )
         self.mock_serialize_acc.assemble_content_aad.assert_called_once_with(
             message_id=VALUES['message_id'],
             aad_content_string=ContentAADString.FRAME_STRING_ID,
-            seq_num=1,
+            seq_num=self.mock_valid_sequence_number,
             length=VALUES['small_frame_length']
         )
+        mock_frame_iv.assert_called_once_with(self.mock_algorithm, self.mock_valid_sequence_number)
         self.mock_crypto.encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
-            key=VALUES['data_key'],
+            key=sentinel.encryption_key,
             plaintext=source_plaintext[:VALUES['small_frame_length']],
             associated_data=VALUES['frame_aac'],
-            message_id=VALUES['message_id']
+            iv=mock_frame_iv.return_value
         )
         self.mock_signer.update.assert_called_once_with(VALUES['serialized_frame'])
         assert test_serialized == VALUES['serialized_frame']
@@ -198,31 +225,14 @@ class TestSerialize(unittest.TestCase):
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'] * 2,
             message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj'],
+            data_encryption_key=VALUES['data_key_obj'],
             frame_length=len(VALUES['data_128']),
             is_final_frame=False,
-            sequence_number=1
+            sequence_number=self.mock_valid_sequence_number
         )
 
-    @patch('aws_encryption_sdk.internal.formatting.serialize.aws_encryption_sdk.internal.defaults')
-    def test_encrypt_and_serialize_frame_too_many_frames(self, mock_defaults):
-        """Validate that the _encrypt_and_serialize_frame
-            function behaves as expected for a frame when
-            the the sequence number exceeds the maximum.
-        """
-        mock_defaults.MAX_FRAME_COUNT = 0
-        with six.assertRaisesRegex(self, SerializationError, 'Max frame count exceeded'):
-            aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
-                algorithm=self.mock_algorithm,
-                plaintext=VALUES['data_128'] * 2,
-                message_id=VALUES['message_id'],
-                encryption_data_key=VALUES['data_key_obj'],
-                frame_length=len(VALUES['data_128']),
-                is_final_frame=False,
-                sequence_number=1
-            )
-
-    def test_encrypt_and_serialize_frame_final(self):
+    @patch('aws_encryption_sdk.internal.formatting.serialize.frame_iv')
+    def test_encrypt_and_serialize_frame_final(self, mock_frame_iv):
         """Validate that the _encrypt_and_serialize_frame
             function behaves as expected for a final frame.
         """
@@ -232,24 +242,25 @@ class TestSerialize(unittest.TestCase):
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'],
             message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj'],
+            data_encryption_key=sentinel.encryption_key,
             frame_length=len(VALUES['data_128']),
-            sequence_number=1,
+            sequence_number=self.mock_valid_sequence_number,
             is_final_frame=True,
             signer=self.mock_signer
         )
         self.mock_serialize_acc.assemble_content_aad.assert_called_once_with(
             message_id=VALUES['message_id'],
             aad_content_string=ContentAADString.FINAL_FRAME_STRING_ID,
-            seq_num=1,
+            seq_num=self.mock_valid_sequence_number,
             length=len(VALUES['data_128'])
         )
+        mock_frame_iv.assert_called_once_with(self.mock_algorithm, self.mock_valid_sequence_number)
         self.mock_crypto.encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
-            key=VALUES['data_key'],
+            key=sentinel.encryption_key,
             plaintext=VALUES['data_128'],
             associated_data=VALUES['final_frame_aac'],
-            message_id=VALUES['message_id']
+            iv=mock_frame_iv.return_value
         )
         self.mock_signer.update.assert_called_once_with(VALUES['serialized_final_frame'])
         assert test_serialized == VALUES['serialized_final_frame']
@@ -266,10 +277,10 @@ class TestSerialize(unittest.TestCase):
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'],
             message_id=VALUES['message_id'],
-            encryption_data_key=VALUES['data_key_obj'],
+            data_encryption_key=VALUES['data_key_obj'],
             frame_length=len(VALUES['data_128']),
             is_final_frame=True,
-            sequence_number=1
+            sequence_number=self.mock_valid_sequence_number
         )
 
     def test_serialize_footer_with_signer(self):

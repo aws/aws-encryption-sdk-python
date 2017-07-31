@@ -6,13 +6,13 @@ import os
 import six
 
 from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, NotSupportedError, SerializationError,
-    UnknownIdentityError, InvalidDataKeyError, MasterKeyProviderError
+    ActionNotAllowedError, SerializationError,
+    UnknownIdentityError, InvalidDataKeyError
 )
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.structures import RawDataKey, DataKey
+from aws_encryption_sdk.structures import EncryptedDataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,83 +113,52 @@ class ROStream(object):
         raise ActionNotAllowedError('Write not allowed on ROStream objects')
 
 
-def prepare_data_keys(
-    key_provider,
-    algorithm,
-    encryption_context,
-    plaintext_rostream,
-    plaintext_length=None,
-    data_key=None
-):
+def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_context):
     """Prepares a DataKey to be used for encrypting message and list
     of EncryptedDataKey objects to be serialized into header.
 
-    :param key_provider: Master Key Provider to use
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param primary_master_key: Master key with which to generate the encryption data key
+    :type primary_master_key: aws_encryption_sdk.key_providers.base.MasterKey
+    :param master_keys: All master keys with which to encrypt data keys
+    :type master_keys: list of :class:`aws_encryption_sdk.key_providers.base.MasterKey`
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param dict encryption_context: Encryption context to use when generating data key
-    :param plaintext_stream: Source plaintext read-only stream
-    :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
-    :param int plaintext_length: Length of source plaintext (optional)
-    :param data_key: Object containing data key to use (if not supplied, a new key will be generated)
-    :type data_key: :class:`aws_encryption_sdk.structure.DataKey`
-        or :class:`aws_encryption_sdk.structure.RawDataKey`
-    :rtype: tuple containing :class:`aws_encryption_sdk.structure.RawDataKey`
-        and set of :class:`aws_encryption_sdk.structure.EncryptedDataKey`
-    :raises SerializationError: if primary master key is not a member of supplied MasterKeyProvider
-    :raises NotSupportedError: if data_key is not a supported data type
-    :raises MasterKeyProviderError: if no Master Keys are returned from key_provider
+    :rtype: tuple containing :class:`aws_encryption_sdk.structures.DataKey`
+        and set of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
     """
-    primary_master_key, master_keys = key_provider.master_keys_for_encryption(
-        encryption_context=encryption_context,
-        plaintext_rostream=plaintext_rostream,
-        plaintext_length=plaintext_length
-    )
-    if not master_keys:
-        raise MasterKeyProviderError('No Master Keys available from Master Key Provider')
-    if primary_master_key not in master_keys:
-        raise MasterKeyProviderError('Primary Master Key not in provided Master Keys')
     encrypted_data_keys = set()
-    encrypted_encryption_data_key = None
-    if not data_key:
-        encryption_data_key = primary_master_key.generate_data_key(algorithm, encryption_context)
-        _LOGGER.debug('encryption data key generated from primary master key')
-    elif isinstance(data_key, RawDataKey):
-        encryption_data_key = data_key
-        _LOGGER.debug('raw encryption data key provided')
-    elif isinstance(data_key, DataKey):
-        encryption_data_key = data_key
-        _LOGGER.debug('full encryption data key provided')
-    else:
-        raise NotSupportedError('Unsupported data_key type: {}'.format(type(data_key)))
-    _LOGGER.debug('encryption data key provider: %s', encryption_data_key.key_provider)
+    encrypted_data_encryption_key = None
+    data_encryption_key = primary_master_key.generate_data_key(algorithm, encryption_context)
+    _LOGGER.debug('encryption data generated with master key: %s', data_encryption_key.key_provider)
     for master_key in master_keys:
+        # Don't re-encrypt the encryption data key; we already have the ciphertext
+        if master_key is primary_master_key:
+            encrypted_data_encryption_key = EncryptedDataKey(
+                key_provider=data_encryption_key.key_provider,
+                encrypted_data_key=data_encryption_key.encrypted_data_key
+            )
+            encrypted_data_keys.add(encrypted_data_encryption_key)
+            continue
         encrypted_key = master_key.encrypt_data_key(
-            data_key=encryption_data_key,
+            data_key=data_encryption_key,
             algorithm=algorithm,
             encryption_context=encryption_context
         )
         encrypted_data_keys.add(encrypted_key)
         _LOGGER.debug('encryption key encrypted with master key: %s', master_key.key_provider)
-        if master_key is primary_master_key:
-            encrypted_encryption_data_key = encrypted_key
-    # Normalize output to DataKey
-    encryption_data_key = DataKey(
-        key_provider=encryption_data_key.key_provider,
-        data_key=encryption_data_key.data_key,
-        encrypted_data_key=encrypted_encryption_data_key.encrypted_data_key
-    )
-    return encryption_data_key, encrypted_data_keys
+    return data_encryption_key, encrypted_data_keys
+
 
 try:
-    _FILE_TYPE = file
+    _FILE_TYPE = file  # Python 2
 except NameError:
-    _FILE_TYPE = io.IOBase
+    _FILE_TYPE = io.IOBase  # Python 3
 
 
 def prep_stream_data(data):
-    """Takes an input str, bytes, io.IOBase, or file object and returns an appropriate stream for _EncryptionStream objects.
+    """Takes an input str, bytes, io.IOBase, or file object and returns an appropriate
+    stream for _EncryptionStream objects.
 
     :param data: Input data
     :type data: str, bytes, io.IOBase, or file
@@ -206,10 +175,10 @@ def source_data_key_length_check(source_data_key, algorithm):
     correct length for the supplied algorithm's kdf_input_len value.
 
     :param source_data_key: Source data key object received from MasterKey decrypt or generate data_key methods
-    :type source_data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
-        or :class:`aws_encryption_sdk.structure.DataKey`
+    :type source_data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
+        or :class:`aws_encryption_sdk.structures.DataKey`
     :param algorithm: Algorithm object which directs how this data key will be used
-    :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :raises InvalidDataKeyError: if data key length does not match required kdf input length
     """
     if len(source_data_key.data_key) != algorithm.kdf_input_len:
@@ -217,3 +186,19 @@ def source_data_key_length_check(source_data_key, algorithm):
             actual=len(source_data_key.data_key),
             required=algorithm.kdf_input_len
         ))
+
+
+def extend_user_agent_suffix(user_agent, suffix):
+    """Adds a suffix to the provided user agent.
+
+    :param str user_agent: Existing user agent (None == not yet defined)
+    :param str suffix: Desired suffix to add to user agent
+    :returns: User agent with suffix
+    :rtype: str
+    """
+    if user_agent is None:
+        user_agent = ''
+    else:
+        user_agent += ' '
+    user_agent += suffix
+    return user_agent

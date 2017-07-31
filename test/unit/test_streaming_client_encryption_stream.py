@@ -95,7 +95,7 @@ class TestEncryptionStream(unittest.TestCase):
         assert not mock_stream._message_prepped
         assert mock_stream.source_stream is self.mock_source_stream
         assert mock_stream._stream_length is self.mock_source_length
-        assert mock_stream.line_length is self.mock_line_length
+        assert mock_stream.line_length == io.DEFAULT_BUFFER_SIZE
 
     def test_new_with_config(self):
         mock_config = MagicMock()
@@ -167,6 +167,16 @@ class TestEncryptionStream(unittest.TestCase):
         )
         assert mock_stream._stream_length == 500
         assert test == 500
+
+    def test_stream_length_unsupported(self):
+        self.mock_source_stream.tell.side_effect = Exception('Unexpected exception!')
+        mock_stream = MockEncryptionStream(
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes
+        )
+        with six.assertRaisesRegex(self, aws_encryption_sdk.exceptions.NotSupportedError, 'Unexpected exception!'):
+            mock_stream.stream_length
 
     def test_header_property(self):
         mock_prep_message = MagicMock()

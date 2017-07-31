@@ -2,16 +2,21 @@
 import unittest
 
 import attr
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel, patch
 import six
 
-from aws_encryption_sdk.exceptions import InvalidKeyIdError, IncorrectMasterKeyError, ConfigMismatchError
+from aws_encryption_sdk.exceptions import (
+    InvalidKeyIdError, IncorrectMasterKeyError, ConfigMismatchError, NotSupportedError
+)
+from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider
 from aws_encryption_sdk.structures import MasterKeyInfo
 from .test_values import VALUES
 
 
-@attr.s
+@attr.s(hash=True)
 class MockMasterKeyConfig(MasterKeyConfig):
     provider_id = VALUES['provider_id']
     mock_generated_data_key = attr.ib()
@@ -132,45 +137,6 @@ class TestMasterKey(unittest.TestCase):
         ):
             MockMasterKey(config=mock_config)
 
-    def test_eq(self):
-        mock_master_key = MockMasterKey(
-            key_id=VALUES['key_info'],
-            mock_generated_data_key=sentinel.generated_data_key,
-            mock_encrypted_data_key=sentinel.encrypted_data_key,
-            mock_decrypted_data_key=sentinel.decrypted_data_key
-        )
-        mock_master_key_b = MockMasterKey(
-            key_id=VALUES['key_info'],
-            mock_generated_data_key=sentinel.generated_data_key,
-            mock_encrypted_data_key=sentinel.encrypted_data_key,
-            mock_decrypted_data_key=sentinel.decrypted_data_key
-        )
-        assert mock_master_key == mock_master_key_b
-
-    def test_not_eq(self):
-        mock_master_key = MockMasterKey(
-            key_id=VALUES['key_info'],
-            mock_generated_data_key=sentinel.generated_data_key,
-            mock_encrypted_data_key=sentinel.encrypted_data_key,
-            mock_decrypted_data_key=sentinel.decrypted_data_key
-        )
-        mock_master_key_b = MockMasterKey(
-            key_id=VALUES['key_info2'],
-            mock_generated_data_key=sentinel.generated_data_key,
-            mock_encrypted_data_key=sentinel.encrypted_data_key,
-            mock_decrypted_data_key=sentinel.decrypted_data_key
-        )
-        assert mock_master_key != mock_master_key_b
-
-    def test_not_eq_different_types(self):
-        mock_master_key = MockMasterKey(
-            key_id=VALUES['key_info'],
-            mock_generated_data_key=sentinel.generated_data_key,
-            mock_encrypted_data_key=sentinel.encrypted_data_key,
-            mock_decrypted_data_key=sentinel.decrypted_data_key
-        )
-        assert mock_master_key != 5
-
     def test_owns_data_key_owned(self):
         mock_master_key = MockMasterKey(
             key_id=VALUES['key_info'],
@@ -200,7 +166,8 @@ class TestMasterKey(unittest.TestCase):
             mock_encrypted_data_key=sentinel.encrypted_data_key,
             mock_decrypted_data_key=sentinel.decrypted_data_key
         )
-        assert mock_master_key._key_index == {VALUES['key_info']: mock_master_key}
+        assert mock_master_key._encrypt_key_index == {VALUES['key_info']: mock_master_key}
+        assert mock_master_key._decrypt_key_index == {}
 
     def test_members(self):
         mock_master_key = MockMasterKey(
@@ -279,17 +246,17 @@ class TestMasterKey(unittest.TestCase):
         mock_master_key._generate_data_key = MagicMock(return_value=sentinel.new_raw_data_key)
 
         test = mock_master_key.generate_data_key(
-            algorithm=sentinel.algorithm,
-            encryption_context=sentinel.encryption_context
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
         )
 
         mock_master_key._generate_data_key.assert_called_once_with(
-            sentinel.algorithm,
-            sentinel.encryption_context
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
         )
         self.mock_data_key_len_check.assert_called_once_with(
             source_data_key=sentinel.new_raw_data_key,
-            algorithm=sentinel.algorithm
+            algorithm=ALGORITHM
         )
         assert test is sentinel.new_raw_data_key
 
@@ -303,12 +270,16 @@ class TestMasterKey(unittest.TestCase):
         mock_master_key._key_check = MagicMock()
         mock_master_key._encrypt_data_key = MagicMock()
 
-        mock_master_key.encrypt_data_key(sentinel.data_key, sentinel.algorithm, sentinel.encryption_context)
+        mock_master_key.encrypt_data_key(
+            data_key=sentinel.data_key,
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
+        )
 
         mock_master_key._encrypt_data_key.assert_called_once_with(
-            sentinel.data_key,
-            sentinel.algorithm,
-            sentinel.encryption_context
+            data_key=sentinel.data_key,
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
         )
 
     def test_decrypt_data_key(self):
@@ -323,17 +294,17 @@ class TestMasterKey(unittest.TestCase):
 
         mock_master_key.decrypt_data_key(
             encrypted_data_key=sentinel.encrypted_data_key,
-            algorithm=sentinel.algorithm,
-            encryption_context=sentinel.encryption_context
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
         )
 
         self.mock_data_key_len_check.assert_called_once_with(
             source_data_key=sentinel.raw_decrypted_data_key,
-            algorithm=sentinel.algorithm
+            algorithm=ALGORITHM
         )
         mock_master_key._key_check.assert_called_once_with(sentinel.encrypted_data_key)
         mock_master_key._decrypt_data_key.assert_called_once_with(
-            sentinel.encrypted_data_key,
-            sentinel.algorithm,
-            sentinel.encryption_context
+            encrypted_data_key=sentinel.encrypted_data_key,
+            algorithm=ALGORITHM,
+            encryption_context=VALUES['encryption_context']
         )

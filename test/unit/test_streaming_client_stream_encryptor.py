@@ -5,10 +5,13 @@ import unittest
 from mock import MagicMock, patch, sentinel, call
 import six
 
-from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError
+from aws_encryption_sdk.exceptions import (
+    NotSupportedError, SerializationError, MasterKeyProviderError, ActionNotAllowedError
+)
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.identifiers import Algorithm, ContentType
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKey
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
 from aws_encryption_sdk.structures import MessageHeader
 from .test_values import VALUES
@@ -20,21 +23,34 @@ class TestStreamEncryptor(unittest.TestCase):
         # Create mock key provider
         self.mock_key_provider = MagicMock()
         self.mock_key_provider.__class__ = MasterKeyProvider
+        self.mock_materials_manager = MagicMock(__class__=CryptoMaterialsManager)
+        self.mock_encryption_materials = MagicMock(
+            algorithm=MagicMock(__class__=Algorithm, iv_len=MagicMock(__class__=int)),
+            encryption_context=MagicMock(__class__=dict),
+            encrypted_data_keys=MagicMock(__class__=set)
+        )
+        self.mock_materials_manager.get_encryption_materials.return_value = self.mock_encryption_materials
+        self.mock_primary_master_key = MagicMock()
+        self.mock_primary_master_key.signing_key.return_value = sentinel.signing_key
+        self.mock_master_keys_set = set([
+            self.mock_primary_master_key,
+            sentinel.master_key_1,
+            sentinel.master_key_2
+        ])
+        self.mock_key_provider.master_keys_for_encryption.return_value = (
+            self.mock_primary_master_key,
+            self.mock_master_keys_set
+        )
 
-        self.mock_master_key = MagicMock()
-        self.mock_master_key.__class__ = MasterKey
+        self.mock_master_key = MagicMock(__class__=MasterKey)
 
-        self.mock_input_stream = MagicMock()
-        self.mock_input_stream.__class__ = io.IOBase
+        self.mock_input_stream = MagicMock(__class__=io.IOBase)
 
-        self.mock_frame_length = MagicMock()
-        self.mock_frame_length.__class__ = int
+        self.mock_frame_length = MagicMock(__class__=int)
 
-        self.mock_algorithm = MagicMock()
-        self.mock_algorithm.__class__ = Algorithm
+        self.mock_algorithm = MagicMock(__class__=Algorithm)
 
-        self.mock_encrypted_data_keys = MagicMock()
-        self.mock_encrypted_data_keys.__class__ = set
+        self.mock_encrypted_data_keys = MagicMock(__class__=set)
 
         self.plaintext = six.b('''
             Lorem Ipsum is simply dummy text of the printing and typesetting industry.
@@ -71,17 +87,13 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_signer_instance = MagicMock()
         self.mock_signer_instance.encoded_public_key.return_value = sentinel.encoded_public_key
         self.mock_signer.return_value = self.mock_signer_instance
-        # Set up codecs patch
-        self.mock_codecs_patcher = patch('aws_encryption_sdk.streaming_client.codecs')
-        self.mock_codecs = self.mock_codecs_patcher.start()
-        self.mock_codecs.decode.return_value = sentinel.decoded_bytes
         # Set up prepare_data_keys patch
         self.mock_prepare_data_keys_patcher = patch(
             'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.utils.prepare_data_keys'
         )
         self.mock_prepare_data_keys = self.mock_prepare_data_keys_patcher.start()
-        self.mock_encryption_data_key = VALUES['data_key_obj']
-        self.mock_prepare_data_keys.return_value = (self.mock_encryption_data_key, self.mock_encrypted_data_keys)
+        self.mock_data_encryption_key = VALUES['data_key_obj']
+        self.mock_prepare_data_keys.return_value = (self.mock_data_encryption_key, self.mock_encrypted_data_keys)
         # Set up serialize_header patch
         self.mock_serialize_header_patcher = patch(
             'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_header'
@@ -138,7 +150,6 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_validate_frame_length_patcher.stop()
         self.mock_message_id_patcher.stop()
         self.mock_signer_patcher.stop()
-        self.mock_codecs_patcher.stop()
         self.mock_prepare_data_keys_patcher.stop()
         self.mock_serialize_header_patcher.stop()
         self.mock_serialize_header_auth_patcher.stop()
@@ -160,7 +171,6 @@ class TestStreamEncryptor(unittest.TestCase):
         assert test_encryptor.sequence_number == 1
         self.mock_content_type.assert_called_once_with(self.mock_frame_length)
         assert test_encryptor.content_type is sentinel.content_type
-        self.mock_validate_frame_length.assert_called_once_with(self.mock_frame_length, self.mock_algorithm)
 
     def test_init_non_framed_message_too_large(self):
         with six.assertRaisesRegex(self, SerializationError, 'Source too large for non-framed message'):
@@ -172,42 +182,108 @@ class TestStreamEncryptor(unittest.TestCase):
                 source_length=aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE + 1
             )
 
-    @patch('aws_encryption_sdk.internal.utils.ROStream')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
-    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
-    def test_prep_message_framed_message(self, mock_write_header, mock_prep_non_framed, mock_rostream):
-        mock_rostream.return_value = sentinel.plaintext_rostream
+    def test_prep_message_no_master_keys(self):
+        self.mock_key_provider.master_keys_for_encryption.return_value = sentinel.primary_master_key, set()
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
             key_provider=self.mock_key_provider,
             frame_length=self.mock_frame_length,
             source_length=5
         )
-        test_encryptor.content_type = ContentType.FRAMED_DATA
-        test_encryptor._prep_message()
-        self.mock_signer.assert_called_once_with(test_encryptor.config.algorithm)
-        self.mock_signer_instance.encoded_public_key.assert_called_once_with()
-        self.mock_codecs.decode.assert_called_once_with(sentinel.encoded_public_key)
-        test_encryption_context = {aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY: sentinel.decoded_bytes}
-        mock_rostream.assert_called_once_with(self.mock_input_stream)
-        self.mock_prepare_data_keys.assert_called_once_with(
-            key_provider=self.mock_key_provider,
-            algorithm=test_encryptor.config.algorithm,
-            encryption_context=test_encryption_context,
-            plaintext_rostream=sentinel.plaintext_rostream,
-            plaintext_length=5,
-            data_key=test_encryptor.config.data_key
+
+        with six.assertRaisesRegex(self, MasterKeyProviderError, 'No Master Keys available from Master Key Provider'):
+            test_encryptor._prep_message()
+
+    def test_prep_message_primary_master_key_not_in_master_keys(self):
+        self.mock_key_provider.master_keys_for_encryption.return_value = (
+            sentinel.unknown_primary_master_key,
+            self.mock_master_keys_set
         )
+        test_encryptor = StreamEncryptor(
+            source=self.mock_input_stream,
+            key_provider=self.mock_key_provider,
+            frame_length=self.mock_frame_length,
+            source_length=5
+        )
+
+        with six.assertRaisesRegex(self, MasterKeyProviderError, 'Primary Master Key not in provided Master Keys'):
+            test_encryptor._prep_message()
+
+    def test_prep_message_algorithm_change(self):
+        self.mock_encryption_materials.algorithm = Algorithm.AES_256_GCM_IV12_TAG16
+        test_encryptor = StreamEncryptor(
+            source=self.mock_input_stream,
+            materials_manager=self.mock_materials_manager,
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+            source_length=128
+        )
+
+        with six.assertRaisesRegex(
+            self,
+            ActionNotAllowedError,
+            'Cryptographic materials manager provided algorithm suite differs from algorithm suite in request.*'
+        ):
+            test_encryptor._prep_message()
+
+    @patch('aws_encryption_sdk.streaming_client.EncryptionMaterialsRequest')
+    @patch('aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.crypto.derive_data_encryption_key')
+    @patch('aws_encryption_sdk.internal.utils.ROStream')
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
+    @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
+    def test_prep_message_framed_message(
+        self,
+        mock_write_header,
+        mock_prep_non_framed,
+        mock_rostream,
+        mock_derive_datakey,
+        mock_encryption_materials_request
+    ):
+        mock_rostream.return_value = sentinel.plaintext_rostream
+        test_encryptor = StreamEncryptor(
+            source=self.mock_input_stream,
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            source_length=5,
+            encryption_context=VALUES['encryption_context']
+        )
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        test_encryption_context = {aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY: sentinel.decoded_bytes}
+        self.mock_encryption_materials.encryption_context = test_encryption_context
+        self.mock_encryption_materials.encrypted_data_keys = self.mock_encrypted_data_keys
+
+        test_encryptor._prep_message()
+
+        mock_encryption_materials_request.assert_called_once_with(
+            algorithm=test_encryptor.config.algorithm,
+            encryption_context=VALUES['encryption_context'],
+            plaintext_rostream=sentinel.plaintext_rostream,
+            frame_length=test_encryptor.config.frame_length,
+            plaintext_length=5
+        )
+        self.mock_materials_manager.get_encryption_materials.assert_called_once_with(
+            request=mock_encryption_materials_request.return_value
+        )
+        self.mock_validate_frame_length.assert_called_once_with(
+            frame_length=self.mock_frame_length,
+            algorithm=self.mock_encryption_materials.algorithm
+        )
+
+        mock_derive_datakey.assert_called_once_with(
+            source_key=self.mock_encryption_materials.data_encryption_key.data_key,
+            algorithm=self.mock_encryption_materials.algorithm,
+            message_id=VALUES['message_id']
+        )
+        assert test_encryptor._derived_data_key is mock_derive_datakey.return_value
         assert test_encryptor._header == MessageHeader(
             version=aws_encryption_sdk.internal.defaults.VERSION,
             type=aws_encryption_sdk.internal.defaults.TYPE,
-            algorithm=test_encryptor.config.algorithm,
+            algorithm=self.mock_encryption_materials.algorithm,
             message_id=VALUES['message_id'],
             encryption_context=test_encryption_context,
             encrypted_data_keys=self.mock_encrypted_data_keys,
             content_type=test_encryptor.content_type,
             content_aad_length=0,
-            header_iv_length=test_encryptor.config.algorithm.iv_len,
+            header_iv_length=self.mock_encryption_materials.algorithm.iv_len,
             frame_length=self.mock_frame_length
         )
         mock_write_header.assert_called_once_with()
@@ -218,8 +294,8 @@ class TestStreamEncryptor(unittest.TestCase):
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
     def test_prep_message_non_framed_message(self, mock_write_header, mock_prep_non_framed):
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
-            key_provider=self.mock_key_provider,
+            source=VALUES['data_128'],
+            materials_manager=self.mock_materials_manager,
             frame_length=self.mock_frame_length
         )
         test_encryptor.content_type = ContentType.NO_FRAMING
@@ -227,16 +303,16 @@ class TestStreamEncryptor(unittest.TestCase):
         mock_prep_non_framed.assert_called_once_with()
 
     def test_prep_message_no_signer(self):
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
-            key_provider=self.mock_key_provider,
+            source=VALUES['data_128'],
+            materials_manager=self.mock_materials_manager,
             frame_length=self.mock_frame_length,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryptor._prep_message()
         assert not self.mock_signer.called
-        assert test_encryptor._header.encryption_context == {}
 
     def test_write_header(self):
         self.mock_serialize_header.return_value = b'12345'
@@ -248,36 +324,41 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=aws_encryption_sdk.internal.defaults.ALGORITHM,
             frame_length=self.mock_frame_length
         )
-        test_encryptor.content_type = sentinel.content_type
-        test_encryptor._header = MagicMock()
-        test_encryptor._header.message_id = VALUES['message_id']
         test_encryptor.signer = sentinel.signer
+        test_encryptor.content_type = sentinel.content_type
+        test_encryptor._header = sentinel.header
         test_encryptor.output_buffer = b''
-        test_encryptor.encryption_data_key = self.mock_encryption_data_key
+        test_encryptor._encryption_materials = self.mock_encryption_materials
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test_encryptor._write_header()
+
         self.mock_serialize_header.assert_called_once_with(
             header=test_encryptor._header,
-            signer=test_encryptor.signer
+            signer=sentinel.signer
         )
         self.mock_serialize_header_auth.assert_called_once_with(
-            algorithm=test_encryptor.config.algorithm,
+            algorithm=self.mock_encryption_materials.algorithm,
             header=b'12345',
-            message_id=test_encryptor._header.message_id,
-            encryption_data_key=test_encryptor.encryption_data_key,
-            signer=test_encryptor.signer
+            data_encryption_key=sentinel.derived_data_key,
+            signer=sentinel.signer
         )
         assert test_encryptor.output_buffer == b'1234567890'
 
-    def test_prep_non_framed(self):
+    @patch('aws_encryption_sdk.streaming_client.non_framed_body_iv')
+    def test_prep_non_framed(self, mock_non_framed_iv):
         self.mock_serialize_non_framed_open.return_value = b'1234567890'
         test_encryptor = StreamEncryptor(
             source=self.mock_input_stream,
             key_provider=self.mock_key_provider
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor.signer = sentinel.signer
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test_encryptor._prep_non_framed()
+
         self.mock_get_aad_content_string.assert_called_once_with(
             content_type=test_encryptor.content_type,
             is_final_frame=True
@@ -289,16 +370,16 @@ class TestStreamEncryptor(unittest.TestCase):
             length=test_encryptor.stream_length
         )
         self.mock_encryptor.assert_called_once_with(
-            algorithm=test_encryptor.config.algorithm,
-            key=test_encryptor.encryption_data_key.data_key,
+            algorithm=self.mock_encryption_materials.algorithm,
+            key=sentinel.derived_data_key,
             associated_data=sentinel.associated_data,
-            message_id=test_encryptor._header.message_id
+            iv=mock_non_framed_iv.return_value
         )
         self.mock_serialize_non_framed_open.assert_called_once_with(
-            algorithm=test_encryptor.config.algorithm,
+            algorithm=self.mock_encryption_materials.algorithm,
             iv=sentinel.iv,
             plaintext_length=test_encryptor.stream_length,
-            signer=test_encryptor.signer
+            signer=sentinel.signer
         )
         assert test_encryptor.output_buffer == b'1234567890'
 
@@ -310,6 +391,7 @@ class TestStreamEncryptor(unittest.TestCase):
         )
         test_encryptor.signer = MagicMock()
         test_encryptor.encryptor = MagicMock()
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor.encryptor.update.return_value = sentinel.ciphertext
         test = test_encryptor._read_bytes_to_non_framed_body(5)
         test_encryptor.encryptor.update.assert_called_once_with(self.plaintext[:5])
@@ -333,6 +415,7 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider
         )
         test_encryptor.signer = MagicMock()
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor.encryptor = MagicMock()
         test_encryptor.encryptor.update.return_value = b'123'
         test_encryptor.encryptor.finalize.return_value = b'456'
@@ -360,9 +443,9 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16
         )
-        test_encryptor.signer = None
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor.signer = None
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor.encryptor = MagicMock()
         test_encryptor.encryptor.update.return_value = b'123'
         test_encryptor.encryptor.finalize.return_value = b'456'
@@ -432,9 +515,8 @@ class TestStreamEncryptor(unittest.TestCase):
             source=pt_stream,
             key_provider=self.mock_key_provider
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
         test_encryptor.content_type = None
         with six.assertRaisesRegex(self, NotSupportedError, 'Unsupported content type'):
             test_encryptor._read_bytes(5)
@@ -449,19 +531,22 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider,
             frame_length=128
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor.signer = sentinel.signer
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test = test_encryptor._read_bytes_to_framed_body(128)
+
         self.mock_serialize_frame.assert_called_once_with(
-            algorithm=test_encryptor.config.algorithm,
+            algorithm=self.mock_encryption_materials.algorithm,
             plaintext=self.plaintext[:128],
             message_id=test_encryptor._header.message_id,
-            encryption_data_key=test_encryptor.encryption_data_key,
+            data_encryption_key=sentinel.derived_data_key,
             frame_length=test_encryptor.config.frame_length,
             sequence_number=1,
             is_final_frame=False,
-            signer=test_encryptor.signer
+            signer=sentinel.signer
         )
         assert not self.mock_serialize_footer.called
         assert not test_encryptor.source_stream.closed
@@ -479,31 +564,34 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider,
             frame_length=50
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor.signer = sentinel.signer
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test = test_encryptor._read_bytes_to_framed_body(51)
+
         self.mock_serialize_frame.assert_has_calls(
             calls=(
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=self.plaintext[:50],
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=1,
                     is_final_frame=False,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 ),
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=b'',
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=2,
                     is_final_frame=True,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 )
             ),
             any_order=False
@@ -526,66 +614,69 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider,
             frame_length=frame_length
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor.signer = sentinel.signer
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test = test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
+
         self.mock_serialize_frame.assert_has_calls(
             calls=[
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=self.plaintext,
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=1,
                     is_final_frame=False,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 ),
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=self.plaintext[frame_length:],
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=2,
                     is_final_frame=False,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 ),
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=self.plaintext[frame_length * 2:],
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=3,
                     is_final_frame=False,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 ),
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=self.plaintext[frame_length * 3:],
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=4,
                     is_final_frame=False,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 ),
                 call(
-                    algorithm=test_encryptor.config.algorithm,
+                    algorithm=self.mock_encryption_materials.algorithm,
                     plaintext=b'',
                     message_id=test_encryptor._header.message_id,
-                    encryption_data_key=test_encryptor.encryption_data_key,
+                    data_encryption_key=sentinel.derived_data_key,
                     frame_length=test_encryptor.config.frame_length,
                     sequence_number=5,
                     is_final_frame=True,
-                    signer=test_encryptor.signer
+                    signer=sentinel.signer
                 )
             ],
             any_order=False
         )
-        self.mock_serialize_footer.assert_called_once_with(test_encryptor.signer)
+        self.mock_serialize_footer.assert_called_once_with(sentinel.signer)
         assert test_encryptor.source_stream.closed
         assert test == b'1234567890-=FINAL/*-'
 
@@ -598,11 +689,14 @@ class TestStreamEncryptor(unittest.TestCase):
             key_provider=self.mock_key_provider,
             frame_length=len(self.plaintext)
         )
-        test_encryptor.signer = MagicMock()
+        test_encryptor.signer = sentinel.signer
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
-        self.mock_serialize_footer.assert_called_once_with(test_encryptor.signer)
+
+        self.mock_serialize_footer.assert_called_once_with(sentinel.signer)
         assert test_encryptor.source_stream.closed
 
     def test_read_bytes_to_framed_body_close_no_signer(self):
@@ -615,21 +709,26 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16
         )
         test_encryptor.signer = None
+        test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
-        test_encryptor.encryption_data_key = MagicMock()
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
+
         assert not self.mock_serialize_footer.called
         assert test_encryptor.source_stream.closed
 
     @patch('aws_encryption_sdk.streaming_client._EncryptionStream.close')
     def test_close(self, mock_close):
-        self.mock_encryption_data_key.key_provider = VALUES['key_provider']
-        self.mock_encryption_data_key.encrypted_data_key = VALUES['encrypted_data_key']
+        self.mock_data_encryption_key.key_provider = VALUES['key_provider']
+        self.mock_data_encryption_key.encrypted_data_key = VALUES['encrypted_data_key']
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(
             source=pt_stream,
             key_provider=self.mock_key_provider
         )
-        test_encryptor.encryption_data_key = self.mock_encryption_data_key
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
         test_encryptor.close()
+
         mock_close.assert_called_once_with()

@@ -1,31 +1,69 @@
 """Unit test suite to validate aws_encryption_sdk.streaming_client._ClientConfig"""
-import unittest
+import io
 
 import attr
+from mock import MagicMock
+import pytest
+import six
 
-import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.internal.defaults import LINE_LENGTH
+from aws_encryption_sdk.internal.utils import prep_stream_data
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import _ClientConfig
 
 
-class TestClientConfig(unittest.TestCase):
+@pytest.mark.parametrize('attribute, default, validator_type, is_optional, convert_function', (
+    (_ClientConfig.source, attr.NOTHING, None, False, prep_stream_data),
+    (_ClientConfig.key_provider, None, MasterKeyProvider, True, None),
+    (_ClientConfig.materials_manager, None, CryptoMaterialsManager, True, None),
+    (_ClientConfig.source_length, None, six.integer_types, True, None),
+    (_ClientConfig.line_length, LINE_LENGTH, six.integer_types, False, None)
+))
+def test_attributes(attribute, default, validator_type, is_optional, convert_function):
+    assert isinstance(attribute, attr.Attribute)
+    assert attribute.hash
+    assert attribute.default is default
+    if validator_type is not None:
+        if is_optional:
+            assert attribute.validator.validator.type == validator_type
+        else:
+            assert attribute.validator.type == validator_type
+    if convert_function is not None:
+        assert attribute.convert is convert_function
 
-    def test_source(self):
-        assert isinstance(_ClientConfig.source, attr.Attribute)
-        assert _ClientConfig.source.default is attr.NOTHING
-        assert _ClientConfig.source.convert is aws_encryption_sdk.internal.utils.prep_stream_data
 
-    def test_key_provider(self):
-        assert isinstance(_ClientConfig.key_provider, attr.Attribute)
-        assert _ClientConfig.key_provider.default is attr.NOTHING
-        assert _ClientConfig.key_provider.validator.type is MasterKeyProvider
+@pytest.mark.parametrize('key_provider, materials_manager, source_length', (
+    (None, None, 5),
+    (MagicMock(__class__=MasterKeyProvider), None, 'not an int'),
+    (None, MagicMock(__class__=CryptoMaterialsManager), 'not an int'),
+    (MagicMock(__class__=MasterKeyProvider), MagicMock(__class__=CryptoMaterialsManager), 5)
+))
+def test_attributes_fail(key_provider, materials_manager, source_length):
+    with pytest.raises(TypeError):
+        _ClientConfig(
+            source='',
+            key_provider=key_provider,
+            materials_manager=materials_manager,
+            source_length=source_length
+        )
 
-    def test_source_length(self):
-        assert isinstance(_ClientConfig.source_length, attr.Attribute)
-        assert _ClientConfig.source_length.default is None
-        assert _ClientConfig.source_length.validator.validator.type is int
 
-    def test_line_length(self):
-        assert isinstance(_ClientConfig.line_length, attr.Attribute)
-        assert _ClientConfig.line_length.default is aws_encryption_sdk.internal.defaults.LINE_LENGTH
-        assert _ClientConfig.line_length.validator.type is int
+def test_attributes_defaults():
+    test = _ClientConfig(
+        source='',
+        key_provider=MagicMock(__class__=MasterKeyProvider)
+    )
+    assert test.source_length is None
+    assert test.line_length == LINE_LENGTH
+
+
+def test_attributes_converts():
+    test = _ClientConfig(
+        source='',
+        key_provider=MagicMock(__class__=MasterKeyProvider)
+    )
+    assert isinstance(test.source, io.BytesIO)
+    assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
+    assert test.materials_manager.master_key_provider is test.key_provider

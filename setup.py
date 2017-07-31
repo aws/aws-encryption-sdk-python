@@ -25,13 +25,13 @@ setup(
     maintainer='Amazon Web Services',
     url='https://github.com/awslabs/aws-encryption-sdk-python',
     description='AWS Encryption SDK implementation for Python',
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     keywords='aws-encryption-sdk aws kms encryption',
     license='Apache License 2.0',
     install_requires=[
         'boto3>=1.4.4',
-        'cryptography>=1.4.0',
-        'attrs==16.3.0'
+        'cryptography>=1.8.1',
+        'attrs>=16.3.0'
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

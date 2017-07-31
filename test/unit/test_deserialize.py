@@ -51,43 +51,6 @@ class TestDeserialize(unittest.TestCase):
         self.mock_deserialize_ec_patcher.stop()
         self.mock_verifier_patcher.stop()
 
-    def test_verifier_from_header(self):
-        """Validate that the verifier_from_header function behaves
-            as expected.
-        """
-        self.mock_header.encryption_context.get.return_value = sentinel.encoded_point
-        self.mock_header.algorithm = sentinel.algorithm
-        test = aws_encryption_sdk.internal.formatting.deserialize.verifier_from_header(self.mock_header)
-        self.mock_verifier_class.from_encoded_point.assert_called_once_with(
-            algorithm=sentinel.algorithm,
-            encoded_point=sentinel.encoded_point
-        )
-        assert test is self.mock_verifier
-
-    def test_verifier_from_header_no_verifier(self):
-        """Validate that the verifier_from_header function behaves
-            as expected when called with a header with no encoded
-            point and an algorithm with no curve type.
-        """
-        self.mock_header.encryption_context.get.return_value = None
-        self.mock_header.algorithm.signing_algorithm_info = None
-        test = aws_encryption_sdk.internal.formatting.deserialize.verifier_from_header(self.mock_header)
-        assert test is None
-
-    def test_verifier_from_header_verifier_required_but_no_point(self):
-        """Validate that the verifier_from_header function behaves
-            as expected when called with a header with no encoded
-            point and an algorithm with a curve type.
-        """
-        self.mock_header.encryption_context.get.return_value = None
-        self.mock_header.algorithm.signing_algorithm_info = sentinel.signing_algorithm_info
-        with six.assertRaisesRegex(
-            self,
-            SerializationError,
-            'No public key found in header for message encrypted with ECDSA algorithm: *'
-        ):
-            aws_encryption_sdk.internal.formatting.deserialize.verifier_from_header(self.mock_header)
-
     def test_validate_header_valid(self):
         """Validate that the validate_header function behaves
             as expected for a valid header.
@@ -100,14 +63,13 @@ class TestDeserialize(unittest.TestCase):
             stream=self.mock_bytesio,
             header_start=0,
             header_end=len(VALUES['header']),
-            data_key=VALUES['data_key_obj']
+            data_key=sentinel.encryption_key
         )
         self.mock_crypto.decrypt.assert_called_once_with(
             algorithm=VALUES['deserialized_header_block'].algorithm,
-            key=VALUES['data_key'],
+            key=sentinel.encryption_key,
             encrypted_data=VALUES['header_auth_base'],
-            associated_data=VALUES['header'],
-            message_id=VALUES['message_id']
+            associated_data=VALUES['header']
         )
 
     def test_validate_header_invalid(self):

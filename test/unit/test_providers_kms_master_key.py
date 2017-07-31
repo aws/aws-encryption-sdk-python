@@ -8,7 +8,7 @@ from mock import MagicMock, sentinel, patch
 import six
 
 from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError, DecryptKeyError
-from aws_encryption_sdk.identifiers import Algorithm, __version__
+from aws_encryption_sdk.identifiers import Algorithm, __version__, user_agent_suffix
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
@@ -45,7 +45,7 @@ class TestKMSMasterKey(unittest.TestCase):
         self.mock_data_key_len_check_patcher = patch('aws_encryption_sdk.internal.utils.source_data_key_length_check')
         self.mock_data_key_len_check = self.mock_data_key_len_check_patcher.start()
 
-        self.mock_grant_tokens = [sentinel.grant_token_1, sentinel.grant_token_2]
+        self.mock_grant_tokens = (sentinel.grant_token_1, sentinel.grant_token_2)
         self.mock_kms_mkc_1 = KMSMasterKeyConfig(
             key_id=VALUES['arn'],
             client=self.mock_client
@@ -72,7 +72,7 @@ class TestKMSMasterKey(unittest.TestCase):
             client=self.mock_client
         )
         assert test.client is self.mock_client
-        assert test.grant_tokens == []
+        assert test.grant_tokens == ()
 
     def test_config_grant_tokens(self):
         test = KMSMasterKeyConfig(
@@ -82,13 +82,16 @@ class TestKMSMasterKey(unittest.TestCase):
         )
         assert test.grant_tokens is self.mock_grant_tokens
 
-    def test_init(self):
+    @patch('aws_encryption_sdk.key_providers.kms.extend_user_agent_suffix')
+    def test_init(self, patch_extend_user_agent_suffix):
+        self.mock_client.meta.config.user_agent_extra = sentinel.user_agent_extra
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
         assert test._key_id == VALUES['arn'].decode('utf-8')
-        assert self.mock_client.meta.config.user_agent == 'Botocore-KMSMasterKey/{}/{}'.format(
-            __version__,
-            botocore.__version__
+        patch_extend_user_agent_suffix.assert_called_once_with(
+            user_agent=sentinel.user_agent_extra,
+            suffix=user_agent_suffix
         )
+        assert self.mock_client.meta.config.user_agent_extra == patch_extend_user_agent_suffix.return_value
 
     def test_generate_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)

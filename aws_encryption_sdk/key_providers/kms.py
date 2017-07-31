@@ -8,8 +8,9 @@ from botocore.exceptions import ClientError
 import botocore.session
 
 from aws_encryption_sdk.exceptions import GenerateKeyError, DecryptKeyError, EncryptKeyError, UnknownRegionError
-from aws_encryption_sdk.identifiers import __version__
+from aws_encryption_sdk.identifiers import user_agent_suffix
 from aws_encryption_sdk.internal.str_ops import to_str
+from aws_encryption_sdk.internal.utils import extend_user_agent_suffix
 from aws_encryption_sdk.key_providers.base import (
     MasterKeyProvider, MasterKeyProviderConfig, MasterKey, MasterKeyConfig
 )
@@ -20,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 _PROVIDER_ID = 'aws-kms'
 
 
-@attr.s
+@attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
 
@@ -30,16 +31,21 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     :param list region_names: List of regions for which to pre-populate clients (optional)
     """
     botocore_session = attr.ib(
+        hash=True,
         default=attr.Factory(botocore.session.Session),
         validator=attr.validators.instance_of(botocore.session.Session)
     )
     key_ids = attr.ib(
-        default=attr.Factory(list),
-        validator=attr.validators.instance_of(list)
+        hash=True,
+        default=attr.Factory(tuple),
+        validator=attr.validators.instance_of(tuple),
+        convert=tuple
     )
     region_names = attr.ib(
-        default=attr.Factory(list),
-        validator=attr.validators.instance_of(list)
+        hash=True,
+        default=attr.Factory(tuple),
+        validator=attr.validators.instance_of(tuple),
+        convert=tuple
     )
 
 
@@ -142,7 +148,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         ))
 
 
-@attr.s
+@attr.s(hash=True)
 class KMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for MasterKey objects.
 
@@ -152,10 +158,12 @@ class KMSMasterKeyConfig(MasterKeyConfig):
     :param list grant_tokens: List of grant tokens to pass to KMS on CMK operations
     """
     provider_id = _PROVIDER_ID
-    client = attr.ib(validator=attr.validators.instance_of(botocore.client.BaseClient))
+    client = attr.ib(hash=True, validator=attr.validators.instance_of(botocore.client.BaseClient))
     grant_tokens = attr.ib(
-        default=attr.Factory(list),
-        validator=attr.validators.instance_of(list)
+        hash=True,
+        default=attr.Factory(tuple),
+        validator=attr.validators.instance_of(tuple),
+        convert=tuple
     )
 
 
@@ -174,11 +182,9 @@ class KMSMasterKey(MasterKey):
 
     def __init__(self, **kwargs):
         self._key_id = to_str(self.key_id)  # KMS client requires str, not bytes
-        self.config.client.meta.config.user_agent = (
-            'Botocore-KMSMasterKey/{version}/{botocore_version}'
-        ).format(
-            version=__version__,
-            botocore_version=botocore.__version__
+        self.config.client.meta.config.user_agent_extra = extend_user_agent_suffix(
+            user_agent=self.config.client.meta.config.user_agent_extra,
+            suffix=user_agent_suffix
         )
 
     def _generate_data_key(self, algorithm, encryption_context=None):
@@ -188,7 +194,7 @@ class KMSMasterKey(MasterKey):
         :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to pass to KMS
         :returns: Generated data key
-        :rtype: aws_encryption_sdk.structure.DataKey
+        :rtype: aws_encryption_sdk.structures.DataKey
         """
         kms_params = {
             'KeyId': self._key_id,
@@ -219,12 +225,12 @@ class KMSMasterKey(MasterKey):
         """Encrypts a data key and returns the ciphertext.
 
         :param data_key: Unencrypted data key
-        :type data_key: :class:`aws_encryption_sdk.structure.RawDataKey`
-            or :class:`aws_encryption_sdk.structure.DataKey`
+        :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
+            or :class:`aws_encryption_sdk.structures.DataKey`
         :param algorithm: Placeholder to maintain API compatibility with parent
         :param dict encryption_context: Encryption context to pass to KMS
         :returns: Data key containing encrypted data key
-        :rtype: aws_encryption_sdk.structure.EncryptedDataKey
+        :rtype: aws_encryption_sdk.structures.EncryptedDataKey
         :raises EncryptKeyError: if Master Key is unable to encrypt data key
         """
         kms_params = {
@@ -254,11 +260,11 @@ class KMSMasterKey(MasterKey):
         """Decrypts an encrypted data key and returns the plaintext.
 
         :param data_key: Encrypted data key
-        :type data_key: aws_encryption_sdk.structure.EncryptedDataKey
-        :type algorithm: aws_encryption_sdk.internal.crypto.identifiers.Algorithm` (not used for KMS)
+        :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
+        :type algorithm: `aws_encryption_sdk.identifiers.Algorithm` (not used for KMS)
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Decrypted data key
-        :rtype: aws_encryption_sdk.structure.DataKey
+        :rtype: aws_encryption_sdk.structures.DataKey
         :raises DecryptKeyError: if Master Key is unable to decrypt data key
         """
         kms_params = {

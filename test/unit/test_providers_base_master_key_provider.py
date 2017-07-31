@@ -10,11 +10,13 @@ from aws_encryption_sdk.exceptions import (
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 
+from .test_values import VALUES
 
-@attr.s
+
+@attr.s(hash=True)
 class MockMasterKeyProviderConfig(MasterKeyProviderConfig):
-    provider_id = attr.ib()
-    mock_new_master_key = attr.ib(default=None)
+    provider_id = attr.ib(hash=True)
+    mock_new_master_key = attr.ib(hash=True, default=None)
 
 
 class MockMasterKeyProvider(MasterKeyProvider):
@@ -33,6 +35,20 @@ class MockMasterKeyProviderNoVendOnDecrypt(MockMasterKeyProvider):
 
     def _new_master_key(self, key_id):
         pass
+
+
+def test_repr():
+    test = MockMasterKeyProvider(
+        provider_id='ex_provider_id',
+        mock_new_master_key='ex_new_master_key'
+    )
+
+    assert repr(test) == (
+        'MockMasterKeyProvider('
+        'mock_new_master_key=ex_new_master_key, '
+        'provider_id=ex_provider_id'
+        ')'
+    )
 
 
 class TestBaseMasterKeyProvider(unittest.TestCase):
@@ -150,10 +166,10 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         )
         mock_master_key_provider._new_master_key = MagicMock()
         mock_master_key_provider._new_master_key.return_value = sentinel.new_master_key
-        mock_master_key_provider.add_master_key('ex_key_id')
-        mock_master_key_provider._new_master_key.assert_called_once_with('ex_key_id')
+        mock_master_key_provider.add_master_key(VALUES['key_info'])
+        mock_master_key_provider._new_master_key.assert_called_once_with(VALUES['key_info'])
         assert sentinel.new_master_key in mock_master_key_provider._members
-        assert mock_master_key_provider._key_index['ex_key_id'] is sentinel.new_master_key
+        assert mock_master_key_provider._encrypt_key_index[VALUES['key_info']] is sentinel.new_master_key
 
     def test_add_master_key_exists(self):
         mock_master_key_provider = MockMasterKeyProvider(
@@ -161,8 +177,18 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             mock_new_master_key=sentinel.new_master_key
         )
         mock_master_key_provider._new_master_key = MagicMock()
-        mock_master_key_provider._key_index = {'ex_key_id': sentinel.existing_master_key}
-        mock_master_key_provider.add_master_key('ex_key_id')
+        mock_master_key_provider._encrypt_key_index = {VALUES['key_info']: sentinel.existing_master_key}
+        mock_master_key_provider.add_master_key(VALUES['key_info'])
+        assert not mock_master_key_provider._new_master_key.called
+
+    def test_add_master_key_to_bytes_exists(self):
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id,
+            mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider._new_master_key = MagicMock()
+        mock_master_key_provider._encrypt_key_index = {b'ex_key_info': sentinel.existing_master_key}
+        mock_master_key_provider.add_master_key('ex_key_info')
         assert not mock_master_key_provider._new_master_key.called
 
     def test_add_master_key_providers_from_list(self):
@@ -182,7 +208,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             call(sentinel.key_provider_c)
         ))
 
-    def test_add_master_key_provider(self):
+    def test_master_key_provider(self):
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id,
             mock_new_master_key=sentinel.new_master_key
@@ -190,15 +216,66 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_master_key_provider.add_master_key_provider(sentinel.new_key_provider)
         assert sentinel.new_key_provider in mock_master_key_provider._members
 
-    def test_master_key(self):
+    def test_master_key_to_bytes(self):
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id,
             mock_new_master_key=sentinel.new_master_key
         )
         mock_master_key_provider.add_master_key = MagicMock()
-        mock_master_key_provider._key_index['ex_key_id'] = sentinel.new_master_key
-        test = mock_master_key_provider.master_key('ex_key_id')
-        mock_master_key_provider.add_master_key.assert_called_once_with('ex_key_id')
+        mock_master_key_provider._encrypt_key_index[b'ex_key_info'] = sentinel.new_master_key
+        mock_master_key_provider.master_key_for_encrypt('ex_key_info')
+        mock_master_key_provider.add_master_key.assert_called_once_with(b'ex_key_info')
+
+    def test_master_key_for_encrypt(self):
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id,
+            mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider.add_master_key = MagicMock()
+        mock_master_key_provider._encrypt_key_index[VALUES['key_info']] = sentinel.new_master_key
+        test = mock_master_key_provider.master_key_for_encrypt(VALUES['key_info'])
+        mock_master_key_provider.add_master_key.assert_called_once_with(VALUES['key_info'])
+        assert test is sentinel.new_master_key
+
+    def test_master_key_for_decrypt_in_encrypt_key_index(self):
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id,
+            mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider._new_master_key = MagicMock()
+        mock_master_key_provider._encrypt_key_index[sentinel.key_info] = sentinel.known_encrypt_master_key
+        mock_master_key_provider._decrypt_key_index[sentinel.key_info] = sentinel.known_decrypt_master_key
+
+        test = mock_master_key_provider.master_key_for_decrypt(sentinel.key_info)
+
+        assert test is sentinel.known_encrypt_master_key
+        assert not mock_master_key_provider._new_master_key.called
+
+    def test_master_key_for_decrypt_in_decrypt_key_index(self):
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id,
+            mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider._new_master_key = MagicMock()
+        mock_master_key_provider._encrypt_key_index = {}
+        mock_master_key_provider._decrypt_key_index[sentinel.key_info] = sentinel.known_decrypt_master_key
+
+        test = mock_master_key_provider.master_key_for_decrypt(sentinel.key_info)
+
+        assert test is sentinel.known_decrypt_master_key
+        assert not mock_master_key_provider._new_master_key.called
+
+    def test_master_key_for_decrypt(self):
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id,
+            mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider._new_master_key = MagicMock(return_value=sentinel.new_master_key)
+
+        test = mock_master_key_provider.master_key_for_decrypt(sentinel.key_info)
+
+        mock_master_key_provider._new_master_key.assert_called_once_with(sentinel.key_info)
+        assert mock_master_key_provider._decrypt_key_index[sentinel.key_info] is sentinel.new_master_key
         assert test is sentinel.new_master_key
 
     def test_decrypt_data_key_successful(self):
@@ -206,7 +283,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_member.provider_id = sentinel.provider_id
         mock_master_key = MagicMock()
         mock_master_key.decrypt_data_key.return_value = sentinel.data_key
-        mock_member.master_key.return_value = mock_master_key
+        mock_member.master_key_for_decrypt.return_value = mock_master_key
         mock_encrypted_data_key = MagicMock()
         mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
@@ -220,7 +297,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             algorithm=sentinel.algorithm,
             encryption_context=sentinel.encryption_context
         )
-        mock_member.master_key.assert_called_once_with(sentinel.key_info)
+        mock_member.master_key_for_decrypt.assert_called_once_with(sentinel.key_info)
         mock_master_key.decrypt_data_key.assert_called_once_with(
             mock_encrypted_data_key,
             sentinel.algorithm,
@@ -235,7 +312,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_member.provider_id = sentinel.provider_id
         mock_master_key = MagicMock()
         mock_master_key.decrypt_data_key.return_value = sentinel.data_key
-        mock_member.master_key.return_value = mock_master_key
+        mock_member.master_key_for_decrypt.return_value = mock_master_key
         mock_encrypted_data_key = MagicMock()
         mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
@@ -249,7 +326,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             algorithm=sentinel.algorithm,
             encryption_context=sentinel.encryption_context
         )
-        assert not mock_first_member.master_key.called
+        assert not mock_first_member.master_key_for_decrypt.called
         assert test is sentinel.data_key
 
     def test_decrypt_data_key_unsuccessful_no_matching_members(self):
@@ -283,7 +360,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         )
         with patch.object(
             mock_master_key_provider,
-            'master_key',
+            'master_key_for_decrypt',
             new_callable=PropertyMock,
             side_effect=InvalidKeyIdError
         ) as mock_master_key:
@@ -303,19 +380,19 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
         mock_master_key_provider = MockMasterKeyProviderNoVendOnDecrypt(provider_id=sentinel.provider_id)
         mock_master_key_provider._members = [mock_member]
-        mock_master_key_provider.master_key = MagicMock()
+        mock_master_key_provider.master_key_for_decrypt = MagicMock()
         with six.assertRaisesRegex(self, DecryptKeyError, 'Unable to decrypt data key'):
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context
             )
-        assert not mock_master_key_provider.master_key.called
+        assert not mock_master_key_provider.master_key_for_decrypt.called
 
     def test_decrypt_data_key_unsuccessful_invalid_key_info(self):
         mock_member = MagicMock()
         mock_member.provider_id = sentinel.provider_id
-        mock_member.master_key.side_effect = (InvalidKeyIdError,)
+        mock_member.master_key_for_decrypt.side_effect = (InvalidKeyIdError,)
         mock_encrypted_data_key = MagicMock()
         mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
@@ -336,7 +413,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_member.provider_id = sentinel.provider_id
         mock_master_key = MagicMock()
         mock_master_key.decrypt_data_key.side_effect = (IncorrectMasterKeyError,)
-        mock_member.master_key.return_value = mock_master_key
+        mock_member.master_key_for_decrypt.return_value = mock_master_key
         mock_encrypted_data_key = MagicMock()
         mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
@@ -357,7 +434,7 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_member.provider_id = sentinel.provider_id
         mock_master_key = MagicMock()
         mock_master_key.decrypt_data_key.side_effect = (DecryptKeyError,)
-        mock_member.master_key.return_value = mock_master_key
+        mock_member.master_key_for_decrypt.return_value = mock_master_key
         mock_encrypted_data_key = MagicMock()
         mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
         mock_encrypted_data_key.key_provider.key_info = sentinel.key_info

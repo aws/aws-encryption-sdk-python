@@ -31,24 +31,24 @@ _LOGGER = logging.getLogger()
 
 
 _WRAPPING_ALGORITHM_MAP = {
-    'AES': {
-        128: {'': {'': WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING}},
-        192: {'': {'': WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING}},
-        256: {'': {'': WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING}}
+    b'AES': {
+        128: {b'': {b'': WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING}},
+        192: {b'': {b'': WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING}},
+        256: {b'': {b'': WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING}}
     },
-    'RSA': {
-        2048: {
-            'PKCS1': {'': WrappingAlgorithm.RSA_PKCS1},
-            'OAEP-MGF1': {
-                'SHA-1': WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
-                'SHA-256': WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
+    b'RSA': defaultdict(
+        lambda: {
+            b'PKCS1': {b'': WrappingAlgorithm.RSA_PKCS1},
+            b'OAEP-MGF1': {
+                b'SHA-1': WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
+                b'SHA-256': WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
             }
         }
-    }
+    )
 }
 _KEY_TYPES_MAP = {
-    'AES': EncryptionKeyType.SYMMETRIC,
-    'RSA': EncryptionKeyType.PRIVATE
+    b'AES': EncryptionKeyType.SYMMETRIC,
+    b'RSA': EncryptionKeyType.PRIVATE
 }
 _STATIC_KEYS = defaultdict(dict)
 
@@ -60,10 +60,11 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
     def _get_raw_key(self, key_id):
         """"""
         try:
-            algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split('.', 3)
+            algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split(b'.', 3)
             key_bits = int(key_bits)
             key_type = _KEY_TYPES_MAP[algorithm]
             wrapping_algorithm = _WRAPPING_ALGORITHM_MAP[algorithm][key_bits][padding_algorithm][padding_hash]
+            print('looking up {} {}'.format(algorithm, key_bits))
             static_key = _STATIC_KEYS[algorithm][key_bits]
             return WrappingKey(
                 wrapping_algorithm=wrapping_algorithm,
@@ -119,8 +120,9 @@ def _generate_test_cases():
 
     # Collect keys from ciphertext manifest
     for algorithm, keys in ciphertext_manifest['test_keys'].items():
-        algorithm = algorithm.upper()
+        algorithm = to_bytes(algorithm.upper())
         for key_bits, key_desc in keys.items():
+            key_desc = to_bytes(key_desc)
             key_bits = int(key_bits)
             raw_key = to_bytes(key_desc.get('line_separator', '').join(key_desc['key']))
             if key_desc['encoding'].lower() in ('raw', 'pem'):
