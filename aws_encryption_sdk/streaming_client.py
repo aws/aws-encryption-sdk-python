@@ -1,7 +1,6 @@
 """High level AWS Encryption SDK client for streaming objects."""
 from __future__ import division
 import abc
-import codecs
 import io
 import logging
 import math
@@ -9,50 +8,78 @@ import math
 import attr
 import six
 
-from aws_encryption_sdk.exceptions import SerializationError, CustomMaximumValueExceeded, NotSupportedError
+from aws_encryption_sdk.exceptions import (
+    AWSEncryptionSDKClientError, SerializationError, CustomMaximumValueExceeded,
+    NotSupportedError, ActionNotAllowedError
+)
+from aws_encryption_sdk.identifiers import Algorithm, ContentType
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.materials_managers import EncryptionMaterialsRequest, DecryptionMaterialsRequest
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
+from aws_encryption_sdk.structures import MessageHeader
+
 import aws_encryption_sdk.internal.crypto
-import aws_encryption_sdk.internal.defaults
+from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
+from aws_encryption_sdk.internal.defaults import LINE_LENGTH, FRAME_LENGTH, MAX_NON_FRAMED_SIZE, VERSION, TYPE
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.encryption_context
 import aws_encryption_sdk.internal.formatting.serialize
-from aws_encryption_sdk.identifiers import Algorithm, ContentType
 import aws_encryption_sdk.internal.utils
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.structures import MessageHeader
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@attr.s
+@attr.s(hash=True)
 @six.add_metaclass(abc.ABCMeta)
 class _ClientConfig(object):
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
+        (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
             If source_length is not provided and unframed message is being written or read() is called,
             will attempt to seek() to the end of the stream and tell() to find the length of source data.
-    :param int line_length: Line length to use for reading "lines" from stream (optional)
-
-        .. note::
-            The concept of "lines" is used to match Python file-like-object terminology.  In this
-            context it defines the number of bytes returned by readline().
     """
-    source = attr.ib(convert=aws_encryption_sdk.internal.utils.prep_stream_data)
-    key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
-    source_length = attr.ib(
+    source = attr.ib(hash=True, convert=aws_encryption_sdk.internal.utils.prep_stream_data)
+    materials_manager = attr.ib(
+        hash=True,
         default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(int))
+        validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
+    )
+    key_provider = attr.ib(
+        hash=True,
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
+    )
+    source_length = attr.ib(
+        hash=True,
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
     line_length = attr.ib(
-        default=aws_encryption_sdk.internal.defaults.LINE_LENGTH,
-        validator=attr.validators.instance_of(int)
-    )
+        hash=True,
+        default=LINE_LENGTH,
+        validator=attr.validators.instance_of(six.integer_types)
+    )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
+
+    def __attrs_post_init__(self):
+        """Normalize inputs to crypto material manager."""
+        both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
+        neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
+
+        if both_cmm_and_mkp_defined or neither_cmm_nor_mkp_defined:
+            raise TypeError('Exactly one of materials_manager or key_provider must be provided')
+        if self.materials_manager is None:
+            self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
 
 
 class _EncryptionStream(io.IOBase):
@@ -83,6 +110,7 @@ class _EncryptionStream(io.IOBase):
     def _config_class(self):
         Configuration class for this class
     """
+    line_length = LINE_LENGTH
 
     def __new__(cls, **kwargs):
         """Patch for abstractmethod-like enforcement in io.IOBase grandchildren."""
@@ -105,7 +133,6 @@ class _EncryptionStream(io.IOBase):
         instance._message_prepped = False
         instance.source_stream = instance.config.source
         instance._stream_length = instance.config.source_length
-        instance.line_length = instance.config.line_length
 
         return instance
 
@@ -113,10 +140,14 @@ class _EncryptionStream(io.IOBase):
     def stream_length(self):
         """Returns the length of the source stream, determining it if not already known."""
         if self._stream_length is None:
-            current_position = self.source_stream.tell()
-            self.source_stream.seek(0, 2)
-            self._stream_length = self.source_stream.tell()
-            self.source_stream.seek(current_position, 0)
+            try:
+                current_position = self.source_stream.tell()
+                self.source_stream.seek(0, 2)
+                self._stream_length = self.source_stream.tell()
+                self.source_stream.seek(current_position, 0)
+            except Exception as e:
+                # Catch-all for unknown issues encountered trying to seek for stream length
+                raise NotSupportedError(e)
         return self._stream_length
 
     @property
@@ -138,9 +169,10 @@ class _EncryptionStream(io.IOBase):
         """Handles closing of stream upon exist of with block."""
         try:
             self.close()
-        except aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError:
-            # Only raise unknown exceptions in close
-            pass
+        except AWSEncryptionSDKClientError:
+            # All known exceptions in close are safe to ignore.
+            # Only raise unknown exceptions in close.
+            _LOGGER.exception('Error on closing')
         return False
 
     def read(self, b=None):
@@ -221,42 +253,51 @@ class _EncryptionStream(io.IOBase):
     __next__ = next
 
 
-@attr.s
+@attr.s(hash=True)
 class EncryptorConfig(_ClientConfig):
     """Configuration object for StreamEncryptor class.
 
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
+        (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
             If source_length is not provided and unframed message is being written or read() is called,
             will attempt to seek() to the end of the stream and tell() to find the length of source data.
-    :param int line_length: Line length to use for reading "lines" from stream (optional)
 
         .. note::
-            The concept of "lines" is used to match Python file-like-object terminology.  In this
-            context it defines the number of bytes returned by readline().
+            .. versionadded:: 1.3.0
+
+            If `source_length` and `materials_manager` are both provided, the total plaintext bytes
+            encrypted will not be allowed to exceed `source_length`. To maintain backwards compatibility,
+            this is not enforced if a `key_provider` is provided.
+
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption (optional)
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes (optional)
     """
     encryption_context = attr.ib(
+        hash=False,  # dictionaries are not hashable
         default=attr.Factory(dict),
         validator=attr.validators.instance_of(dict)
     )
     algorithm = attr.ib(
-        default=aws_encryption_sdk.internal.defaults.ALGORITHM,
-        validator=attr.validators.instance_of(Algorithm)
+        hash=True,
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(Algorithm))
     )
     frame_length = attr.ib(
-        default=aws_encryption_sdk.internal.defaults.FRAME_LENGTH,
-        validator=attr.validators.instance_of(int)
+        hash=True,
+        default=FRAME_LENGTH,
+        validator=attr.validators.instance_of(six.integer_types)
     )
-    data_key = None
 
 
 class StreamEncryptor(_EncryptionStream):
@@ -274,18 +315,25 @@ class StreamEncryptor(_EncryptionStream):
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
+        (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
             If source_length is not provided and unframed message is being written or read() is called,
             will attempt to seek() to the end of the stream and tell() to find the length of source data.
-    :param int line_length: Line length to use for reading "lines" from stream (optional)
 
         .. note::
-            The concept of "lines" is used to match Python file-like-object terminology.  In this
-            context it defines the number of bytes returned by readline().
+            .. versionadded:: 1.3.0
+
+            If `source_length` and `materials_manager` are both provided, the total plaintext bytes
+            encrypted will not be allowed to exceed `source_length`. To maintain backwards compatibility,
+            this is not enforced if a `key_provider` is provided.
+
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
@@ -297,49 +345,91 @@ class StreamEncryptor(_EncryptionStream):
         self.sequence_number = 1
 
         self.content_type = aws_encryption_sdk.internal.utils.content_type(self.config.frame_length)
-        aws_encryption_sdk.internal.utils.validate_frame_length(self.config.frame_length, self.config.algorithm)
+        self._bytes_encrypted = 0
 
         if (
             self.config.frame_length == 0
             and (
                 self.config.source_length is not None
-                and self.config.source_length > aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
+                and self.config.source_length > MAX_NON_FRAMED_SIZE
             )
         ):
             raise SerializationError('Source too large for non-framed message')
 
-    def _prep_message(self):
-        """Performs initial message setup."""
-        encryption_context = self.config.encryption_context.copy()
+    def ciphertext_length(self):
+        """Returns the length of the resulting ciphertext message in bytes.
 
+        :rtype: int
+        """
+        return aws_encryption_sdk.internal.formatting.ciphertext_length(
+            header=self.header,
+            plaintext_length=self.stream_length
+        )
+
+    def _prep_message(self):
+        """Performs initial message setup.
+
+        :raises MasterKeyProviderError: if primary master key is not a member of supplied MasterKeyProvider
+        :raises MasterKeyProviderError: if no Master Keys are returned from key_provider
+        """
         message_id = aws_encryption_sdk.internal.utils.message_id()
 
-        if self.config.algorithm.signing_algorithm_info is None:
-            self.signer = None
-        else:
-            self.signer = aws_encryption_sdk.internal.crypto.Signer(self.config.algorithm)
-            encryption_context[aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY] = codecs.decode(
-                self.signer.encoded_public_key()
+        try:
+            plaintext_length = self.stream_length
+        except NotSupportedError:
+            plaintext_length = None
+        encryption_materials_request = EncryptionMaterialsRequest(
+            algorithm=self.config.algorithm,
+            encryption_context=self.config.encryption_context.copy(),
+            frame_length=self.config.frame_length,
+            plaintext_rostream=aws_encryption_sdk.internal.utils.ROStream(self.source_stream),
+            plaintext_length=plaintext_length
+        )
+        self._encryption_materials = self.config.materials_manager.get_encryption_materials(
+            request=encryption_materials_request
+        )
+
+        if self.config.algorithm is not None and self._encryption_materials.algorithm != self.config.algorithm:
+            raise ActionNotAllowedError(
+                (
+                    'Cryptographic materials manager provided algorithm suite'
+                    ' differs from algorithm suite in request.\n'
+                    'Required: {requested}\n'
+                    'Provided: {provided}'
+                ).format(
+                    requested=self.config.algorithm,
+                    provided=self._encryption_materials.algorithm
+                )
             )
 
-        self.encryption_data_key, encrypted_data_keys = aws_encryption_sdk.internal.utils.prepare_data_keys(
-            key_provider=self.config.key_provider,
-            algorithm=self.config.algorithm,
-            encryption_context=encryption_context,
-            plaintext_rostream=aws_encryption_sdk.internal.utils.ROStream(self.source_stream),
-            plaintext_length=self.config.source_length,
-            data_key=self.config.data_key
+        if self._encryption_materials.signing_key is None:
+            self.signer = None
+        else:
+            self.signer = aws_encryption_sdk.internal.crypto.Signer.from_key_bytes(
+                algorithm=self._encryption_materials.algorithm,
+                key_bytes=self._encryption_materials.signing_key
+            )
+        aws_encryption_sdk.internal.utils.validate_frame_length(
+            frame_length=self.config.frame_length,
+            algorithm=self._encryption_materials.algorithm
         )
+
+        self._derived_data_key = aws_encryption_sdk.internal.crypto.derive_data_encryption_key(
+            source_key=self._encryption_materials.data_encryption_key.data_key,
+            algorithm=self._encryption_materials.algorithm,
+            message_id=message_id
+        )
+
         self._header = MessageHeader(
-            version=aws_encryption_sdk.internal.defaults.VERSION,
-            type=aws_encryption_sdk.internal.defaults.TYPE,
-            algorithm=self.config.algorithm,
+            version=VERSION,
+            type=TYPE,
+            algorithm=self._encryption_materials.algorithm,
             message_id=message_id,
-            encryption_context=encryption_context,
-            encrypted_data_keys=encrypted_data_keys,
+            encryption_context=self._encryption_materials.encryption_context,
+            encrypted_data_keys=self._encryption_materials.encrypted_data_keys,
             content_type=self.content_type,
             content_aad_length=0,
-            header_iv_length=self.config.algorithm.iv_len,
+            header_iv_length=self._encryption_materials.algorithm.iv_len,
             frame_length=self.config.frame_length
         )
         self._write_header()
@@ -354,10 +444,9 @@ class StreamEncryptor(_EncryptionStream):
             signer=self.signer
         )
         self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
-            algorithm=self.config.algorithm,
+            algorithm=self._encryption_materials.algorithm,
             header=self.output_buffer,
-            message_id=self._header.message_id,
-            encryption_data_key=self.encryption_data_key,
+            data_encryption_key=self._derived_data_key,
             signer=self.signer
         )
 
@@ -374,13 +463,13 @@ class StreamEncryptor(_EncryptionStream):
             length=self.stream_length
         )
         self.encryptor = aws_encryption_sdk.internal.crypto.Encryptor(
-            algorithm=self.config.algorithm,
-            key=self.encryption_data_key.data_key,
+            algorithm=self._encryption_materials.algorithm,
+            key=self._derived_data_key,
             associated_data=associated_data,
-            message_id=self._header.message_id
+            iv=non_framed_body_iv(self._encryption_materials.algorithm)
         )
         self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
-            algorithm=self.config.algorithm,
+            algorithm=self._encryption_materials.algorithm,
             iv=self.encryptor.iv,
             plaintext_length=self.stream_length,
             signer=self.signer
@@ -395,22 +484,25 @@ class StreamEncryptor(_EncryptionStream):
         """
         _LOGGER.debug('Reading %s bytes', b)
         plaintext = self.source_stream.read(b)
-        if self.tell() + len(plaintext) > aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE:
+        if self.tell() + len(plaintext) > MAX_NON_FRAMED_SIZE:
             raise SerializationError('Source too large for non-framed message')
+
         ciphertext = self.encryptor.update(plaintext)
-        if self.signer:
+        self._bytes_encrypted += len(plaintext)
+        if self.signer is not None:
             self.signer.update(ciphertext)
+
         if len(plaintext) < b:
             _LOGGER.debug('Closing encryptor after receiving only %s bytes of %s bytes requested', plaintext, b)
             self.source_stream.close()
             closing = self.encryptor.finalize()
-            if self.signer:
+            if self.signer is not None:
                 self.signer.update(closing)
             closing += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
                 tag=self.encryptor.tag,
                 signer=self.signer
             )
-            if self.signer:
+            if self.signer is not None:
                 closing += aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.signer)
             return ciphertext + closing
         return ciphertext
@@ -440,17 +532,19 @@ class StreamEncryptor(_EncryptionStream):
             or (finalize and not final_frame_written)  # If finalizing on this pass, wait until final frame is written
         ):
             is_final_frame = finalize and len(plaintext) < self.config.frame_length
+            bytes_in_frame = min(len(plaintext), self.config.frame_length)
             _LOGGER.debug(
-                'Writing %s bytes into% frame %s',
-                min(len(plaintext), self.config.frame_length),
-                self.sequence_number,
-                ' final' if is_final_frame else ''
+                'Writing %s bytes into%s frame %s',
+                bytes_in_frame,
+                ' final' if is_final_frame else '',
+                self.sequence_number
             )
+            self._bytes_encrypted += bytes_in_frame
             ciphertext, plaintext = aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
-                algorithm=self.config.algorithm,
+                algorithm=self._encryption_materials.algorithm,
                 plaintext=plaintext,
                 message_id=self._header.message_id,
-                encryption_data_key=self.encryption_data_key,
+                data_encryption_key=self._derived_data_key,
                 frame_length=self.config.frame_length,
                 sequence_number=self.sequence_number,
                 is_final_frame=is_final_frame,
@@ -462,7 +556,7 @@ class StreamEncryptor(_EncryptionStream):
 
         if finalize:
             _LOGGER.debug('Writing footer')
-            if self.signer:
+            if self.signer is not None:
                 output += aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.signer)
             self.source_stream.close()
         return output
@@ -487,36 +581,49 @@ class StreamEncryptor(_EncryptionStream):
         else:
             raise NotSupportedError('Unsupported content type')
 
+        # To maintain backwards compatibility, only enforce this if a CMM is provided by the caller.
+        if self.config.key_provider is None and self.config.source_length is not None:
+            # Enforce that if the caller provided a source length value, the total bytes encrypted
+            # must not exceed that value.
+            if self._bytes_encrypted > self.config.source_length:
+                raise CustomMaximumValueExceeded(
+                    'Bytes encrypted has exceeded stated source length estimate:\n{actual} > {estimated}'.format(
+                        actual=self._bytes_encrypted,
+                        estimated=self.config.source
+                    )
+                )
+
     def close(self):
         """Closes out the stream."""
         _LOGGER.debug('Closing stream')
         super(StreamEncryptor, self).close()
 
 
-@attr.s
+@attr.s(hash=True)
 class DecryptorConfig(_ClientConfig):
     """Configuration object for StreamDecryptor class.
 
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param key_provider: MasterKeyProvider from which to obtain data keys for encryption
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
+        (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
             If source_length is not provided and read() is called, will attempt to seek()
             to the end of the stream and tell() to find the length of source data.
-    :param int line_length: Line length to use for reading "lines" from stream (optional)
 
-        .. note::
-            The concept of "lines" is used to match Python file-like-object terminology.  In this
-            context it defines the number of bytes returned by readline().
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
-    in bytes to read from ciphertext message.
+        in bytes to read from ciphertext message.
     """
     max_body_length = attr.ib(
+        hash=True,
         default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(int))
+        validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
 
 
@@ -535,20 +642,20 @@ class StreamDecryptor(_EncryptionStream):
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param key_provider: MasterKeyProvider from which to obtain data keys for decryption
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
+        (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
             If source_length is not provided and read() is called, will attempt to seek()
             to the end of the stream and tell() to find the length of source data.
-    :param int line_length: Line length to use for reading "lines" from stream (optional)
 
-        .. note::
-            The concept of "lines" is used to match Python file-like-object terminology.  In this
-            context it defines the number of bytes returned by readline().
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
-    in bytes to read from ciphertext message.
+        in bytes to read from ciphertext message.
     """
     _config_class = DecryptorConfig
 
@@ -566,7 +673,7 @@ class StreamDecryptor(_EncryptionStream):
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects
-        :rtype: tuple of aws_encryption_sdk.structure.MessageHeader
+        :rtype: tuple of aws_encryption_sdk.structures.MessageHeader
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
         :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
         """
@@ -586,19 +693,32 @@ class StreamDecryptor(_EncryptionStream):
             )
 
         header_end = self.source_stream.tell()
-        self.verifier = aws_encryption_sdk.internal.formatting.deserialize.verifier_from_header(header)
-        if self.verifier:
+        decrypt_materials_request = DecryptionMaterialsRequest(
+            encrypted_data_keys=header.encrypted_data_keys,
+            algorithm=header.algorithm,
+            encryption_context=header.encryption_context
+        )
+        decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
+        if decryption_materials.verification_key is None:
+            self.verifier = None
+        else:
+            self.verifier = aws_encryption_sdk.internal.crypto.Verifier.from_key_bytes(
+                algorithm=header.algorithm,
+                key_bytes=decryption_materials.verification_key
+            )
+        if self.verifier is not None:
             self.source_stream.seek(header_start)
             self.verifier.update(self.source_stream.read(header_end - header_start))
+
         header_auth = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
             stream=self.source_stream,
             algorithm=header.algorithm,
             verifier=self.verifier
         )
-        self.data_key = self.config.key_provider.decrypt_data_key_from_list(
-            encrypted_data_keys=header.encrypted_data_keys,
+        self._derived_data_key = aws_encryption_sdk.internal.crypto.derive_data_encryption_key(
+            source_key=decryption_materials.data_key.data_key,
             algorithm=header.algorithm,
-            encryption_context=header.encryption_context
+            message_id=header.message_id
         )
         aws_encryption_sdk.internal.formatting.deserialize.validate_header(
             header=header,
@@ -606,7 +726,7 @@ class StreamDecryptor(_EncryptionStream):
             stream=self.source_stream,
             header_start=header_start,
             header_end=header_end,
-            data_key=self.data_key
+            data_key=self._derived_data_key
         )
         return header, header_auth
 
@@ -638,9 +758,8 @@ class StreamDecryptor(_EncryptionStream):
         )
         self.decryptor = aws_encryption_sdk.internal.crypto.Decryptor(
             algorithm=self._header.algorithm,
-            key=self.data_key.data_key,
+            key=self._derived_data_key,
             associated_data=associated_data,
-            message_id=self._header.message_id,
             iv=iv,
             tag=tag
         )
@@ -661,7 +780,7 @@ class StreamDecryptor(_EncryptionStream):
         ciphertext = self.source_stream.read(bytes_to_read)
         if len(self.output_buffer) + len(ciphertext) < self.body_length:
             raise SerializationError('Total message body contents less than specified in body description')
-        if self.verifier:
+        if self.verifier is not None:
             self.verifier.update(ciphertext)
         plaintext = self.decryptor.update(ciphertext)
         plaintext += self.decryptor.finalize()
@@ -694,7 +813,7 @@ class StreamDecryptor(_EncryptionStream):
                 header=self._header,
                 verifier=self.verifier
             )
-            _LOGGER.debug('Read complete for frame %s'.format(frame_data.sequence_number))
+            _LOGGER.debug('Read complete for frame %s', frame_data.sequence_number)
             if frame_data.sequence_number != self.last_sequence_number + 1:
                 raise SerializationError('Malformed message: frames out of order')
             self.last_sequence_number += 1
@@ -710,10 +829,9 @@ class StreamDecryptor(_EncryptionStream):
             )
             plaintext += aws_encryption_sdk.internal.crypto.decrypt(
                 algorithm=self._header.algorithm,
-                key=self.data_key.data_key,
+                key=self._derived_data_key,
                 encrypted_data=frame_data,
-                associated_data=associated_data,
-                message_id=self._header.message_id
+                associated_data=associated_data
             )
             _LOGGER.debug('bytes collected: %s', len(plaintext))
         if final_frame:

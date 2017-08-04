@@ -4,17 +4,27 @@
 import unittest
 
 from mock import MagicMock, patch, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, NotSupportedError, SerializationError,
-    UnknownIdentityError, InvalidDataKeyError, MasterKeyProviderError
+    ActionNotAllowedError, SerializationError,
+    UnknownIdentityError, InvalidDataKeyError
 )
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.structures import RawDataKey, DataKey, EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
+
+
+@pytest.mark.parametrize('user_agent, suffix, output', (
+    (None, 'test_suffix', 'test_suffix'),
+    ('test_existing_suffix', 'test_suffix', 'test_existing_suffix test_suffix')
+))
+def test_extend_user_agent_suffix(user_agent, suffix, output):
+    test = aws_encryption_sdk.internal.utils.extend_user_agent_suffix(user_agent, suffix)
+    assert test == output
 
 
 class TestUtils(unittest.TestCase):
@@ -221,84 +231,49 @@ class TestUtils(unittest.TestCase):
         with six.assertRaisesRegex(self, UnknownIdentityError, 'Unhandled content type'):
             aws_encryption_sdk.internal.utils.get_aad_content_string(-1, False)
 
-    def test_prepare_data_keys_no_master_keys(self):
-        """"""
-        self.mock_master_key_provider.master_keys_for_encryption.return_value = None, []
-        with six.assertRaisesRegex(self, MasterKeyProviderError, 'No Master Keys available from Master Key Provider'):
-            aws_encryption_sdk.internal.utils.prepare_data_keys(
-                key_provider=self.mock_master_key_provider,
-                algorithm=sentinel.algorithm,
-                encryption_context=sentinel.encryption_context,
-                plaintext_rostream=sentinel.plaintext_rostream,
-                plaintext_length=sentinel.plaintext_length,
-                data_key=self.mock_raw_data_key_1
-            )
-
-    def test_prepare_data_keys_primary_master_key_not_in_master_keys(self):
-        """"""
-        self.mock_master_key_provider.master_keys_for_encryption.return_value = sentinel.primary, [sentinel.non_primary]
-        with six.assertRaisesRegex(self, MasterKeyProviderError, 'Primary Master Key not in provided Master Keys'):
-            aws_encryption_sdk.internal.utils.prepare_data_keys(
-                key_provider=self.mock_master_key_provider,
-                algorithm=sentinel.algorithm,
-                encryption_context=sentinel.encryption_context,
-                plaintext_rostream=sentinel.plaintext_rostream,
-                plaintext_length=sentinel.plaintext_length,
-                data_key=self.mock_raw_data_key_1
-            )
-
-    def test_prepare_data_keys_raw_data_key(self):
-        """Validate that the prepare_data_keys function behaves as
-            expected when called with a RawDataKey.
-        """
-        test_encryption_data_key, _ = aws_encryption_sdk.internal.utils.prepare_data_keys(
-            key_provider=self.mock_master_key_provider,
-            algorithm=sentinel.algorithm,
-            encryption_context=sentinel.encryption_context,
-            plaintext_rostream=sentinel.plaintext_rostream,
-            plaintext_length=sentinel.plaintext_length,
-            data_key=self.mock_raw_data_key_1
-        )
-        assert not self.mock_master_key_1.generate_data_key.called
-        assert test_encryption_data_key == DataKey(
+    def test_prepare_data_keys(self):
+        mock_encryption_dk = DataKey(
             key_provider=self.mock_key_provider_1,
             data_key=self.mock_raw_data_key_1_bytes,
             encrypted_data_key=self.mock_encrypted_data_key_1_bytes
         )
-
-    def test_prepare_data_keys_data_key(self):
-        """Validate that the prepare_data_keys function behaves as
-            expected when called with a DataKey.
-        """
-        test_encryption_data_key, test_encrypted_data_keys = aws_encryption_sdk.internal.utils.prepare_data_keys(
-            key_provider=self.mock_master_key_provider,
+        mock_primary_mk = MagicMock()
+        mock_primary_mk.generate_data_key.return_value = mock_encryption_dk
+        mock_mk_1 = MagicMock()
+        mock_mk_1.encrypt_data_key.return_value = sentinel.encrypted_data_key_1
+        mock_mk_2 = MagicMock()
+        mock_mk_2.encrypt_data_key.return_value = sentinel.encrypted_data_key_2
+        test_data_encryption_key, test_encrypted_data_keys = aws_encryption_sdk.internal.utils.prepare_data_keys(
+            primary_master_key=mock_primary_mk,
+            master_keys=[mock_primary_mk, mock_mk_1, mock_mk_2],
             algorithm=sentinel.algorithm,
-            encryption_context=sentinel.encryption_context,
-            plaintext_rostream=sentinel.plaintext_rostream,
-            plaintext_length=sentinel.plaintext_length,
-            data_key=self.mock_data_key
+            encryption_context=sentinel.encryption_context
         )
-        assert self.mock_master_key_1.encrypt_data_key.called
-        assert test_encryption_data_key == self.mock_decrypted_data_key
+        mock_primary_mk.generate_data_key.assert_called_once_with(
+            sentinel.algorithm,
+            sentinel.encryption_context
+        )
+        assert not mock_primary_mk.encrypt_data_key.called
+        mock_mk_1.encrypt_data_key.assert_called_once_with(
+            data_key=mock_encryption_dk,
+            algorithm=sentinel.algorithm,
+            encryption_context=sentinel.encryption_context
+        )
+        mock_mk_2.encrypt_data_key.assert_called_once_with(
+            data_key=mock_encryption_dk,
+            algorithm=sentinel.algorithm,
+            encryption_context=sentinel.encryption_context
+        )
+        mock_encrypted_data_encryption_key = EncryptedDataKey(
+            key_provider=self.mock_key_provider_1,
+            encrypted_data_key=self.mock_encrypted_data_key_1_bytes
+        )
+        assert test_data_encryption_key is mock_encryption_dk
         assert test_encrypted_data_keys == set([
-            self.mock_encrypted_data_key_1,
-            self.mock_encrypted_data_key_2,
-            self.mock_encrypted_data_key_3
+            mock_encrypted_data_encryption_key,
+            sentinel.encrypted_data_key_1,
+            sentinel.encrypted_data_key_2
         ])
-
-    def test_prepare_data_keys_unsupported_data_key_type(self):
-        """Validate that the prepare_data_keys function behaves as
-            expected when called with an unsupported data_key type.
-        """
-        with six.assertRaisesRegex(self, NotSupportedError, 'Unsupported data_key type: *'):
-            aws_encryption_sdk.internal.utils.prepare_data_keys(
-                key_provider=self.mock_master_key_provider,
-                algorithm=sentinel.algorithm,
-                encryption_context=sentinel.encryption_context,
-                plaintext_rostream=sentinel.plaintext_rostream,
-                plaintext_length=sentinel.plaintext_length,
-                data_key='THIS IS NOT A VALID DATA KEY'
-            )
 
     @patch('aws_encryption_sdk.internal.utils.to_bytes', return_value=sentinel.bytes)
     @patch('aws_encryption_sdk.internal.utils.io.BytesIO', return_value=sentinel.bytesio)

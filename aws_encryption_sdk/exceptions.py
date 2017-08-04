@@ -71,3 +71,19 @@ class ConfigMismatchError(AWSEncryptionSDKClientError):
 
 class UnknownRegionError(AWSEncryptionSDKClientError):
     """Exception class for errors encountered when attempting to process unknown regions or region names."""
+
+
+class CacheError(AWSEncryptionSDKClientError):
+    """General exception class for materials caches.
+
+    .. versionadded:: 1.3.0
+    """
+
+
+class CacheKeyError(CacheError):
+    """Exception class for `CryptoCache` key misses.
+
+    .. versionadded:: 1.3.0
+
+    This exception is meant to mirror `KeyError` but in the context of a `CryptoCache`.
+    """

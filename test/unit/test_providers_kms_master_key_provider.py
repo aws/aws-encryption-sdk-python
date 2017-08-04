@@ -41,13 +41,13 @@ class TestKMSMasterKeyProvider(unittest.TestCase):
 
     @patch('aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_master_keys_from_list')
     def test_init_with_key_ids(self, mock_add_keys):
-        mock_ids = [sentinel.id_1, sentinel.id_2]
+        mock_ids = (sentinel.id_1, sentinel.id_2)
         KMSMasterKeyProvider(key_ids=mock_ids)
         mock_add_keys.assert_called_once_with(mock_ids)
 
     @patch('aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_clients_from_list')
     def test_init_with_region_names(self, mock_add_clients):
-        region_names = [sentinel.region_name_1, sentinel.region_name_2]
+        region_names = (sentinel.region_name_1, sentinel.region_name_2)
         test = KMSMasterKeyProvider(region_names=region_names)
         mock_add_clients.assert_called_once_with(region_names)
         assert test.default_region is sentinel.region_name_1
@@ -131,6 +131,7 @@ class TestKMSMasterKeyProvider(unittest.TestCase):
 
     @patch('aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider._client')
     def test_new_master_key(self, mock_client):
+        """v1.2.4 : master key equality is left to the Python object identity now"""
         mock_client.return_value = self.mock_boto3_client_instance
         key_info = 'example key info asdf'
         test = KMSMasterKeyProvider()
@@ -139,4 +140,4 @@ class TestKMSMasterKeyProvider(unittest.TestCase):
             key_id=key_info,
             client=self.mock_boto3_client_instance
         )
-        assert key == check_key
+        assert key != check_key

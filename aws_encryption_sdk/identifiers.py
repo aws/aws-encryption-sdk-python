@@ -1,4 +1,6 @@
 """AWS Encryption SDK native data structures for defining implementation-specific characteristics."""
+import struct
+
 from enum import Enum
 
 from cryptography.hazmat.primitives import hashes
@@ -8,7 +10,8 @@ from cryptography.hazmat.primitives.kdf import hkdf
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
-__version__ = '1.2.2'
+__version__ = '1.3.0'
+user_agent_suffix = 'AwsEncryptionSdkPython-KMSMasterKey/{}'.format(__version__)
 
 
 def _kdf_input_len_check(data_key_len, kdf_type, kdf_input_len):
@@ -42,35 +45,38 @@ class Algorithm(Enum):
     :param int auth_key_len: Number of bytes in auth key (not currently supported by any algorithms)
     :param int data_key_len: Number of bytes in envelope encryption data key
     :param kdf_type: KDF algorithm to use
-    :param kdf_type: cryptography.io KDF object
+    :type kdf_type: cryptography.io KDF object
     :param int kdf_input_len: Number of bytes of input data to feed into KDF function
     :param kdf_hash_type: Hash algorithm to use in KDF
     :type kdf_hash_type: cryptography.io hashes object
     :param signing_algorithm_info: Information needed by signing algorithm to define behavior
     :type signing_algorithm_info: may vary (currently only ECC curve object)
+    :param signature_hash_type: Hash algorithm to use in signature
+    :type signature_hash_type: cryptography.io hashes object
+    :param int signature_len: Number of bytes in signature
     """
     __rlookup__ = {}  # algorithm_id -> Algorithm
 
-    AES_128_GCM_IV12_TAG16 = (0x0014, algorithms.AES, modes.GCM, 12, 16, 0, 16, None, 16, None, None)
-    AES_192_GCM_IV12_TAG16 = (0x0046, algorithms.AES, modes.GCM, 12, 16, 0, 24, None, 24, None, None)
-    AES_256_GCM_IV12_TAG16 = (0x0078, algorithms.AES, modes.GCM, 12, 16, 0, 32, None, 32, None, None)
+    AES_128_GCM_IV12_TAG16 = (0x0014, algorithms.AES, modes.GCM, 12, 16, 0, 16, None, 16, None, None, None, 0)
+    AES_192_GCM_IV12_TAG16 = (0x0046, algorithms.AES, modes.GCM, 12, 16, 0, 24, None, 24, None, None, None, 0)
+    AES_256_GCM_IV12_TAG16 = (0x0078, algorithms.AES, modes.GCM, 12, 16, 0, 32, None, 32, None, None, None, 0)
     AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0114, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, None
+        0x0114, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, None, None, 0
     )
     AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0146, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA256, None
+        0x0146, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA256, None, None, 0
     )
     AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0178, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA256, None
+        0x0178, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA256, None, None, 0
     )
     AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256 = (
-        0x0214, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, ec.SECP256R1
+        0x0214, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, ec.SECP256R1, hashes.SHA256, 71
     )
     AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0346, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA384, ec.SECP384R1
+        0x0346, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA384, ec.SECP384R1, hashes.SHA384, 103
     )
     AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0378, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA384, ec.SECP384R1
+        0x0378, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA384, ec.SECP384R1, hashes.SHA384, 103
     )
 
     def __init__(
@@ -85,7 +91,9 @@ class Algorithm(Enum):
         kdf_type,
         kdf_input_len,
         kdf_hash_type,
-        signing_algorithm_info
+        signing_algorithm_info,
+        signing_hash_type,
+        signature_len
     ):
         _kdf_input_len_check(
             data_key_len=data_key_len,
@@ -104,6 +112,8 @@ class Algorithm(Enum):
         self.kdf_input_len = kdf_input_len
         self.kdf_hash_type = kdf_hash_type
         self.signing_algorithm_info = signing_algorithm_info
+        self.signing_hash_type = signing_hash_type
+        self.signature_len = signature_len
         # All algorithms in this enum are allowed for now.
         #  This might change in the future.
         self.allowed = True
@@ -119,6 +129,14 @@ class Algorithm(Enum):
         :rtype: aws_encryption_sdk.identifiers.Algorithm
         """
         return cls.__rlookup__[algorithm_id]
+
+    def id_as_bytes(self):
+        """Returns the algorithm suite ID as a 2-byte array"""
+        return struct.pack('>H', self.algorithm_id)
+
+    def safe_to_cache(self):
+        """Determines whether encryption materials for this algorithm suite should be cached."""
+        return self.kdf_type is not None
 
 
 class EncryptionType(Enum):
