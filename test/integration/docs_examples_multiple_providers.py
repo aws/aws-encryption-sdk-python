@@ -33,8 +33,8 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
     def _get_raw_key(self, key_id):
         """Retrieves a static, randomly generated, RSA key for the specified key id.
 
-        :param str key_id: Key ID
-        :returns: Wrapping key which contains the specified static key
+        :param str key_id: : User-defined ID for the static key
+        :returns: Wrapping key that contains the specified static key
         :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
         """
         try:
@@ -59,33 +59,36 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
-    """Encrypts and then decrypts a file under both a KMS Master Key Provider and a custom static Master Key Provider.
+"""Encrypts and then decrypts a file using a KMS master key provider and a custom static master
+    key provider. Both master key providers are used to encrypt the plaintext file, so either one alone 
+    can decrypt it.
 
-    :param str key_arn: Amazon Resource Name (Arn) of the KMS CMK
+    :param str key_arn: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK) (http://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html)    
     :param str source_plaintext_filename: Filename of file to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
-
+    
+    # "Cycled" means encrypted and then decrypted 
     ciphertext_filename = source_plaintext_filename + '.encrypted'
     cycled_kms_plaintext_filename = source_plaintext_filename + '.kms.decrypted'
     cycled_static_plaintext_filename = source_plaintext_filename + '.static.decrypted'
 
-    # Create KMS Master Key Provider
+    # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs['botocore_session'] = botocore_session
     kms_master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
 
-    # Create Static Master Key Provider and add to KMS Master Key Provider
+    # Create a static master key provider and add a master key to it
     static_key_id = os.urandom(8)
     static_master_key_provider = StaticRandomMasterKeyProvider()
     static_master_key_provider.add_master_key(static_key_id)
 
-    # Add Static Master Key Provider to KMS Master Key Provider
+    # Create a master key provider that includes the KMS and static master key providers
     kms_master_key_provider.add_master_key_provider(static_master_key_provider)
 
-    # Encrypt plaintext with both KMS and Static Master Keys
+    # Encrypt plaintext with both KMS and static master keys
     with open(source_plaintext_filename, 'rb') as plaintext, open(ciphertext_filename, 'wb') as ciphertext:
         with aws_encryption_sdk.stream(
             source=plaintext,
@@ -95,7 +98,7 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
-    # Decrypt the ciphertext with the KMS Master Key
+    # Decrypt the ciphertext with only the KMS master key
     with open(ciphertext_filename, 'rb') as ciphertext, open(cycled_kms_plaintext_filename, 'wb') as plaintext:
         with aws_encryption_sdk.stream(
             source=ciphertext,
@@ -105,7 +108,7 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
             for chunk in kms_decryptor:
                 plaintext.write(chunk)
 
-    # Decrypt the ciphertext with the Static Master Key only
+    # Decrypt the ciphertext with only the static master key
     with open(ciphertext_filename, 'rb') as ciphertext, open(cycled_static_plaintext_filename, 'wb') as plaintext:
         with aws_encryption_sdk.stream(
             source=ciphertext,
@@ -115,11 +118,16 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
             for chunk in static_decryptor:
                 plaintext.write(chunk)
 
-    # Validate that the cycled plaintext is identical to the source plaintext
+    # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert filecmp.cmp(source_plaintext_filename, cycled_kms_plaintext_filename)
     assert filecmp.cmp(source_plaintext_filename, cycled_static_plaintext_filename)
 
-    # Validate that the encryption context used by the decryptor has all the key-pairs from the encryptor
+
+    # Verify that the encryption context in the decrypt operation includes all key pairs from the
+    # encrypt operation.
+    #
+    # In production, always use a meaningful encryption context. In this sample, we omit the
+    # encryption context (no key pairs).
     assert all(
         pair in kms_decryptor.header.encryption_context.items()
         for pair in encryptor.header.encryption_context.items()

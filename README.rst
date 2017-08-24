@@ -44,7 +44,7 @@ An example of a CMM is the default CMM, which is automatically generated anywher
 key provider. The default CMM collects encrypted data keys from all master keys referenced by the master key
 provider.
 
-An example of a more advanced CMM is the caching CMM, which caches cryptographic materials provided by a another CMM.
+An example of a more advanced CMM is the caching CMM, which caches cryptographic materials provided by another CMM.
 
 Master Key Providers
 --------------------
@@ -57,12 +57,13 @@ To encrypt data in this client, a ``MasterKeyProvider`` object must contain at l
 
 Master Keys
 -----------
-Master keys provide data keys.
+Master keys generate, encrypt, and decrypt data keys.
 An example of a master key is a `KMS customer master key (CMK)`_.
 
 Data Keys
 ---------
-Data Keys are the actual encryption keys which are used to encrypt your data.
+Data keys are the encryption keys that are used to encrypt your data. If your algorithm suite
+uses a key derivation function, the data key is used to generate the key that directly encrypts the data.
 
 *****
 Usage
