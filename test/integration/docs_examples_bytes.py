@@ -21,17 +21,17 @@ from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
 
 
 class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
-    """Randomly generates and provides 256-bit keys consistently per unique key id."""
+    """Randomly generates 256-bit keys for each unique key ID."""
     provider_id = 'static-random'
 
     def __init__(self, **kwargs):
         self._static_keys = {}
 
     def _get_raw_key(self, key_id):
-        """Retrieves a static, randomly generated, symmetric key for the specified key id.
+        """Returns a static, randomly-generated symmetric key for the specified key ID.
 
         :param str key_id: Key ID
-        :returns: Wrapping key which contains the specified static key
+        :returns: Wrapping key that contains the specified static key
         :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
         """
         try:
@@ -47,12 +47,12 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def cycle_file(source_plaintext_filename):
-    """Encrypts and then decrypts a file under a custom static Master Key Provider.
+    """Encrypts and then decrypts a file under a custom static master key provider.
 
     :param str source_plaintext_filename: Filename of file to encrypt
     """
 
-    # Create the Static Random Master Key Provider
+    # Create a static random master key provider
     key_id = os.urandom(8)
     master_key_provider = StaticRandomMasterKeyProvider()
     master_key_provider.add_master_key(key_id)
@@ -60,7 +60,7 @@ def cycle_file(source_plaintext_filename):
     ciphertext_filename = source_plaintext_filename + '.encrypted'
     cycled_plaintext_filename = source_plaintext_filename + '.decrypted'
 
-    # Encrypt the source plaintext
+    # Encrypt the plaintext source data
     with open(source_plaintext_filename, 'rb') as plaintext, open(ciphertext_filename, 'wb') as ciphertext:
         with aws_encryption_sdk.stream(
             mode='e',
@@ -80,10 +80,15 @@ def cycle_file(source_plaintext_filename):
             for chunk in decryptor:
                 plaintext.write(chunk)
 
-    # Validate that the cycled plaintext is identical to the source plaintext
+    # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source 
+    # plaintext
     assert filecmp.cmp(source_plaintext_filename, cycled_plaintext_filename)
 
-    # Validate that the encryption context used by the decryptor has all the key-pairs from the encryptor
+    # Verify that the encryption context used in the decrypt operation includes all key pairs from
+    # the encrypt operation
+    #
+    # In production, always use a meaningful encryption context. In this sample, we omit the
+    # encryption context (no key pairs).
     assert all(
         pair in decryptor.header.encryption_context.items()
         for pair in encryptor.header.encryption_context.items()

@@ -19,19 +19,19 @@ import aws_encryption_sdk
 def cycle_string(key_arn, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under a KMS customer master key (CMK)
 
-    :param str key_arn: Amazon Resource Name (Arn) of the KMS CMK
+    :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
 
-    # Create the KMS Master Key Provider
+    # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs['botocore_session'] = botocore_session
     master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
 
-    # Encrypt the source plaintext
+    # Encrypt the plaintext source data
     ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
         source=source_plaintext,
         key_provider=master_key_provider
@@ -44,10 +44,14 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
         key_provider=master_key_provider
     )
 
-    # Validate that the cycled plaintext is identical to the source plaintext
+    # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == source_plaintext
 
-    # Validate that the encryption context used by the decryptor has all the key-pairs from the encryptor
+    # Verify that the encryption context used in the decrypt operation includes all key pairs from
+    # the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
+    #
+    # In production, always use a meaningful encryption context. In this sample, we omit the
+    # encryption context (no key pairs).
     assert all(
         pair in decrypted_header.encryption_context.items()
         for pair in encryptor_header.encryption_context.items()
