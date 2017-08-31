@@ -33,7 +33,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
     def _get_raw_key(self, key_id):
         """Retrieves a static, randomly generated, RSA key for the specified key id.
 
-        :param str key_id: : User-defined ID for the static key
+        :param str key_id: User-defined ID for the static key
         :returns: Wrapping key that contains the specified static key
         :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
         """
@@ -59,7 +59,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
-"""Encrypts and then decrypts a file using a KMS master key provider and a custom static master
+    """Encrypts and then decrypts a file using a KMS master key provider and a custom static master
     key provider. Both master key providers are used to encrypt the plaintext file, so either one alone 
     can decrypt it.
 
@@ -85,7 +85,9 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
     static_master_key_provider = StaticRandomMasterKeyProvider()
     static_master_key_provider.add_master_key(static_key_id)
 
-    # Create a master key provider that includes the KMS and static master key providers
+    # Add the static master key provider to the KMS master key provider
+    #   The resulting master key provider uses KMS master keys to generate (and encrypt) 
+    #   data keys and static master keys to create an additional encrypted copy of each data key.
     kms_master_key_provider.add_master_key_provider(static_master_key_provider)
 
     # Encrypt plaintext with both KMS and static master keys
