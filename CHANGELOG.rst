@@ -2,6 +2,29 @@
 Changelog
 *********
 
+1.3.1
+=====
+
+Reorganization
+--------------
+* Moved source into ``src``.
+* Moved examples into ``examples``.
+* Broke out ``internal.crypto`` into smaller, feature-oriented, modules.
+
+Tooling
+-------
+* Added `tox`_ configuration to support automation and development tooling.
+* Added `pylint`_, `flake8`_, and `doc8`_ configuration to enforce style rules.
+
+Maintenance
+-----------
+* Updated ``internal.crypto.authentication.Verifier`` to use ``Prehashed``.
+* Addressed `docstring issue #7 https://github.com/awslabs/aws-encryption-sdk-python/issues/7`_.
+* Addressed `docstring issue #8 https://github.com/awslabs/aws-encryption-sdk-python/issues/8`_.
+* Addressed `logging issue #10 https://github.com/awslabs/aws-encryption-sdk-python/issues/10`_.
+* Addressed assorted linting issues to bring source, tests, examples, and docs up to configured
+   linting standards.
+
 1.3.0
 =====
 
@@ -32,3 +55,7 @@ Minor
 * Initial public release
 
 .. _breaking changes in attrs 17.1.0: https://attrs.readthedocs.io/en/stable/changelog.html
+.. _tox: https://tox.readthedocs.io/en/latest/
+.. _pylint: https://www.pylint.org/
+.. _flake8: http://flake8.pycqa.org/en/latest/
+.. _doc8: https://launchpad.net/doc8
