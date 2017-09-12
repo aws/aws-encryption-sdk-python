@@ -1,17 +1,29 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.caches common functions."""
 from base64 import b64decode
 import struct
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.caches import (
-    _encryption_context_hash, build_encryption_materials_cache_key,
-    _encrypted_data_keys_hash, _512_BIT_PAD, build_decryption_materials_cache_key
+    _512_BIT_PAD, _encrypted_data_keys_hash, _encryption_context_hash,
+    build_decryption_materials_cache_key, build_encryption_materials_cache_key
 )
-from aws_encryption_sdk.materials_managers import EncryptionMaterialsRequest, DecryptionMaterialsRequest
+from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo
 
 

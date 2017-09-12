@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.structures"""
 import attr
 from mock import MagicMock
@@ -5,11 +17,11 @@ import pytest
 import six
 
 from aws_encryption_sdk.identifiers import (
-    SerializationVersion, ObjectType, Algorithm, ContentType
+    Algorithm, ContentType, ObjectType, SerializationVersion
 )
-from aws_encryption_sdk.internal.str_ops import to_str, to_bytes
+from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 from aws_encryption_sdk.structures import (
-    MessageHeader, MasterKeyInfo, RawDataKey, DataKey, EncryptedDataKey
+    DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader, RawDataKey
 )
 
 
@@ -179,16 +191,16 @@ def test_attributes(attribute, validator_type, convert_function):
     )
 )
 def test_message_header_attributes_fails(
-    version,
-    message_type,
-    algorithm,
-    message_id,
-    encryption_context,
-    encrypted_data_keys,
-    content_type,
-    content_aad_length,
-    header_iv_length,
-    frame_length
+        version,
+        message_type,
+        algorithm,
+        message_id,
+        encryption_context,
+        encrypted_data_keys,
+        content_type,
+        content_aad_length,
+        header_iv_length,
+        frame_length
 ):
     with pytest.raises(TypeError):
         MessageHeader(

@@ -1,7 +1,19 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Functional test suite testing decryption of known good test files encrypted using static RawMasterKeyProvider."""
 from __future__ import print_function
-from collections import defaultdict
 import base64
+from collections import defaultdict
 import json
 import logging
 import os
@@ -13,8 +25,8 @@ import six
 
 import aws_encryption_sdk
 from aws_encryption_sdk.exceptions import InvalidKeyIdError
-from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType
-from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
@@ -22,6 +34,8 @@ from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 # Environment-specific test file locator.  May not always exist.
 def _file_root():
     return '.'
+
+
 try:
     from .aws_test_file_finder import file_root
 except ImportError:
@@ -58,7 +72,7 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
     provider_id = 'static-aws-xcompat'
 
     def _get_raw_key(self, key_id):
-        """"""
+        """Finds a loaded raw key."""
         try:
             algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split(b'.', 3)
             key_bits = int(key_bits)
@@ -72,13 +86,13 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
                 wrapping_key_type=key_type
             )
         except KeyError:
-            _LOGGER.exception('Unknown Key ID: {}'.format(key_id))
+            _LOGGER.exception('Unknown Key ID: %s', key_id)
             raise InvalidKeyIdError('Unknown Key ID: {}'.format(key_id))
 
 
 @attr.s
 class RawKeyDescription(object):
-    """"""
+    """Customer raw key descriptor used by StaticStoredMasterKeyProvider."""
     encryption_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
     key_bits = attr.ib(validator=attr.validators.instance_of(int))
     padding_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
@@ -86,7 +100,7 @@ class RawKeyDescription(object):
 
     @property
     def key_id(self):
-        """"""
+        """Build a key ID from instance parameters."""
         return '.'.join([self.encryption_algorithm, str(self.key_bits), self.padding_algorithm, self.padding_hash])
 
 
@@ -100,8 +114,14 @@ class Scenario(object):
 
 
 def _generate_test_cases():
+    try:
+        root_dir = os.path.abspath(file_root())
+    except Exception:  # pylint: disable=broad-except
+        root_dir = os.getcwd()
+    if not os.path.isdir(root_dir):
+        root_dir = os.getcwd()
     base_dir = os.path.join(
-        os.path.abspath(file_root()),
+        root_dir,
         'aws_encryption_sdk_resources'
     )
     ciphertext_manifest_path = os.path.join(

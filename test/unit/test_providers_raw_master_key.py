@@ -1,13 +1,25 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKey"""
 import unittest
 
-from mock import MagicMock, sentinel, patch
+from mock import MagicMock, patch, sentinel
 
-from aws_encryption_sdk.internal.crypto import WrappingKey
-from aws_encryption_sdk.identifiers import WrappingAlgorithm, Algorithm
+from aws_encryption_sdk.identifiers import Algorithm, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyConfig
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, RawDataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 from .test_values import VALUES
 
 

@@ -1,15 +1,23 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.base.MasterKey"""
 import unittest
 
 import attr
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.utils import InterfaceNotImplemented
-from mock import MagicMock, sentinel, patch
+from mock import MagicMock, patch, sentinel
 import six
 
-from aws_encryption_sdk.exceptions import (
-    InvalidKeyIdError, IncorrectMasterKeyError, ConfigMismatchError, NotSupportedError
-)
+from aws_encryption_sdk.exceptions import ConfigMismatchError, IncorrectMasterKeyError, InvalidKeyIdError
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider
 from aws_encryption_sdk.structures import MasterKeyInfo
@@ -34,7 +42,7 @@ class MockMasterKey(MasterKey):
     def _encrypt_data_key(self, data_key, algorithm, encryption_context):
         return self.config.mock_encrypted_data_key
 
-    def _decrypt_data_key(self, encrypted_data_key, encryption_context):
+    def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
         return self.config.mock_decrypted_data_key
 
 
@@ -58,7 +66,7 @@ class TestMasterKey(unittest.TestCase):
             def _encrypt_data_key(self, data_key, algorithm, encryption_context):
                 pass
 
-            def _decrypt_data_key(self, encrypted_data_key, encryption_context):
+            def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
         with six.assertRaisesRegex(
             self,
@@ -74,7 +82,7 @@ class TestMasterKey(unittest.TestCase):
             def _encrypt_data_key(self, data_key, algorithm, encryption_context):
                 pass
 
-            def _decrypt_data_key(self, encrypted_data_key, encryption_context):
+            def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
         with six.assertRaisesRegex(
             self,
@@ -90,7 +98,7 @@ class TestMasterKey(unittest.TestCase):
             def generate_data_key(self, algorithm, encryption_context):
                 pass
 
-            def _decrypt_data_key(self, encrypted_data_key, encryption_context):
+            def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
         with six.assertRaisesRegex(
             self,

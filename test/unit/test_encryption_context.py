@@ -1,12 +1,24 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context"""
 import unittest
 
 import six
 
 from aws_encryption_sdk.exceptions import SerializationError
+from aws_encryption_sdk.identifiers import ContentAADString
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
-from aws_encryption_sdk.identifiers import ContentAADString
 from .test_values import VALUES
 
 
@@ -74,7 +86,9 @@ class TestEncryptionContext(unittest.TestCase):
         """
         for encryption_context in [{'a': b'\xc4'}, {b'\xc4': 'a'}, {b'\xc4': b'\xc4'}]:
             with six.assertRaisesRegex(self, SerializationError, 'Cannot encode dictionary key or value using *'):
-                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(encryption_context)
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    encryption_context
+                )
 
     def test_serialize_encryption_context_valid(self):
         """Validate that the serialize_encryption_context

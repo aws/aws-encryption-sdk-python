@@ -1,12 +1,24 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Functional test suite for Elliptic Curve static length signature calculation."""
-import pytest
-
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.backends import default_backend
+import pytest
 
 import aws_encryption_sdk
-from aws_encryption_sdk.internal.crypto import _ecc_static_length_signature, Signer
+from aws_encryption_sdk.internal.crypto.authentication import Signer
+from aws_encryption_sdk.internal.crypto.elliptic_curve import _ecc_static_length_signature
 
 
 # Run several of each type to make get a high probability of forcing signature length correction

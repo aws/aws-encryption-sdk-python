@@ -1,16 +1,28 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamEncryptor"""
 import io
 import unittest
 
-from mock import MagicMock, patch, sentinel, call
+from mock import call, MagicMock, patch, sentinel
 import six
 
 from aws_encryption_sdk.exceptions import (
-    NotSupportedError, SerializationError, MasterKeyProviderError, ActionNotAllowedError
+    ActionNotAllowedError, MasterKeyProviderError, NotSupportedError, SerializationError
 )
-import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.identifiers import Algorithm, ContentType
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKey
+import aws_encryption_sdk.internal.defaults
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
 from aws_encryption_sdk.structures import MessageHeader
@@ -81,7 +93,7 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_message_id.return_value = VALUES['message_id']
         # Set up signer patch
         self.mock_signer_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.crypto.Signer'
+            'aws_encryption_sdk.streaming_client.Signer'
         )
         self.mock_signer = self.mock_signer_patcher.start()
         self.mock_signer_instance = MagicMock()
@@ -112,13 +124,14 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_get_aad_content_string.return_value = sentinel.aad_content_string
         # Set up assemble_content_aad patch
         self.mock_assemble_content_aad_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad'
+            'aws_encryption_sdk.streaming_client'
+            '.aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad'
         )
         self.mock_assemble_content_aad = self.mock_assemble_content_aad_patcher.start()
         self.mock_assemble_content_aad.return_value = sentinel.associated_data
         # Set up encryptor patch
         self.mock_encryptor_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.crypto.Encryptor'
+            'aws_encryption_sdk.streaming_client.Encryptor'
         )
         self.mock_encryptor = self.mock_encryptor_patcher.start()
         self.mock_encryptor_instance = MagicMock()
@@ -126,12 +139,14 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_encryptor.return_value = self.mock_encryptor_instance
         # Set up serialize_non_framed_open patch
         self.mock_serialize_non_framed_open_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open'
+            'aws_encryption_sdk.streaming_client'
+            '.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open'
         )
         self.mock_serialize_non_framed_open = self.mock_serialize_non_framed_open_patcher.start()
         # Set up serialize_non_framed_close patch
         self.mock_serialize_non_framed_close_patcher = patch(
-            'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close'
+            'aws_encryption_sdk.streaming_client'
+            '.aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close'
         )
         self.mock_serialize_non_framed_close = self.mock_serialize_non_framed_close_patcher.start()
         # Set up serialize_footer patch
@@ -226,17 +241,17 @@ class TestStreamEncryptor(unittest.TestCase):
             test_encryptor._prep_message()
 
     @patch('aws_encryption_sdk.streaming_client.EncryptionMaterialsRequest')
-    @patch('aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.crypto.derive_data_encryption_key')
+    @patch('aws_encryption_sdk.streaming_client.derive_data_encryption_key')
     @patch('aws_encryption_sdk.internal.utils.ROStream')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
     def test_prep_message_framed_message(
-        self,
-        mock_write_header,
-        mock_prep_non_framed,
-        mock_rostream,
-        mock_derive_datakey,
-        mock_encryption_materials_request
+            self,
+            mock_write_header,
+            mock_prep_non_framed,
+            mock_rostream,
+            mock_derive_datakey,
+            mock_encryption_materials_request
     ):
         mock_rostream.return_value = sentinel.plaintext_rostream
         test_encryptor = StreamEncryptor(
