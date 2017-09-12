@@ -19,11 +19,11 @@ Tooling
 Maintenance
 -----------
 * Updated ``internal.crypto.authentication.Verifier`` to use ``Prehashed``.
-* Addressed `docstring issue #7 https://github.com/awslabs/aws-encryption-sdk-python/issues/7`_.
-* Addressed `docstring issue #8 https://github.com/awslabs/aws-encryption-sdk-python/issues/8`_.
-* Addressed `logging issue #10 https://github.com/awslabs/aws-encryption-sdk-python/issues/10`_.
+* Addressed `docstring issue #7 <https://github.com/awslabs/aws-encryption-sdk-python/issues/7>`_.
+* Addressed `docstring issue #8 <https://github.com/awslabs/aws-encryption-sdk-python/issues/8>`_.
+* Addressed `logging issue #10 <https://github.com/awslabs/aws-encryption-sdk-python/issues/10>`_.
 * Addressed assorted linting issues to bring source, tests, examples, and docs up to configured
-   linting standards.
+  linting standards.
 
 1.3.0
 =====
@@ -40,8 +40,8 @@ Minor
 * Fixed attrs usage to provide consistent behavior with 16.3.0 and 17.x
 * Fixed performance bug which caused KDF calculations to be performed too frequently
 * Removed ``line_length`` as a configurable parameter of ``EncryptingStream`` and
-   ``DecryptingStream`` objects to simplify class APIs after it was found in further
-   testing to have no measurable impact on performance
+  ``DecryptingStream`` objects to simplify class APIs after it was found in further
+  testing to have no measurable impact on performance
 * Added deterministic length eliptic curve signature generation
 * Added support for calculating ciphertext message length from header
 * Migrated README from md to rst
