@@ -1,16 +1,28 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for CachingCryptoMaterialsManager"""
 from mock import MagicMock, sentinel
 import pytest
-from pytest_mock import mocker
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.caches.base import CryptoMaterialsCache
 from aws_encryption_sdk.exceptions import CacheKeyError
+from aws_encryption_sdk.internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
+from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 import aws_encryption_sdk.materials_managers.caching
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
-from aws_encryption_sdk.internal.defaults import MAX_MESSAGES_PER_KEY, MAX_BYTES_PER_KEY
-from aws_encryption_sdk.internal.str_ops import to_bytes
 
 
 def build_ccmm(**custom_kwargs):
@@ -80,8 +92,8 @@ def test_mkp_to_default_cmm(mocker):
         master_key_provider=mock_mkp
     )
 
-    aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.assert_called_once_with(mock_mkp)
-    assert test.backing_materials_manager is aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.return_value
+    aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.assert_called_once_with(mock_mkp)  # noqa pylint: disable=line-too-long
+    assert test.backing_materials_manager is aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.return_value  # noqa pylint: disable=line-too-long
 
 
 @pytest.mark.parametrize('invalid_kwargs, error_message', (
@@ -253,11 +265,11 @@ def test_get_encryption_materials_do_not_cache(patch_should_cache_encryption_req
 
 
 def test_get_encryption_materials_cache_hit_expired_entry(
-    patch_encryption_materials_request,
-    patch_should_cache_encryption_request,
-    patch_cache_entry_has_exceeded_limits,
-    patch_build_encryption_materials_cache_key,
-    patch_crypto_cache_entry_hints
+        patch_encryption_materials_request,
+        patch_should_cache_encryption_request,
+        patch_cache_entry_has_exceeded_limits,
+        patch_build_encryption_materials_cache_key,
+        patch_crypto_cache_entry_hints
 ):
     patch_cache_entry_has_exceeded_limits.return_value = True
     mock_request = fake_encryption_request()
@@ -287,7 +299,7 @@ def test_get_encryption_materials_cache_hit_expired_entry(
     ccmm.backing_materials_manager.get_encryption_materials.assert_called_once_with(
         patch_encryption_materials_request.return_value
     )
-    ccmm.backing_materials_manager.get_encryption_materials.return_value.algorithm.safe_to_cache.assert_called_once_with()
+    ccmm.backing_materials_manager.get_encryption_materials.return_value.algorithm.safe_to_cache.assert_called_once_with()  # noqa pylint: disable=line-too-long
 
     patch_crypto_cache_entry_hints.assert_called_once_with(lifetime=ccmm.max_age)
     ccmm.cache.put_encryption_materials.assert_called_once_with(
@@ -301,10 +313,10 @@ def test_get_encryption_materials_cache_hit_expired_entry(
 
 
 def test_get_encryption_materials_cache_hit_good_entry(
-    patch_encryption_materials_request,
-    patch_should_cache_encryption_request,
-    patch_cache_entry_has_exceeded_limits,
-    patch_build_encryption_materials_cache_key
+        patch_encryption_materials_request,
+        patch_should_cache_encryption_request,
+        patch_cache_entry_has_exceeded_limits,
+        patch_build_encryption_materials_cache_key
 ):
     patch_cache_entry_has_exceeded_limits.return_value = False
     mock_request = fake_encryption_request()
@@ -318,10 +330,10 @@ def test_get_encryption_materials_cache_hit_good_entry(
 
 
 def test_get_encryption_materials_cache_miss(
-    patch_encryption_materials_request,
-    patch_should_cache_encryption_request,
-    patch_cache_entry_has_exceeded_limits,
-    patch_build_encryption_materials_cache_key
+        patch_encryption_materials_request,
+        patch_should_cache_encryption_request,
+        patch_cache_entry_has_exceeded_limits,
+        patch_build_encryption_materials_cache_key
 ):
     mock_request = fake_encryption_request()
     mock_request.plaintext_length = 10
@@ -337,10 +349,10 @@ def test_get_encryption_materials_cache_miss(
 
 
 def test_get_encryption_materials_cache_miss_plaintext_too_big_to_cache(
-    patch_encryption_materials_request,
-    patch_should_cache_encryption_request,
-    patch_cache_entry_has_exceeded_limits,
-    patch_build_encryption_materials_cache_key
+        patch_encryption_materials_request,
+        patch_should_cache_encryption_request,
+        patch_cache_entry_has_exceeded_limits,
+        patch_build_encryption_materials_cache_key
 ):
     mock_request = fake_encryption_request()
     mock_request.plaintext_length = 100
@@ -354,10 +366,10 @@ def test_get_encryption_materials_cache_miss_plaintext_too_big_to_cache(
 
 
 def test_get_encryption_materials_cache_miss_algorithm_not_safe_to_cache(
-    patch_encryption_materials_request,
-    patch_should_cache_encryption_request,
-    patch_cache_entry_has_exceeded_limits,
-    patch_build_encryption_materials_cache_key
+        patch_encryption_materials_request,
+        patch_should_cache_encryption_request,
+        patch_cache_entry_has_exceeded_limits,
+        patch_build_encryption_materials_cache_key
 ):
     mock_request = fake_encryption_request()
     mock_request.plaintext_length = 10
@@ -383,8 +395,8 @@ def patch_cache_entry_is_too_old(mocker):
 
 
 def test_decrypt_materials_cache_hit_good_entry(
-    patch_build_decryption_materials_cache_key,
-    patch_cache_entry_is_too_old
+        patch_build_decryption_materials_cache_key,
+        patch_cache_entry_is_too_old
 ):
     patch_cache_entry_is_too_old.return_value = False
     ccmm = build_ccmm()
@@ -404,8 +416,8 @@ def test_decrypt_materials_cache_hit_good_entry(
 
 
 def test_decrypt_materials_cache_hit_expired_entry(
-    patch_build_decryption_materials_cache_key,
-    patch_cache_entry_is_too_old
+        patch_build_decryption_materials_cache_key,
+        patch_cache_entry_is_too_old
 ):
     patch_cache_entry_is_too_old.return_value = True
     ccmm = build_ccmm()

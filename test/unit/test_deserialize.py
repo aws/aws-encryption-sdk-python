@@ -1,12 +1,24 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.deserialize"""
 import io
+import unittest
 
 from cryptography.exceptions import InvalidTag
-import unittest
 from mock import MagicMock, patch, sentinel
 import six
 
-from aws_encryption_sdk.exceptions import SerializationError, UnknownIdentityError, NotSupportedError
+from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import Algorithm
 import aws_encryption_sdk.internal.formatting.deserialize
 from aws_encryption_sdk.internal.structures import EncryptedData
@@ -27,36 +39,30 @@ class TestDeserialize(unittest.TestCase):
         # Set up BytesIO patch
         self.mock_bytesio = MagicMock()
         # Set up crypto patch
-        self.mock_crypto_patcher = patch(
-            'aws_encryption_sdk.internal.formatting.deserialize.aws_encryption_sdk.internal.crypto'
+        self.mock_decrypt_patcher = patch(
+            'aws_encryption_sdk.internal.formatting.deserialize.decrypt'
         )
-        self.mock_crypto = self.mock_crypto_patcher.start()
+        self.mock_decrypt = self.mock_decrypt_patcher.start()
         # Set up encryption_context patch
         self.mock_deserialize_ec_patcher = patch(
             'aws_encryption_sdk.internal.formatting.deserialize.deserialize_encryption_context'
         )
         self.mock_deserialize_ec = self.mock_deserialize_ec_patcher.start()
         self.mock_deserialize_ec.return_value = VALUES['updated_encryption_context']
-        # Set up verifier patch
-        self.mock_verifier_patcher = patch(
-            'aws_encryption_sdk.internal.formatting.deserialize.aws_encryption_sdk.internal.crypto.Verifier'
-        )
-        self.mock_verifier_class = self.mock_verifier_patcher.start()
+        # Set up mock verifier
         self.mock_verifier = MagicMock()
         self.mock_verifier.update.return_value = None
-        self.mock_verifier_class.from_encoded_point.return_value = self.mock_verifier
 
     def tearDown(self):
-        self.mock_crypto_patcher.stop()
+        self.mock_decrypt_patcher.stop()
         self.mock_deserialize_ec_patcher.stop()
-        self.mock_verifier_patcher.stop()
 
     def test_validate_header_valid(self):
         """Validate that the validate_header function behaves
             as expected for a valid header.
         """
         self.mock_bytesio.read.return_value = VALUES['header']
-        self.mock_crypto.decrypt.return_value = sentinel.decrypted
+        self.mock_decrypt.return_value = sentinel.decrypted
         aws_encryption_sdk.internal.formatting.deserialize.validate_header(
             header=VALUES['deserialized_header_block'],
             header_auth=VALUES['deserialized_header_auth_block'],
@@ -65,7 +71,7 @@ class TestDeserialize(unittest.TestCase):
             header_end=len(VALUES['header']),
             data_key=sentinel.encryption_key
         )
-        self.mock_crypto.decrypt.assert_called_once_with(
+        self.mock_decrypt.assert_called_once_with(
             algorithm=VALUES['deserialized_header_block'].algorithm,
             key=sentinel.encryption_key,
             encrypted_data=VALUES['header_auth_base'],
@@ -76,7 +82,7 @@ class TestDeserialize(unittest.TestCase):
         """Validate that the validate_header function behaves
             as expected for a valid header.
         """
-        self.mock_crypto.decrypt.side_effect = InvalidTag()
+        self.mock_decrypt.side_effect = InvalidTag()
         with six.assertRaisesRegex(self, SerializationError, 'Header authorization failed'):
             aws_encryption_sdk.internal.formatting.deserialize.validate_header(
                 header=VALUES['deserialized_header_block'],
@@ -249,8 +255,7 @@ class TestDeserialize(unittest.TestCase):
         """
         stream = io.BytesIO(VALUES['serialized_footer'])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream, self.mock_verifier)
-        self.mock_verifier.set_signature.assert_called_once_with(VALUES['signature'])
-        self.mock_verifier.verify.assert_called_once_with()
+        self.mock_verifier.verify.assert_called_once_with(VALUES['signature'])
         assert test == VALUES['deserialized_footer']
 
     def test_deserialize_footer_verifier_no_footer(self):
@@ -334,7 +339,9 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],
-                wrapped_encrypted_key=VALUES['wrapped_keys']['structures']['wrapped_encrypted_data_key_symmetric_incomplete_info']
+                wrapped_encrypted_key=VALUES['wrapped_keys']['structures'][
+                    'wrapped_encrypted_data_key_symmetric_incomplete_info'
+                ]
             )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_iv_len_mismatch(self):
@@ -342,7 +349,9 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],
-                wrapped_encrypted_key=VALUES['wrapped_keys']['structures']['wrapped_encrypted_data_key_symmetric_bad_iv_len']
+                wrapped_encrypted_key=VALUES['wrapped_keys']['structures'][
+                    'wrapped_encrypted_data_key_symmetric_bad_iv_len'
+                ]
             )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_iv(self):
@@ -350,7 +359,9 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],
-                wrapped_encrypted_key=VALUES['wrapped_keys']['structures']['wrapped_encrypted_data_key_symmetric_incomplete_iv']
+                wrapped_encrypted_key=VALUES['wrapped_keys']['structures'][
+                    'wrapped_encrypted_data_key_symmetric_incomplete_iv'
+                ]
             )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_tag(self):
@@ -358,7 +369,9 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],
-                wrapped_encrypted_key=VALUES['wrapped_keys']['structures']['wrapped_encrypted_data_key_symmetric_incomplete_tag']
+                wrapped_encrypted_key=VALUES['wrapped_keys']['structures'][
+                    'wrapped_encrypted_data_key_symmetric_incomplete_tag'
+                ]
             )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_tag2(self):
@@ -366,5 +379,7 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],
-                wrapped_encrypted_key=VALUES['wrapped_keys']['structures']['wrapped_encrypted_data_key_symmetric_incomplete_tag2']
+                wrapped_encrypted_key=VALUES['wrapped_keys']['structures'][
+                    'wrapped_encrypted_data_key_symmetric_incomplete_tag2'
+                ]
             )

@@ -1,14 +1,26 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for CryptoMaterialsCacheEntry and CryptoMaterialsCacheEntryHints"""
 from mock import MagicMock
 import pytest
-from pytest_mock import mocker
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.caches
 from aws_encryption_sdk.caches import (
-    CryptoMaterialsCacheEntryHints, CryptoMaterialsCacheEntry
+    CryptoMaterialsCacheEntry, CryptoMaterialsCacheEntryHints
 )
 from aws_encryption_sdk.exceptions import NotSupportedError
-from aws_encryption_sdk.materials_managers import EncryptionMaterials, DecryptionMaterials
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
 _VALID_KWARGS = {
     'CryptoMaterialsCacheEntryHints': dict(lifetime=5.0),

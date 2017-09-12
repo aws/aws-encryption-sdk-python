@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Values to use in various unit test suites."""
 import copy
 import struct
@@ -5,22 +17,21 @@ import struct
 from mock import MagicMock
 import six
 
-import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.identifiers import (
     Algorithm, ContentType, ObjectType, SerializationVersion
 )
+import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.internal.structures import (
-    EncryptedData, MessageHeaderAuthentication,
-    MessageNoFrameBody, MessageFrameBody, MessageFooter
+    EncryptedData, MessageFooter, MessageFrameBody,
+    MessageHeaderAuthentication, MessageNoFrameBody
 )
-from aws_encryption_sdk.structures import DataKey, MessageHeader, EncryptedDataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader
 
 
 def array_byte(source):
     if six.PY2:
         return six.b(source)
-    else:
-        return source
+    return source
 
 
 VALUES = {
@@ -195,7 +206,7 @@ VALUES['serialized_non_framed'] = b''.join([
 ])
 VALUES['frame_base'] = EncryptedData(
     iv=VALUES['final_frame_base'].iv,
-    ciphertext=VALUES['final_frame_base'].ciphertext[:VALUES['small_frame_length']],
+    ciphertext=VALUES['final_frame_base'].ciphertext[:VALUES['small_frame_length']],  # noqa works but confuses pylint: disable=unsubscriptable-object
     tag=VALUES['final_frame_base'].tag
 )
 VALUES['serialized_frame'] = b''.join([

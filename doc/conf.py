@@ -1,8 +1,35 @@
 # -*- coding: utf-8 -*-
+import os
+import re
 from datetime import datetime
 
-version = '1.2'
+VERSION_RE = re.compile(r'''__version__ = ['"]([0-9.]+)['"]''')
+HERE = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*args):
+    """Reads complete file contents."""
+    return open(os.path.join(HERE, *args)).read()
+
+
+def get_release():
+    """Reads the release (full three-part version number) from this module."""
+    init = read('..', 'src', 'aws_encryption_sdk', 'identifiers.py')
+    return VERSION_RE.search(init).group(1)
+
+
+def get_version():
+    """Reads the version (MAJOR.MINOR) from this module."""
+    release = get_release()
+    split_version = release.split('.')
+    if len(split_version) == 3:
+        return '.'.join(split_version[:2])
+    return release
+
+
 project = u'aws-encryption-sdk-python'
+version = get_version()
+release = get_release()
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -20,9 +47,6 @@ master_doc = 'index'  # The master toctree document.
 
 copyright = u'%s, Amazon' % datetime.now().year
 
-# The full version, including alpha/beta/rc tags.
-release = version
-
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
 exclude_trees = ['_build']
@@ -30,7 +54,7 @@ exclude_trees = ['_build']
 pygments_style = 'sphinx'
 
 autoclass_content = "both"
-autodoc_default_flags = ['show-inheritance', 'members']#, 'undoc-members']
+autodoc_default_flags = ['show-inheritance', 'members']
 autodoc_member_order = 'bysource'
 
 html_theme = 'sphinx_rtd_theme'

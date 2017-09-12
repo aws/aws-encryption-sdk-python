@@ -24,8 +24,12 @@ Modules
     aws_encryption_sdk.streaming_client
     aws_encryption_sdk.structures
     aws_encryption_sdk.internal
-    aws_encryption_sdk.internal.crypto
+    aws_encryption_sdk.internal.crypto.authentication
+    aws_encryption_sdk.internal.crypto.data_keys
+    aws_encryption_sdk.internal.crypto.elliptic_curve
+    aws_encryption_sdk.internal.crypto.encryption
     aws_encryption_sdk.internal.crypto.iv
+    aws_encryption_sdk.internal.crypto.wrapping_keys
     aws_encryption_sdk.internal.defaults
     aws_encryption_sdk.internal.formatting
     aws_encryption_sdk.internal.formatting.deserialize

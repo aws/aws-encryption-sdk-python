@@ -1,14 +1,26 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client._EncryptionStream"""
 import io
 import unittest
 
 import attr
-from mock import MagicMock, PropertyMock, sentinel, call, patch
+from mock import call, MagicMock, patch, PropertyMock, sentinel
 import six
 
 import aws_encryption_sdk.exceptions
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.streaming_client import _EncryptionStream, _ClientConfig
+from aws_encryption_sdk.streaming_client import _ClientConfig, _EncryptionStream
 from .test_values import VALUES
 
 
@@ -176,7 +188,7 @@ class TestEncryptionStream(unittest.TestCase):
             mock_read_bytes=sentinel.read_bytes
         )
         with six.assertRaisesRegex(self, aws_encryption_sdk.exceptions.NotSupportedError, 'Unexpected exception!'):
-            mock_stream.stream_length
+            mock_stream.stream_length  # pylint: disable=pointless-statement
 
     def test_header_property(self):
         mock_prep_message = MagicMock()

@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Functional test suite for aws_encryption_sdk.kms_thick_client"""
 import io
 
@@ -14,13 +26,13 @@ import pytest
 import aws_encryption_sdk
 from aws_encryption_sdk import KMSMasterKeyProvider
 from aws_encryption_sdk.caches import build_decryption_materials_cache_key, build_encryption_materials_cache_key
-from aws_encryption_sdk.materials_managers import EncryptionMaterialsRequest, DecryptionMaterialsRequest
-from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
-from aws_encryption_sdk.identifiers import WrappingAlgorithm, EncryptionKeyType, Algorithm
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
-from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 
 VALUES = {
     'frame_lengths': (  # Assuming 1280 byte plaintext:

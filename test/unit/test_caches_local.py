@@ -1,14 +1,26 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit testing suite for LocalCryptoMaterialsCache"""
 from collections import deque, OrderedDict
 import weakref
 
-from mock import MagicMock, sentinel, call
+from mock import call, MagicMock, sentinel
 import pytest
-from pytest_mock import mocker
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.caches.local
-from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache, _OPPORTUNISTIC_EVICTION_ROUNDS
-from aws_encryption_sdk.exceptions import NotSupportedError, CacheKeyError
+from aws_encryption_sdk.caches.local import _OPPORTUNISTIC_EVICTION_ROUNDS, LocalCryptoMaterialsCache
+from aws_encryption_sdk.exceptions import CacheKeyError, NotSupportedError
 
 
 def build_lcmc(**custom_kwargs):
@@ -302,7 +314,9 @@ def test_get_encryption_materials(patch_get_single_entry):
     )
 
     patch_get_single_entry.assert_called_once_with(sentinel.cache_key)
-    patch_get_single_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(sentinel.plaintext_length)
+    patch_get_single_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(
+        sentinel.plaintext_length
+    )
     assert test is patch_get_single_entry.return_value
 
 

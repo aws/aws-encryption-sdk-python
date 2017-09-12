@@ -1,13 +1,25 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite from aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider"""
 import unittest
 
 import botocore.client
-from mock import MagicMock, patch, sentinel, call, ANY
+from mock import ANY, call, MagicMock, patch, sentinel
 import six
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKey
+from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
 
 class TestKMSMasterKeyProvider(unittest.TestCase):
@@ -56,7 +68,11 @@ class TestKMSMasterKeyProvider(unittest.TestCase):
     def test_init_with_default_region_found(self, mock_add_regional_client):
         test = KMSMasterKeyProvider()
         assert test.default_region is None
-        with patch.object(test.config.botocore_session, 'get_config_variable', return_value=sentinel.default_region) as mock_get_config:
+        with patch.object(
+            test.config.botocore_session,
+            'get_config_variable',
+            return_value=sentinel.default_region
+        ) as mock_get_config:
             test._process_config()
             mock_get_config.assert_called_once_with('region')
             assert test.default_region is sentinel.default_region

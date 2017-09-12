@@ -1,15 +1,27 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers"""
 from mock import MagicMock
 import pytest
-from pytest_mock import mocker
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.identifiers import Algorithm
-from aws_encryption_sdk.structures import DataKey
 from aws_encryption_sdk.internal.utils import ROStream
 from aws_encryption_sdk.materials_managers import (
-    EncryptionMaterialsRequest, EncryptionMaterials,
-    DecryptionMaterialsRequest, DecryptionMaterials
+    DecryptionMaterials, DecryptionMaterialsRequest,
+    EncryptionMaterials, EncryptionMaterialsRequest
 )
+from aws_encryption_sdk.structures import DataKey
 
 
 _VALID_KWARGS = {

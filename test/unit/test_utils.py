@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """
     Test suite for aws_encryption_sdk.internal.utils
 """
@@ -8,13 +20,13 @@ import pytest
 import six
 
 from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, SerializationError,
-    UnknownIdentityError, InvalidDataKeyError
+    ActionNotAllowedError, InvalidDataKeyError,
+    SerializationError, UnknownIdentityError
 )
-import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.identifiers
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
 import aws_encryption_sdk.internal.utils
-from aws_encryption_sdk.structures import RawDataKey, DataKey, EncryptedDataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 from .test_values import VALUES
 
 
@@ -182,16 +194,14 @@ class TestUtils(unittest.TestCase):
         """
         with six.assertRaisesRegex(self, SerializationError, 'Frame size too large: *'):
             aws_encryption_sdk.internal.utils.validate_frame_length(
-                frame_length=aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE + 1,
+                frame_length=MAX_FRAME_SIZE + 1,
                 algorithm=self.mock_algorithm
             )
 
     def test_message_id(self):
         """Validate that the message_id function behaves as expected."""
         test = aws_encryption_sdk.internal.utils.message_id()
-        self.mock_urandom.assert_called_once_with(
-            aws_encryption_sdk.internal.defaults.MESSAGE_ID_LENGTH
-        )
+        self.mock_urandom.assert_called_once_with(MESSAGE_ID_LENGTH)
         self.assertEqual(test, sentinel.random)
 
     def test_get_aad_content_string_no_framing(self):

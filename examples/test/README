@@ -1,0 +1,3 @@
+The tests in this directory all rely on the same configuration as this library's integration tests.
+
+For more information see test/integration/README

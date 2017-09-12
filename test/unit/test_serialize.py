@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
 import unittest
 
@@ -5,9 +17,9 @@ from mock import MagicMock, patch, sentinel
 import pytest
 
 from aws_encryption_sdk.exceptions import SerializationError
-import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.identifiers import ContentAADString
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_COUNT
+import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
@@ -60,10 +72,10 @@ class TestSerialize(unittest.TestCase):
         self.mock_serialize_acc = self.mock_serialize_acc_patcher.start()
         self.mock_serialize_acc.serialize_encryption_context.return_value = VALUES['serialized_encryption_context']
         # Set up crypto patch
-        self.mock_crypto_patcher = patch(
-            'aws_encryption_sdk.internal.formatting.serialize.aws_encryption_sdk.internal.crypto'
+        self.mock_encrypt_patcher = patch(
+            'aws_encryption_sdk.internal.formatting.serialize.encrypt'
         )
-        self.mock_crypto = self.mock_crypto_patcher.start()
+        self.mock_encrypt = self.mock_encrypt_patcher.start()
         # Set up validate_frame_length patch
         self.mock_valid_frame_length_patcher = patch(
             'aws_encryption_sdk.internal.formatting.serialize.aws_encryption_sdk.internal.utils.validate_frame_length'
@@ -76,7 +88,7 @@ class TestSerialize(unittest.TestCase):
 
     def tearDown(self):
         self.mock_serialize_acc_patcher.stop()
-        self.mock_crypto_patcher.stop()
+        self.mock_encrypt_patcher.stop()
         self.mock_valid_frame_length_patcher.stop()
 
     def test_serialize_header(self):
@@ -106,14 +118,14 @@ class TestSerialize(unittest.TestCase):
         """Validate that the _create_header_auth function
             behaves as expected.
         """
-        self.mock_crypto.encrypt.return_value = VALUES['header_auth_base']
+        self.mock_encrypt.return_value = VALUES['header_auth_base']
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
             algorithm=self.mock_algorithm,
             header=VALUES['serialized_header'],
             data_encryption_key=sentinel.encryption_key,
             signer=self.mock_signer
         )
-        self.mock_crypto.encrypt.assert_called_once_with(
+        self.mock_encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
             key=sentinel.encryption_key,
             plaintext=b'',
@@ -127,7 +139,7 @@ class TestSerialize(unittest.TestCase):
         """Validate that the _create_header_auth function
             behaves as expected when called with no signer.
         """
-        self.mock_crypto.encrypt.return_value = VALUES['header_auth_base']
+        self.mock_encrypt.return_value = VALUES['header_auth_base']
         aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
             algorithm=self.mock_algorithm,
             header=VALUES['serialized_header'],
@@ -184,7 +196,7 @@ class TestSerialize(unittest.TestCase):
             function behaves as expected for a normal frame.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES['frame_aac']
-        self.mock_crypto.encrypt.return_value = VALUES['frame_base']
+        self.mock_encrypt.return_value = VALUES['frame_base']
         source_plaintext = VALUES['data_128'] * 2
         test_serialized, test_remainder = aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
             algorithm=self.mock_algorithm,
@@ -203,7 +215,7 @@ class TestSerialize(unittest.TestCase):
             length=VALUES['small_frame_length']
         )
         mock_frame_iv.assert_called_once_with(self.mock_algorithm, self.mock_valid_sequence_number)
-        self.mock_crypto.encrypt.assert_called_once_with(
+        self.mock_encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
             key=sentinel.encryption_key,
             plaintext=source_plaintext[:VALUES['small_frame_length']],
@@ -220,7 +232,7 @@ class TestSerialize(unittest.TestCase):
             when called with no signer.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES['frame_aac']
-        self.mock_crypto.encrypt.return_value = VALUES['frame_base']
+        self.mock_encrypt.return_value = VALUES['frame_base']
         aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'] * 2,
@@ -237,7 +249,7 @@ class TestSerialize(unittest.TestCase):
             function behaves as expected for a final frame.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES['final_frame_aac']
-        self.mock_crypto.encrypt.return_value = VALUES['final_frame_base']
+        self.mock_encrypt.return_value = VALUES['final_frame_base']
         test_serialized, test_remainder = aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'],
@@ -255,7 +267,7 @@ class TestSerialize(unittest.TestCase):
             length=len(VALUES['data_128'])
         )
         mock_frame_iv.assert_called_once_with(self.mock_algorithm, self.mock_valid_sequence_number)
-        self.mock_crypto.encrypt.assert_called_once_with(
+        self.mock_encrypt.assert_called_once_with(
             algorithm=self.mock_algorithm,
             key=sentinel.encryption_key,
             plaintext=VALUES['data_128'],
@@ -272,7 +284,7 @@ class TestSerialize(unittest.TestCase):
             when called with no signer.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES['final_frame_aac']
-        self.mock_crypto.encrypt.return_value = VALUES['final_frame_base']
+        self.mock_encrypt.return_value = VALUES['final_frame_base']
         aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
             algorithm=self.mock_algorithm,
             plaintext=VALUES['data_128'],

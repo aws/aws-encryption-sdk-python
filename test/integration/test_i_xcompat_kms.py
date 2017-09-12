@@ -1,3 +1,15 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Integration test suite testing decryption of known good test files encrypted using KMSMasterKeyProvider."""
 import json
 import os
@@ -6,12 +18,14 @@ import pytest
 
 import aws_encryption_sdk
 
-from .test_i_aws_encrytion_sdk_client import setup_kms_master_key_provider, skip_tests, SKIP_MESSAGE
+from .integration_test_utils import setup_kms_master_key_provider, skip_tests, SKIP_MESSAGE
 
 
 # Environment-specific test file locator.  May not always exist.
 def _file_root():
     return '.'
+
+
 try:
     from .aws_test_file_finder import file_root
 except ImportError:
@@ -23,8 +37,14 @@ def _generate_test_cases():
         return []
 
     kms_key_provider = setup_kms_master_key_provider()
+    try:
+        root_dir = os.path.abspath(file_root())
+    except Exception:  # pylint: disable=broad-except
+        root_dir = os.getcwd()
+    if not os.path.isdir(root_dir):
+        root_dir = os.getcwd()
     base_dir = os.path.join(
-        os.path.abspath(file_root()),
+        root_dir,
         'aws_encryption_sdk_resources'
     )
     ciphertext_manifest_path = os.path.join(

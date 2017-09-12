@@ -1,14 +1,25 @@
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.key_providers.kms.KMSMasterKey"""
 import unittest
 
-import botocore
 import botocore.client
 from botocore.exceptions import ClientError
-from mock import MagicMock, sentinel, patch
+from mock import MagicMock, patch, sentinel
 import six
 
-from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError, DecryptKeyError
-from aws_encryption_sdk.identifiers import Algorithm, __version__, user_agent_suffix
+from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError
+from aws_encryption_sdk.identifiers import Algorithm, USER_AGENT_SUFFIX
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
@@ -89,7 +100,7 @@ class TestKMSMasterKey(unittest.TestCase):
         assert test._key_id == VALUES['arn'].decode('utf-8')
         patch_extend_user_agent_suffix.assert_called_once_with(
             user_agent=sentinel.user_agent_extra,
-            suffix=user_agent_suffix
+            suffix=USER_AGENT_SUFFIX
         )
         assert self.mock_client.meta.config.user_agent_extra == patch_extend_user_agent_suffix.return_value
 
