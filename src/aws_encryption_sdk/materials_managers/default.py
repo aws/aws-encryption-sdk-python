@@ -36,8 +36,6 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
 
     :param master_key_provider: Master key provider to use
     :type master_key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param algorithm: Algorithm suite to prefer
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     """
 
     algorithm = ALGORITHM
