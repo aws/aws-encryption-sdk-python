@@ -30,6 +30,7 @@ from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
 from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
+from aws_encryption_sdk.internal.utils import ROStream
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
@@ -533,4 +534,32 @@ def test_encrypt_source_length_enforcement_legacy_support():
         source=VALUES['plaintext_128'],
         key_provider=key_provider,
         source_length=int(len(VALUES['plaintext_128']) / 2)
+    )
+
+
+class NoSeekBytesIO(io.BytesIO):
+    """``io.BytesIO`` that blocks ``seek()`` and ``tell()``."""
+
+    def seekable(self):
+        return False
+
+    def seek(self, offset, whence=0):
+        raise NotImplementedError('seek is blocked')
+
+    def tell(self):
+        raise NotImplementedError('tell is blocked')
+
+
+def test_decrypt_no_seek_input():
+    """Test that StreamDecryptor can decrypt an input stream that is not seekable."""
+    key_provider = fake_kms_key_provider()
+    ciphertext, _header = aws_encryption_sdk.encrypt(
+        source=VALUES['plaintext_128'],
+        key_provider=key_provider,
+        encryption_context=VALUES['encryption_context']
+    )
+    ciphertext_no_seek = NoSeekBytesIO(ciphertext)
+    aws_encryption_sdk.decrypt(
+        source=ciphertext_no_seek,
+        key_provider=key_provider
     )
