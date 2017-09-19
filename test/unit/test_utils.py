@@ -10,19 +10,14 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""
-    Test suite for aws_encryption_sdk.internal.utils
-"""
+"""Test suite for aws_encryption_sdk.internal.utils"""
 import unittest
 
 from mock import MagicMock, patch, sentinel
 import pytest
 import six
 
-from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, InvalidDataKeyError,
-    SerializationError, UnknownIdentityError
-)
+from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 import aws_encryption_sdk.identifiers
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
 import aws_encryption_sdk.internal.utils
@@ -317,25 +312,3 @@ class TestUtils(unittest.TestCase):
                 source_data_key=mock_data_key,
                 algorithm=mock_algorithm
             )
-
-    @patch('aws_encryption_sdk.internal.utils.ROStream._duplicate_api')
-    def test_rostream_init(self, mock_duplicate):
-        test = aws_encryption_sdk.internal.utils.ROStream(sentinel.source)
-        assert test._source_stream is sentinel.source
-        mock_duplicate.assert_called_once_with()
-
-    def test_rostream_write(self):
-        test = aws_encryption_sdk.internal.utils.ROStream(sentinel.source)
-        with six.assertRaisesRegex(self, ActionNotAllowedError, 'Write not allowed on ROStream objects'):
-            test.write(None)
-
-    def test_rostream_duplicate_api(self):
-        class _TestSource(object):
-            z = sentinel.z
-            x = sentinel.x
-            write = sentinel.write
-        source = _TestSource()
-        test = aws_encryption_sdk.internal.utils.ROStream(source)
-        assert test.z is source.z
-        assert test.x is source.x
-        assert test.write is not source.write
