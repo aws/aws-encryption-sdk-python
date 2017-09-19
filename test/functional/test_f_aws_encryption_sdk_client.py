@@ -550,8 +550,27 @@ class NoSeekBytesIO(io.BytesIO):
         raise NotImplementedError('tell is blocked')
 
 
-def test_decrypt_no_seek_input():
-    """Test that StreamDecryptor can decrypt an input stream that is not seekable."""
+def test_stream_encryptor_no_seek_input():
+    """Test that StreamEncryptor can handle an input stream that is not seekable."""
+    key_provider = fake_kms_key_provider()
+    plaintext = NoSeekBytesIO(VALUES['plaintext_128'])
+    ciphertext = io.BytesIO()
+    with aws_encryption_sdk.StreamEncryptor(
+            source=plaintext,
+            key_provider=key_provider,
+            encryption_context=VALUES['encryption_context']
+    ) as encryptor:
+        for chunk in encryptor:
+            ciphertext.write(chunk)
+    decrypted, _header = aws_encryption_sdk.decrypt(
+        source=ciphertext.getvalue(),
+        key_provider=key_provider
+    )
+    assert decrypted == VALUES['plaintext_128']
+
+
+def test_stream_decryptor_no_seek_input():
+    """Test that StreamDecryptor can handle an input stream that is not seekable."""
     key_provider = fake_kms_key_provider()
     ciphertext, _header = aws_encryption_sdk.encrypt(
         source=VALUES['plaintext_128'],
@@ -559,7 +578,43 @@ def test_decrypt_no_seek_input():
         encryption_context=VALUES['encryption_context']
     )
     ciphertext_no_seek = NoSeekBytesIO(ciphertext)
-    aws_encryption_sdk.decrypt(
+    decrypted = io.BytesIO()
+    with aws_encryption_sdk.StreamDecryptor(
+            source=ciphertext_no_seek,
+            key_provider=key_provider
+    ) as decryptor:
+        for chunk in decryptor:
+            decrypted.write(chunk)
+    assert decrypted.getvalue() == VALUES['plaintext_128']
+
+
+def test_encrypt_oneshot_no_seek_input():
+    """Test that encrypt can handle an input stream that is not seekable."""
+    key_provider = fake_kms_key_provider()
+    plaintext = NoSeekBytesIO(VALUES['plaintext_128'])
+    ciphertext, _header = aws_encryption_sdk.encrypt(
+        source=plaintext,
+        key_provider=key_provider,
+        encryption_context=VALUES['encryption_context']
+    )
+    decrypted, _header = aws_encryption_sdk.decrypt(
+        source=ciphertext,
+        key_provider=key_provider
+    )
+    assert decrypted == VALUES['plaintext_128']
+
+
+def test_decrypt_oneshot_no_seek_input():
+    """Test that decrypt can handle an input stream that is not seekable."""
+    key_provider = fake_kms_key_provider()
+    ciphertext, _header = aws_encryption_sdk.encrypt(
+        source=VALUES['plaintext_128'],
+        key_provider=key_provider,
+        encryption_context=VALUES['encryption_context']
+    )
+    ciphertext_no_seek = NoSeekBytesIO(ciphertext)
+    decrypted, _header = aws_encryption_sdk.decrypt(
         source=ciphertext_no_seek,
         key_provider=key_provider
     )
+    assert decrypted == VALUES['plaintext_128']
