@@ -397,7 +397,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             algorithm=self.config.algorithm,
             encryption_context=self.config.encryption_context.copy(),
             frame_length=self.config.frame_length,
-            plaintext_rostream=aws_encryption_sdk.internal.utils.ROStream(self.source_stream),
+            plaintext_rostream=aws_encryption_sdk.internal.utils.streams.ROStream(self.source_stream),
             plaintext_length=plaintext_length
         )
         self._encryption_materials = self.config.materials_manager.get_encryption_materials(

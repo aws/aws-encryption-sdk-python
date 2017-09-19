@@ -18,7 +18,7 @@ import attr
 import six
 
 from ..identifiers import Algorithm
-from ..internal.utils import ROStream
+from ..internal.utils.streams import ROStream
 from ..structures import DataKey
 
 
@@ -34,7 +34,7 @@ class EncryptionMaterialsRequest(object):
     :param dict encryption_context: Encryption context passed to underlying master key provider and master keys
     :param int frame_length: Frame length to be used while encrypting stream
     :param plaintext_rostream: Source plaintext read-only stream (optional)
-    :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
+    :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
     :param algorithm: Algorithm passed to underlying master key provider and master keys (optional)
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int plaintext_length: Length of source plaintext (optional)

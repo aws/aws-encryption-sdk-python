@@ -242,7 +242,7 @@ class TestStreamEncryptor(unittest.TestCase):
 
     @patch('aws_encryption_sdk.streaming_client.EncryptionMaterialsRequest')
     @patch('aws_encryption_sdk.streaming_client.derive_data_encryption_key')
-    @patch('aws_encryption_sdk.internal.utils.ROStream')
+    @patch('aws_encryption_sdk.internal.utils.streams.ROStream')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._prep_non_framed')
     @patch('aws_encryption_sdk.streaming_client.StreamEncryptor._write_header')
     def test_prep_message_framed_message(

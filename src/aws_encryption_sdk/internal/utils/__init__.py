@@ -17,7 +17,6 @@ import os
 
 import six
 
-from .streams import ROStream  # TODO: update callers and remove this
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 import aws_encryption_sdk.internal.defaults
