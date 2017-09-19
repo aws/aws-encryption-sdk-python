@@ -15,7 +15,7 @@ import io
 
 from mock import sentinel
 import pytest
-from pytest_mock import mocker
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.utils.streams import PassThroughStream, ROStream, TeeStream

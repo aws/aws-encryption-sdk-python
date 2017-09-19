@@ -15,7 +15,7 @@ from mock import MagicMock, sentinel
 import pytest
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from aws_encryption_sdk.exceptions import InvalidDataKeyError
+from aws_encryption_sdk.exceptions import IncorrectMasterKeyError, InvalidDataKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, EncryptionType
 import aws_encryption_sdk.internal.crypto.wrapping_keys
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
@@ -317,3 +317,27 @@ def test_wrapping_key_decrypt_private(
     assert not patch_serialize_encryption_context.called
     assert not patch_decrypt.called
     assert test is sentinel.plaintext_data
+
+
+def test_wrapping_key_decrypt_public(
+        patch_default_backend,
+        patch_serialization,
+        patch_serialize_encryption_context,
+        patch_decrypt
+):
+    private_key, _ = mock_wrapping_rsa_keys()
+    patch_serialization.load_pem_private_key.return_value = private_key
+    private_key.decrypt.return_value = sentinel.plaintext_data
+    mock_wrapping_algorithm = MagicMock(encryption_type=EncryptionType.ASYMMETRIC)
+    test_wrapping_key = WrappingKey(
+        wrapping_algorithm=mock_wrapping_algorithm,
+        wrapping_key=sentinel.wrapping_key,
+        wrapping_key_type=EncryptionKeyType.PUBLIC
+    )
+    with pytest.raises(IncorrectMasterKeyError) as excinfo:
+        test_wrapping_key.decrypt(
+            encrypted_wrapped_data_key=mock_encrypted_data(),
+            encryption_context=sentinel.encryption_context
+        )
+
+    excinfo.match(r'Public key cannot decrypt')

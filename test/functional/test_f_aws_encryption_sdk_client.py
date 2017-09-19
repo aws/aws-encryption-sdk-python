@@ -30,7 +30,6 @@ from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
 from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
-from aws_encryption_sdk.internal.utils import ROStream
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest

@@ -19,6 +19,7 @@ from mock import call, MagicMock, patch, PropertyMock, sentinel
 import six
 
 import aws_encryption_sdk.exceptions
+from aws_encryption_sdk.internal.defaults import LINE_LENGTH
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import _ClientConfig, _EncryptionStream
 from .test_values import VALUES
@@ -266,7 +267,7 @@ class TestEncryptionStream(unittest.TestCase):
         mock_stream._read_bytes = MagicMock()
         type(mock_stream.source_stream).closed = PropertyMock(side_effect=(False, True))
         mock_stream.read()
-        mock_stream._read_bytes.assert_called_once_with(1)
+        mock_stream._read_bytes.assert_called_once_with(LINE_LENGTH)
 
     def test_tell(self):
         mock_stream = MockEncryptionStream(
