@@ -555,9 +555,9 @@ def test_stream_encryptor_no_seek_input():
     plaintext = NoSeekBytesIO(VALUES['plaintext_128'])
     ciphertext = io.BytesIO()
     with aws_encryption_sdk.StreamEncryptor(
-            source=plaintext,
-            key_provider=key_provider,
-            encryption_context=VALUES['encryption_context']
+        source=plaintext,
+        key_provider=key_provider,
+        encryption_context=VALUES['encryption_context']
     ) as encryptor:
         for chunk in encryptor:
             ciphertext.write(chunk)
@@ -579,8 +579,8 @@ def test_stream_decryptor_no_seek_input():
     ciphertext_no_seek = NoSeekBytesIO(ciphertext)
     decrypted = io.BytesIO()
     with aws_encryption_sdk.StreamDecryptor(
-            source=ciphertext_no_seek,
-            key_provider=key_provider
+        source=ciphertext_no_seek,
+        key_provider=key_provider
     ) as decryptor:
         for chunk in decryptor:
             decrypted.write(chunk)

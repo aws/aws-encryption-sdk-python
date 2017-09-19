@@ -15,7 +15,7 @@ decision making for integration tests."""
 import os
 
 import botocore.session
-from six.moves.configparser import ConfigParser
+from six.moves.configparser import ConfigParser, NoOptionError  # six.moves confuses pylint: disable=import-error
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
 SKIP_MESSAGE = 'Skipping tests due to blocking environment variable'
@@ -35,7 +35,7 @@ def read_test_config():
     config_file = os.sep.join([os.path.dirname(__file__), 'test_values.conf'])
     config_readme = os.sep.join([os.path.dirname(__file__), 'README'])
     if not os.path.isfile(config_file):
-        raise Exception('Integration test config file missing.  See setup instructions in {}'.format(config_readme))
+        raise OSError('Integration test config file missing.  See setup instructions in {}'.format(config_readme))
     config.read(config_file)
     return config
 
@@ -51,7 +51,7 @@ def setup_botocore_session(config):
     for key in ['aws_access_key_id', 'aws_secret_access_key', 'aws_session_token']:
         try:
             aws_params[key] = config.get('TestKMSThickClientIntegration', key)
-        except Exception:
+        except NoOptionError:
             pass
     botocore_session = botocore.session.Session()
     if aws_params:
