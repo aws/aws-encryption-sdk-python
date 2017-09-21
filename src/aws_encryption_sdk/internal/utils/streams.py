@@ -17,7 +17,7 @@ from aws_encryption_sdk.exceptions import ActionNotAllowedError
 
 
 class PassThroughStream(object):
-    """Provides a pass-through interface on top of a stream object.
+    """Provides a pass-through interface on top of a file-like object.
 
     :param source_stream: File-like object
     """
@@ -28,10 +28,10 @@ class PassThroughStream(object):
         self._duplicate_api()
 
     def _duplicate_api(self):
-        """Maps the source stream API onto this object."""
+        """Maps the source file-like API onto this object."""
         source_attributes = set([
-            method for method in dir(self._source_stream)
-            if not method.startswith('_')
+            attribute for attribute in dir(self._source_stream)
+            if not attribute.startswith('_')
         ])
         self_attributes = set(dir(self))
         for attribute in source_attributes.difference(self_attributes):
@@ -39,7 +39,7 @@ class PassThroughStream(object):
 
 
 class ROStream(PassThroughStream):
-    """Provides a read-only interface on top of a stream object.
+    """Provides a read-only interface on top of a file-like object.
 
     Used to provide MasterKeyProviders with read-only access to plaintext.
 
@@ -55,7 +55,7 @@ class ROStream(PassThroughStream):
 
 
 class TeeStream(PassThroughStream):
-    """Provides a ``tee``-like interface on top of a stream object, which collects read bytes
+    """Provides a ``tee``-like interface on top of a file-like object, which collects read bytes
     into a local :class:`io.BytesIO`.
 
     :param source_stream: File-like object
