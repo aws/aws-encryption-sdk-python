@@ -16,5 +16,20 @@ matrix:
       env: TOXENV=doc8
     - python: 3.6
       env: TOXENV=readme
-install: pip install tox-travis
+# pending reorg of deserialize_header
+#    - python: 3.6
+#      env: TOXENV=flake8
+#    - python: 3.6
+#      env: TOXENV=pylint
+# pending test-vectors refactor
+#    - python: 3.6
+#      env: TOXENV=flake8-tests
+    - python: 3.6
+      env: TOXENV=pylint-tests
+    - python: 3.6
+      env: TOXENV=examples
+    - python: 3.6
+      env: TOXENV=flake8-examples
+    - python: 3.6
+      env: TOXENV=pylint-examples
 script: tox
