@@ -32,4 +32,5 @@ matrix:
       env: TOXENV=flake8-examples
     - python: 3.6
       env: TOXENV=pylint-examples
+install: pip install tox
 script: tox
