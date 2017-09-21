@@ -26,10 +26,9 @@ AWS_KMS_KEY_ID = 'AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID'
 
 def skip_tests():
     """Only run tests if both required environment variables are found."""
-    for var in (TEST_CONTROL, AWS_KMS_KEY_ID):
-        if os.environ.get(var, None) is None:
-            return False
-    return True
+    test_control = os.environ.get(TEST_CONTROL, None)
+    key_id = os.environ.get(AWS_KMS_KEY_ID, None)
+    return not (test_control == 'RUN' and key_id is not None)
 
 
 def get_cmk_arn():
