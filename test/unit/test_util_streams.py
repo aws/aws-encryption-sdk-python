@@ -13,36 +13,14 @@
 """Unit test suite for aws_encryption_sdk.internal.utils.streams"""
 import io
 
-from mock import sentinel
 import pytest
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.exceptions import ActionNotAllowedError
-from aws_encryption_sdk.internal.utils.streams import PassThroughStream, ROStream, TeeStream
+from aws_encryption_sdk.internal.utils.streams import ROStream, TeeStream
 
 
 def data():
     return io.BytesIO(b'asdijfhoaisjdfoiasjdfoijawef')
-
-
-def test_passthrough_stream_init(mocker):
-    mocker.patch.object(PassThroughStream, '_duplicate_api')
-    test = PassThroughStream(sentinel.source_stream)
-
-    assert test._source_stream is sentinel.source_stream
-    test._duplicate_api.assert_called_once_with()
-
-
-def test_passthrough_stream_duplicate_api():
-    class _TestSource(object):
-        z = sentinel.z
-        x = sentinel.x
-        _internal_unique = sentinel.internal_unique
-    source = _TestSource()
-    test = PassThroughStream(source)
-    assert test.z is source.z
-    assert test.x is source.x
-    assert not hasattr(test, '_internal_unique')
 
 
 def test_rostream():
@@ -55,9 +33,9 @@ def test_rostream():
 
 
 def test_teestream_full():
-    test_tee = TeeStream(data())
+    new_tee = io.BytesIO()
+    test_tee = TeeStream(data(), new_tee)
 
     raw_read = test_tee.read()
-    tee_data = test_tee.tee.getvalue()
 
-    assert data().getvalue() == raw_read == tee_data
+    assert data().getvalue() == raw_read == new_tee.getvalue()

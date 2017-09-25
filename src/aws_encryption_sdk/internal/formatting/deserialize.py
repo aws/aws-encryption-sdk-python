@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Components for handling AWS Encryption SDK message deserialization."""
 from __future__ import division
+import io
 import logging
 import struct
 
@@ -71,7 +72,8 @@ def deserialize_header(stream):
     :raises SerializationError: if IV length does not match algorithm
     """
     _LOGGER.debug('Starting header deserialization')
-    tee_stream = TeeStream(stream)
+    tee = io.BytesIO()
+    tee_stream = TeeStream(stream, tee)
     version_id, message_type_id = unpack_values('>BB', tee_stream)
     try:
         message_type = ObjectType(message_type_id)
@@ -162,7 +164,7 @@ def deserialize_header(stream):
         raise SerializationError('Non-zero frame length found for non-framed message')
     header['frame_length'] = frame_length
 
-    return MessageHeader(**header), tee_stream.tee.getvalue()
+    return MessageHeader(**header), tee.getvalue()
 
 
 def deserialize_header_auth(stream, algorithm, verifier=None):

@@ -11,39 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Helper stream utility objects for AWS Encryption SDK."""
-import io
+from wrapt import ObjectProxy
 
 from aws_encryption_sdk.exceptions import ActionNotAllowedError
 
 
-class PassThroughStream(object):
-    """Provides a pass-through interface on top of a file-like object.
-
-    :param source_stream: File-like object
-    """
-
-    def __init__(self, source_stream):
-        """Prepares the passthroughs."""
-        self._source_stream = source_stream
-        self._duplicate_api()
-
-    def _duplicate_api(self):
-        """Maps the source file-like API onto this object."""
-        source_attributes = set([
-            attribute for attribute in dir(self._source_stream)
-            if not attribute.startswith('_')
-        ])
-        self_attributes = set(dir(self))
-        for attribute in source_attributes.difference(self_attributes):
-            setattr(self, attribute, getattr(self._source_stream, attribute))
-
-
-class ROStream(PassThroughStream):
+class ROStream(ObjectProxy):
     """Provides a read-only interface on top of a file-like object.
 
     Used to provide MasterKeyProviders with read-only access to plaintext.
 
-    :param source_stream: File-like object
+    :param wrapped: File-like object
     """
 
     def write(self, b):  # pylint: disable=unused-argument
@@ -54,23 +32,27 @@ class ROStream(PassThroughStream):
         raise ActionNotAllowedError('Write not allowed on ROStream objects')
 
 
-class TeeStream(PassThroughStream):
+class TeeStream(ObjectProxy):
     """Provides a ``tee``-like interface on top of a file-like object, which collects read bytes
     into a local :class:`io.BytesIO`.
 
-    :param source_stream: File-like object
+    :param wrapped: File-like object
+    :param tee: Stream to copy read bytes into.
+    :type tee: io.BaseIO
     """
 
-    def __init__(self, source_stream):
+    __tee__ = None  # Prime ObjectProxy's attributes to allow setting in init.
+
+    def __init__(self, wrapped, tee):
         """Creates the local tee stream."""
-        self.tee = io.BytesIO()
-        super(TeeStream, self).__init__(source_stream)
+        super(TeeStream, self).__init__(wrapped)
+        self.__tee__ = tee
 
     def read(self, b=None):
         """Reads data from source, copying it into ``tee`` before returning.
 
         :param int b: number of bytes to read
         """
-        data = self._source_stream.read(b)
-        self.tee.write(data)
+        data = self.__wrapped__.read(b)
+        self.__tee__.write(data)
         return data
