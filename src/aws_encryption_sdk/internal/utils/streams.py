@@ -41,12 +41,12 @@ class TeeStream(ObjectProxy):
     :type tee: io.BaseIO
     """
 
-    __tee__ = None  # Prime ObjectProxy's attributes to allow setting in init.
+    __tee = None  # Prime ObjectProxy's attributes to allow setting in init.
 
     def __init__(self, wrapped, tee):
         """Creates the local tee stream."""
         super(TeeStream, self).__init__(wrapped)
-        self.__tee__ = tee
+        self.__tee = tee
 
     def read(self, b=None):
         """Reads data from source, copying it into ``tee`` before returning.
@@ -54,5 +54,5 @@ class TeeStream(ObjectProxy):
         :param int b: number of bytes to read
         """
         data = self.__wrapped__.read(b)
-        self.__tee__.write(data)
+        self.__tee.write(data)
         return data
