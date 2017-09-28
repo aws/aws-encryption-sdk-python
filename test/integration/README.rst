@@ -2,7 +2,7 @@
 aws-encryption-sdk Integration Tests
 ************************************
 
-In order to run these integration tests successfully, these things which must be configured.
+In order to run these integration tests successfully, these things must be configured.
 
 #. Ensure that AWS credentials are available in one of the `automatically discoverable credential locations`_.
 #. Set environment variable ``AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID`` to valid
