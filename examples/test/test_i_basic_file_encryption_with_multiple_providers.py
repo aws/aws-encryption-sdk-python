@@ -20,17 +20,14 @@ sys.path.extend([  # noqa
 import tempfile
 
 from basic_file_encryption_with_multiple_providers import cycle_file
-from integration_test_utils import (
-    get_cmk_arn, read_test_config, setup_botocore_session, SKIP_MESSAGE, skip_tests
-)
+import botocore.session
+from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
 import pytest
 
 
 @pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_cycle_file():
-    config = read_test_config()
-    cmk_arn = get_cmk_arn(config)
-    botocore_session = setup_botocore_session(config)
+    cmk_arn = get_cmk_arn()
     _handle, filename = tempfile.mkstemp()
     with open(filename, 'wb') as f:
         f.write(os.urandom(1024))
@@ -38,7 +35,7 @@ def test_cycle_file():
         new_files = cycle_file(
             key_arn=cmk_arn,
             source_plaintext_filename=filename,
-            botocore_session=botocore_session
+            botocore_session=botocore.session.Session()
         )
         for f in new_files:
             os.remove(f)
