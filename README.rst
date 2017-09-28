@@ -2,6 +2,17 @@
 aws-encryption-sdk
 ##################
 
+.. image:: https://img.shields.io/pypi/v/aws-encryption-sdk.svg
+   :target: https://pypi.python.org/pypi/aws-encryption-sdk
+   :alt: Latest Version
+
+.. image:: https://readthedocs.org/projects/aws-encryption-sdk-python/badge/
+   :target: https://aws-encryption-sdk-python.readthedocs.io/en/stable/
+   :alt: Documentation Status
+
+.. image:: https://travis-ci.org/awslabs/aws-encryption-sdk-python.svg?branch=master
+   :target: https://travis-ci.org/awslabs/aws-encryption-sdk-python
+
 The AWS Encryption SDK for Python provides a fully compliant, native Python implementation of the `AWS Encryption SDK`_.
 
 The latest full documentation can be found at `Read the Docs`_.

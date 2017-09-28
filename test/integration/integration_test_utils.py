@@ -14,60 +14,31 @@
 decision making for integration tests."""
 import os
 
-import botocore.session
-from six.moves.configparser import ConfigParser
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
-SKIP_MESSAGE = 'Skipping tests due to blocking environment variable'
+SKIP_MESSAGE = (
+    'Required environment variables not found. Skipping integration tests.'
+    ' See integration tests README.rst for more information.'
+)
+TEST_CONTROL = 'AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_CONTROL'
+AWS_KMS_KEY_ID = 'AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID'
 
 
 def skip_tests():
-    blocker_var_name = 'AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_CONTROL'
-    blocker_val = os.environ.get(blocker_var_name, None)
-    if blocker_val != 'RUN':
-        return True
-    return False
+    """Only run tests if both required environment variables are found."""
+    test_control = os.environ.get(TEST_CONTROL, None)
+    key_id = os.environ.get(AWS_KMS_KEY_ID, None)
+    return not (test_control == 'RUN' and key_id is not None)
 
 
-def read_test_config():
-    """Reads the test_values config file."""
-    config = ConfigParser()
-    config_file = os.sep.join([os.path.dirname(__file__), 'test_values.conf'])
-    config_readme = os.sep.join([os.path.dirname(__file__), 'README'])
-    if not os.path.isfile(config_file):
-        raise Exception('Integration test config file missing.  See setup instructions in {}'.format(config_readme))
-    config.read(config_file)
-    return config
-
-
-def get_cmk_arn(config):
-    """Retrieves the target CMK ARN from the received config."""
-    return config.get('TestKMSThickClientIntegration', 'cmk_arn')
-
-
-def setup_botocore_session(config):
-    """Configures a botocore session based on the received config."""
-    aws_params = {}
-    for key in ['aws_access_key_id', 'aws_secret_access_key', 'aws_session_token']:
-        try:
-            aws_params[key] = config.get('TestKMSThickClientIntegration', key)
-        except Exception:
-            pass
-    botocore_session = botocore.session.Session()
-    if aws_params:
-        botocore_session.set_credentials(
-            access_key=aws_params['aws_access_key_id'],
-            secret_key=aws_params['aws_secret_access_key'],
-            token=aws_params['aws_session_token']
-        )
-    return botocore_session
+def get_cmk_arn():
+    """Retrieves the target CMK ARN from environment variable."""
+    return os.environ.get(AWS_KMS_KEY_ID)
 
 
 def setup_kms_master_key_provider():
     """Reads the test_values config file and builds the requested KMS Master Key Provider."""
-    config = read_test_config()
-    cmk_arn = get_cmk_arn(config)
-    botocore_session = setup_botocore_session(config)
-    kms_master_key_provider = KMSMasterKeyProvider(botocore_session=botocore_session)
+    cmk_arn = get_cmk_arn()
+    kms_master_key_provider = KMSMasterKeyProvider()
     kms_master_key_provider.add_master_key(cmk_arn)
     return kms_master_key_provider

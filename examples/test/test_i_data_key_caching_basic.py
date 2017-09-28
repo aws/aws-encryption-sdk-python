@@ -19,14 +19,13 @@ sys.path.extend([  # noqa
 ])
 
 from data_key_caching_basic import encrypt_with_caching
-from integration_test_utils import get_cmk_arn, read_test_config, SKIP_MESSAGE, skip_tests
+from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
 import pytest
 
 
 @pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_encrypt_with_caching():
-    config = read_test_config()
-    cmk_arn = get_cmk_arn(config)
+    cmk_arn = get_cmk_arn()
     encrypt_with_caching(
         kms_cmk_arn=cmk_arn,
         max_age_in_cache=10.0,

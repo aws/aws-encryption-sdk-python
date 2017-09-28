@@ -19,20 +19,17 @@ sys.path.extend([  # noqa
 ])
 
 from basic_encryption import cycle_string
-from integration_test_utils import (
-    get_cmk_arn, read_test_config, setup_botocore_session, SKIP_MESSAGE, skip_tests
-)
+import botocore.session
+from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
 import pytest
 
 
 @pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_cycle_string():
     plaintext = os.urandom(1024)
-    config = read_test_config()
-    cmk_arn = get_cmk_arn(config)
-    botocore_session = setup_botocore_session(config)
+    cmk_arn = get_cmk_arn()
     cycle_string(
         key_arn=cmk_arn,
         source_plaintext=plaintext,
-        botocore_session=botocore_session
+        botocore_session=botocore.session.Session()
     )
