@@ -2,6 +2,11 @@
 Changelog
 *********
 
+1.3.2
+=====
+* Addressed `issue #13 <https://github.com/awslabs/aws-encryption-sdk-python/issues/13>`_
+  to properly handle non-seekable source streams.
+
 1.3.1
 =====
 

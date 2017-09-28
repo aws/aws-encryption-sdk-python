@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Components for handling AWS Encryption SDK message deserialization."""
 from __future__ import division
+import io
 import logging
 import struct
 
@@ -29,38 +30,34 @@ from aws_encryption_sdk.internal.structures import (
     EncryptedData, MessageFooter,
     MessageFrameBody, MessageHeaderAuthentication
 )
+from aws_encryption_sdk.internal.utils.streams import TeeStream
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, MessageHeader
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def validate_header(header, header_auth, stream, header_start, header_end, data_key):
+def validate_header(header, header_auth, raw_header, data_key):
     """Validates the header using the header authentication data.
 
     :param header: Deserialized header
     :type header: aws_encryption_sdk.structures.MessageHeader
     :param header_auth: Deserialized header auth
     :type header_auth: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
-    :param stream: Stream containing serialized message
     :type stream: io.BytesIO
-    :param int header_start: Position in stream of start of serialized header
-    :param int header_end: Position in stream of end of serialized header
+    :param bytes raw_header: Raw header bytes
     :param bytes data_key: Data key with which to perform validation
     :raises SerializationError: if header authorization fails
     """
     _LOGGER.debug('Starting header validation')
-    current_position = stream.tell()
-    stream.seek(header_start)
     try:
         decrypt(
             algorithm=header.algorithm,
             key=data_key,
             encrypted_data=EncryptedData(header_auth.iv, b'', header_auth.tag),
-            associated_data=stream.read(header_end - header_start)
+            associated_data=raw_header
         )
     except InvalidTag:
         raise SerializationError('Header authorization failed')
-    stream.seek(current_position)
 
 
 def deserialize_header(stream):
@@ -69,13 +66,15 @@ def deserialize_header(stream):
     :param stream: Source data stream
     :type stream: io.BytesIO
     :returns: Deserialized MessageHeader object
-    :rtype: aws_encryption_sdk.structures.MessageHeader
+    :rtype: :class:`aws_encryption_sdk.structures.MessageHeader` and bytes
     :raises NotSupportedError: if unsupported data types are found
     :raises UnknownIdentityError: if unknown data types are found
     :raises SerializationError: if IV length does not match algorithm
     """
     _LOGGER.debug('Starting header deserialization')
-    version_id, message_type_id = unpack_values('>BB', stream)
+    tee = io.BytesIO()
+    tee_stream = TeeStream(stream, tee)
+    version_id, message_type_id = unpack_values('>BB', tee_stream)
     try:
         message_type = ObjectType(message_type_id)
     except ValueError as error:
@@ -89,7 +88,7 @@ def deserialize_header(stream):
         raise NotSupportedError('Unsupported version {}'.format(version_id), error)
     header = {'version': version, 'type': message_type}
 
-    algorithm_id, message_id, ser_encryption_context_length = unpack_values('>H16sH', stream)
+    algorithm_id, message_id, ser_encryption_context_length = unpack_values('>H16sH', tee_stream)
 
     try:
         alg = Algorithm.get_by_id(algorithm_id)
@@ -101,24 +100,24 @@ def deserialize_header(stream):
     header['message_id'] = message_id
 
     header['encryption_context'] = deserialize_encryption_context(
-        stream.read(ser_encryption_context_length)
+        tee_stream.read(ser_encryption_context_length)
     )
-    (encrypted_data_key_count,) = unpack_values('>H', stream)
+    (encrypted_data_key_count,) = unpack_values('>H', tee_stream)
 
     encrypted_data_keys = set([])
     for _ in range(encrypted_data_key_count):
-        (key_provider_length,) = unpack_values('>H', stream)
+        (key_provider_length,) = unpack_values('>H', tee_stream)
         (key_provider_identifier,) = unpack_values(
             '>{}s'.format(key_provider_length),
-            stream
+            tee_stream
         )
-        (key_provider_information_length,) = unpack_values('>H', stream)
+        (key_provider_information_length,) = unpack_values('>H', tee_stream)
         (key_provider_information,) = unpack_values(
             '>{}s'.format(key_provider_information_length),
-            stream
+            tee_stream
         )
-        (encrypted_data_key_length,) = unpack_values('>H', stream)
-        encrypted_data_key = stream.read(encrypted_data_key_length)
+        (encrypted_data_key_length,) = unpack_values('>H', tee_stream)
+        encrypted_data_key = tee_stream.read(encrypted_data_key_length)
         encrypted_data_keys.add(EncryptedDataKey(
             key_provider=MasterKeyInfo(
                 provider_id=to_str(key_provider_identifier),
@@ -128,7 +127,7 @@ def deserialize_header(stream):
         ))
     header['encrypted_data_keys'] = encrypted_data_keys
 
-    (content_type_id,) = unpack_values('>B', stream)
+    (content_type_id,) = unpack_values('>B', tee_stream)
     try:
         content_type = ContentType(content_type_id)
     except ValueError as error:
@@ -138,14 +137,14 @@ def deserialize_header(stream):
         )
     header['content_type'] = content_type
 
-    (content_aad_length,) = unpack_values('>I', stream)
+    (content_aad_length,) = unpack_values('>I', tee_stream)
     if content_aad_length != 0:
         raise SerializationError(
             'Content AAD length field is currently unused, its value must be always 0'
         )
     header['content_aad_length'] = 0
 
-    (iv_length,) = unpack_values('>B', stream)
+    (iv_length,) = unpack_values('>B', tee_stream)
     if iv_length != alg.iv_len:
         raise SerializationError(
             'Specified IV length ({length}) does not match algorithm IV length ({alg})'.format(
@@ -155,7 +154,7 @@ def deserialize_header(stream):
         )
     header['header_iv_length'] = iv_length
 
-    (frame_length,) = unpack_values('>I', stream)
+    (frame_length,) = unpack_values('>I', tee_stream)
     if content_type == ContentType.FRAMED_DATA and frame_length > MAX_FRAME_SIZE:
         raise SerializationError('Specified frame length larger than allowed maximum: {found} > {max}'.format(
             found=frame_length,
@@ -165,7 +164,7 @@ def deserialize_header(stream):
         raise SerializationError('Non-zero frame length found for non-framed message')
     header['frame_length'] = frame_length
 
-    return MessageHeader(**header)
+    return MessageHeader(**header), tee.getvalue()
 
 
 def deserialize_header_auth(stream, algorithm, verifier=None):

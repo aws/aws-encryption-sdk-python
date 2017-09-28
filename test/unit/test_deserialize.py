@@ -66,9 +66,7 @@ class TestDeserialize(unittest.TestCase):
         aws_encryption_sdk.internal.formatting.deserialize.validate_header(
             header=VALUES['deserialized_header_block'],
             header_auth=VALUES['deserialized_header_auth_block'],
-            stream=self.mock_bytesio,
-            header_start=0,
-            header_end=len(VALUES['header']),
+            raw_header=VALUES['header'],
             data_key=sentinel.encryption_key
         )
         self.mock_decrypt.assert_called_once_with(
@@ -87,9 +85,7 @@ class TestDeserialize(unittest.TestCase):
             aws_encryption_sdk.internal.formatting.deserialize.validate_header(
                 header=VALUES['deserialized_header_block'],
                 header_auth=VALUES['deserialized_header_auth_block'],
-                stream=self.mock_bytesio,
-                header_start=0,
-                header_end=len(VALUES['header']),
+                raw_header=VALUES['header'],
                 data_key=VALUES['data_key_obj']
             )
 
@@ -192,8 +188,9 @@ class TestDeserialize(unittest.TestCase):
             as expected for a valid header.
         """
         stream = io.BytesIO(VALUES['serialized_header_small_frame'])
-        test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
-        assert test == VALUES['deserialized_header_frame']
+        test_header, test_raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        assert test_header == VALUES['deserialized_header_frame']
+        assert test_raw_header == VALUES['serialized_header_small_frame']
 
     def test_deserialize_header_auth(self):
         """Validate that the deserialize_header_auth function

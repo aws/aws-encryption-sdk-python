@@ -196,24 +196,23 @@ class _EncryptionStream(io.IOBase):
         :rtype: bytes
         """
         _LOGGER.debug('Stream read called, requesting %s bytes', b)
+        output = io.BytesIO()
         if not self._message_prepped:
             self._prep_message()
         if self.closed:
             raise ValueError('I/O operation on closed file')
         if b:
             self._read_bytes(b)
-            output = self.output_buffer[:b]
+            output.write(self.output_buffer[:b])
             self.output_buffer = self.output_buffer[b:]
         else:
-            output = b''
             while not self.source_stream.closed:
-                b = self.stream_length if self.stream_length else 1  # Edge case to handle empty source streams.
-                self._read_bytes(b)
-                output += self.output_buffer
+                self._read_bytes(LINE_LENGTH)
+                output.write(self.output_buffer)
                 self.output_buffer = b''
-        self.bytes_read += len(output)
-        _LOGGER.debug('Returning %s bytes of %s bytes requested', len(output), b)
-        return output
+        self.bytes_read += output.tell()
+        _LOGGER.debug('Returning %s bytes of %s bytes requested', output.tell(), b)
+        return output.getvalue()
 
     def tell(self):
         """Returns the current position in the stream."""
@@ -398,7 +397,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             algorithm=self.config.algorithm,
             encryption_context=self.config.encryption_context.copy(),
             frame_length=self.config.frame_length,
-            plaintext_rostream=aws_encryption_sdk.internal.utils.ROStream(self.source_stream),
+            plaintext_rostream=aws_encryption_sdk.internal.utils.streams.ROStream(self.source_stream),
             plaintext_length=plaintext_length
         )
         self._encryption_materials = self.config.materials_manager.get_encryption_materials(
@@ -698,8 +697,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
         :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
         """
-        header_start = self.source_stream.tell()
-        header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(self.source_stream)
+        header, raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(self.source_stream)
 
         if (
                 self.config.max_body_length is not None
@@ -713,7 +711,6 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 )
             )
 
-        header_end = self.source_stream.tell()
         decrypt_materials_request = DecryptionMaterialsRequest(
             encrypted_data_keys=header.encrypted_data_keys,
             algorithm=header.algorithm,
@@ -728,8 +725,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 key_bytes=decryption_materials.verification_key
             )
         if self.verifier is not None:
-            self.source_stream.seek(header_start)
-            self.verifier.update(self.source_stream.read(header_end - header_start))
+            self.verifier.update(raw_header)
 
         header_auth = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
             stream=self.source_stream,
@@ -744,9 +740,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         aws_encryption_sdk.internal.formatting.deserialize.validate_header(
             header=header,
             header_auth=header_auth,
-            stream=self.source_stream,
-            header_start=header_start,
-            header_end=header_end,
+            raw_header=raw_header,
             data_key=self._derived_data_key
         )
         return header, header_auth

@@ -110,7 +110,7 @@ class MasterKeyProvider(object):
 
         :param dict encryption_context: Encryption context passed to client
         :param plaintext_rostream: Source plaintext read-only stream
-        :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
+        :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
         :param int plaintext_length: Length of source plaintext (optional)
         :returns: Tuple containing Primary Master Key and List of all Master Keys added to
             this Provider and any member Providers
@@ -387,7 +387,7 @@ class MasterKey(MasterKeyProvider):
 
         :param dict encryption_context: Encryption context passed to client
         :param plaintext_rostream: Source plaintext read-only stream
-        :type plaintext_rostream: aws_encryption_sdk.internal.utils.ROStream
+        :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
         :param int plaintext_length: Length of source plaintext (optional)
         :returns: Tuple containing self and a list of self
         :rtype: tuple containing :class:`aws_encryption_sdk.key_providers.base.MasterKey`

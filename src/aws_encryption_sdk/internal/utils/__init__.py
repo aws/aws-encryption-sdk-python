@@ -17,10 +17,7 @@ import os
 
 import six
 
-from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, InvalidDataKeyError,
-    SerializationError, UnknownIdentityError
-)
+from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.internal.str_ops import to_bytes
@@ -93,37 +90,6 @@ def get_aad_content_string(content_type, is_final_frame):
     else:
         raise UnknownIdentityError('Unhandled content type')
     return aad_content_string
-
-
-class ROStream(object):
-    """Provides a read-only interface on top of a stream object.
-
-    Used to provide MasterKeyProviders with read-only access to plaintext.
-
-    :param source_stream: File-like object
-    """
-
-    def __init__(self, source_stream):
-        """Prepares the passthroughs."""
-        self._source_stream = source_stream
-        self._duplicate_api()
-
-    def _duplicate_api(self):
-        """Maps the source stream API onto this object."""
-        source_attributes = set([
-            method for method in dir(self._source_stream)
-            if not method.startswith('_')
-        ])
-        self_attributes = set(dir(self))
-        for attribute in source_attributes.difference(self_attributes):
-            setattr(self, attribute, getattr(self._source_stream, attribute))
-
-    def write(self, b):  # pylint: disable=unused-argument
-        """Blocks calls to write.
-
-        :raises ActionNotAllowedError: when called
-        """
-        raise ActionNotAllowedError('Write not allowed on ROStream objects')
 
 
 def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_context):

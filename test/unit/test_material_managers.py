@@ -16,7 +16,7 @@ import pytest
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.identifiers import Algorithm
-from aws_encryption_sdk.internal.utils import ROStream
+from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials, DecryptionMaterialsRequest,
     EncryptionMaterials, EncryptionMaterialsRequest

@@ -48,7 +48,7 @@ class TestStreamDecryptor(unittest.TestCase):
             'aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.deserialize_header'
         )
         self.mock_deserialize_header = self.mock_deserialize_header_patcher.start()
-        self.mock_deserialize_header.return_value = self.mock_header
+        self.mock_deserialize_header.return_value = self.mock_header, sentinel.raw_header
         # Set up deserialize_header_auth patch
         self.mock_deserialize_header_auth_patcher = patch(
             'aws_encryption_sdk.streaming_client'
@@ -190,7 +190,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_materials_manager.decrypt_materials.assert_called_once_with(
             request=mock_decrypt_materials_request.return_value
         )
-        mock_verifier_instance.update.assert_called_once_with(b'')
+        mock_verifier_instance.update.assert_called_once_with(sentinel.raw_header)
         self.mock_deserialize_header_auth.assert_called_once_with(
             stream=ct_stream,
             algorithm=self.mock_header.algorithm,
@@ -205,9 +205,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_validate_header.assert_called_once_with(
             header=self.mock_header,
             header_auth=sentinel.header_auth,
-            stream=ct_stream,
-            header_start=0,
-            header_end=0,  # Because we mock out deserialize_header, this stays at the start of the stream
+            raw_header=sentinel.raw_header,
             data_key=mock_derive_datakey.return_value
         )
         assert test_header is self.mock_header
