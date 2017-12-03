@@ -20,7 +20,7 @@ from aws_encryption_sdk.internal.defaults import ALGORITHM, FRAME_LENGTH, LINE_L
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
-from aws_encryption_sdk.streaming_client import _ClientConfig, EncryptorConfig, DecryptorConfig
+from aws_encryption_sdk.streaming_client import _ClientConfig, DecryptorConfig, EncryptorConfig
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs, build_valid_kwargs_list
 
 
@@ -64,8 +64,8 @@ INVALID_KWARGS = {
         dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), key_provider=FakeMasterKeyProvider())
     ],
     EncryptorConfig: [
-      dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), encryption_context=None),
-      dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), frame_length=None)
+        dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), encryption_context=None),
+        dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), frame_length=None)
     ],
     DecryptorConfig: [
         dict(source=b'', materials_manager=FakeCryptoMaterialsManager(), max_body_length='not an int')

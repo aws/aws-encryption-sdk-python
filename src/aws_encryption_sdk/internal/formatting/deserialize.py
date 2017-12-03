@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Components for handling AWS Encryption SDK message deserialization."""
 from __future__ import division
+
 import io
 import logging
 import struct

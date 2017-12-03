@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.key_providers.raw.RawMasterKeyConfig"""
 import pytest
+import six
 
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
@@ -50,4 +51,4 @@ def test_parent():
 @pytest.mark.parametrize('cls, kwargs', all_valid_kwargs(VALID_KWARGS))
 def test_attributes_converts(cls, kwargs):
     test = cls(**kwargs)
-    assert isinstance(test.provider_id, str)
+    assert isinstance(test.provider_id, six.string_types)

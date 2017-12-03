@@ -18,7 +18,6 @@ import six
 
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import Algorithm
-
 from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
 
 

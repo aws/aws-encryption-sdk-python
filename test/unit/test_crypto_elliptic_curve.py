@@ -26,7 +26,6 @@ from aws_encryption_sdk.internal.crypto.elliptic_curve import (
     _ecc_public_numbers_from_compressed_point, _ecc_static_length_signature,
     _ECCCurveParameters, generate_ecc_signing_key
 )
-
 from .test_crypto import VALUES
 
 

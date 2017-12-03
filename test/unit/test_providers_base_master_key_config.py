@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.key_providers.base.MasterKeyConfig"""
-from mock import sentinel
 import pytest
 
 from aws_encryption_sdk.key_providers.base import MasterKeyConfig

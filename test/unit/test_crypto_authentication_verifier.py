@@ -18,7 +18,6 @@ from pytest_mock import mocker  # noqa pylint: disable=unused-import
 import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.internal.crypto.authentication import Verifier
 from aws_encryption_sdk.internal.defaults import ALGORITHM
-
 from .test_crypto import VALUES
 
 

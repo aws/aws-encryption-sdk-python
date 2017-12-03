@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """High level AWS Encryption SDK client for streaming objects."""
 from __future__ import division
+
 import abc
 import io
 import logging

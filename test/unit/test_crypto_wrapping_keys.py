@@ -20,7 +20,6 @@ from aws_encryption_sdk.identifiers import EncryptionKeyType, EncryptionType
 import aws_encryption_sdk.internal.crypto.wrapping_keys
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.structures import EncryptedData
-
 from .test_crypto import VALUES
 
 

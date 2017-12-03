@@ -17,7 +17,6 @@ import os
 import pytest
 
 import aws_encryption_sdk
-
 from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
 
 

@@ -21,7 +21,6 @@ from aws_encryption_sdk.exceptions import (
     DecryptKeyError, IncorrectMasterKeyError, InvalidKeyIdError, MasterKeyProviderError
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
-
 from .test_values import VALUES
 
 
