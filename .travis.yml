@@ -21,9 +21,8 @@ matrix:
 #      env: TOXENV=flake8
 #    - python: 3.6
 #      env: TOXENV=pylint
-# pending test-vectors refactor
-#    - python: 3.6
-#      env: TOXENV=flake8-tests
+    - python: 3.6
+      env: TOXENV=flake8-tests
     - python: 3.6
       env: TOXENV=pylint-tests
     - python: 3.6
