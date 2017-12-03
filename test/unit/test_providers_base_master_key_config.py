@@ -11,37 +11,39 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.key_providers.base.MasterKeyConfig"""
-import attr
 from mock import sentinel
 import pytest
-import six
 
-from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.key_providers.base import MasterKeyConfig
+from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 
-@pytest.mark.parametrize('attribute, validator_type, convert_function', (
-    (MasterKeyConfig.key_id, (six.string_types, bytes), to_bytes),
-))
-def test_attributes(attribute, validator_type, convert_function):
-    assert isinstance(attribute, attr.Attribute)
-    assert attribute.hash
-    assert attribute.validator.type == validator_type
-    assert attribute.convert is convert_function
+class FakeMasterKeyConfig(MasterKeyConfig):
+    provider_id = None
 
 
-def test_attributes_fails():
-    class TestConfig(MasterKeyConfig):
-        provider_id = sentinel.provider_id
+VALID_KWARGS = {
+    FakeMasterKeyConfig: [
+        dict(key_id='a key id'),
+        dict(key_id=b'a key id')
+    ]
+}
+
+
+@pytest.mark.parametrize('cls, kwargs', all_valid_kwargs(VALID_KWARGS))
+def test_attributes_valid_kwargs(cls, kwargs):
+    cls(**kwargs)
+
+
+@pytest.mark.parametrize('cls, kwargs', all_invalid_kwargs(VALID_KWARGS))
+def test_attributes_invalid_kwargs(cls, kwargs):
     with pytest.raises(TypeError):
-        TestConfig(key_id=None)
+        cls(**kwargs)
 
 
 @pytest.mark.parametrize('key_id', (b'key', 'key'))
 def test_attributes_converts(key_id):
-    class TestConfig(MasterKeyConfig):
-        provider_id = sentinel.provider_id
-    test = TestConfig(key_id=key_id)
+    test = FakeMasterKeyConfig(key_id=key_id)
     assert isinstance(test.key_id, bytes)
 
 
