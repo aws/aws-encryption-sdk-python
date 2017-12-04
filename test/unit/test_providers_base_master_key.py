@@ -15,6 +15,7 @@ import unittest
 
 import attr
 from mock import MagicMock, patch, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import ConfigMismatchError, IncorrectMasterKeyError, InvalidKeyIdError
@@ -46,6 +47,19 @@ class MockMasterKey(MasterKey):
         return self.config.mock_decrypted_data_key
 
 
+def test_master_key_provider_id_config_enforcement():
+    class FakeConfig(object):
+        key_id = b'a key'
+
+    class FakeMasterKey(MockMasterKey):
+        _config_class = FakeConfig
+
+    with pytest.raises(TypeError) as excinfo:
+        FakeMasterKey()
+
+    excinfo.match(r'MasterKey config classes must have a "provider_id" attribute defined.')
+
+
 class TestMasterKey(unittest.TestCase):
 
     def setUp(self):
@@ -60,7 +74,7 @@ class TestMasterKey(unittest.TestCase):
 
     def test_provider_id_enforcement(self):
         class TestMasterKey(MasterKey):
-            def generate_data_key(self, algorithm, encryption_context):
+            def _generate_data_key(self, algorithm, encryption_context):
                 pass
 
             def _encrypt_data_key(self, data_key, algorithm, encryption_context):
@@ -95,7 +109,7 @@ class TestMasterKey(unittest.TestCase):
         class TestMasterKey(MasterKey):
             provider_id = None
 
-            def generate_data_key(self, algorithm, encryption_context):
+            def _generate_data_key(self, algorithm, encryption_context):
                 pass
 
             def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
@@ -111,7 +125,7 @@ class TestMasterKey(unittest.TestCase):
         class TestMasterKey(MasterKey):
             provider_id = None
 
-            def generate_data_key(self, algorithm, encryption_context):
+            def _generate_data_key(self, algorithm, encryption_context):
                 pass
 
             def _encrypt_data_key(self, data_key, algorithm, encryption_context):

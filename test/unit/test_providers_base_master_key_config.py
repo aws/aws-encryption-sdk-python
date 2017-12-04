@@ -51,6 +51,6 @@ def test_provider_id_enforcement():
         pass
 
     with pytest.raises(TypeError) as excinfo:
-        TestConfig()
+        TestConfig(key_id='a key')
 
-    excinfo.match(r"Can't instantiate abstract class TestConfig *")
+    excinfo.match(r'Instances of MasterKeyConfig must have a "provider_id" attribute defined.')

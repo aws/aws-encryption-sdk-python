@@ -294,7 +294,6 @@ class MasterKeyProvider(object):
 
 
 @attr.s(hash=True)
-@six.add_metaclass(abc.ABCMeta)
 class MasterKeyConfig(object):
     """Configuration object for MasterKey objects.
 
@@ -307,23 +306,10 @@ class MasterKeyConfig(object):
         convert=to_bytes
     )
 
-    @abc.abstractproperty
-    def provider_id(self):
-        """Utilizing ABCMeta to enable children to either set this as a class property or require it as input.
-
-        .. note::
-            Must be implemented by child classes.
-
-        If requiring provider_id as input:
-
-        .. code-block:: python
-
-            provider_id = attr.ib(
-                hash=True,
-                validator=attr.validators.instance_of((six.string_types, bytes)),
-                convert=aws_encryption_sdk.internal.str_ops.to_str
-            )
-        """
+    def __attrs_post_init__(self):
+        """Verify that children of this class define a "provider_id" attribute."""
+        if not hasattr(self, 'provider_id'):
+            raise TypeError('Instances of MasterKeyConfig must have a "provider_id" attribute defined.')
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -338,6 +324,10 @@ class MasterKey(MasterKeyProvider):
     def __new__(cls, **kwargs):
         """Performs universal prep work for all MasterKeys."""
         instance = super(MasterKey, cls).__new__(cls, **kwargs)
+
+        if not hasattr(instance.config, 'provider_id'):
+            raise TypeError('MasterKey config classes must have a "provider_id" attribute defined.')
+
         if instance.config.provider_id is not None:
             # Only allow override if provider_id is NOT set to non-None for the class
             if instance.provider_id is None:
