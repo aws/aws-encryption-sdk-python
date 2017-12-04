@@ -25,116 +25,181 @@ __version__ = '1.3.3'
 USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython-KMSMasterKey/{}'.format(__version__)
 
 
-def _kdf_input_len_check(data_key_len, kdf_type, kdf_input_len):
-    """Validates that data_key_len and kdf_input_len have the correct relationship.
+class EncryptionSuite(Enum):
+    """Static definition of encryption algorithm details.
 
-    :param int data_key_len: Number of bytes in key
-    :param kdf_type: KDF algorithm to use
-    :param kdf_type: cryptography.io KDF object
-    :param int kdf_input_len: Length of input data to feed into KDF function
+    :param algorithm: Encryption algorithm to use
+    :type algorithm: cryptography.io ciphers algorithm object
+    :param mode: Encryption mode in which to operate
+    :type mode: cryptography.io ciphers modes object
+    :param int data_key_length: Number of bytes in envelope encryption data key
+    :param int iv_length: Number of bytes in IV
+    :param int auth_length: Number of bytes in auth data (tag)
+    :param int auth_key_length: Number of bytes in auth key (not currently supported by any algorithms)
     """
-    if kdf_type is None and data_key_len != kdf_input_len:
-        raise InvalidAlgorithmError(
-            'Invalid Algorithm definition: data_key_len must equal kdf_input_len for non-KDF algorithms'
-        )
-    elif data_key_len > kdf_input_len:
-        raise InvalidAlgorithmError(
-            'Invalid Algorithm definition: data_key_len must not be greater than kdf_input_len'
-        )
+
+    AES_128_GCM_IV12_TAG16 = (algorithms.AES, modes.GCM, 16, 12, 16)
+    AES_192_GCM_IV12_TAG16 = (algorithms.AES, modes.GCM, 24, 12, 16)
+    AES_256_GCM_IV12_TAG16 = (algorithms.AES, modes.GCM, 32, 12, 16)
+
+    def __init__(self, algorithm, mode, data_key_length, iv_length, auth_length, auth_key_length=0):
+        """Prepare a new EncryptionSuite."""
+        self.algorithm = algorithm
+        self.mode = mode
+        self.data_key_length = data_key_length
+        self.iv_length = iv_length
+        self.auth_length = self.tag_len = auth_length
+        # Auth keys are not currently supported
+        self.auth_key_length = auth_key_length
+
+    def valid_kdf(self, kdf):
+        """Determine whether a KDFSuite can be used with this EncryptionSuite.
+
+        :param kdf: KDFSuite to evaluate
+        :type kdf: aws_encryption_sdk.identifiers.KDFSuite
+        :rtype: bool
+        """
+        if kdf.input_length is None:
+            return True
+
+        if self.data_key_length > kdf.input_length(self):
+            raise InvalidAlgorithmError(
+                'Invalid Algorithm definition: data_key_len must not be greater than kdf_input_len'
+            )
+
+        return True
 
 
-class Algorithm(Enum):  # pylint: disable=too-many-instance-attributes
-    """IDs of cryptographic algorithms this library knows about.
+class KDFSuite(Enum):
+    """Static definition of key derivation algorithm details.
+
+    :param algorithm: KDF algorithm to use
+    :type algorithm: cryptography.io KDF object
+    :param int input_length: Number of bytes of input data to feed into KDF function
+    :param hash_algorithm: Hash algorithm to use in KDF
+    :type hash_algorithm: cryptography.io hashes object
+    """
+
+    NONE = (None, None, None)
+    HKDF_SHA256 = (hkdf.HKDF, None, hashes.SHA256)
+    HKDF_SHA384 = (hkdf.HKDF, None, hashes.SHA384)
+
+    def __init__(self, algorithm, input_length, hash_algorithm):
+        """Prepare a new KDFSuite."""
+        self.algorithm = algorithm
+        self._input_length = input_length
+        self.hash_algorithm = hash_algorithm
+
+    def input_length(self, encryption):
+        """Determine the correct KDF input value length for this KDFSuite when used with
+        a specific EncryptionSuite.
+
+        :param encryption: EncryptionSuite to use
+        :type encryption: aws_encryption_sdk.identifiers.EncryptionSuite
+        :rtype: int
+        """
+        # type: (EncryptionSuite) -> bool
+        if self._input_length is None:
+            return encryption.data_key_length
+
+        return self._input_length
+
+
+class AuthenticationSuite(Enum):
+    """Static definition of authentication algorithm details.
+
+    :param algorithm: Information needed by signing algorithm to define behavior
+    :type algorithm: may vary (currently only ECC curve object)
+    :param hash_algorithm: Hash algorithm to use in signature
+    :type hash_algorithm: cryptography.io hashes object
+    :param int signature_lenth: Number of bytes in signature
+    """
+
+    NONE = (None, None, 0)
+    SHA256_ECDSA_P256 = (ec.SECP256R1, hashes.SHA256, 71)
+    SHA256_ECDSA_P384 = (ec.SECP384R1, hashes.SHA384, 103)
+
+    def __init__(self, algorithm, hash_algorithm, signature_length):
+        """Prepare a new AuthenticationSuite."""
+        self.algorithm = algorithm
+        self.hash_algorithm = hash_algorithm
+        self.signature_length = signature_length
+
+
+class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
+    """Static combinations of encryption, KDF, and authentication algorithms.
 
     :param int algorithm_id: KMS Encryption Algorithm ID
-    :param encryption_algorithm: Encryption algorithm to use
-    :type encryption_algorithm: cryptography.io ciphers algorithm object
-    :param encryption_mode: Encryption mode in which to operate
-    :type encryption_mode: cryptography.io ciphers modes object
-    :param int iv_len: Number of bytes in IV
-    :param int auth_len: Number of bytes in auth data (tag)
-    :param int auth_key_len: Number of bytes in auth key (not currently supported by any algorithms)
-    :param int data_key_len: Number of bytes in envelope encryption data key
-    :param kdf_type: KDF algorithm to use
-    :type kdf_type: cryptography.io KDF object
-    :param int kdf_input_len: Number of bytes of input data to feed into KDF function
-    :param kdf_hash_type: Hash algorithm to use in KDF
-    :type kdf_hash_type: cryptography.io hashes object
-    :param signing_algorithm_info: Information needed by signing algorithm to define behavior
-    :type signing_algorithm_info: may vary (currently only ECC curve object)
-    :param signature_hash_type: Hash algorithm to use in signature
-    :type signature_hash_type: cryptography.io hashes object
-    :param int signature_len: Number of bytes in signature
+    :param encryption_suite: EncryptionSuite to use with this AlgorithmSuite
+    :type encryption_suite: aws_encryption_sdk.identifiers.EncryptionSuite
+    :param kdf_suite: KDFSuite to use with this AlgorithmSuite
+    :type kdf_suite: aws_encryption_sdk.identifiers.KDFSuite
+    :param authentication_suite: AuthenticationSuite to use with this AlgorithmSuite
+    :type authentication_suite: aws_encryption_sdk.identifiers.AuthenticationSuite
     """
 
-    __rlookup__ = {}  # algorithm_id -> Algorithm
+    __rlookup__ = {}  # algorithm_id -> AlgorithmSuite
 
-    AES_128_GCM_IV12_TAG16 = (0x0014, algorithms.AES, modes.GCM, 12, 16, 0, 16, None, 16, None, None, None, 0)
-    AES_192_GCM_IV12_TAG16 = (0x0046, algorithms.AES, modes.GCM, 12, 16, 0, 24, None, 24, None, None, None, 0)
-    AES_256_GCM_IV12_TAG16 = (0x0078, algorithms.AES, modes.GCM, 12, 16, 0, 32, None, 32, None, None, None, 0)
-    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0114, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, None, None, 0
-    )
-    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0146, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA256, None, None, 0
-    )
-    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (
-        0x0178, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA256, None, None, 0
-    )
+    AES_128_GCM_IV12_TAG16 = (0x0014, EncryptionSuite.AES_128_GCM_IV12_TAG16)
+    AES_192_GCM_IV12_TAG16 = (0x0046, EncryptionSuite.AES_192_GCM_IV12_TAG16)
+    AES_256_GCM_IV12_TAG16 = (0x0078, EncryptionSuite.AES_256_GCM_IV12_TAG16)
+    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (0x0114, EncryptionSuite.AES_128_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
+    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (0x0146, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
+    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (0x0178, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
     AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256 = (
-        0x0214, algorithms.AES, modes.GCM, 12, 16, 0, 16, hkdf.HKDF, 16, hashes.SHA256, ec.SECP256R1, hashes.SHA256, 71
+        0x0214, EncryptionSuite.AES_128_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256, AuthenticationSuite.SHA256_ECDSA_P256
     )
     AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0346, algorithms.AES, modes.GCM, 12, 16, 0, 24, hkdf.HKDF, 24, hashes.SHA384, ec.SECP384R1, hashes.SHA384, 103
+        0x0346, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA384, AuthenticationSuite.SHA256_ECDSA_P384
     )
     AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0378, algorithms.AES, modes.GCM, 12, 16, 0, 32, hkdf.HKDF, 32, hashes.SHA384, ec.SECP384R1, hashes.SHA384, 103
+        0x0378, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA384, AuthenticationSuite.SHA256_ECDSA_P384
     )
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
             self,
-            algorithm_id,
-            encryption_algorithm,
-            encryption_mode,
-            iv_len,
-            auth_len,
-            auth_key_len,
-            data_key_len,
-            kdf_type,
-            kdf_input_len,
-            kdf_hash_type,
-            signing_algorithm_info,
-            signing_hash_type,
-            signature_len
+            algorithm_id,  # type: int
+            encryption,  # type: EncryptionSuite
+            kdf=KDFSuite.NONE,  # type: Optional[KDFSuite]
+            authentication=AuthenticationSuite.NONE,  # type: Optional[AuthenticationSuite]
+            allowed=True  # type: bool
     ):
-        """Prepares new Algorithm."""
-        _kdf_input_len_check(
-            data_key_len=data_key_len,
-            kdf_type=kdf_type,
-            kdf_input_len=kdf_input_len
-        )
+        # type: (...) -> None
+        """Prepare a new AlgorithmSuite."""
         self.algorithm_id = algorithm_id
-        self.encryption_algorithm = encryption_algorithm
-        self.encryption_mode = encryption_mode
-        self.iv_len = iv_len
-        # Auth keys are not currently supported
-        self.auth_key_len = auth_key_len
-        self.auth_len = self.tag_len = auth_len
-        self.data_key_len = data_key_len
-        self.kdf_type = kdf_type
-        self.kdf_input_len = kdf_input_len
-        self.kdf_hash_type = kdf_hash_type
-        self.signing_algorithm_info = signing_algorithm_info
-        self.signing_hash_type = signing_hash_type
-        self.signature_len = signature_len
-        # All algorithms in this enum are allowed for now.
-        #  This might change in the future.
-        self.allowed = True
+        self.encryption = encryption
+        self.encryption.valid_kdf(kdf)
+        self.kdf = kdf
+        self.authentication = authentication
+        self.allowed = allowed
+
+        # Encryption Suite Legacy Compatibility
+        self.encryption_algorithm = self.encryption.algorithm
+        self.encryption_mode = self.encryption.mode
+        self.data_key_len = self.encryption.data_key_length
+        self.iv_len = self.encryption.iv_length
+        self.auth_key_len = self.encryption.auth_key_length
+        self.auth_len = self.tag_len = self.encryption.auth_length
+
+        # KDF Suite Legacy Compatibility
+        self.kdf_type = self.kdf.algorithm
+        self.kdf_hash_type = self.kdf.hash_algorithm
+
+        # Authentication Suite Legacy Compatibility
+        self.signing_algorithm_info = self.authentication.algorithm
+        self.signing_hash_type = self.authentication.hash_algorithm
+        self.signature_len = self.authentication.signature_length
+
         self.__rlookup__[algorithm_id] = self
+
+    @property
+    def kdf_input_len(self):
+        """Determine the correct KDF input value length for this algorithm suite."""
+        return self.kdf.input_length(self.encryption)
 
     @classmethod
     def get_by_id(cls, algorithm_id):
-        """Returns the correct member based on the algorithm_id value.
+        """Return the correct member based on the algorithm_id value.
 
         :param algorithm_id: Value of algorithm_id field with which to retrieve Algorithm
         :type algorithm_id: int
@@ -144,12 +209,15 @@ class Algorithm(Enum):  # pylint: disable=too-many-instance-attributes
         return cls.__rlookup__[algorithm_id]
 
     def id_as_bytes(self):
-        """Returns the algorithm suite ID as a 2-byte array"""
+        """Return the algorithm suite ID as a 2-byte array"""
         return struct.pack('>H', self.algorithm_id)
 
     def safe_to_cache(self):
-        """Determines whether encryption materials for this algorithm suite should be cached."""
-        return self.kdf_type is not None
+        """Determine whether encryption materials for this algorithm suite should be cached."""
+        return self.kdf is not KDFSuite.NONE
+
+
+Algorithm = AlgorithmSuite
 
 
 class EncryptionType(Enum):
