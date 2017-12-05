@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Functional test suite testing decryption of known good test files encrypted using static RawMasterKeyProvider."""
-from __future__ import print_function
 import base64
 from collections import defaultdict
 import json
@@ -78,7 +77,6 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
             key_bits = int(key_bits)
             key_type = _KEY_TYPES_MAP[algorithm]
             wrapping_algorithm = _WRAPPING_ALGORITHM_MAP[algorithm][key_bits][padding_algorithm][padding_hash]
-            print('looking up {} {}'.format(algorithm, key_bits))
             static_key = _STATIC_KEYS[algorithm][key_bits]
             return WrappingKey(
                 wrapping_algorithm=wrapping_algorithm,
@@ -113,7 +111,7 @@ class Scenario(object):
     key_ids = attr.ib(validator=attr.validators.instance_of(list))
 
 
-def _generate_test_cases():
+def _generate_test_cases():  # noqa=C901
     try:
         root_dir = os.path.abspath(file_root())
     except Exception:  # pylint: disable=broad-except

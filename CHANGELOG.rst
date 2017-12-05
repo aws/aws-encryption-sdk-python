@@ -2,6 +2,20 @@
 Changelog
 *********
 
+1.3.3
+=====
+
+Bugfixes
+--------
+* Remove use of attrs functionality deprecated in 17.3.0
+  `#29 <https://github.com/awslabs/aws-encryption-sdk-python/issues/29>`_
+
+Maintenance
+-----------
+* Blacklisted pytest 3.3.0
+  `#32 <https://github.com/awslabs/aws-encryption-sdk-python/issues/32>`_
+  `pytest-dev/pytest#2957 <https://github.com/pytest-dev/pytest/issues/2957>`_
+
 1.3.2
 =====
 * Addressed `issue #13 <https://github.com/awslabs/aws-encryption-sdk-python/issues/13>`_

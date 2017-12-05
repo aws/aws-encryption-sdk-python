@@ -11,304 +11,70 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.structures"""
-import attr
-from mock import MagicMock
 import pytest
-import six
 
 from aws_encryption_sdk.identifiers import (
     Algorithm, ContentType, ObjectType, SerializationVersion
 )
-from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 from aws_encryption_sdk.structures import (
     DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader, RawDataKey
 )
+from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 
-@pytest.mark.parametrize('attribute, validator_type, convert_function', (
-    (MessageHeader.version, SerializationVersion, None),
-    (MessageHeader.type, ObjectType, None),
-    (MessageHeader.algorithm, Algorithm, None),
-    (MessageHeader.message_id, bytes, None),
-    (MessageHeader.encryption_context, dict, None),
-    (MessageHeader.encrypted_data_keys, set, None),
-    (MessageHeader.content_type, ContentType, None),
-    (MessageHeader.content_aad_length, six.integer_types, None),
-    (MessageHeader.header_iv_length, six.integer_types, None),
-    (MessageHeader.frame_length, six.integer_types, None),
-    (MasterKeyInfo.provider_id, (six.string_types, bytes), to_str),
-    (MasterKeyInfo.key_info, (six.string_types, bytes), to_bytes),
-    (RawDataKey.key_provider, MasterKeyInfo, None),
-    (RawDataKey.data_key, bytes, None),
-    (DataKey.key_provider, MasterKeyInfo, None),
-    (DataKey.data_key, bytes, None),
-    (DataKey.encrypted_data_key, bytes, None),
-    (EncryptedDataKey.key_provider, MasterKeyInfo, None),
-    (EncryptedDataKey.encrypted_data_key, bytes, None)
-))
-def test_attributes(attribute, validator_type, convert_function):
-    assert isinstance(attribute, attr.Attribute)
-    assert attribute.validator.type == validator_type
-    assert attribute.hash
-    if convert_function is not None:
-        assert attribute.convert is convert_function
-
-
-@pytest.mark.parametrize(
-    (
-        'version,'
-        'message_type,'
-        'algorithm,'
-        'message_id,'
-        'encryption_context,'
-        'encrypted_data_keys,'
-        'content_type,'
-        'content_aad_length,'
-        'header_iv_length,'
-        'frame_length'
-    ),
-    (
-        (
-            None,
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            None,
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            None,
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            None,
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            None,
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            None,
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            None,
-            5,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            None,
-            5,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            None,
-            5
-        ),
-        (
-            MagicMock(__class__=SerializationVersion),
-            MagicMock(__class__=ObjectType),
-            MagicMock(__class__=Algorithm),
-            b'',
-            {},
-            set([]),
-            MagicMock(__class__=ContentType),
-            5,
-            5,
-            None
-        )
-    )
-)
-def test_message_header_attributes_fails(
-        version,
-        message_type,
-        algorithm,
-        message_id,
-        encryption_context,
-        encrypted_data_keys,
-        content_type,
-        content_aad_length,
-        header_iv_length,
-        frame_length
-):
-    with pytest.raises(TypeError):
-        MessageHeader(
-            version=version,
-            type=message_type,
-            algorithm=algorithm,
-            message_id=message_id,
-            encryption_context=encryption_context,
-            encrypted_data_keys=encrypted_data_keys,
-            content_type=content_type,
-            content_aad_length=content_aad_length,
-            header_iv_length=header_iv_length,
-            frame_length=frame_length
-        )
-
-
-def test_message_header_attributes_succeeds():
-    MessageHeader(
-        version=MagicMock(__class__=SerializationVersion),
-        type=MagicMock(__class__=ObjectType),
-        algorithm=MagicMock(__class__=Algorithm),
-        message_id=b'',
+VALID_KWARGS = {
+    MessageHeader: [dict(
+        version=SerializationVersion.V1,
+        type=ObjectType.CUSTOMER_AE_DATA,
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        message_id=b'aosiejfoaiwej',
         encryption_context={},
         encrypted_data_keys=set([]),
-        content_type=MagicMock(__class__=ContentType),
-        content_aad_length=5,
-        header_iv_length=5,
-        frame_length=5
-    )
+        content_type=ContentType.FRAMED_DATA,
+        content_aad_length=32456,
+        header_iv_length=32456,
+        frame_length=234567
+    )],
+    MasterKeyInfo: [
+        dict(provider_id='fawnofijawef', key_info='ajsnoiajerofi'),
+        dict(provider_id=b'fawnofijawef', key_info='ajsnoiajerofi'),
+        dict(provider_id='fawnofijawef', key_info=b'ajsnoiajerofi'),
+        dict(provider_id=b'fawnofijawef', key_info=b'ajsnoiajerofi')
+    ],
+    RawDataKey: [dict(
+        key_provider=MasterKeyInfo(provider_id='asjnoa', key_info=b'aosjfoaiwej'),
+        data_key=b'aosijfoewaijf'
+    )],
+    DataKey: [dict(
+        key_provider=MasterKeyInfo(provider_id='asjnoa', key_info=b'aosjfoaiwej'),
+        data_key=b'oaijefoawiejf',
+        encrypted_data_key=b'aisofiawjef'
+    )],
+    EncryptedDataKey: [dict(
+        key_provider=MasterKeyInfo(provider_id='asjnoa', key_info=b'aosjfoaiwej'),
+        encrypted_data_key=b'aisofiawjef'
+    )]
+}
 
 
-@pytest.mark.parametrize('provider_id, key_info', (
-    (None, 'key'),
-    ('provider', None)
-))
-def test_master_key_info_attributes_fails(provider_id, key_info):
+@pytest.mark.parametrize('cls, kwargs', all_valid_kwargs(VALID_KWARGS))
+def test_attributes_valid_kwargs(cls, kwargs):
+    cls(**kwargs)
+
+
+@pytest.mark.parametrize('cls, kwargs', all_invalid_kwargs(VALID_KWARGS))
+def test_attributes_invalid_kwargs(cls, kwargs):
     with pytest.raises(TypeError):
-        MasterKeyInfo(provider_id=provider_id, key_info=key_info)
+        cls(**kwargs)
 
 
-@pytest.mark.parametrize('provider_id, key_info', (
-    ('provider', 'key'),
-    (b'provider', b'key')
+@pytest.mark.parametrize('kwargs, attribute, expected_value', (
+    (dict(provider_id='asfoijwae', key_info=b'oaiejfoeiwja'), 'provider_id', 'asfoijwae'),
+    (dict(provider_id=b'asfoijwae', key_info=b'oaiejfoeiwja'), 'provider_id', 'asfoijwae'),
+    (dict(provider_id='asfoijwae', key_info='oaiejfoeiwja'), 'key_info', b'oaiejfoeiwja'),
+    (dict(provider_id='asfoijwae', key_info=b'oaiejfoeiwja'), 'key_info', b'oaiejfoeiwja')
 ))
-def test_key_info_attributes_converts(provider_id, key_info):
-    test = MasterKeyInfo(
-        provider_id=provider_id,
-        key_info=key_info
-    )
-    assert test.provider_id == 'provider'
-    assert test.key_info == b'key'
+def test_master_key_info_convert(kwargs, attribute, expected_value):
+    test = MasterKeyInfo(**kwargs)
 
-
-@pytest.mark.parametrize('key_provider, data_key', (
-    (None, b''),
-    (MagicMock(__class__=MasterKeyInfo), None)
-))
-def test_raw_data_key_attributes_fails(key_provider, data_key):
-    with pytest.raises(TypeError):
-        RawDataKey(
-            key_provider=key_provider,
-            data_key=data_key
-        )
-
-
-def test_raw_data_key_attributes_succeeds():
-    RawDataKey(
-        key_provider=MagicMock(__class__=MasterKeyInfo),
-        data_key=b''
-    )
-
-
-@pytest.mark.parametrize('key_provider, data_key, encrypted_data_key', (
-    (None, b'', b''),
-    (MagicMock(__class__=MasterKeyInfo), None, b''),
-    (MagicMock(__class__=MasterKeyInfo), b'', None)
-))
-def test_data_key_attributes_fails(key_provider, data_key, encrypted_data_key):
-    with pytest.raises(TypeError):
-        DataKey(
-            key_provider=key_provider,
-            data_key=data_key,
-            encryted_data_key=encrypted_data_key
-        )
-
-
-def test_data_key_attributes_succeeds():
-    DataKey(
-        key_provider=MagicMock(__class__=MasterKeyInfo),
-        data_key=b'',
-        encrypted_data_key=b''
-    )
-
-
-@pytest.mark.parametrize('key_provider, encrypted_data_key', (
-    (None, b''),
-    (MagicMock(__class__=MasterKeyInfo), None)
-))
-def test_encrypted_data_key_attributes_fails(key_provider, encrypted_data_key):
-    with pytest.raises(TypeError):
-        EncryptedDataKey(
-            key_provider=key_provider,
-            encryted_data_key=encrypted_data_key
-        )
-
-
-def test_Encrypted_data_key_attributes_succeeds():
-    EncryptedDataKey(
-        key_provider=MagicMock(__class__=MasterKeyInfo),
-        encrypted_data_key=b''
-    )
+    assert getattr(test, attribute) == expected_value
