@@ -3,3 +3,7 @@ include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
 include requirements.txt
+
+recursive-include doc *
+recursive-include test *.py
+recursive-include examples *.py
