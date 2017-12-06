@@ -10,7 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Integration tests to ensure ``aws_encryption_sdk`` clients are thread safe."""
+"""Basic sanity check for ``aws_encryption_sdk`` client behavior when threading."""
 from __future__ import division
 import copy
 from random import SystemRandom
