@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Basic sanity check for ``aws_encryption_sdk`` client behavior when threading."""
 from __future__ import division
+
 import copy
 from random import SystemRandom
 import threading
@@ -21,7 +22,6 @@ import pytest
 from six.moves import queue  # six.moves confuses pylint: disable=import-error
 
 import aws_encryption_sdk
-
 from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
 
 
