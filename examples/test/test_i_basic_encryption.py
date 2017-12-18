@@ -18,10 +18,11 @@ sys.path.extend([  # noqa
     os.sep.join([os.path.dirname(__file__), '..', 'src'])
 ])
 
-from basic_encryption import cycle_string
 import botocore.session
-from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
 import pytest
+
+from basic_encryption import cycle_string
+from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
 
 
 @pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)

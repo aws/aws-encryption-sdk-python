@@ -19,9 +19,10 @@ sys.path.extend([  # noqa
 ])
 import tempfile
 
+import pytest
+
 from basic_file_encryption_with_raw_key_provider import cycle_file
 from integration_test_utils import SKIP_MESSAGE, skip_tests
-import pytest
 
 
 @pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
