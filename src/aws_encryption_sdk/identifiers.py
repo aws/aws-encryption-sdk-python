@@ -173,7 +173,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         self.authentication = authentication
         self.allowed = allowed
 
-        # Encryption Suite Legacy Compatibility
+        # Encryption Values
         self.encryption_algorithm = self.encryption.algorithm
         self.encryption_mode = self.encryption.mode
         self.data_key_len = self.encryption.data_key_length
@@ -181,11 +181,11 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         self.auth_key_len = self.encryption.auth_key_length
         self.auth_len = self.tag_len = self.encryption.auth_length
 
-        # KDF Suite Legacy Compatibility
+        # KDF Values
         self.kdf_type = self.kdf.algorithm
         self.kdf_hash_type = self.kdf.hash_algorithm
 
-        # Authentication Suite Legacy Compatibility
+        # Authentication Values
         self.signing_algorithm_info = self.authentication.algorithm
         self.signing_hash_type = self.authentication.hash_algorithm
         self.signature_len = self.authentication.signature_length
