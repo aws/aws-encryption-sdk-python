@@ -28,6 +28,8 @@ USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython-KMSMasterKey/{}'.format(__version__)
 class EncryptionSuite(Enum):
     """Static definition of encryption algorithm details.
 
+    .. warning:: These members must only be used as part of an AlgorithmSuite.
+
     :param algorithm: Encryption algorithm to use
     :type algorithm: cryptography.io ciphers algorithm object
     :param mode: Encryption mode in which to operate
@@ -73,6 +75,8 @@ class EncryptionSuite(Enum):
 class KDFSuite(Enum):
     """Static definition of key derivation algorithm details.
 
+    .. warning:: These members must only be used as part of an AlgorithmSuite.
+
     :param algorithm: KDF algorithm to use
     :type algorithm: cryptography.io KDF object
     :param int input_length: Number of bytes of input data to feed into KDF function
@@ -107,6 +111,8 @@ class KDFSuite(Enum):
 
 class AuthenticationSuite(Enum):
     """Static definition of authentication algorithm details.
+
+    .. warning:: These members must only be used as part of an AlgorithmSuite.
 
     :param algorithm: Information needed by signing algorithm to define behavior
     :type algorithm: may vary (currently only ECC curve object)
