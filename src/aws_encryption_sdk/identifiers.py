@@ -135,6 +135,8 @@ class AuthenticationSuite(Enum):
 class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
     """Static combinations of encryption, KDF, and authentication algorithms.
 
+    .. warning:: No AlgorithmSuites except those defined here are supported.
+
     :param int algorithm_id: KMS Encryption Algorithm ID
     :param encryption_suite: EncryptionSuite to use with this AlgorithmSuite
     :type encryption_suite: aws_encryption_sdk.identifiers.EncryptionSuite
