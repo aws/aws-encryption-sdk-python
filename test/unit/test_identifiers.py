@@ -11,10 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.identifiers"""
+from mock import Mock
 import pytest
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
-from aws_encryption_sdk.identifiers import _kdf_input_len_check, Algorithm
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionSuite, KDFSuite
 
 
 @pytest.mark.parametrize('check_algorithm, safe_to_cache', (
@@ -35,23 +36,30 @@ def test_algorithm_safe_to_cache(check_algorithm, safe_to_cache):
         assert not check_algorithm.safe_to_cache()
 
 
-def test_kdf_input_len_check_valid():
-    _kdf_input_len_check(
-        data_key_len=5,
-        kdf_type=5,
-        kdf_input_len=5
-    )
-
-
-def test_kdf_input_len_check_invalid_no_kdf():
+@pytest.mark.parametrize('suite', [suite for suite in EncryptionSuite])
+def test_encryption_suite_invalid_kdf(suite):
+    mock_kdf = Mock()
+    mock_kdf.input_length.return_value = 1
     with pytest.raises(InvalidAlgorithmError) as excinfo:
-        _kdf_input_len_check(data_key_len=2, kdf_type=None, kdf_input_len=5)
-
-    excinfo.match(r'Invalid Algorithm definition: data_key_len must equal kdf_input_len for non-KDF algorithms')
-
-
-def test_kdf_input_len_check_invalid_with_kdf():
-    with pytest.raises(InvalidAlgorithmError) as excinfo:
-        _kdf_input_len_check(data_key_len=5, kdf_type=5, kdf_input_len=2)
+        suite.valid_kdf(mock_kdf)
 
     excinfo.match(r'Invalid Algorithm definition: data_key_len must not be greater than kdf_input_len')
+
+
+def build_valid_kdf_checks():
+    checks = []
+    for suite in EncryptionSuite:
+        checks.append((suite, KDFSuite.NONE, True))
+        checks.append((suite, KDFSuite.HKDF_SHA256, True))
+        checks.append((suite, KDFSuite.HKDF_SHA384, True))
+    return checks
+
+
+@pytest.mark.parametrize('encryption, kdf, expected', build_valid_kdf_checks())
+def test_encryption_suite_valid_kdf(encryption, kdf, expected):
+    actual = encryption.valid_kdf(kdf)
+
+    if expected:
+        assert actual
+    else:
+        assert not actual
