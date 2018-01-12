@@ -64,7 +64,7 @@ class _ClientConfig(object):
             will attempt to seek() to the end of the stream and tell() to find the length of source data.
     """
 
-    source = attr.ib(hash=True, convert=aws_encryption_sdk.internal.utils.prep_stream_data)
+    source = attr.ib(hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data)
     materials_manager = attr.ib(
         hash=True,
         default=None,

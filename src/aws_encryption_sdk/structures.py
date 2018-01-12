@@ -70,12 +70,12 @@ class MasterKeyInfo(object):
     provider_id = attr.ib(
         hash=True,
         validator=attr.validators.instance_of((six.string_types, bytes)),
-        convert=to_str
+        converter=to_str
     )
     key_info = attr.ib(
         hash=True,
         validator=attr.validators.instance_of((six.string_types, bytes)),
-        convert=to_bytes
+        converter=to_bytes
     )
 
 
