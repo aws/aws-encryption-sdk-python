@@ -43,7 +43,7 @@ class RawMasterKeyConfig(MasterKeyConfig):
     provider_id = attr.ib(
         hash=True,
         validator=attr.validators.instance_of((six.string_types, bytes)),
-        convert=aws_encryption_sdk.internal.str_ops.to_str
+        converter=aws_encryption_sdk.internal.str_ops.to_str
     )
     wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
 

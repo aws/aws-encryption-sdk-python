@@ -52,13 +52,13 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
         hash=True,
         default=attr.Factory(tuple),
         validator=attr.validators.instance_of(tuple),
-        convert=tuple
+        converter=tuple
     )
     region_names = attr.ib(
         hash=True,
         default=attr.Factory(tuple),
         validator=attr.validators.instance_of(tuple),
-        convert=tuple
+        converter=tuple
     )
 
 
@@ -179,7 +179,7 @@ class KMSMasterKeyConfig(MasterKeyConfig):
         hash=True,
         default=attr.Factory(tuple),
         validator=attr.validators.instance_of(tuple),
-        convert=tuple
+        converter=tuple
     )
 
 

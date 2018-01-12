@@ -303,7 +303,7 @@ class MasterKeyConfig(object):
     key_id = attr.ib(
         hash=True,
         validator=attr.validators.instance_of((six.string_types, bytes)),
-        convert=to_bytes
+        converter=to_bytes
     )
 
     def __attrs_post_init__(self):

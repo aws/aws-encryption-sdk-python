@@ -89,7 +89,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
     )
     partition_name = attr.ib(
         default=None,
-        convert=to_bytes,
+        converter=to_bytes,
         validator=attr.validators.optional(attr.validators.instance_of(bytes))
     )
     master_key_provider = attr.ib(
