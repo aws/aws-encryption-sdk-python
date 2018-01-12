@@ -20,6 +20,8 @@ from aws_encryption_sdk.exceptions import NotSupportedError
 import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.internal.crypto.authentication import _PrehashingAuthenticator
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_set_signature_type(mocker):

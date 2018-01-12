@@ -21,6 +21,8 @@ from aws_encryption_sdk.structures import (
 )
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 VALID_KWARGS = {
     MessageHeader: [dict(

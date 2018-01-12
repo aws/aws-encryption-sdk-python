@@ -14,10 +14,13 @@
 import unittest
 
 from mock import MagicMock, patch, sentinel
+import pytest
 import six
 
 import aws_encryption_sdk
 import aws_encryption_sdk.internal.defaults
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestAwsEncryptionSdk(unittest.TestCase):

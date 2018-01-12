@@ -22,6 +22,8 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.structures import EncryptedData
 from .test_crypto import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):

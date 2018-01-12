@@ -22,10 +22,11 @@ import botocore.session
 import pytest
 
 from basic_encryption import cycle_string
-from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
+from integration_test_utils import get_cmk_arn
+
+pytestmark = [pytest.mark.examples]
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_cycle_string():
     plaintext = os.urandom(1024)
     cmk_arn = get_cmk_arn()

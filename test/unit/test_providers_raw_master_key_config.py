@@ -20,6 +20,8 @@ from aws_encryption_sdk.key_providers.base import MasterKeyConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyConfig
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 STATIC_WRAPPING_KEY = WrappingKey(
     wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
     wrapping_key=b'_________a symmetric key________',

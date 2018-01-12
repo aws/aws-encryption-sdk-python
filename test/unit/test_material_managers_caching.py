@@ -24,6 +24,8 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 import aws_encryption_sdk.materials_managers.caching
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 def build_ccmm(**custom_kwargs):
     kwargs = dict(

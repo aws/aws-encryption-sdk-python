@@ -23,10 +23,11 @@ import botocore.session
 import pytest
 
 from basic_file_encryption_with_multiple_providers import cycle_file
-from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
+from integration_test_utils import get_cmk_arn
+
+pytestmark = [pytest.mark.examples]
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_cycle_file():
     cmk_arn = get_cmk_arn()
     _handle, filename = tempfile.mkstemp()

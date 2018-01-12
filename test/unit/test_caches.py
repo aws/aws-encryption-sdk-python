@@ -26,6 +26,8 @@ from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 VALUES = {
     'basic': {

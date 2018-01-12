@@ -18,6 +18,8 @@ import pytest
 from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.utils.streams import ROStream, TeeStream
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 def data():
     return io.BytesIO(b'asdijfhoaisjdfoiasjdfoijawef')

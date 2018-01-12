@@ -17,7 +17,9 @@ import os
 import pytest
 
 import aws_encryption_sdk
-from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
+from .integration_test_utils import setup_kms_master_key_provider
+
+pytestmark = [pytest.mark.accept]
 
 
 # Environment-specific test file locator.  May not always exist.
@@ -32,9 +34,6 @@ except ImportError:
 
 
 def _generate_test_cases():
-    if skip_tests():
-        return []
-
     kms_key_provider = setup_kms_master_key_provider()
     try:
         root_dir = os.path.abspath(file_root())
@@ -73,7 +72,6 @@ def _generate_test_cases():
     return _test_cases
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 @pytest.mark.parametrize('plaintext_filename,ciphertext_filename,key_provider', _generate_test_cases())
 def test_decrypt_from_file(plaintext_filename, ciphertext_filename, key_provider):
     """Tests decrypt from known good files."""

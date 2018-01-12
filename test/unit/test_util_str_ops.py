@@ -15,7 +15,11 @@
 import codecs
 import unittest
 
+import pytest
+
 import aws_encryption_sdk.internal.str_ops
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestStrOps(unittest.TestCase):

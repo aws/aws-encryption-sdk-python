@@ -19,6 +19,8 @@ import aws_encryption_sdk.internal.crypto.encryption
 from aws_encryption_sdk.internal.crypto.encryption import encrypt, Encryptor
 from aws_encryption_sdk.internal.structures import EncryptedData
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):

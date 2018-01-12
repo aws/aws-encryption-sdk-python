@@ -23,6 +23,8 @@ from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterials
 from aws_encryption_sdk.streaming_client import _ClientConfig, DecryptorConfig, EncryptorConfig
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs, build_valid_kwargs_list
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 class FakeCryptoMaterialsManager(CryptoMaterialsManager):
 

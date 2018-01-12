@@ -15,6 +15,7 @@ import io
 import unittest
 
 from mock import call, MagicMock, patch, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded, NotSupportedError, SerializationError
@@ -23,6 +24,8 @@ from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamDecryptor
 from .test_values import VALUES
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestStreamDecryptor(unittest.TestCase):

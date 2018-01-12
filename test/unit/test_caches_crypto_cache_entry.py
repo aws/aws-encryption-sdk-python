@@ -22,6 +22,8 @@ from aws_encryption_sdk.caches import (
 from aws_encryption_sdk.exceptions import NotSupportedError
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 _VALID_KWARGS = {
     'CryptoMaterialsCacheEntryHints': dict(lifetime=5.0),
     'CryptoMaterialsCacheEntry': dict(

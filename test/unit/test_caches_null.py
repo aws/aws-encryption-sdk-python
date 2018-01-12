@@ -19,6 +19,8 @@ from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache
 from aws_encryption_sdk.exceptions import CacheKeyError
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 def test_put_encryption_materials():
     cache_key = b'ex_cache_key'

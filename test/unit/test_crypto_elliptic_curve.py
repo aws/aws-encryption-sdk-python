@@ -28,6 +28,8 @@ from aws_encryption_sdk.internal.crypto.elliptic_curve import (
 )
 from .test_crypto import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):

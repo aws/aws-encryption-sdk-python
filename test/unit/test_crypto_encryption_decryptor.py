@@ -18,6 +18,8 @@ from pytest_mock import mocker  # noqa pylint: disable=unused-import
 import aws_encryption_sdk.internal.crypto.encryption
 from aws_encryption_sdk.internal.crypto.encryption import decrypt, Decryptor
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):

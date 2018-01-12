@@ -20,6 +20,8 @@ from aws_encryption_sdk.internal.crypto.authentication import Signer
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from .test_crypto import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):

@@ -14,6 +14,7 @@
 import unittest
 
 from mock import MagicMock, patch, sentinel
+import pytest
 
 from aws_encryption_sdk.identifiers import Algorithm, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
@@ -21,6 +22,8 @@ from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 from .test_values import VALUES
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestRawMasterKey(unittest.TestCase):
