@@ -23,6 +23,8 @@ from aws_encryption_sdk.materials_managers import (
 )
 from aws_encryption_sdk.structures import DataKey
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 _VALID_KWARGS = {
     'EncryptionMaterialsRequest': dict(

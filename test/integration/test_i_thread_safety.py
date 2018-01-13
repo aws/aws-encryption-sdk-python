@@ -22,7 +22,9 @@ import pytest
 from six.moves import queue  # six.moves confuses pylint: disable=import-error
 
 import aws_encryption_sdk
-from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
+from .integration_test_utils import setup_kms_master_key_provider
+
+pytestmark = [pytest.mark.integ]
 
 
 PLAINTEXT = (
@@ -101,7 +103,6 @@ def random_pause_time(max_seconds=3):
     return SystemRandom().random() * 10 % max_seconds
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_threading_loop():
     """Test thread safety of client."""
     rounds = 20
@@ -127,7 +128,6 @@ def test_threading_loop():
     assert all(value == PLAINTEXT for value in decrypted_values)
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_threading_loop_with_common_cache():
     """Test thread safety of client while using common cryptographic materials cache across all threads."""
     rounds = 20

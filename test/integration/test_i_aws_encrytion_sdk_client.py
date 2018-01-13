@@ -14,9 +14,13 @@
 import io
 import unittest
 
+import pytest
+
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import Algorithm
-from .integration_test_utils import setup_kms_master_key_provider, SKIP_MESSAGE, skip_tests
+from .integration_test_utils import setup_kms_master_key_provider
+
+pytestmark = [pytest.mark.integ]
 
 
 VALUES = {
@@ -39,8 +43,6 @@ VALUES = {
 class TestKMSThickClientIntegration(unittest.TestCase):
 
     def setUp(self):
-        if skip_tests():
-            self.skipTest(SKIP_MESSAGE)
         self.kms_master_key_provider = setup_kms_master_key_provider()
 
     def test_encryption_cycle_default_algorithm_framed_stream(self):

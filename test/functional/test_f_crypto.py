@@ -20,6 +20,8 @@ import aws_encryption_sdk
 from aws_encryption_sdk.internal.crypto.authentication import Signer
 from aws_encryption_sdk.internal.crypto.elliptic_curve import _ecc_static_length_signature
 
+pytestmark = [pytest.mark.functional, pytest.mark.local]
+
 
 # Run several of each type to make get a high probability of forcing signature length correction
 @pytest.mark.parametrize('algorithm', [

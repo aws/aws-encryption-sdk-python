@@ -17,6 +17,8 @@ import pytest
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 from aws_encryption_sdk.identifiers import Algorithm, EncryptionSuite, KDFSuite
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.mark.parametrize('check_algorithm, safe_to_cache', (
     (Algorithm.AES_128_GCM_IV12_TAG16, False),

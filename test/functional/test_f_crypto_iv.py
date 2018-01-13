@@ -17,6 +17,8 @@ from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.crypto.iv import frame_iv, header_auth_iv, non_framed_body_iv
 from aws_encryption_sdk.internal.defaults import ALGORITHM, MAX_FRAME_COUNT
 
+pytestmark = [pytest.mark.functional, pytest.mark.local]
+
 VALUES = {
     'ivs': {
         'header_auth': b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',

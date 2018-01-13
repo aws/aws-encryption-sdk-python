@@ -25,6 +25,8 @@ import aws_encryption_sdk.materials_managers.default
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.fixture
 def patch_for_dcmm_encrypt(mocker):

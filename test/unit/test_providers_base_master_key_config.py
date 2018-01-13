@@ -16,6 +16,8 @@ import pytest
 from aws_encryption_sdk.key_providers.base import MasterKeyConfig
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 class FakeMasterKeyConfig(MasterKeyConfig):
     provider_id = None

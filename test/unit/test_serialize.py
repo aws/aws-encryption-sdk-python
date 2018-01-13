@@ -24,6 +24,8 @@ from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.mark.parametrize('sequence_number, error_message', (
     (-1, r'Frame sequence number must be greater than 0'),

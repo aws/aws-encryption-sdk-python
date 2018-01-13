@@ -24,6 +24,8 @@ import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 from .test_values import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @pytest.mark.parametrize('user_agent, suffix, output', (
     (None, 'test_suffix', 'test_suffix'),

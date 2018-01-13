@@ -34,6 +34,8 @@ from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 
+pytestmark = [pytest.mark.functional, pytest.mark.local]
+
 VALUES = {
     'frame_lengths': (  # Assuming 1280 byte plaintext:
         0,  # Non-framed
@@ -347,7 +349,10 @@ def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decry
     assert plaintext == VALUES['plaintext_128']
 
 
-@pytest.mark.skipif(not _mgf1_sha256_supported(), reason='MGF1-SHA256 not supported by this backend')
+@pytest.mark.skipif(
+    not _mgf1_sha256_supported(),
+    reason='MGF1-SHA256 not supported by this backend: OpenSSL required v1.0.2+'
+)
 @pytest.mark.parametrize('wrapping_algorithm, encryption_key_type, decryption_key_type', (
     (WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, EncryptionKeyType.PRIVATE, EncryptionKeyType.PRIVATE),
     (WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE)

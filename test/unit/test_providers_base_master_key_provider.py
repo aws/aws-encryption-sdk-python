@@ -15,6 +15,7 @@ import unittest
 
 import attr
 from mock import call, MagicMock, patch, PropertyMock, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import (
@@ -22,6 +23,8 @@ from aws_encryption_sdk.exceptions import (
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from .test_values import VALUES
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 @attr.s(hash=True)

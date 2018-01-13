@@ -29,6 +29,8 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
+pytestmark = [pytest.mark.accept]
+
 
 # Environment-specific test file locator.  May not always exist.
 def _file_root():

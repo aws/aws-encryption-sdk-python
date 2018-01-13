@@ -15,11 +15,14 @@ import unittest
 
 import botocore.client
 from mock import ANY, call, MagicMock, patch, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestKMSMasterKeyProvider(unittest.TestCase):

@@ -16,6 +16,7 @@ import unittest
 
 from cryptography.exceptions import InvalidTag
 from mock import MagicMock, patch, sentinel
+import pytest
 import six
 
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
@@ -23,6 +24,8 @@ from aws_encryption_sdk.identifiers import Algorithm
 import aws_encryption_sdk.internal.formatting.deserialize
 from aws_encryption_sdk.internal.structures import EncryptedData
 from .test_values import VALUES
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestDeserialize(unittest.TestCase):

@@ -22,6 +22,8 @@ import aws_encryption_sdk.caches.local
 from aws_encryption_sdk.caches.local import _OPPORTUNISTIC_EVICTION_ROUNDS, LocalCryptoMaterialsCache
 from aws_encryption_sdk.exceptions import CacheKeyError, NotSupportedError
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 def build_lcmc(**custom_kwargs):
     kwargs = dict(capacity=10)

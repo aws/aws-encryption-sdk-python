@@ -24,6 +24,8 @@ from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, Ma
 from aws_encryption_sdk.structures import MasterKeyInfo
 from .test_values import VALUES
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @attr.s(hash=True)
 class MockMasterKeyConfig(MasterKeyConfig):

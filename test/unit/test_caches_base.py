@@ -15,6 +15,8 @@ import pytest
 
 from aws_encryption_sdk.caches.base import CryptoMaterialsCache
 
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 def test_abstracts():
     with pytest.raises(TypeError) as excinfo:

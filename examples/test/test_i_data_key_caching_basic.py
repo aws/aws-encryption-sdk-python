@@ -21,10 +21,11 @@ sys.path.extend([  # noqa
 import pytest
 
 from data_key_caching_basic import encrypt_with_caching
-from integration_test_utils import get_cmk_arn, SKIP_MESSAGE, skip_tests
+from integration_test_utils import get_cmk_arn
+
+pytestmark = [pytest.mark.examples]
 
 
-@pytest.mark.skipif(skip_tests(), reason=SKIP_MESSAGE)
 def test_encrypt_with_caching():
     cmk_arn = get_cmk_arn()
     encrypt_with_caching(

@@ -13,7 +13,11 @@
 """Test suite to verify calculated values in aws_encryption_sdk.internal.defaults"""
 import unittest
 
+import pytest
+
 import aws_encryption_sdk.internal.defaults
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestDefaults(unittest.TestCase):
