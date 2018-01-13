@@ -30,7 +30,7 @@ pytestmark = [pytest.mark.examples]
 
 def test_cycle_file():
     cmk_arn = get_cmk_arn()
-    _handle, filename = tempfile.mkstemp()
+    handle, filename = tempfile.mkstemp()
     with open(filename, 'wb') as f:
         f.write(os.urandom(1024))
     try:
@@ -42,4 +42,5 @@ def test_cycle_file():
         for f in new_files:
             os.remove(f)
     finally:
+        os.close(handle)
         os.remove(filename)
