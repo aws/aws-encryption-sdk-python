@@ -1,0 +1,95 @@
+# https://packaging.python.org/guides/supporting-windows-using-appveyor/
+
+environment:
+
+  matrix:
+    # The only test we perform on Windows are our actual code tests. All linting, static
+    # analysis, etc are only run on Linux (via Travis CI).
+
+    # Python 2.7
+    - PYTHON: "C:\\Python27"
+      TOXENV: "py27-local"
+    - PYTHON: "C:\\Python27"
+      TOXENV: "py27-integ"
+    - PYTHON: "C:\\Python27"
+      TOXENV: "py27-accept"
+    - PYTHON: "C:\\Python27"
+      TOXENV: "py27-examples"
+    - PYTHON: "C:\\Python27-x64"
+      TOXENV: "py27-local"
+    - PYTHON: "C:\\Python27-x64"
+      TOXENV: "py27-integ"
+    - PYTHON: "C:\\Python27-x64"
+      TOXENV: "py27-accept"
+    - PYTHON: "C:\\Python27-x64"
+      TOXENV: "py27-examples"
+
+    # Python 3.4
+    - PYTHON: "C:\\Python34"
+      TOXENV: "py34-local"
+    - PYTHON: "C:\\Python34"
+      TOXENV: "py34-integ"
+    - PYTHON: "C:\\Python34"
+      TOXENV: "py34-accept"
+    - PYTHON: "C:\\Python34"
+      TOXENV: "py34-examples"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+      TOXENV: "py34-local"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+      TOXENV: "py34-integ"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+      TOXENV: "py34-accept"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+      TOXENV: "py34-examples"
+
+    # Python 3.5
+    - PYTHON: "C:\\Python35"
+      TOXENV: "py35-local"
+    - PYTHON: "C:\\Python35"
+      TOXENV: "py35-integ"
+    - PYTHON: "C:\\Python35"
+      TOXENV: "py35-accept"
+    - PYTHON: "C:\\Python35"
+      TOXENV: "py35-examples"
+    - PYTHON: "C:\\Python35-x64"
+      TOXENV: "py35-local"
+    - PYTHON: "C:\\Python35-x64"
+      TOXENV: "py35-integ"
+    - PYTHON: "C:\\Python35-x64"
+      TOXENV: "py35-accept"
+    - PYTHON: "C:\\Python35-x64"
+      TOXENV: "py35-examples"
+
+    # Python 3.6
+    - PYTHON: "C:\\Python36"
+      TOXENV: "py36-local"
+    - PYTHON: "C:\\Python36"
+      TOXENV: "py36-integ"
+    - PYTHON: "C:\\Python36"
+      TOXENV: "py36-accept"
+    - PYTHON: "C:\\Python36"
+      TOXENV: "py36-examples"
+    - PYTHON: "C:\\Python36-x64"
+      TOXENV: "py36-local"
+    - PYTHON: "C:\\Python36-x64"
+      TOXENV: "py36-integ"
+    - PYTHON: "C:\\Python36-x64"
+      TOXENV: "py36-accept"
+    - PYTHON: "C:\\Python36-x64"
+      TOXENV: "py36-examples"
+
+install:
+  # Prepend newly installed Python to the PATH of this build
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  # Check the Python version to verify the correct version was installed
+  - "python --version"
+  - "python -m pip install wheel tox"
+
+build: off
+
+test_script:
+  - "tox"
