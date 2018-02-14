@@ -34,8 +34,9 @@ matrix:
       env: TOXENV=py36-accept
     - python: 3.6
       env: TOXENV=py36-examples
-    - python: 3.6
-      env: TOXENV=bandit
+# disabling Bandit run in Travis pending resolution of https://bugs.launchpad.net/bandit/+bug/1749603
+#    - python: 3.6
+#      env: TOXENV=bandit
     - python: 3.6
       env: TOXENV=doc8
     - python: 3.6
