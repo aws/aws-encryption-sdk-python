@@ -18,3 +18,4 @@ dist
 docs/build
 test/integration/test_values.conf
 .python-version
+.pytest_cache

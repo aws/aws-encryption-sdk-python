@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Example showing basic encryption and decryption of a value already in memory."""
-from __future__ import print_function
-
 import aws_encryption_sdk
 
 
@@ -35,7 +33,6 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
         source=source_plaintext,
         key_provider=master_key_provider
     )
-    print('Ciphertext: ', ciphertext)
 
     # Decrypt the ciphertext
     cycled_plaintext, decrypted_header = aws_encryption_sdk.decrypt(
@@ -55,5 +52,3 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
         pair in decrypted_header.encryption_context.items()
         for pair in encryptor_header.encryption_context.items()
     )
-
-    print('Decrypted: ', cycled_plaintext)
