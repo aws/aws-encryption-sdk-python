@@ -34,7 +34,6 @@ except ImportError:
 
 
 def _generate_test_cases():
-    kms_key_provider = setup_kms_master_key_provider()
     try:
         root_dir = os.path.abspath(file_root())
     except Exception:  # pylint: disable=broad-except
@@ -65,15 +64,14 @@ def _generate_test_cases():
             if key['provider_id'] == 'aws-kms' and key['decryptable']:
                 _test_cases.append((
                     os.path.join(base_dir, test_case['plaintext']['filename']),
-                    os.path.join(base_dir, test_case['ciphertext']['filename']),
-                    kms_key_provider
+                    os.path.join(base_dir, test_case['ciphertext']['filename'])
                 ))
                 break
     return _test_cases
 
 
-@pytest.mark.parametrize('plaintext_filename,ciphertext_filename,key_provider', _generate_test_cases())
-def test_decrypt_from_file(plaintext_filename, ciphertext_filename, key_provider):
+@pytest.mark.parametrize('plaintext_filename, ciphertext_filename', _generate_test_cases())
+def test_decrypt_from_file(plaintext_filename, ciphertext_filename):
     """Tests decrypt from known good files."""
     with open(ciphertext_filename, 'rb') as infile:
         ciphertext = infile.read()
@@ -81,6 +79,6 @@ def test_decrypt_from_file(plaintext_filename, ciphertext_filename, key_provider
         plaintext = infile.read()
     decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(
         source=ciphertext,
-        key_provider=key_provider
+        key_provider=setup_kms_master_key_provider()
     )
     assert decrypted_ciphertext == plaintext

@@ -22,7 +22,7 @@ import pytest
 from six.moves import queue  # six.moves confuses pylint: disable=import-error
 
 import aws_encryption_sdk
-from .integration_test_utils import setup_kms_master_key_provider
+from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]
 
@@ -49,7 +49,7 @@ def crypto_thread_worker(crypto_function, start_pause, input_value, output_queue
     :param cache: Cache to use with master key provider (optional)
     """
     time.sleep(start_pause)
-    kms_master_key_provider = setup_kms_master_key_provider()
+    kms_master_key_provider = setup_kms_master_key_provider(cache=False)
     if cache is None:
         # For simplicity, always use a caching CMM; just use a null cache if no cache is specified.
         cache = aws_encryption_sdk.NullCryptoMaterialsCache()
@@ -105,6 +105,8 @@ def random_pause_time(max_seconds=3):
 
 def test_threading_loop():
     """Test thread safety of client."""
+    # Check for the CMK ARN first to fail fast if it is not available
+    get_cmk_arn()
     rounds = 20
     plaintext_inputs = [
         dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time())
@@ -130,6 +132,8 @@ def test_threading_loop():
 
 def test_threading_loop_with_common_cache():
     """Test thread safety of client while using common cryptographic materials cache across all threads."""
+    # Check for the CMK ARN first to fail fast if it is not available
+    get_cmk_arn()
     rounds = 20
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(capacity=40)
     plaintext_inputs = [
