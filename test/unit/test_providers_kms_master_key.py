@@ -20,7 +20,7 @@ import pytest
 import six
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError
-from aws_encryption_sdk.identifiers import Algorithm, USER_AGENT_SUFFIX
+from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo

@@ -20,7 +20,7 @@ import pytest
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import Algorithm, USER_AGENT_SUFFIX
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey
-from .integration_test_utils import setup_kms_master_key_provider, get_cmk_arn
+from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]
 
