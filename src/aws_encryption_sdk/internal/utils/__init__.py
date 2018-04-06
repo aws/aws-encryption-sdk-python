@@ -165,19 +165,3 @@ def source_data_key_length_check(source_data_key, algorithm):
             actual=len(source_data_key.data_key),
             required=algorithm.kdf_input_len
         ))
-
-
-def extend_user_agent_suffix(user_agent, suffix):
-    """Adds a suffix to the provided user agent.
-
-    :param str user_agent: Existing user agent (None == not yet defined)
-    :param str suffix: Desired suffix to add to user agent
-    :returns: User agent with suffix
-    :rtype: str
-    """
-    if user_agent is None:
-        user_agent = ''
-    else:
-        user_agent += ' '
-    user_agent += suffix
-    return user_agent

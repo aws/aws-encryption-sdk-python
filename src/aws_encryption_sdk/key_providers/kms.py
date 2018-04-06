@@ -16,13 +16,13 @@ import logging
 import attr
 import boto3
 import botocore.client
+import botocore.config
 from botocore.exceptions import ClientError
 import botocore.session
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError, UnknownRegionError
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.str_ops import to_str
-from aws_encryption_sdk.internal.utils import extend_user_agent_suffix
 from aws_encryption_sdk.key_providers.base import (
     MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 )
@@ -101,6 +101,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
     def _process_config(self):
         """Traverses the config and adds master keys and regional clients as needed."""
+        self._user_agent_adding_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
         if self.config.key_ids:
             self.add_master_keys_from_list(self.config.key_ids)
         if self.config.region_names:
@@ -120,7 +121,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
             self._regional_clients[region_name] = boto3.session.Session(
                 region_name=region_name,
                 botocore_session=self.config.botocore_session
-            ).client('kms')
+            ).client('kms', config=self._user_agent_adding_config)
 
     def add_regional_clients_from_list(self, region_names):
         """Adds multiple regional clients for the specified regions if they do not already exist.
@@ -200,10 +201,6 @@ class KMSMasterKey(MasterKey):
     def __init__(self, **kwargs):  # pylint: disable=unused-argument
         """Performs transformations needed for KMS."""
         self._key_id = to_str(self.key_id)  # KMS client requires str, not bytes
-        self.config.client.meta.config.user_agent_extra = extend_user_agent_suffix(
-            user_agent=self.config.client.meta.config.user_agent_extra,
-            suffix=USER_AGENT_SUFFIX
-        )
 
     def _generate_data_key(self, algorithm, encryption_context=None):
         """Generates data key and returns plaintext and ciphertext of key.
