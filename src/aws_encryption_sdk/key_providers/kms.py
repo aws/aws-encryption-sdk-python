@@ -33,6 +33,28 @@ _LOGGER = logging.getLogger(__name__)
 _PROVIDER_ID = 'aws-kms'
 
 
+def _region_from_key_id(key_id, default_region=None):
+    """Determine the target region from a key ID, falling back to a default region if provided.
+
+    :param str key_id: AWS KMS key ID
+    :param str default_region: Region to use if no region found in key_id
+    :returns: region name
+    :rtype: str
+    :raises UnknownRegionError: if no region found in key_id and no default_region provided
+    """
+    try:
+        region_name = key_id.split(':', 4)[3]
+        if default_region is None:
+            default_region = region_name
+    except IndexError:
+        if default_region is None:
+            raise UnknownRegionError(
+                'No default region found and no region determinable from key id: {}'.format(key_id)
+            )
+        region_name = default_region
+    return region_name
+
+
 @attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
@@ -136,16 +158,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
         :param str key_id: KMS CMK ID
         """
-        try:
-            region_name = key_id.split(':', 4)[3]
-            if self.default_region is None:
-                self.default_region = region_name
-        except IndexError:
-            if self.default_region is None:
-                raise UnknownRegionError(
-                    'No default region found and no region determinable from key id: {}'.format(key_id)
-                )
-            region_name = self.default_region
+        region_name = _region_from_key_id(key_id, self.default_region)
         self.add_regional_client(region_name)
         return self._regional_clients[region_name]
 
@@ -175,13 +188,27 @@ class KMSMasterKeyConfig(MasterKeyConfig):
     """
 
     provider_id = _PROVIDER_ID
-    client = attr.ib(hash=True, validator=attr.validators.instance_of(botocore.client.BaseClient))
+    client = attr.ib(
+        hash=True,
+        validator=attr.validators.instance_of(botocore.client.BaseClient)
+    )
     grant_tokens = attr.ib(
         hash=True,
         default=attr.Factory(tuple),
         validator=attr.validators.instance_of(tuple),
         converter=tuple
     )
+
+    @client.default
+    def client_default(self):
+        """Create a client if one was not provided."""
+        try:
+            region_name = _region_from_key_id(to_str(self.key_id))
+            kwargs = dict(region_name=region_name)
+        except UnknownRegionError:
+            kwargs = {}
+        botocore_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
+        return boto3.session.Session(**kwargs).client('kms', config=botocore_config)
 
 
 class KMSMasterKey(MasterKey):
