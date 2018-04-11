@@ -16,13 +16,13 @@ import logging
 import attr
 import boto3
 import botocore.client
+import botocore.config
 from botocore.exceptions import ClientError
 import botocore.session
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError, UnknownRegionError
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.str_ops import to_str
-from aws_encryption_sdk.internal.utils import extend_user_agent_suffix
 from aws_encryption_sdk.key_providers.base import (
     MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 )
@@ -31,6 +31,28 @@ from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyIn
 _LOGGER = logging.getLogger(__name__)
 
 _PROVIDER_ID = 'aws-kms'
+
+
+def _region_from_key_id(key_id, default_region=None):
+    """Determine the target region from a key ID, falling back to a default region if provided.
+
+    :param str key_id: AWS KMS key ID
+    :param str default_region: Region to use if no region found in key_id
+    :returns: region name
+    :rtype: str
+    :raises UnknownRegionError: if no region found in key_id and no default_region provided
+    """
+    try:
+        region_name = key_id.split(':', 4)[3]
+        if default_region is None:
+            default_region = region_name
+    except IndexError:
+        if default_region is None:
+            raise UnknownRegionError(
+                'No default region found and no region determinable from key id: {}'.format(key_id)
+            )
+        region_name = default_region
+    return region_name
 
 
 @attr.s(hash=True)
@@ -101,6 +123,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
     def _process_config(self):
         """Traverses the config and adds master keys and regional clients as needed."""
+        self._user_agent_adding_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
         if self.config.key_ids:
             self.add_master_keys_from_list(self.config.key_ids)
         if self.config.region_names:
@@ -120,7 +143,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
             self._regional_clients[region_name] = boto3.session.Session(
                 region_name=region_name,
                 botocore_session=self.config.botocore_session
-            ).client('kms')
+            ).client('kms', config=self._user_agent_adding_config)
 
     def add_regional_clients_from_list(self, region_names):
         """Adds multiple regional clients for the specified regions if they do not already exist.
@@ -135,16 +158,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
         :param str key_id: KMS CMK ID
         """
-        try:
-            region_name = key_id.split(':', 4)[3]
-            if self.default_region is None:
-                self.default_region = region_name
-        except IndexError:
-            if self.default_region is None:
-                raise UnknownRegionError(
-                    'No default region found and no region determinable from key id: {}'.format(key_id)
-                )
-            region_name = self.default_region
+        region_name = _region_from_key_id(key_id, self.default_region)
         self.add_regional_client(region_name)
         return self._regional_clients[region_name]
 
@@ -174,13 +188,27 @@ class KMSMasterKeyConfig(MasterKeyConfig):
     """
 
     provider_id = _PROVIDER_ID
-    client = attr.ib(hash=True, validator=attr.validators.instance_of(botocore.client.BaseClient))
+    client = attr.ib(
+        hash=True,
+        validator=attr.validators.instance_of(botocore.client.BaseClient)
+    )
     grant_tokens = attr.ib(
         hash=True,
         default=attr.Factory(tuple),
         validator=attr.validators.instance_of(tuple),
         converter=tuple
     )
+
+    @client.default
+    def client_default(self):
+        """Create a client if one was not provided."""
+        try:
+            region_name = _region_from_key_id(to_str(self.key_id))
+            kwargs = dict(region_name=region_name)
+        except UnknownRegionError:
+            kwargs = {}
+        botocore_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
+        return boto3.session.Session(**kwargs).client('kms', config=botocore_config)
 
 
 class KMSMasterKey(MasterKey):
@@ -200,10 +228,6 @@ class KMSMasterKey(MasterKey):
     def __init__(self, **kwargs):  # pylint: disable=unused-argument
         """Performs transformations needed for KMS."""
         self._key_id = to_str(self.key_id)  # KMS client requires str, not bytes
-        self.config.client.meta.config.user_agent_extra = extend_user_agent_suffix(
-            user_agent=self.config.client.meta.config.user_agent_extra,
-            suffix=USER_AGENT_SUFFIX
-        )
 
     def _generate_data_key(self, algorithm, encryption_context=None):
         """Generates data key and returns plaintext and ciphertext of key.

@@ -20,7 +20,7 @@ import pytest
 import six
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError
-from aws_encryption_sdk.identifiers import Algorithm, USER_AGENT_SUFFIX
+from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
@@ -96,16 +96,10 @@ class TestKMSMasterKey(unittest.TestCase):
         )
         assert test.grant_tokens is self.mock_grant_tokens
 
-    @patch('aws_encryption_sdk.key_providers.kms.extend_user_agent_suffix')
-    def test_init(self, patch_extend_user_agent_suffix):
+    def test_init(self):
         self.mock_client.meta.config.user_agent_extra = sentinel.user_agent_extra
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
         assert test._key_id == VALUES['arn'].decode('utf-8')
-        patch_extend_user_agent_suffix.assert_called_once_with(
-            user_agent=sentinel.user_agent_extra,
-            suffix=USER_AGENT_SUFFIX
-        )
-        assert self.mock_client.meta.config.user_agent_extra == patch_extend_user_agent_suffix.return_value
 
     def test_generate_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)

@@ -99,7 +99,7 @@ class TestKMSMasterKeyProvider(unittest.TestCase):
             region_name='ex_region_name',
             botocore_session=ANY
         )
-        self.mock_boto3_session_instance.client.assert_called_once_with('kms')
+        self.mock_boto3_session_instance.client.assert_called_once_with('kms', config=test._user_agent_adding_config)
         assert test._regional_clients['ex_region_name'] is self.mock_boto3_client_instance
 
     def test_add_regional_client_exists(self):

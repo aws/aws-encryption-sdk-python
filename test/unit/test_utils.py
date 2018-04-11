@@ -27,15 +27,6 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.mark.parametrize('user_agent, suffix, output', (
-    (None, 'test_suffix', 'test_suffix'),
-    ('test_existing_suffix', 'test_suffix', 'test_existing_suffix test_suffix')
-))
-def test_extend_user_agent_suffix(user_agent, suffix, output):
-    test = aws_encryption_sdk.internal.utils.extend_user_agent_suffix(user_agent, suffix)
-    assert test == output
-
-
 class TestUtils(unittest.TestCase):
 
     def setUp(self):

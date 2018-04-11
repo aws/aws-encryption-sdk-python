@@ -12,13 +12,15 @@
 # language governing permissions and limitations under the License.
 """Integration test suite for `aws_encryption_sdk`."""
 import io
+import logging
 import unittest
 
 import pytest
 
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import Algorithm
-from .integration_test_utils import setup_kms_master_key_provider
+from aws_encryption_sdk.identifiers import Algorithm, USER_AGENT_SUFFIX
+from aws_encryption_sdk.key_providers.kms import KMSMasterKey
+from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]
 
@@ -38,6 +40,25 @@ VALUES = {
         'key_c': 'value_c'
     }
 }
+
+
+def test_encrypt_verify_user_agent_kms_master_key_provider(caplog):
+    caplog.set_level(level=logging.DEBUG)
+    mkp = setup_kms_master_key_provider()
+    mk = mkp.master_key(get_cmk_arn())
+
+    mk.generate_data_key(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
+
+    assert USER_AGENT_SUFFIX in caplog.text
+
+
+def test_encrypt_verify_user_agent_kms_master_key(caplog):
+    caplog.set_level(level=logging.DEBUG)
+    mk = KMSMasterKey(key_id=get_cmk_arn())
+
+    mk.generate_data_key(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
+
+    assert USER_AGENT_SUFFIX in caplog.text
 
 
 class TestKMSThickClientIntegration(unittest.TestCase):

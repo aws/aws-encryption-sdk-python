@@ -22,7 +22,7 @@ from cryptography.hazmat.primitives.kdf import hkdf
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
 __version__ = '1.3.3'
-USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython-KMSMasterKey/{}'.format(__version__)
+USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython/{}'.format(__version__)
 
 
 class EncryptionSuite(Enum):
