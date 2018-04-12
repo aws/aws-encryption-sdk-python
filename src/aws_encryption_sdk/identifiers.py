@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.kdf import hkdf
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
-__version__ = '1.3.3'
+__version__ = '1.3.4'
 USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython/{}'.format(__version__)
 
 
