@@ -39,8 +39,4 @@ Modules
     aws_encryption_sdk.internal.structures
     aws_encryption_sdk.internal.utils
 
-*********
-Changelog
-*********
-
 .. include:: ../CHANGELOG.rst
