@@ -9,13 +9,18 @@
 /.coverage*
 /build
 /doc/generated/*
-/runpy
 /test/integration/test_values.conf
 __pycache__
 aws_encryption_sdk_resources
 build
 dist
 docs/build
-test/integration/test_values.conf
+
+# PyEnv
 .python-version
+
+# PyTest
 .pytest_cache
+
+# PyCharm
+.idea/
