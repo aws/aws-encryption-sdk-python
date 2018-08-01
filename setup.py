@@ -33,7 +33,7 @@ setup(
     author='Amazon Web Services',
     maintainer='Amazon Web Services',
     author_email='aws-cryptools@amazon.com',
-    url='https://github.com/awslabs/aws-encryption-sdk-python',
+    url='https://github.com/aws/aws-encryption-sdk-python',
     description='AWS Encryption SDK implementation for Python',
     long_description=read('README.rst'),
     keywords='aws-encryption-sdk aws kms encryption',

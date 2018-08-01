@@ -10,8 +10,8 @@ aws-encryption-sdk
    :target: https://aws-encryption-sdk-python.readthedocs.io/en/stable/
    :alt: Documentation Status
 
-.. image:: https://travis-ci.org/awslabs/aws-encryption-sdk-python.svg?branch=master
-   :target: https://travis-ci.org/awslabs/aws-encryption-sdk-python
+.. image:: https://travis-ci.org/aws/aws-encryption-sdk-python.svg?branch=master
+   :target: https://travis-ci.org/aws/aws-encryption-sdk-python
 
 .. image:: https://ci.appveyor.com/api/projects/status/v42snaej4lavd5lm/branch/master?svg=true
    :target: https://ci.appveyor.com/project/mattsb42-aws/aws-encryption-sdk-python-m2mgl
@@ -244,7 +244,7 @@ to your use-case in order to obtain peak performance.
 .. _cryptography: https://cryptography.io/en/latest/
 .. _cryptography installation guide: https://cryptography.io/en/latest/installation/
 .. _Read the Docs: http://aws-encryption-sdk-python.readthedocs.io/en/latest/
-.. _GitHub: https://github.com/awslabs/aws-encryption-sdk-python/
+.. _GitHub: https://github.com/aws/aws-encryption-sdk-python/
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 .. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
 .. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
