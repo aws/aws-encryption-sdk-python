@@ -2,6 +2,10 @@
 Changelog
 *********
 
+1.3.5 -- 2018-08-01
+===================
+* Move the ``aws-encryption-sdk-python`` repository from ``awslabs`` to ``aws``.
+
 1.3.4 -- 2018-04-12
 ===================
 
