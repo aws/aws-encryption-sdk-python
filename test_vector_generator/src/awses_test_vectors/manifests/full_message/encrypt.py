@@ -183,7 +183,7 @@ class EncryptMessageManifest(object):
         root_dir = os.path.abspath(target_directory)
         root_writer = file_writer(root_dir)
 
-        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent))
+        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent).encode('utf-8'))
 
         plaintext_writer = file_writer(os.path.join(root_dir, "plaintexts"))
         plaintext_uris = {name: plaintext_writer(name, plaintext) for name, plaintext in self.plaintexts.items()}
@@ -199,4 +199,4 @@ class EncryptMessageManifest(object):
             keys_uri="file://keys.json", parent_dir=root_dir, test_scenarios=test_scenarios
         )
 
-        root_writer("decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent))
+        root_writer("decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode('utf-8'))
