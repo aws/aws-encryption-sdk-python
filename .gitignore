@@ -6,7 +6,7 @@
 .DS_Store
 .tox
 /.cache*
-/.coverage*
+.coverage*
 /build
 /doc/generated/*
 /test/integration/test_values.conf
