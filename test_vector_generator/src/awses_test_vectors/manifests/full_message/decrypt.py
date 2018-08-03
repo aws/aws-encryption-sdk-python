@@ -26,7 +26,7 @@ from awses_test_vectors.manifests.master_key import MasterKeySpec
 from awses_test_vectors.util import dictionary_validator, iterable_validator, validate_manifest_type
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, Dict, IO  # noqa pylint: disable=unused-import
+    from typing import Any, Callable, Dict, IO  # noqa pylint: disable=unused-import
     from awses_test_vectors.mypy_types import (  # noqa pylint: disable=unused-import
         DECRYPT_SCENARIO_SPEC,
         FULL_MESSAGE_DECRYPT_MANIFEST,
@@ -57,11 +57,13 @@ class DecryptTestScenario(object):
 
     @classmethod
     def from_scenario(cls, scenario, plaintext_reader, ciphertext_reader):
-        # type: (DECRYPT_SCENARIO_SPEC) -> DecryptTestScenario
+        # type: (DECRYPT_SCENARIO_SPEC, Callable, Callable) -> DecryptTestScenario
         """"""
         return cls(
             plaintext_uri=scenario["plaintext"],
+            plaintext=plaintext_reader(scenario["plaintext"]),
             ciphertext_uri=scenario["ciphertext"],
+            ciphertext=ciphertext_reader(scenario["ciphertext"]),
             master_keys=[MasterKeySpec.from_scenario_spec(spec) for spec in scenario["master-keys"]],
             description=scenario.get("description"),
         )
