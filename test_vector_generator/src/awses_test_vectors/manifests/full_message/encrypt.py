@@ -12,16 +12,38 @@
 # language governing permissions and limitations under the License.
 """
 AWS Encryption SDK Encrypt Message manifest handler.
+
+Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Encrypt Message.
 """
+import binascii
 import json
 import os
+import uuid
 
-from awses_test_vectors.util import algorithm_suite_from_string_id, validate_manifest_type
+import attr
+import aws_encryption_sdk
+import six
+from aws_encryption_sdk.identifiers import AlgorithmSuite
+from aws_encryption_sdk.key_providers.base import MasterKey
+
+from awses_test_vectors.manifests import load_keys_from_uri
+from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec
+from awses_test_vectors.util import (
+    algorithm_suite_from_string_id,
+    dictionary_validator,
+    file_writer,
+    iterable_validator,
+    validate_manifest_type,
+)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, Dict, IO  # noqa pylint: disable=unused-import
+    from typing import Callable, Dict, IO, Optional  # noqa pylint: disable=unused-import
+    from awses_test_vectors.mypy_types import (  # noqa pylint: disable=unused-import
+        ENCRYPT_SCENARIO_SPEC,
+        PLAINTEXTS_SPEC,
+    )
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -29,80 +51,152 @@ except ImportError:  # pragma: no cover
 SUPPORTED_VERSIONS = (1,)
 
 
+@attr.s
 class EncryptTestScenario(object):
     """"""
 
+    plaintext_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    plaintext = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+    algorithm = attr.ib(validator=attr.validators.instance_of(AlgorithmSuite))
+    frame_size = attr.ib(validator=attr.validators.instance_of(int))
+    encryption_context = attr.ib(validator=dictionary_validator(six.string_types, six.string_types))
+    master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
+    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKey))
+
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts):
-        instance = cls()
-        instance.plaintext = plaintexts[scenario['plaintext']]
-        instance.algorithm = algorithm_suite_from_string_id(scenario['algorithm'])
-        instance.frame_size = scenario['frame-size']
-        instance.encryption_context = scenario['encryption-context']
-        master_keys = [MasterKeySpec.from_scenario_spec(spec).master_key(keys) for spec in scenario['master-keys']]
+        # type: (ENCRYPT_SCENARIO_SPEC) -> EncryptTestScenario
+        algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
+        master_key_specs = [MasterKeySpec.from_scenario_spec(spec) for spec in scenario["master-keys"]]
+        master_keys = [spec.master_key(keys) for spec in master_key_specs]
         primary = master_keys[0]
         others = master_keys[1:]
         for master_key in others:
             primary.add_master_key_provider(master_key)
-        instance.master_key_provider = primary
-        return instance
+
+        return cls(
+            plaintext_name=scenario["plaintext"],
+            plaintext=plaintexts[scenario["plaintext"]],
+            algorithm=algorithm,
+            frame_size=scenario["frame-size"],
+            encryption_context=scenario["encryption-context"],
+            master_key_specs=master_key_specs,
+            master_key_provider=primary,
+        )
+
+    @property
+    def scenario_spec(self):
+        # type: () -> ENCRYPT_SCENARIO_SPEC
+        """"""
+        return {
+            "plaintext": self.plaintext_name,
+            "algorithm": binascii.hexlify(self.algorithm.id_as_bytes()),
+            "frame-size": self.frame_size,
+            "encryption-context": self.encryption_context,
+            "master-keys": [spec.scenario_spec for spec in self.master_key_specs],
+        }
 
 
+@attr.s
 class EncryptMessageManifest(object):
     """"""
-    type_name = 'awses-encrypt'
 
-    @staticmethod
-    def _load_keys(parent_dir, keys_uri):
-        # type: (str, str) -> KeysManifest
-        """"""
-        if not keys_uri.startswith('file://'):
-            raise ValueError('Only file URIs are supported at this time.')
-
-        with open(os.path.join(parent_dir, keys_uri[len('file://'):])) as keys_file:
-            raw_manifest = json.load(keys_file)
-            return KeysManifest.from_raw_manifest(raw_manifest)
+    version = attr.ib(validator=attr.validators.instance_of(int))
+    keys = attr.ib(validator=attr.validators.instance_of(KeysManifest))
+    plaintexts = attr.ib(validator=dictionary_validator(six.string_types, six.binary_type))
+    tests = attr.ib(validator=dictionary_validator(six.string_types, EncryptTestScenario))
+    type_name = "awses-encrypt"
 
     @staticmethod
     def _generate_plaintexts(plaintexts_specs):
-        # type: (Dict[str, int]) -> Dict[str, bytes]
+        # type: (PLAINTEXTS_SPEC) -> Dict[str, bytes]
         """Generate required plaintext values.
 
         :param dict plaintexts_specs: Mapping of plaintext name to size in bytes
         :return: Mapping of plaintext name to randomly generated bytes
         :rtype: dict
         """
-        # generate and return rather than being a generator because we need
-        # the values to actually be generated immediately
-        plaintexts = {}
-        for name, size in plaintexts_specs.items():
-            plaintexts[name] = os.urandom(size)
-        return plaintexts
+        return {name: os.urandom(size) for name, size in plaintexts_specs.items()}
 
     @classmethod
     def from_file(cls, input_file):
         # type: (IO) -> EncryptMessageManifest
-        """"""
+        """Load manifest from file.
+
+        :param file input_file: File to load
+        :return: Loaded manifest
+        :rtype: EncryptMessageManifest
+        """
         raw_manifest = json.load(input_file)
         validate_manifest_type(
-            type_name=cls.type_name,
-            manifest=raw_manifest,
-            supported_versions=SUPPORTED_VERSIONS
+            type_name=cls.type_name, manifest_version=raw_manifest["manifest"], supported_versions=SUPPORTED_VERSIONS
         )
-        instance = cls()
-        instance.version = raw_manifest['manifest']['version']
-        parent_dir = os.path.abspath(os.path.dirname(input_file.name))
-        instance.keys = instance._load_keys(parent_dir, raw_manifest['keys'])
-        instance.plaintexts = instance._generate_plaintexts(raw_manifest['plaintexts'])
-        instance.tests = [
-            EncryptTestScenario.from_scenario(
-                scenario=scenario,
-                keys=instance.keys,
-                plaintexts=instance.plaintexts
-            )
-            for scenario in raw_manifest['tests']
-        ]
-        return instance
 
-    def write_to_dir(self, target_directory):
-        """"""
+        parent_dir = os.path.abspath(os.path.dirname(input_file.name))
+        keys = load_keys_from_uri(parent_dir, raw_manifest["keys"])
+        plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
+        tests = {
+            name: EncryptTestScenario.from_scenario(scenario=scenario, keys=keys, plaintexts=plaintexts)
+            for name, scenario in raw_manifest["tests"].items()
+        }
+        return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
+
+    @staticmethod
+    def _process_encrypt_scenario(ciphertext_writer, plaintext_uri, scenario):
+        # type: (Callable, str, EncryptTestScenario) -> DecryptTestScenario
+        """Process an encrypt test scenario, generating and writing the desired ciphertext, and returning
+        a :class:`DecryptTestScenario` that describes the generated scenario.
+
+        :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
+            return a URI locating the written data
+        :param str plaintext_uri: URI locating the written plaintext data for this scenario
+        :param EncryptTestScenario scenario: Encrypt test scenario that describes the scenario to generate
+        :return: Decrypt test scenario that describes the generated scenario
+        :rtype: DecryptTestScenario
+        """
+        ciphertext, _header = aws_encryption_sdk.encrypt(
+            source=scenario.plaintext,
+            algorithm=scenario.algorithm,
+            frame_length=scenario.frame_size,
+            encryption_context=scenario.encryption_context,
+            key_provider=scenario.master_key_provider,
+        )
+
+        ciphertext_name = str(uuid.uuid4())
+        ciphertext_uri = ciphertext_writer(ciphertext_name, ciphertext)
+
+        return DecryptTestScenario(
+            plaintext_uri=plaintext_uri,
+            plaintext=scenario.plaintext,
+            ciphertext_uri=ciphertext_uri,
+            ciphertext=ciphertext,
+            master_keys=scenario.master_key_specs,
+        )
+
+    def run_and_write_to_dir(self, target_directory, json_indent=None):
+        # type: (str, Optional[int]) -> None
+        """Process all known encrypt test scenarios and write the resulting data and manifests to disk.
+
+        :param str target_directory: Directory in which to write all output
+        :param int json_indent: Number of spaces to indent JSON files (optional: default is to write minified)
+        """
+        root_dir = os.path.abspath(target_directory)
+        root_writer = file_writer(root_dir)
+
+        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent))
+
+        plaintext_writer = file_writer(os.path.join(root_dir, "plaintexts"))
+        plaintext_uris = {name: plaintext_writer(name, plaintext) for name, plaintext in self.plaintexts.items()}
+
+        ciphertext_writer = file_writer(os.path.join(root_dir, "ciphertexts"))
+
+        test_scenarios = {
+            name: self._process_encrypt_scenario(ciphertext_writer, plaintext_uris[scenario.plaintext_name], scenario)
+            for name, scenario in self.tests.items()
+        }
+
+        decrypt_manifest = DecryptMessageManifest(
+            keys_uri="file://keys.json", parent_dir=root_dir, test_scenarios=test_scenarios
+        )
+
+        root_writer("decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent))

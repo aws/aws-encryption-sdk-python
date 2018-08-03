@@ -10,18 +10,18 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import json
-import os
+"""
+Integration tests for ``awses_test_vectors.commands.full_message_encrypt``.
+"""
+import pytest
 
-from awses_test_vectors.manifests.keys import KeysManifest
+from awses_test_vectors.commands import full_message_encrypt
+
+from ..integration_test_utils import full_message_encrypt_vectors
+
+pytestmark = [pytest.mark.integ]
 
 
-def load_keys_from_uri(parent_dir, keys_uri):
-    # type: (str, str) -> KeysManifest
-    """"""
-    if not keys_uri.startswith("file://"):
-        raise ValueError("Only file URIs are supported at this time.")
-
-    with open(os.path.join(parent_dir, keys_uri[len("file://") :])) as keys_file:
-        raw_manifest = json.load(keys_file)
-        return KeysManifest.from_manifest_spec(raw_manifest)
+def test_full_message_encrypt_canonical_full(tmpdir, full_message_encrypt_vectors):
+    output_dir = str(tmpdir.join("output"))
+    full_message_encrypt.cli(["--output", output_dir, "--encrypt", full_message_encrypt_vectors])

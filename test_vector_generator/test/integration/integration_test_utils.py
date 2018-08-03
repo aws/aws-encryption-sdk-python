@@ -10,18 +10,19 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import json
+"""
+Integration test utilities.[
+"""
 import os
 
-from awses_test_vectors.manifests.keys import KeysManifest
+import pytest
 
 
-def load_keys_from_uri(parent_dir, keys_uri):
-    # type: (str, str) -> KeysManifest
-    """"""
-    if not keys_uri.startswith("file://"):
-        raise ValueError("Only file URIs are supported at this time.")
+def vectors_dir():
+    here = os.path.abspath(os.path.dirname(__file__))
+    return os.path.abspath(os.path.join(here, "..", "vectors"))
 
-    with open(os.path.join(parent_dir, keys_uri[len("file://") :])) as keys_file:
-        raw_manifest = json.load(keys_file)
-        return KeysManifest.from_manifest_spec(raw_manifest)
+
+@pytest.fixture
+def full_message_encrypt_vectors():
+    return os.path.join(vectors_dir(), "full-message-encrypt.json")
