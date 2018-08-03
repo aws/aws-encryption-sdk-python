@@ -30,7 +30,7 @@ from awses_test_vectors.manifests import load_keys_from_uri
 from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec
-from awses_test_vectors.util import (
+from awses_test_vectors.internal.util import (
     algorithm_suite_from_string_id,
     dictionary_validator,
     file_writer,
@@ -39,8 +39,8 @@ from awses_test_vectors.util import (
 )
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Callable, Dict, IO, Optional  # noqa pylint: disable=unused-import
-    from awses_test_vectors.mypy_types import (  # noqa pylint: disable=unused-import
+    from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
+    from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         ENCRYPT_SCENARIO_SPEC,
         PLAINTEXTS_SPEC,
     )
@@ -65,7 +65,8 @@ class EncryptTestScenario(object):
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts):
-        # type: (ENCRYPT_SCENARIO_SPEC) -> EncryptTestScenario
+        # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> EncryptTestScenario
+        """"""
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
         master_key_specs = [MasterKeySpec.from_scenario_spec(spec) for spec in scenario["master-keys"]]
         master_keys = [spec.master_key(keys) for spec in master_key_specs]
