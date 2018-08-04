@@ -16,11 +16,15 @@ import struct
 from binascii import unhexlify
 
 import six
+from attr import Attribute
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, Callable, Iterable, Type, Union  # noqa pylint: disable=unused-import
-    from awses_test_vectors.internal.mypy_types import MANIFEST_VERSION  # noqa pylint: disable=unused-import
+    from typing import Any, Callable, Dict, Iterable, Type, Union  # noqa pylint: disable=unused-import
+    from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
+        ISINSTANCE,
+        MANIFEST_VERSION,
+    )
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -67,10 +71,11 @@ def validate_manifest_type(type_name, manifest_version, supported_versions):
 
 
 def membership_validator(allowed):
-    # type: (Iterable[Any]) -> Callable
+    # type: (Iterable[Any]) -> Callable[[object, Attribute, Any], None]
     """``attrs`` validator to perform check that attribute value is in a set of allowed values."""
 
     def _validate_membership(instance, attribute, value):
+        # type: (object, Attribute, Any) -> None
         # pylint: disable=unused-argument
         """"""
         if value not in allowed:
@@ -84,10 +89,11 @@ def membership_validator(allowed):
 
 
 def dictionary_validator(key_type, value_type):
-    # type: (Type, Type) -> Callable
+    # type: (ISINSTANCE, ISINSTANCE) -> Callable[[object, Attribute, Dict[Any, Any]], None]
     """``attrs`` validator to perform deep type checking of dictionaries."""
 
     def _validate_dictionary(instance, attribute, value):
+        # type: (object, Attribute, Dict[Any, Any]) -> None
         # pylint: disable=unused-argument
         """Validate that a dictionary is structured as expected.
 
@@ -113,10 +119,11 @@ def dictionary_validator(key_type, value_type):
 
 
 def iterable_validator(iterable_type, member_type):
-    # type: (Type, Type) -> Callable
+    # type: (ISINSTANCE, ISINSTANCE) -> Callable[[object, Attribute, Iterable[Any]], None]
     """``attrs`` validator to perform deep type checking of iterables."""
 
-    def _validate_tuple(instance, attribute, value):
+    def _validate_iterable(instance, attribute, value):
+        # type: (object, Attribute, Iterable[Any]) -> None
         # pylint: disable=unused-argument
         """Validate that a dictionary is structured as expected.
 
@@ -132,7 +139,7 @@ def iterable_validator(iterable_type, member_type):
                     '"{name}" members must all be of type "{type}"'.format(name=attribute.name, type=member_type)
                 )
 
-    return _validate_tuple
+    return _validate_iterable
 
 
 def algorithm_suite_from_string_id(string_id):
@@ -143,8 +150,18 @@ def algorithm_suite_from_string_id(string_id):
     return AlgorithmSuite.get_by_id(numeric_id)
 
 
+def master_key_provider_from_master_key_specs(keys, master_key_specs):
+    """"""
+    master_keys = [spec.master_key(keys) for spec in master_key_specs]
+    primary = master_keys[0]
+    others = master_keys[1:]
+    for master_key in others:
+        primary.add_master_key_provider(master_key)
+    return primary
+
+
 def file_writer(parent_dir):
-    # type: (str) -> Callable
+    # type: (str) -> Callable[[str, bytes], str]
     """Return a caller that will write the requested named data to a file and return
     a URI locating the written data.
 
@@ -152,7 +169,7 @@ def file_writer(parent_dir):
     :return: URI-returning named data writer
     :rtype: callable
     """
-    # Abstracted like this because we want to support reading from and writing to S3 in the future.
+    # Abstracted like this because we want to support writing to S3 in the future.
 
     makedir_if_not_exist(parent_dir)
 
@@ -172,3 +189,21 @@ def file_writer(parent_dir):
         return file_uri
 
     return _write_file
+
+
+def file_reader(parent_dir):
+    # type: (str) -> Callable[[str], bytes]
+    """"""
+    # Abstracted like this because we want to support reading from S3 in the future.
+
+    def _read_file(uri):
+        # type: (str) -> bytes
+        """"""
+        if not uri.startswith("file://"):
+            raise ValueError('Only file URIs are supported by "file_reader"')
+
+        filename = uri[len("file://") :]
+        with open(os.path.join(parent_dir, filename), "rb") as source:
+            return source.read()
+
+    return _read_file

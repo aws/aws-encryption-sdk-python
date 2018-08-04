@@ -22,8 +22,9 @@ from aws_encryption_sdk.key_providers.kms import KMSMasterKey  # noqa pylint: di
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 
-from awses_test_vectors.manifests.keys import KeysManifest, KeySpec  # noqa pylint: disable=unused-import
+from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER
 from awses_test_vectors.internal.util import membership_validator
+from awses_test_vectors.manifests.keys import KeysManifest, KeySpec  # noqa pylint: disable=unused-import
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from awses_test_vectors.internal.mypy_types import MASTER_KEY_SPEC  # noqa pylint: disable=unused-import
@@ -51,9 +52,6 @@ _RAW_ENCRYPTION_KEY_TYPE = {
     "private": EncryptionKeyType.PRIVATE,
     "public": EncryptionKeyType.PUBLIC,
 }
-
-# This lets us easily use a single boto3 client per region for all KMS master keys.
-_KMS_MKP = KMSMasterKeyProvider()
 
 
 @attr.s
@@ -138,7 +136,7 @@ class MasterKeySpec(object):
         if self.key_id is not None and self.key_id != key_spec.key_id:
             raise ValueError("AWS KMS key IDs must match between master key spec and key spec")
 
-        return _KMS_MKP.master_key(key_id=key_spec.key_id)
+        return KMS_MASTER_KEY_PROVIDER.master_key(key_id=key_spec.key_id)
 
     _MASTER_KEY_LOADERS = {"aws-kms": _kms_master_key_from_spec, "raw": _raw_master_key_from_spec}
 

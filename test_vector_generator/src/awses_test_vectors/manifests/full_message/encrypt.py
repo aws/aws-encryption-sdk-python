@@ -24,19 +24,21 @@ import attr
 import aws_encryption_sdk
 import six
 from aws_encryption_sdk.identifiers import AlgorithmSuite
-from aws_encryption_sdk.key_providers.base import MasterKey
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 
-from awses_test_vectors.manifests import load_keys_from_uri
-from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
-from awses_test_vectors.manifests.keys import KeysManifest
-from awses_test_vectors.manifests.master_key import MasterKeySpec
+from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
     algorithm_suite_from_string_id,
     dictionary_validator,
+    file_reader,
     file_writer,
     iterable_validator,
+    master_key_provider_from_master_key_specs,
     validate_manifest_type,
 )
+from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
+from awses_test_vectors.manifests.keys import KeysManifest
+from awses_test_vectors.manifests.master_key import MasterKeySpec
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -61,7 +63,7 @@ class EncryptTestScenario(object):
     frame_size = attr.ib(validator=attr.validators.instance_of(int))
     encryption_context = attr.ib(validator=dictionary_validator(six.string_types, six.string_types))
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKey))
+    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts):
@@ -69,11 +71,7 @@ class EncryptTestScenario(object):
         """"""
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
         master_key_specs = [MasterKeySpec.from_scenario_spec(spec) for spec in scenario["master-keys"]]
-        master_keys = [spec.master_key(keys) for spec in master_key_specs]
-        primary = master_keys[0]
-        others = master_keys[1:]
-        for master_key in others:
-            primary.add_master_key_provider(master_key)
+        master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(
             plaintext_name=scenario["plaintext"],
@@ -82,7 +80,7 @@ class EncryptTestScenario(object):
             frame_size=scenario["frame-size"],
             encryption_context=scenario["encryption-context"],
             master_key_specs=master_key_specs,
-            master_key_provider=primary,
+            master_key_provider=master_key_provider,
         )
 
     @property
@@ -134,7 +132,9 @@ class EncryptMessageManifest(object):
         )
 
         parent_dir = os.path.abspath(os.path.dirname(input_file.name))
-        keys = load_keys_from_uri(parent_dir, raw_manifest["keys"])
+        reader = file_reader(parent_dir)
+        raw_keys_manifest = json.loads(reader(raw_manifest["keys"]).decode(ENCODING))
+        keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
         plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
         tests = {
             name: EncryptTestScenario.from_scenario(scenario=scenario, keys=keys, plaintexts=plaintexts)
@@ -142,8 +142,7 @@ class EncryptMessageManifest(object):
         }
         return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
 
-    @staticmethod
-    def _process_encrypt_scenario(ciphertext_writer, plaintext_uri, scenario):
+    def _process_encrypt_scenario(self, ciphertext_writer, plaintext_uri, scenario):
         # type: (Callable, str, EncryptTestScenario) -> DecryptTestScenario
         """Process an encrypt test scenario, generating and writing the desired ciphertext, and returning
         a :class:`DecryptTestScenario` that describes the generated scenario.
@@ -171,7 +170,8 @@ class EncryptMessageManifest(object):
             plaintext=scenario.plaintext,
             ciphertext_uri=ciphertext_uri,
             ciphertext=ciphertext,
-            master_keys=scenario.master_key_specs,
+            master_key_specs=scenario.master_key_specs,
+            master_key_provider=scenario.master_key_provider,
         )
 
     def run_and_write_to_dir(self, target_directory, json_indent=None):
@@ -184,7 +184,7 @@ class EncryptMessageManifest(object):
         root_dir = os.path.abspath(target_directory)
         root_writer = file_writer(root_dir)
 
-        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent).encode('utf-8'))
+        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent).encode(ENCODING))
 
         plaintext_writer = file_writer(os.path.join(root_dir, "plaintexts"))
         plaintext_uris = {name: plaintext_writer(name, plaintext) for name, plaintext in self.plaintexts.items()}
@@ -197,7 +197,9 @@ class EncryptMessageManifest(object):
         }
 
         decrypt_manifest = DecryptMessageManifest(
-            keys_uri="file://keys.json", parent_dir=root_dir, test_scenarios=test_scenarios
+            keys_uri="file://keys.json", keys=self.keys, test_scenarios=test_scenarios
         )
 
-        root_writer("decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode('utf-8'))
+        root_writer(
+            "decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING)
+        )

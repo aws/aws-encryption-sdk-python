@@ -14,9 +14,22 @@
 MyPy types for use in AWS Encryption SDK test vector handlers.
 """
 # mypy types confuse pylint: disable=invalid-name
+from attr import Attribute
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, IO, Iterable, Optional, Union  # noqa pylint: disable=unused-import
+    from typing import (  # noqa pylint: disable=unused-import
+        Any,
+        Callable,
+        Dict,
+        IO,
+        Iterable,
+        Optional,
+        Tuple,
+        Type,
+        Union,
+    )
+
+    ISINSTANCE = Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]
 
     MANIFEST_VERSION = Dict[str, Union[str, int]]
 

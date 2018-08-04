@@ -57,6 +57,9 @@ setup(
         "Topic :: Security :: Cryptography",
     ],
     entry_points={
-        "console_scripts": ["awses-full-message-encrypt=awses_test_vectors.commands.full_message_encrypt:cli"]
+        "console_scripts": [
+            "awses-full-message-encrypt=awses_test_vectors.commands.full_message_encrypt:cli",
+            "awses-full-message-decrypt=awses_test_vectors.commands.full_message_decrypt:cli",
+        ]
     },
 )

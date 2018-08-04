@@ -15,9 +15,9 @@ Integration tests for ``awses_test_vectors.commands.full_message_encrypt``.
 """
 import pytest
 
-from awses_test_vectors.commands import full_message_encrypt
+from awses_test_vectors.commands import full_message_decrypt, full_message_encrypt
 
-from ..integration_test_utils import full_message_encrypt_vectors
+from ..integration_test_utils import full_message_encrypt_vectors  # noqa pylint: disable=unused-import
 
 pytestmark = [pytest.mark.integ]
 
@@ -25,3 +25,11 @@ pytestmark = [pytest.mark.integ]
 def test_full_message_encrypt_canonical_full(tmpdir, full_message_encrypt_vectors):
     output_dir = str(tmpdir.join("output"))
     full_message_encrypt.cli(["--output", output_dir, "--encrypt", full_message_encrypt_vectors])
+
+
+def test_full_message_cycle_canonical_full(tmpdir, full_message_encrypt_vectors):
+    output_dir = tmpdir.join("output")
+    full_message_encrypt.cli(["--output", str(output_dir), "--encrypt", full_message_encrypt_vectors])
+
+    decrypt_manifest_file = output_dir.join("decrypt_message.json")
+    full_message_decrypt.cli(["--decrypt", str(decrypt_manifest_file)])
