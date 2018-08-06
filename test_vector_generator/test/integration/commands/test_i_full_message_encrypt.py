@@ -24,12 +24,12 @@ pytestmark = [pytest.mark.integ]
 
 def test_full_message_encrypt_canonical_full(tmpdir, full_message_encrypt_vectors):
     output_dir = str(tmpdir.join("output"))
-    full_message_encrypt.cli(["--output", output_dir, "--encrypt", full_message_encrypt_vectors])
+    full_message_encrypt.cli(["--output", output_dir, "--input", full_message_encrypt_vectors])
 
 
 def test_full_message_cycle_canonical_full(tmpdir, full_message_encrypt_vectors):
     output_dir = tmpdir.join("output")
-    full_message_encrypt.cli(["--output", str(output_dir), "--encrypt", full_message_encrypt_vectors])
+    full_message_encrypt.cli(["--output", str(output_dir), "--input", full_message_encrypt_vectors])
 
     decrypt_manifest_file = output_dir.join("decrypt_message.json")
-    full_message_decrypt.cli(["--decrypt", str(decrypt_manifest_file)])
+    full_message_decrypt.cli(["--input", str(decrypt_manifest_file)])

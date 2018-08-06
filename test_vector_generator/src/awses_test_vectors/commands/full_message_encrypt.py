@@ -31,7 +31,7 @@ def cli(args=None):
         description="Build ciphertexts and decrypt manifest from keys and encrypt manifests"
     )
     parser.add_argument("--output", help="Directory in which to store results")
-    parser.add_argument("--encrypt", type=argparse.FileType("r"), help="Existing full message encrypt manifest")
+    parser.add_argument("--input", type=argparse.FileType("r"), help="Existing full message encrypt manifest")
     parser.add_argument(
         "--human",
         required=False,
@@ -44,6 +44,6 @@ def cli(args=None):
 
     parsed = parser.parse_args(args)
 
-    encrypt_manifest = EncryptMessageManifest.from_file(parsed.encrypt)
+    encrypt_manifest = EncryptMessageManifest.from_file(parsed.input)
 
     encrypt_manifest.run_and_write_to_dir(target_directory=parsed.output, json_indent=parsed.json_indent)
