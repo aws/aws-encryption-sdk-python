@@ -30,12 +30,13 @@ from awses_test_vectors.internal.util import (
 )
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Iterable, Optional  # noqa pylint: disable=unused-import
+    from typing import cast, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         AWS_KMS_KEY_SPEC,
         MANUAL_KEY_SPEC,
         KEY_SPEC,
         KEYS_MANIFEST,
+    MANIFEST_VERSION
     )
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
@@ -49,7 +50,11 @@ KEY_ALGORITHMS = ("aes", "rsa")
 
 @attr.s(init=False)
 class KeySpec(object):
-    """"""
+    """Base key specification.
+
+    :param bool encrypt: Key can be used to encrypt
+    :param bool decrypt: Key can be used to decrypt
+    """
 
     # pylint: disable=too-few-public-methods
 
@@ -68,7 +73,13 @@ class KeySpec(object):
 
 @attr.s(init=False)
 class AwsKmsKeySpec(KeySpec):
-    """"""
+    """AWS KMS key specification.
+
+    :param bool encrypt: Key can be used to encrypt
+    :param bool decrypt: Key can be used to decrypt
+    :param str type_name: Master key type name (must be "aws-kms")
+    :param str key_id: Master key ID
+    """
 
     # pylint: disable=too-few-public-methods
 
@@ -87,7 +98,11 @@ class AwsKmsKeySpec(KeySpec):
     @property
     def manifest_spec(self):
         # type: () -> AWS_KMS_KEY_SPEC
-        """"""
+        """Build a key specification describing this key specification.
+
+        :return: Key specification JSON
+        :rtype: dict
+        """
         return {
             "encrypt": self.encrypt,
             "decrypt": self.decrypt,
@@ -98,7 +113,21 @@ class AwsKmsKeySpec(KeySpec):
 
 @attr.s(init=False)
 class ManualKeySpec(KeySpec):
-    """"""
+    """Manual key specification.
+
+    Allowed values described in AWS Crypto Tools Test Vector Framework feature #0002 Keys Manifest.
+
+    :param bool encrypt: Key can be used to encrypt
+    :param bool decrypt: Key can be used to decrypt
+    :param str algorithm: Algorithm to use with key
+    :param str type_name: Key type
+    :param int bits: Key length in bits
+    :param str encoding: Encoding used to encode key material
+    :param material: Raw material encoded, then split into lines separated by ``line_separator``
+    :type material: list of str
+    :param str line_separator: Character with which to separate members of ``material``
+        before decoding (optional: default is empty string)
+    """
 
     algorithm = attr.ib(validator=membership_validator(KEY_ALGORITHMS))
     type_name = attr.ib(validator=membership_validator(KEY_TYPES))
@@ -107,8 +136,18 @@ class ManualKeySpec(KeySpec):
     material = attr.ib(validator=iterable_validator(list, six.string_types))
     line_separator = attr.ib(default="", validator=attr.validators.instance_of(six.string_types))
 
-    def __init__(self, encrypt, decrypt, algorithm, type_name, bits, encoding, material, line_separator):  # noqa=D107
-        # type: (bool, bool, str, str, int, str, Iterable[str], Optional[str]) -> None
+    def __init__(
+            self,
+            encrypt,  # type: bool
+            decrypt,  # type: bool
+            algorithm,  # type: str
+            type_name,  # type: str
+            bits,  # type: int
+            encoding,  # type: str
+            material,  # type: Iterable[str]
+            line_separator=''  # type: Optional[str]
+    ):  # noqa=D107
+        # type: (...) -> None
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
@@ -123,7 +162,11 @@ class ManualKeySpec(KeySpec):
     @property
     def raw_material(self):
         # type: () -> bytes
-        """"""
+        """Provide the raw binary material for this key.
+
+        :return: Binary key material
+        :rtype: bytes
+        """
         raw_material = self.line_separator.join(self.material).encode(ENCODING)
         if self.encoding == "base64":
             return base64.b64decode(raw_material)
@@ -133,7 +176,11 @@ class ManualKeySpec(KeySpec):
     @property
     def manifest_spec(self):
         # type: () -> MANUAL_KEY_SPEC
-        """"""
+        """Build a key specification describing this key specification.
+
+        :return: Key specification JSON
+        :rtype: dict
+        """
         return {
             "encrypt": self.encrypt,
             "decrypt": self.decrypt,
@@ -148,30 +195,50 @@ class ManualKeySpec(KeySpec):
 
 def key_from_manifest_spec(key_spec):
     # type: (KEY_SPEC) -> KeySpec
-    """"""
+    """Load a key from a key specification.
+
+    :param dict key_spec: Key specification JSON
+    :return: Loaded key
+    :rtype: KeySpec
+    """
+    decrypt = key_spec['decrypt']  # type: bool
+    encrypt = key_spec['encrypt']  # type: bool
+    type_name = key_spec['type']  # type: str
     if key_spec["type"] == "aws-kms":
+        key_id = key_spec['key-id']  # type: str
         return AwsKmsKeySpec(
-            encrypt=key_spec["encrypt"],
-            decrypt=key_spec["decrypt"],
-            type_name=key_spec["type"],
-            key_id=key_spec["key-id"],
+            encrypt=encrypt,
+            decrypt=decrypt,
+            type_name=type_name,
+            key_id=key_id,
         )
 
+    algorithm = key_spec['algorithm']  # type: str
+    bits = key_spec['bits']  # type: int
+    encoding = key_spec['encoding']  # type: str
+    line_separator = key_spec.get('line-separator', '')  # type: str
+    material = key_spec['material']  # type: Iterable[str]
     return ManualKeySpec(
-        encrypt=key_spec["encrypt"],
-        decrypt=key_spec["decrypt"],
-        type_name=key_spec["type"],
-        algorithm=key_spec["algorithm"],
-        bits=key_spec["bits"],
-        encoding=key_spec["encoding"],
-        line_separator=key_spec.get("line-separator", ""),
-        material=key_spec["material"],
+        encrypt=encrypt,
+        decrypt=decrypt,
+        type_name=type_name,
+        algorithm=algorithm,
+        bits=bits,
+        encoding=encoding,
+        line_separator=line_separator,
+        material=material,
     )
 
 
 @attr.s
 class KeysManifest(object):
-    """"""
+    """Keys Manifest handler.
+
+    Described in AWS Crypto Tools Test Vector Framework feature #0002 Keys Manifest.
+
+    :param int version: Version of this manifest
+    :param dict keys: Mapping of key names to :class:`KeySpec`s
+    """
 
     version = attr.ib(validator=membership_validator(SUPPORTED_VERSIONS))
     keys = attr.ib(validator=dictionary_validator(six.string_types, KeySpec))
@@ -181,8 +248,9 @@ class KeysManifest(object):
     def from_manifest_spec(cls, raw_manifest):
         # type: (KEYS_MANIFEST) -> KeysManifest
         """"""
+        manifest_version = raw_manifest["manifest"]  # type: MANIFEST_VERSION
         validate_manifest_type(
-            type_name=cls.type_name, manifest_version=raw_manifest["manifest"], supported_versions=SUPPORTED_VERSIONS
+            type_name=cls.type_name, manifest_version=manifest_version, supported_versions=SUPPORTED_VERSIONS
         )
         raw_key_specs = raw_manifest["keys"]  # type: Dict[str, KEY_SPEC]
         keys = {name: key_from_manifest_spec(key_spec) for name, key_spec in raw_key_specs.items()}
@@ -190,7 +258,13 @@ class KeysManifest(object):
 
     def key(self, name):
         # type: (str) -> KeySpec
-        """"""
+        """Provide the key with the specified name.
+
+        :param str name: Key name
+        :return: Specified key
+        :rtype: KeySpec
+        :raises ValueError: if key name is unknown
+        """
         try:
             return self.keys[name]
         except KeyError:
@@ -199,7 +273,11 @@ class KeysManifest(object):
     @property
     def manifest_spec(self):
         # type: () -> KEYS_MANIFEST
-        """"""
+        """Build a keys manifest describing this manifest.
+
+        :return: Manifest JSON
+        :rtype: dict
+        """
         return {
             "manifest": {"type": self.type_name, "version": self.version},
             "keys": {name: key.manifest_spec for name, key in self.keys.items()},

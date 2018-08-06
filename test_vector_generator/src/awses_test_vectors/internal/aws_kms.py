@@ -24,7 +24,15 @@ KMS_MASTER_KEY_PROVIDER = KMSMasterKeyProvider()
 
 def arn_from_key_id(key_id):
     # type: (str) -> str
-    """"""
+    """Determine the KMS CMK Arn for the identified key ID.
+
+    To avoid needing additional KMS permissions, we just call ``generate_data_key``
+    using a master key identified by ``key_id``.
+
+    :param str key_id: Original key ID
+    :returns: Full Arn for KMS CMK that key ID identifies
+    :rtype: str
+    """
     encrypted_data_key = KMS_MASTER_KEY_PROVIDER.master_key(key_id.encode(ENCODING)).generate_data_key(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         encryption_context={}

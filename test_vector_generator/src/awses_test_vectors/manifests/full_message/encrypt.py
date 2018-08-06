@@ -33,12 +33,12 @@ from awses_test_vectors.internal.util import (
     file_reader,
     file_writer,
     iterable_validator,
-    master_key_provider_from_master_key_specs,
     validate_manifest_type,
+membership_validator
 )
 from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
-from awses_test_vectors.manifests.master_key import MasterKeySpec
+from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -55,7 +55,19 @@ SUPPORTED_VERSIONS = (1,)
 
 @attr.s
 class EncryptTestScenario(object):
-    """"""
+    """Data class for a single full message decrypt test scenario.
+
+    Handles serialization and deserialization to and from manifest specs.
+
+    :param str plaintext_name: Identifying name of plaintext
+    :param bytes plaintext: Binary plaintext data
+    :param AlgorithmSuite algorithm: Algorithm suite to use
+    :param int frame_size: Frame size to use
+    :param dict encryption_context: Encryption context to use
+    :param master_key_specs: Iterable of loaded master key specifications
+    :type master_key_specs: iterable of :class:`MasterKeySpec`
+    :param MasterKeyProvider master_key_provider:
+    """
 
     plaintext_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
     plaintext = attr.ib(validator=attr.validators.instance_of(six.binary_type))
@@ -68,9 +80,16 @@ class EncryptTestScenario(object):
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts):
         # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> EncryptTestScenario
-        """"""
+        """Load from a scenario specification.
+
+        :param dict scenario: Scenario specification JSON
+        :param KeysManifest keys: Loaded keys
+        :param dict plaintexts: Mapping of plaintext names to plaintext values
+        :return: Loaded test scenario
+        :rtype: EncryptTestScenario
+        """
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
-        master_key_specs = [MasterKeySpec.from_scenario_spec(spec) for spec in scenario["master-keys"]]
+        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]]
         master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(
@@ -86,7 +105,11 @@ class EncryptTestScenario(object):
     @property
     def scenario_spec(self):
         # type: () -> ENCRYPT_SCENARIO_SPEC
-        """"""
+        """Build a scenario specification describing this test scenario.
+
+        :return: Scenario specification JSON
+        :rtype: dict
+        """
         return {
             "plaintext": self.plaintext_name,
             "algorithm": binascii.hexlify(self.algorithm.id_as_bytes()),
@@ -95,12 +118,50 @@ class EncryptTestScenario(object):
             "master-keys": [spec.scenario_spec for spec in self.master_key_specs],
         }
 
+    def run(self, ciphertext_writer, plaintext_uri):
+        """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
+        a :class:`DecryptTestScenario` that describes the matching decrypt scenario.
+
+        :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
+            return a URI locating the written data
+        :param str plaintext_uri: URI locating the written plaintext data for this scenario
+        :return: Decrypt test scenario that describes the generated scenario
+        :rtype: DecryptTestScenario
+        """
+        ciphertext, _header = aws_encryption_sdk.encrypt(
+            source=self.plaintext,
+            algorithm=self.algorithm,
+            frame_length=self.frame_size,
+            encryption_context=self.encryption_context,
+            key_provider=self.master_key_provider,
+        )
+
+        ciphertext_name = str(uuid.uuid4())
+        ciphertext_uri = ciphertext_writer(ciphertext_name, ciphertext)
+
+        return DecryptTestScenario(
+            plaintext_uri=plaintext_uri,
+            plaintext=self.plaintext,
+            ciphertext_uri=ciphertext_uri,
+            ciphertext=ciphertext,
+            master_key_specs=self.master_key_specs,
+            master_key_provider=self.master_key_provider,
+        )
+
 
 @attr.s
 class EncryptMessageManifest(object):
-    """"""
+    """AWS Encryption SDK Encrypt Message manifest handler.
 
-    version = attr.ib(validator=attr.validators.instance_of(int))
+    Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Encrypt Message.
+
+    :param int version: Version of this manifest
+    :param KeysManifest keys: Loaded keys
+    :param dict plaintexts: Mapping of plaintext names to plaintext values
+    :param dict tests: Mapping of test scenario names to :class:`EncryptTextScenario`s
+    """
+
+    version = attr.ib(validator=membership_validator(SUPPORTED_VERSIONS))
     keys = attr.ib(validator=attr.validators.instance_of(KeysManifest))
     plaintexts = attr.ib(validator=dictionary_validator(six.string_types, six.binary_type))
     tests = attr.ib(validator=dictionary_validator(six.string_types, EncryptTestScenario))
@@ -120,9 +181,9 @@ class EncryptMessageManifest(object):
     @classmethod
     def from_file(cls, input_file):
         # type: (IO) -> EncryptMessageManifest
-        """Load manifest from file.
+        """Load frome a file containing a full message encrypt manifest.
 
-        :param file input_file: File to load
+        :param file input_file: File object for file containing JSON manifest
         :return: Loaded manifest
         :rtype: EncryptMessageManifest
         """
@@ -142,38 +203,6 @@ class EncryptMessageManifest(object):
         }
         return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
 
-    def _process_encrypt_scenario(self, ciphertext_writer, plaintext_uri, scenario):
-        # type: (Callable, str, EncryptTestScenario) -> DecryptTestScenario
-        """Process an encrypt test scenario, generating and writing the desired ciphertext, and returning
-        a :class:`DecryptTestScenario` that describes the generated scenario.
-
-        :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
-            return a URI locating the written data
-        :param str plaintext_uri: URI locating the written plaintext data for this scenario
-        :param EncryptTestScenario scenario: Encrypt test scenario that describes the scenario to generate
-        :return: Decrypt test scenario that describes the generated scenario
-        :rtype: DecryptTestScenario
-        """
-        ciphertext, _header = aws_encryption_sdk.encrypt(
-            source=scenario.plaintext,
-            algorithm=scenario.algorithm,
-            frame_length=scenario.frame_size,
-            encryption_context=scenario.encryption_context,
-            key_provider=scenario.master_key_provider,
-        )
-
-        ciphertext_name = str(uuid.uuid4())
-        ciphertext_uri = ciphertext_writer(ciphertext_name, ciphertext)
-
-        return DecryptTestScenario(
-            plaintext_uri=plaintext_uri,
-            plaintext=scenario.plaintext,
-            ciphertext_uri=ciphertext_uri,
-            ciphertext=ciphertext,
-            master_key_specs=scenario.master_key_specs,
-            master_key_provider=scenario.master_key_provider,
-        )
-
     def run_and_write_to_dir(self, target_directory, json_indent=None):
         # type: (str, Optional[int]) -> None
         """Process all known encrypt test scenarios and write the resulting data and manifests to disk.
@@ -192,7 +221,7 @@ class EncryptMessageManifest(object):
         ciphertext_writer = file_writer(os.path.join(root_dir, "ciphertexts"))
 
         test_scenarios = {
-            name: self._process_encrypt_scenario(ciphertext_writer, plaintext_uris[scenario.plaintext_name], scenario)
+            name: scenario.run(ciphertext_writer, plaintext_uris[scenario.plaintext_name])
             for name, scenario in self.tests.items()
         }
 

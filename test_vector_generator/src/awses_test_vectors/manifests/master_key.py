@@ -12,14 +12,15 @@
 # language governing permissions and limitations under the License.
 """
 AWS Encryption SDK master key specification utilities.
+
+Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 """
 import attr
 import six
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.key_providers.base import MasterKey  # noqa pylint: disable=unused-import
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 
 from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER
@@ -27,6 +28,7 @@ from awses_test_vectors.internal.util import membership_validator
 from awses_test_vectors.manifests.keys import KeysManifest, KeySpec  # noqa pylint: disable=unused-import
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
     from awses_test_vectors.internal.mypy_types import MASTER_KEY_SPEC  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
@@ -56,7 +58,18 @@ _RAW_ENCRYPTION_KEY_TYPE = {
 
 @attr.s
 class MasterKeySpec(object):
-    """"""
+    """AWS Encryption SDK master key specification utilities.
+
+    Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
+
+    :param str type_name:
+    :param str key_name:
+    :param str key_id:
+    :param str provider_id:
+    :param str encryption_algorithm:
+    :param str padding_algorithm:
+    :param str padding_hash:
+    """
 
     type_name = attr.ib(validator=membership_validator(KNOWN_TYPES))
     key_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
@@ -68,7 +81,7 @@ class MasterKeySpec(object):
 
     def __attrs_post_init__(self):
         # type: () -> None
-        """"""
+        """Verify that known types all have loaders and that all required parameters are provided."""
         if set(KNOWN_TYPES) != set(self._MASTER_KEY_LOADERS.keys()):
             raise NotImplementedError("Gap found between known master key types and available master key loaders.")
 
@@ -82,9 +95,14 @@ class MasterKeySpec(object):
                 raise ValueError('Padding hash must be specified if padding algorithm is "oaep-mgf1"')
 
     @classmethod
-    def from_scenario_spec(cls, spec):
+    def from_scenario(cls, spec):
         # type: (MASTER_KEY_SPEC) -> MasterKeySpec
-        """"""
+        """Load from a master key specification.
+
+        :param dict spec: Master key specification JSON
+        :return: Loaded master key specification
+        :rtype: MasterKeySpec
+        """
         return cls(
             type_name=spec["type"],
             key_name=spec["key"],
@@ -97,7 +115,16 @@ class MasterKeySpec(object):
 
     def _wrapping_algorithm(self, key_bits):
         # type: (int) -> WrappingAlgorithm
-        """"""
+        """Determine the correct wrapping algorithm if this is a raw master key.
+
+        :param key_bits: Key size in bits
+        :return: Correct wrapping algorithm
+        :rtype: WrappingAlgorithm
+        :raises TypeError: if this is not a raw master key specification
+        """
+        if not self.type_name == 'raw':
+            raise TypeError('This is not a raw master key')
+
         key_spec_values = [self.encryption_algorithm]
         if self.encryption_algorithm == "aes":
             key_spec_values.append(str(key_bits))
@@ -112,7 +139,16 @@ class MasterKeySpec(object):
 
     def _wrapping_key(self, key_spec):
         # type: (KeySpec) -> WrappingKey
-        """"""
+        """Build the  correct wrapping key if this is a raw master key.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: Wrapping key to use
+        :rtype: WrappingKey
+        :raises TypeError: if this is not a raw master key specification
+        """
+        if not self.type_name == 'raw':
+            raise TypeError('This is not a raw master key')
+
         algorithm = self._wrapping_algorithm(key_spec.bits)
         material = key_spec.raw_material
         key_type = _RAW_ENCRYPTION_KEY_TYPE[key_spec.type_name]
@@ -120,19 +156,45 @@ class MasterKeySpec(object):
 
     def _raw_key_id(self):
         # type: () -> str
-        """"""
+        """Determine the key ID value if this is a raw master key.
+
+        :returns: Correct key ID
+        :rtype: str
+        :raises TypeError: if this is not a raw master key specification
+        """
+        if not self.type_name == 'raw':
+            raise TypeError('This is not a raw master key')
+
         return self.key_id if self.key_id is not None else self.key_name
 
     def _raw_master_key_from_spec(self, key_spec):
         # type: (KeySpec) -> RawMasterKey
-        """"""
+        """Build a raw master key using this specification.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: Raw master key based on this specification
+        :rtype: RawMasterKey
+        :raises TypeError: if this is not a raw master key specification
+        """
+        if not self.type_name == 'raw':
+            raise TypeError('This is not a raw master key')
+
         wrapping_key = self._wrapping_key(key_spec)
         key_id = self._raw_key_id()
         return RawMasterKey(provider_id=self.provider_id, key_id=key_id, wrapping_key=wrapping_key)
 
     def _kms_master_key_from_spec(self, key_spec):
         # type: (KeySpec) -> KMSMasterKey
-        """"""
+        """Build an AWS KMS master key using this specification.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: AWS KMS master key based on this specification
+        :rtype: KMSMasterKey
+        :raises TypeError: if this is not an AWS KMS master key specification
+        """
+        if not self.type_name == 'aws-kms':
+            raise TypeError('This is not an AWS KMS master key')
+
         if self.key_id is not None and self.key_id != key_spec.key_id:
             raise ValueError("AWS KMS key IDs must match between master key spec and key spec")
 
@@ -141,8 +203,11 @@ class MasterKeySpec(object):
     _MASTER_KEY_LOADERS = {"aws-kms": _kms_master_key_from_spec, "raw": _raw_master_key_from_spec}
 
     def master_key(self, keys):
-        # type: (KeysManifest) -> MasterKey
-        """"""
+        # type: (KeysManifest) -> MasterKeyProvider
+        """Build a master key using this specification.
+
+        :param KeysManifest keys: Loaded key materials
+        """
         key_spec = keys.key(self.key_name)
         key_loader = self._MASTER_KEY_LOADERS[self.type_name]
         return key_loader(self, key_spec)
@@ -150,7 +215,11 @@ class MasterKeySpec(object):
     @property
     def scenario_spec(self):
         # type: () -> MASTER_KEY_SPEC
-        """"""
+        """Build a master key specification describing this master key.
+
+        :return: Master key specification JSON
+        :rtype: dict
+        """
         spec = {"type": self.type_name, "key": self.key_name}
 
         if self.type_name != "aws-kms":
@@ -166,3 +235,22 @@ class MasterKeySpec(object):
                 spec["padding-hash"] = self.padding_hash
 
         return spec
+
+
+def master_key_provider_from_master_key_specs(keys, master_key_specs):
+    # type: (KeysManifest, Iterable[MasterKeySpec]) -> MasterKeyProvider
+    """Build and combine all master key providers identified by the provided specs and
+    using the provided keys.
+
+    :param KeysManifest keys: Loaded keys manifest
+    :param master_key_specs: Master key specs from which to load master keys
+    :type master_key_specs: iterable of MasterKeySpec
+    :return: Master key provider combining all loaded master keys
+    :rtype: MasterKeyProvider
+    """
+    master_keys = [spec.master_key(keys) for spec in master_key_specs]
+    primary = master_keys[0]
+    others = master_keys[1:]
+    for master_key in others:
+        primary.add_master_key_provider(master_key)
+    return primary

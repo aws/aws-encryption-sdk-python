@@ -10,17 +10,19 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Utility functions for use by test vector handlers."""
+"""
+Utility functions for use in AWS Encryption SDK test vector handlers.
+"""
 import os
 import struct
 from binascii import unhexlify
 
 import six
-from attr import Attribute
+from attr import Attribute  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, Callable, Dict, Iterable, Type, Union  # noqa pylint: disable=unused-import
+    from typing import Any, Callable, Dict, Iterable, Type  # noqa pylint: disable=unused-import
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         ISINSTANCE,
         MANIFEST_VERSION,
@@ -42,7 +44,10 @@ def _file_exists_error():
 
 def makedir_if_not_exist(dir_name):
     # type: (str) -> None
-    """"""
+    """Create a directory, ignoring errors if it already exists.
+
+    :param str dir_name: Path to directory to create
+    """
     try:
         os.makedirs(dir_name)
     except _file_exists_error():
@@ -52,7 +57,21 @@ def makedir_if_not_exist(dir_name):
 
 def validate_manifest_type(type_name, manifest_version, supported_versions):
     # type: (str, MANIFEST_VERSION, Iterable[int]) -> None
-    """"""
+    """Validate the provided manifest version structure. Manifest version structure
+    must meet the below format.
+
+    .. code:: json
+
+        {
+            "type": "a-valid-manifest-type-name",
+            "version": 9
+        }
+
+    :param str type_name: Manifest type name for which to check
+    :param dict manifest_version: Manifest version structure to validate
+    :param supported_versions: Iterable of supported versions
+    :type supported_versions: iterable of int
+    """
     try:
         if manifest_version["type"] != type_name:
             raise ValueError(
@@ -144,22 +163,20 @@ def iterable_validator(iterable_type, member_type):
 
 def algorithm_suite_from_string_id(string_id):
     # type: (str) -> AlgorithmSuite
-    """"""
+    """Locate an :class:`AlgorithmSuite` by the hex string encoding of the algorithm ID.
+
+    :param string_id: Hex ID string of algorithm suite
+    :return: Correct algorithm suite for ``string_id``
+    :rtype: AlgorithmSuite
+    """
     bytes_id = unhexlify(string_id)
     (numeric_id,) = struct.unpack(">H", bytes_id)
     return AlgorithmSuite.get_by_id(numeric_id)
 
 
-def master_key_provider_from_master_key_specs(keys, master_key_specs):
-    """"""
-    master_keys = [spec.master_key(keys) for spec in master_key_specs]
-    primary = master_keys[0]
-    others = master_keys[1:]
-    for master_key in others:
-        primary.add_master_key_provider(master_key)
-    return primary
-
-
+# TODO: I want to replace these functions with an extensible "URI Handler" class
+#  that will abstract away any file handling. This will vastly simply extending
+#  these handlers to work with files in some non-local location, such as S3.
 def file_writer(parent_dir):
     # type: (str) -> Callable[[str, bytes], str]
     """Return a caller that will write the requested named data to a file and return
@@ -193,12 +210,22 @@ def file_writer(parent_dir):
 
 def file_reader(parent_dir):
     # type: (str) -> Callable[[str], bytes]
-    """"""
+    """Returns a callable that accepts a URI identifying a file relative to ``parent_dir``
+    and returns the binary contents of that file.
+
+    :param str parent_dir: Parent directory to use as the relative root for all URIs
+    :return: callable URI file reader
+    """
     # Abstracted like this because we want to support reading from S3 in the future.
 
     def _read_file(uri):
         # type: (str) -> bytes
-        """"""
+        """Read the contents of the specified file.
+
+        :param uri: File URI relative to ``parent_dir``
+        :return: Binary file contents
+        :rtype: bytes
+        """
         if not uri.startswith("file://"):
             raise ValueError('Only file URIs are supported by "file_reader"')
 

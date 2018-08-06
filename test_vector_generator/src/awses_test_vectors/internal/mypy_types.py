@@ -14,7 +14,6 @@
 MyPy types for use in AWS Encryption SDK test vector handlers.
 """
 # mypy types confuse pylint: disable=invalid-name
-from attr import Attribute
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import (  # noqa pylint: disable=unused-import

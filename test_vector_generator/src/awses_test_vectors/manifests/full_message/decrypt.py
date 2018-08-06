@@ -28,11 +28,10 @@ from awses_test_vectors.internal.util import (
     dictionary_validator,
     file_reader,
     iterable_validator,
-    master_key_provider_from_master_key_specs,
     validate_manifest_type,
 )
 from awses_test_vectors.manifests.keys import KeysManifest
-from awses_test_vectors.manifests.master_key import MasterKeySpec
+from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -52,7 +51,19 @@ SUPPORTED_VERSIONS = (1,)
 
 @attr.s(init=False)
 class DecryptTestScenario(object):
-    """"""
+    """Data class for a single full message decrypt test scenario.
+
+    Handles serialization and deserialization to and from manifest specs.
+
+    :param str plaintext_uri: URI locating plaintext data
+    :param bytes plaintext: Binary plaintext data
+    :param str ciphertext_uri: URI locating ciphertext data
+    :param bytes ciphertext: Binary ciphertext data
+    :param master_key_specs: Iterable of master key specifications
+    :type master_key_specs: iterable of :class:`MasterKeySpec`
+    :param MasterKeyProvider master_key_provider:
+    :param str description: Description of test scenario (optional)
+    """
 
     # pylint: disable=too-few-public-methods
 
@@ -98,9 +109,17 @@ class DecryptTestScenario(object):
         keys,  # type: KeysManifest
     ):
         # type: (...) -> DecryptTestScenario
-        """"""
+        """Load from a scenario specification.
+
+        :param dict scenario: Scenario specification JSON
+        :param plaintext_reader: URI-handling data reader for reading plaintext
+        :param ciphertext_reader: URI-handling data reader for reading ciphertext
+        :param KeysManifest keys: Loaded keys
+        :return: Loaded test scenario
+        :rtype: DecryptTestScenario
+        """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
-        master_key_specs = [MasterKeySpec.from_scenario_spec(spec) for spec in raw_master_key_specs]
+        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
         master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(
@@ -116,7 +135,11 @@ class DecryptTestScenario(object):
     @property
     def scenario_spec(self):
         # type: () -> DECRYPT_SCENARIO_SPEC
-        """"""
+        """Build a scenario specification describing this test scenario.
+
+        :return: Scenario specification JSON
+        :rtype: dict
+        """
         spec = {
             "plaintext": self.plaintext_uri,
             "ciphertext": self.ciphertext_uri,
@@ -126,10 +149,32 @@ class DecryptTestScenario(object):
             spec["description"] = self.description
         return spec
 
+    def run(self, name):
+        """Run this test scenario
+
+        :param str name: Descriptive name for this scenario to use in any logging or errors
+        """
+        plaintext, _header = aws_encryption_sdk.decrypt(
+            source=self.ciphertext, key_provider=self.master_key_provider
+        )
+        if plaintext != self.plaintext:
+            # TODO: Actually do something here
+            raise Exception("TODO: ERROR MESSAGE")
+
 
 @attr.s(init=False)
 class DecryptMessageManifest(object):
-    """"""
+    """AWS Encryption SDK Decrypt Message manifest handler.
+
+    Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Decrypt Message.
+
+    :param str keys_uri:
+    :param KeysManifest keys:
+    :param dict test_scenarios:
+    :param int version:
+    :param str client_name:
+    :param str client_version:
+    """
 
     keys_uri = attr.ib(validator=attr.validators.instance_of(six.string_types))
     keys = attr.ib(validator=attr.validators.instance_of(KeysManifest))
@@ -167,27 +212,25 @@ class DecryptMessageManifest(object):
     @property
     def manifest_spec(self):
         # type: () -> FULL_MESSAGE_DECRYPT_MANIFEST
-        """"""
+        """Build a full message decrypt manifest describing this manifest.
+
+        :return: Manifest JSON
+        :rtype: dict
+        """
         manifest_spec = {"type": self.type_name, "version": self.version}
         client_spec = {"name": self.client_name, "version": self.client_version}
         test_specs = {name: spec.scenario_spec for name, spec in self.test_scenarios.items()}
         return {"manifest": manifest_spec, "client": client_spec, "keys": self.keys_uri, "tests": test_specs}
 
-    @staticmethod
-    def _process_decrypt_scenario(scenario):
-        # type: (DecryptTestScenario) -> None
-        """"""
-        plaintext, header = aws_encryption_sdk.decrypt(
-            source=scenario.ciphertext, key_provider=scenario.master_key_provider
-        )
-        if plaintext != scenario.plaintext:
-            # TODO: Actually do something here
-            raise Exception("TODO: ERROR MESSAGE")
-
     @classmethod
     def from_file(cls, input_file):
         # type: (IO) -> DecryptMessageManifest
-        """"""
+        """Load from a file containing a full message decrypt manifest.
+
+        :param file input_file: File object for file containing JSON manifest
+        :return: Loaded manifest
+        :rtype: DecryptMessageManifest
+        """
         raw_manifest = json.load(input_file)
         validate_manifest_type(
             type_name=cls.type_name, manifest_version=raw_manifest["manifest"], supported_versions=SUPPORTED_VERSIONS
@@ -223,6 +266,6 @@ class DecryptMessageManifest(object):
 
     def run(self):
         # () -> None
-        """"""
-        for _name, scenario in self.test_scenarios.items():
-            self._process_decrypt_scenario(scenario)
+        """Process all scenarios in this manifest."""
+        for name, scenario in self.test_scenarios.items():
+            scenario.run(name)
