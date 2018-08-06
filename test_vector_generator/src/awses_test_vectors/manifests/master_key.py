@@ -122,8 +122,8 @@ class MasterKeySpec(object):
         :rtype: WrappingAlgorithm
         :raises TypeError: if this is not a raw master key specification
         """
-        if not self.type_name == 'raw':
-            raise TypeError('This is not a raw master key')
+        if not self.type_name == "raw":
+            raise TypeError("This is not a raw master key")
 
         key_spec_values = [self.encryption_algorithm]
         if self.encryption_algorithm == "aes":
@@ -146,8 +146,8 @@ class MasterKeySpec(object):
         :rtype: WrappingKey
         :raises TypeError: if this is not a raw master key specification
         """
-        if not self.type_name == 'raw':
-            raise TypeError('This is not a raw master key')
+        if not self.type_name == "raw":
+            raise TypeError("This is not a raw master key")
 
         algorithm = self._wrapping_algorithm(key_spec.bits)
         material = key_spec.raw_material
@@ -162,8 +162,8 @@ class MasterKeySpec(object):
         :rtype: str
         :raises TypeError: if this is not a raw master key specification
         """
-        if not self.type_name == 'raw':
-            raise TypeError('This is not a raw master key')
+        if not self.type_name == "raw":
+            raise TypeError("This is not a raw master key")
 
         return self.key_id if self.key_id is not None else self.key_name
 
@@ -176,8 +176,8 @@ class MasterKeySpec(object):
         :rtype: RawMasterKey
         :raises TypeError: if this is not a raw master key specification
         """
-        if not self.type_name == 'raw':
-            raise TypeError('This is not a raw master key')
+        if not self.type_name == "raw":
+            raise TypeError("This is not a raw master key")
 
         wrapping_key = self._wrapping_key(key_spec)
         key_id = self._raw_key_id()
@@ -192,8 +192,8 @@ class MasterKeySpec(object):
         :rtype: KMSMasterKey
         :raises TypeError: if this is not an AWS KMS master key specification
         """
-        if not self.type_name == 'aws-kms':
-            raise TypeError('This is not an AWS KMS master key')
+        if not self.type_name == "aws-kms":
+            raise TypeError("This is not an AWS KMS master key")
 
         if self.key_id is not None and self.key_id != key_spec.key_id:
             raise ValueError("AWS KMS key IDs must match between master key spec and key spec")

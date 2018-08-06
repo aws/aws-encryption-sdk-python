@@ -154,9 +154,7 @@ class DecryptTestScenario(object):
 
         :param str name: Descriptive name for this scenario to use in any logging or errors
         """
-        plaintext, _header = aws_encryption_sdk.decrypt(
-            source=self.ciphertext, key_provider=self.master_key_provider
-        )
+        plaintext, _header = aws_encryption_sdk.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
         if plaintext != self.plaintext:
             # TODO: Actually do something here
             raise Exception("TODO: ERROR MESSAGE")

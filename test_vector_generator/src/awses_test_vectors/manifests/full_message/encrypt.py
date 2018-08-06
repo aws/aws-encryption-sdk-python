@@ -33,8 +33,8 @@ from awses_test_vectors.internal.util import (
     file_reader,
     file_writer,
     iterable_validator,
+    membership_validator,
     validate_manifest_type,
-membership_validator
 )
 from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest, DecryptTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest

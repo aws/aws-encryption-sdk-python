@@ -34,7 +34,6 @@ def arn_from_key_id(key_id):
     :rtype: str
     """
     encrypted_data_key = KMS_MASTER_KEY_PROVIDER.master_key(key_id.encode(ENCODING)).generate_data_key(
-        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        encryption_context={}
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={}
     )
     return encrypted_data_key.key_provider.key_info.decode(ENCODING)

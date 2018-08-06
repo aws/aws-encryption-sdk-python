@@ -36,7 +36,7 @@ try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
         MANUAL_KEY_SPEC,
         KEY_SPEC,
         KEYS_MANIFEST,
-    MANIFEST_VERSION
+        MANIFEST_VERSION,
     )
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
@@ -137,15 +137,15 @@ class ManualKeySpec(KeySpec):
     line_separator = attr.ib(default="", validator=attr.validators.instance_of(six.string_types))
 
     def __init__(
-            self,
-            encrypt,  # type: bool
-            decrypt,  # type: bool
-            algorithm,  # type: str
-            type_name,  # type: str
-            bits,  # type: int
-            encoding,  # type: str
-            material,  # type: Iterable[str]
-            line_separator=''  # type: Optional[str]
+        self,
+        encrypt,  # type: bool
+        decrypt,  # type: bool
+        algorithm,  # type: str
+        type_name,  # type: str
+        bits,  # type: int
+        encoding,  # type: str
+        material,  # type: Iterable[str]
+        line_separator="",  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
         # Workaround pending resolution of attrs/mypy interaction.
@@ -201,23 +201,18 @@ def key_from_manifest_spec(key_spec):
     :return: Loaded key
     :rtype: KeySpec
     """
-    decrypt = key_spec['decrypt']  # type: bool
-    encrypt = key_spec['encrypt']  # type: bool
-    type_name = key_spec['type']  # type: str
+    decrypt = key_spec["decrypt"]  # type: bool
+    encrypt = key_spec["encrypt"]  # type: bool
+    type_name = key_spec["type"]  # type: str
     if key_spec["type"] == "aws-kms":
-        key_id = key_spec['key-id']  # type: str
-        return AwsKmsKeySpec(
-            encrypt=encrypt,
-            decrypt=decrypt,
-            type_name=type_name,
-            key_id=key_id,
-        )
+        key_id = key_spec["key-id"]  # type: str
+        return AwsKmsKeySpec(encrypt=encrypt, decrypt=decrypt, type_name=type_name, key_id=key_id)
 
-    algorithm = key_spec['algorithm']  # type: str
-    bits = key_spec['bits']  # type: int
-    encoding = key_spec['encoding']  # type: str
-    line_separator = key_spec.get('line-separator', '')  # type: str
-    material = key_spec['material']  # type: Iterable[str]
+    algorithm = key_spec["algorithm"]  # type: str
+    bits = key_spec["bits"]  # type: int
+    encoding = key_spec["encoding"]  # type: str
+    line_separator = key_spec.get("line-separator", "")  # type: str
+    material = key_spec["material"]  # type: Iterable[str]
     return ManualKeySpec(
         encrypt=encrypt,
         decrypt=decrypt,
