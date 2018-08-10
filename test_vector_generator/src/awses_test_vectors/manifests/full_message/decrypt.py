@@ -50,7 +50,7 @@ SUPPORTED_VERSIONS = (1,)
 
 
 @attr.s(init=False)
-class DecryptTestScenario(object):
+class MessageDecryptionTestScenario(object):
     """Data class for a single full message decrypt test scenario.
 
     Handles serialization and deserialization to and from manifest specs.
@@ -108,7 +108,7 @@ class DecryptTestScenario(object):
         ciphertext_reader,  # type: Callable[[str], bytes]
         keys,  # type: KeysManifest
     ):
-        # type: (...) -> DecryptTestScenario
+        # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
 
         :param dict scenario: Scenario specification JSON
@@ -116,7 +116,7 @@ class DecryptTestScenario(object):
         :param ciphertext_reader: URI-handling data reader for reading ciphertext
         :param KeysManifest keys: Loaded keys
         :return: Loaded test scenario
-        :rtype: DecryptTestScenario
+        :rtype: MessageDecryptionTestScenario
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
@@ -161,7 +161,7 @@ class DecryptTestScenario(object):
 
 
 @attr.s(init=False)
-class DecryptMessageManifest(object):
+class MessageDecryptionManifest(object):
     """AWS Encryption SDK Decrypt Message manifest handler.
 
     Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Decrypt Message.
@@ -177,7 +177,7 @@ class DecryptMessageManifest(object):
     keys_uri = attr.ib(validator=attr.validators.instance_of(six.string_types))
     keys = attr.ib(validator=attr.validators.instance_of(KeysManifest))
     test_scenarios = attr.ib(
-        default=attr.Factory(dict), validator=dictionary_validator(six.string_types, DecryptTestScenario)
+        default=attr.Factory(dict), validator=dictionary_validator(six.string_types, MessageDecryptionTestScenario)
     )
     version = attr.ib(default=CURRENT_VERSION, validator=attr.validators.instance_of(int))
     client_name = attr.ib(default=CLIENT_NAME, validator=attr.validators.instance_of(six.string_types))
@@ -190,7 +190,7 @@ class DecryptMessageManifest(object):
         self,
         keys_uri,  # type: str
         keys,  # type: KeysManifest
-        test_scenarios=None,  # type: Optional[Dict[str, DecryptTestScenario]]
+        test_scenarios=None,  # type: Optional[Dict[str, MessageDecryptionTestScenario]]
         version=CURRENT_VERSION,  # type: Optional[int]
         client_name=CLIENT_NAME,  # type: Optional[str]
         client_version=aws_encryption_sdk.__version__,  # type: Optional[str]
@@ -222,12 +222,12 @@ class DecryptMessageManifest(object):
 
     @classmethod
     def from_file(cls, input_file):
-        # type: (IO) -> DecryptMessageManifest
+        # type: (IO) -> MessageDecryptionManifest
         """Load from a file containing a full message decrypt manifest.
 
         :param file input_file: File object for file containing JSON manifest
         :return: Loaded manifest
-        :rtype: DecryptMessageManifest
+        :rtype: MessageDecryptionManifest
         """
         raw_manifest = json.load(input_file)
         validate_manifest_type(
@@ -247,7 +247,7 @@ class DecryptMessageManifest(object):
         client_version = raw_manifest["client"]["version"]  # type: str
         raw_scenarios = raw_manifest["tests"]  # type: Dict[str, DECRYPT_SCENARIO_SPEC]
         test_scenarios = {
-            name: DecryptTestScenario.from_scenario(
+            name: MessageDecryptionTestScenario.from_scenario(
                 scenario=scenario, plaintext_reader=root_reader, ciphertext_reader=root_reader, keys=keys
             )
             for name, scenario in raw_scenarios.items()

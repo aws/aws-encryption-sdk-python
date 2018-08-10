@@ -15,7 +15,7 @@ AWS Encryption SDK full message decrypt command.
 """
 import argparse
 
-from awses_test_vectors.manifests.full_message.decrypt import DecryptMessageManifest
+from awses_test_vectors.manifests.full_message.decrypt import MessageDecryptionManifest
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Optional  # noqa pylint: disable=unused-import
@@ -32,6 +32,6 @@ def cli(args=None):
 
     parsed = parser.parse_args(args)
 
-    decrypt_manifest = DecryptMessageManifest.from_file(parsed.input)
+    decrypt_manifest = MessageDecryptionManifest.from_file(parsed.input)
 
     decrypt_manifest.run()
