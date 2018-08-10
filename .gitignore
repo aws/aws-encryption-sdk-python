@@ -1,21 +1,38 @@
-*.class
-*.egg-info
-*.pyc
-*.pyo
 *~
-.DS_Store
-.tox
-/.cache*
-/.coverage*
-/build
-/doc/generated/*
-/runpy
-/test/integration/test_values.conf
-__pycache__
+
+# Test vectors (legacy)
 aws_encryption_sdk_resources
+
+# OS Artifacts
+.DS_Store
+
+# Build Artifacts
 build
 dist
 docs/build
-test/integration/test_values.conf
+/doc/generated/*
+
+# Bytecode Artifacts
+*.pyc
+*.pyo
+.cache*
+__pycache__
+*.egg-info
+
+# Coverage.py
+.coverage*
+
+# MyPy
+.mypy_cache
+
+# PyEnv
 .python-version
+
+# PyTest
 .pytest_cache
+
+# PyCharm
+.idea/
+
+# Tox
+.tox
