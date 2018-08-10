@@ -3,7 +3,7 @@
 # Test vectors (legacy)
 aws_encryption_sdk_resources
 
-# OS Atrifacts
+# OS Artifacts
 .DS_Store
 
 # Build Artifacts
