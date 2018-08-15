@@ -117,7 +117,7 @@ VALUES['cache_ids'] = {
             'components': {
                 'partition_name': VALUES['basic']['partition_name'],
                 'algorithm': Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-                'encrypted_data_keys': set([entry['key'] for entry in VALUES['basic']['encrypted_data_keys']]),
+                'encrypted_data_keys': {entry['key'] for entry in VALUES['basic']['encrypted_data_keys']},
                 'encryption_context': VALUES['basic']['encryption_context']['full']['raw']
             },
             'id': b'+rtwUe38CGnczGmYu12iqGWHIyDyZ44EvYQ4S6ACmsgS8VaEpiw0RTGpDk6Z/7YYN/jVHOAcNKDyCNP8EmstFg=='
