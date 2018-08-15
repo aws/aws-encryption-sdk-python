@@ -105,14 +105,14 @@ def _verified_algorithm_from_id(algorithm_id):
     :raises NotSupportedError: if unsupported algorithm ID is received
     """
     try:
-        alg = AlgorithmSuite.get_by_id(algorithm_id)
+        algorithm_suite = AlgorithmSuite.get_by_id(algorithm_id)
     except KeyError as error:
         raise UnknownIdentityError('Unknown algorithm {}'.format(algorithm_id), error)
 
-    if not alg.allowed:
-        raise NotSupportedError('Unsupported algorithm: {}'.format(alg))
+    if not algorithm_suite.allowed:
+        raise NotSupportedError('Unsupported algorithm: {}'.format(algorithm_suite))
 
-    return alg
+    return algorithm_suite
 
 
 def _deserialize_encrypted_data_keys(stream):
@@ -183,21 +183,21 @@ def _verified_content_aad_length(content_aad_length):
     return 0
 
 
-def _verified_iv_length(iv_length, algorithm):
+def _verified_iv_length(iv_length, algorithm_suite):
     # type: (int, AlgorithmSuite) -> int
     """Verify an IV length for an algorithm suite.
 
     :param int iv_length: IV length to verify
-    :param AlgorithmSuite algorithm: Algorithm suite to verify against
+    :param AlgorithmSuite algorithm_suite: Algorithm suite to verify against
     :return: IV length
     :rtype: int
     :raises SerializationError: if IV length does not match algorithm suite
     """
-    if iv_length != algorithm.iv_len:
+    if iv_length != algorithm_suite.iv_len:
         raise SerializationError(
             'Specified IV length ({length}) does not match algorithm IV length ({algorithm})'.format(
                 length=iv_length,
-                algorithm=algorithm
+                algorithm=algorithm_suite
             )
         )
 
