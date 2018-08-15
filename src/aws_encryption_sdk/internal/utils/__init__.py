@@ -132,7 +132,7 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
 try:
     _FILE_TYPE = file  # Python 2
 except NameError:
-    _FILE_TYPE = io.IOBase  # Python 3 # pylint: disable=invalid-name
+    _FILE_TYPE = io.IOBase  # Python 3 pylint: disable=invalid-name
 
 
 def prep_stream_data(data):
