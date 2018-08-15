@@ -4,9 +4,12 @@
 #
 # C0103 : invalid-name (we prefer long, descriptive, names for tests)
 # C0111 : missing-docstring (we don't write docstrings for tests)
+# C0330 : bad-continuation (we let black handle this)
+# C0412 : ungrouped-imports (we let isort handle this)
 # E0110 : abstract-class-instantiated (we do this on purpose to test that they are enforced)
 # E1101 : no-member (raised on patched objects with mock checks)
 # R0201 : no-self-use (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
+# R0205 : useless-object-inheritance (we need to support Python 2, so no, not useless)
 # R0801 : duplicate-code (unit tests for similar things tend to be similar)
 # R0902 : too-many-instance-attributes (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
 # R0903 : too-few-public-methods (common when setting up mock classes)
@@ -18,7 +21,7 @@
 # W0223 : abstract-method (we do this on purpose to test that they are enforced)
 # W0621 : redefined-outer-name (raised when using pytest-mock)
 # W0613 : unused-argument (raised when patches are needed but not called)
-disable = C0103, C0111, E0110, E1101, R0201, R0801, R0902, R0903, R0904, R0914, R0915, W0201, W0212, W0223, W0621, W0613
+disable = C0103, C0111, C0330, C0412, E0110, E1101, R0201, R0205, R0801, R0902, R0903, R0904, R0914, R0915, W0201, W0212, W0223, W0621, W0613
 
 [VARIABLES]
 additional-builtins = raw_input

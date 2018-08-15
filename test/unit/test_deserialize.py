@@ -20,7 +20,7 @@ import pytest
 import six
 
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.identifiers import AlgorithmSuite
 import aws_encryption_sdk.internal.formatting.deserialize
 from aws_encryption_sdk.internal.structures import EncryptedData
 from .test_values import VALUES
@@ -108,7 +108,7 @@ class TestDeserialize(unittest.TestCase):
             stream = io.BytesIO(VALUES['serialized_header_invalid_version'])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
 
-    @patch('aws_encryption_sdk.internal.formatting.deserialize.Algorithm.get_by_id')
+    @patch('aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id')
     def test_deserialize_header_unsupported_data_encryption_algorithm(self, mock_algorithm_get):
         """Validate that the deserialize_header function behaves
             as expected for an unsupported/disallowed algorithm.
@@ -120,7 +120,7 @@ class TestDeserialize(unittest.TestCase):
             stream = io.BytesIO(VALUES['serialized_header_disallowed_algorithm'])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
 
-    @patch('aws_encryption_sdk.internal.formatting.deserialize.Algorithm.get_by_id')
+    @patch('aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id')
     def test_deserialize_header_unknown_data_encryption_algorithm(self, mock_algorithm_get):
         """Validate that the deserialize_header function behaves
             as expected for an unknown algorithm.
@@ -202,7 +202,7 @@ class TestDeserialize(unittest.TestCase):
         stream = io.BytesIO(VALUES['serialized_header_auth'])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
             stream=stream,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16
+            algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16
         )
         assert test == VALUES['deserialized_header_auth_block']
 
@@ -345,7 +345,7 @@ class TestDeserialize(unittest.TestCase):
             )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_iv_len_mismatch(self):
-        with six.assertRaisesRegex(self, SerializationError, 'Wrapping Algorithm mismatch for wrapped data key'):
+        with six.assertRaisesRegex(self, SerializationError, 'Wrapping AlgorithmSuite mismatch for wrapped data key'):
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES['wrapped_keys']['raw']['key_info'],

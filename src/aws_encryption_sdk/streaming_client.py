@@ -124,10 +124,19 @@ class _EncryptionStream(io.IOBase):
     # def _config_class(self):
     #     Configuration class for this class
 
-    line_length = LINE_LENGTH
+    line_length = LINE_LENGTH  # type: int
+    config = None  # type: _ClientConfig
+    bytes_read = None  # type: int
+    output_buffer = None  # type: bytes
+    _message_prepped = None  # type: bool
+    source_stream = None
+    _stream_length = None  # type: int
 
     def __new__(cls, **kwargs):
-        """Patch for abstractmethod-like enforcement in io.IOBase grandchildren."""
+        """Perform necessary handling for _EncryptionStream instances that should be
+        applied to all children.
+        """
+        # Patch for abstractmethod-like enforcement in io.IOBase grandchildren.
         if (
                 not (hasattr(cls, '_read_bytes') and callable(cls._read_bytes))
                 or not (hasattr(cls, '_prep_message') and callable(cls._read_bytes))
