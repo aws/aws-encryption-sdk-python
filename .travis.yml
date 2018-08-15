@@ -56,5 +56,9 @@ matrix:
       env: TOXENV=flake8-examples
     - python: 3.6
       env: TOXENV=pylint-examples
+    - python: 3.6
+      env: TOXENV=black-check
+    - python: 3.6
+      env: TOXENV=isort-check
 install: pip install tox
 script: tox
