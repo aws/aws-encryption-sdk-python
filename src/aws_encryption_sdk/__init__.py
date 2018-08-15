@@ -11,10 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """High level AWS Encryption SDK client functions."""
+# Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
-
-# Below are imported for ease of use by implementors
 from aws_encryption_sdk.identifiers import Algorithm, __version__  # noqa
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig  # noqa
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager  # noqa
