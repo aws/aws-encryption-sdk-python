@@ -25,45 +25,42 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.yield_fixture
 def patch_set_signature_type(mocker):
-    mocker.patch.object(_PrehashingAuthenticator, '_set_signature_type')
+    mocker.patch.object(_PrehashingAuthenticator, "_set_signature_type")
     yield _PrehashingAuthenticator._set_signature_type
 
 
 @pytest.yield_fixture
 def patch_build_hasher(mocker):
-    mocker.patch.object(_PrehashingAuthenticator, '_build_hasher')
+    mocker.patch.object(_PrehashingAuthenticator, "_build_hasher")
     yield _PrehashingAuthenticator._build_hasher
 
 
 @pytest.yield_fixture
 def patch_cryptography_utils_verify_interface(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'verify_interface')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "verify_interface")
     yield aws_encryption_sdk.internal.crypto.authentication.verify_interface
 
 
 @pytest.yield_fixture
 def patch_cryptography_ec(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'ec')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "ec")
     yield aws_encryption_sdk.internal.crypto.authentication.ec
 
 
 @pytest.yield_fixture
 def patch_cryptography_hashes(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'hashes')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "hashes")
     yield aws_encryption_sdk.internal.crypto.authentication.hashes
 
 
 @pytest.yield_fixture
 def patch_cryptography_default_backend(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'default_backend')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "default_backend")
     yield aws_encryption_sdk.internal.crypto.authentication.default_backend
 
 
 def test_init(patch_set_signature_type, patch_build_hasher):
-    test = _PrehashingAuthenticator(
-        algorithm=sentinel.algorithm,
-        key=sentinel.key
-    )
+    test = _PrehashingAuthenticator(algorithm=sentinel.algorithm, key=sentinel.key)
 
     assert test.algorithm is sentinel.algorithm
     patch_set_signature_type.assert_called_once_with()
@@ -74,47 +71,32 @@ def test_init(patch_set_signature_type, patch_build_hasher):
 
 
 def test_set_signature_type_elliptic_curve(
-        patch_build_hasher,
-        patch_cryptography_utils_verify_interface,
-        patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
 ):
     mock_algorithm = MagicMock()
-    test = _PrehashingAuthenticator(
-        algorithm=mock_algorithm,
-        key=sentinel.key
-    )
+    test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     patch_cryptography_utils_verify_interface.assert_called_once_with(
-        patch_cryptography_ec.EllipticCurve,
-        mock_algorithm.signing_algorithm_info
+        patch_cryptography_ec.EllipticCurve, mock_algorithm.signing_algorithm_info
     )
     assert test._signature_type is patch_cryptography_ec.EllipticCurve
 
 
 def test_set_signature_type_unknown(
-        patch_build_hasher,
-        patch_cryptography_utils_verify_interface,
-        patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
 ):
     patch_cryptography_utils_verify_interface.side_effect = InterfaceNotImplemented
     with pytest.raises(NotSupportedError) as excinfo:
-        _PrehashingAuthenticator(
-            algorithm=MagicMock(),
-            key=sentinel.key
-        )
+        _PrehashingAuthenticator(algorithm=MagicMock(), key=sentinel.key)
 
-    excinfo.match(r'Unsupported signing algorithm info')
+    excinfo.match(r"Unsupported signing algorithm info")
 
 
 def test_build_hasher(patch_set_signature_type, patch_cryptography_hashes, patch_cryptography_default_backend):
     mock_algorithm = MagicMock()
-    test = _PrehashingAuthenticator(
-        algorithm=mock_algorithm,
-        key=sentinel.key
-    )
+    test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     patch_cryptography_hashes.Hash.assert_called_once_with(
-        mock_algorithm.signing_hash_type.return_value,
-        backend=patch_cryptography_default_backend.return_value
+        mock_algorithm.signing_hash_type.return_value, backend=patch_cryptography_default_backend.return_value
     )
     assert test._hasher is patch_cryptography_hashes.Hash.return_value

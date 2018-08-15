@@ -25,20 +25,14 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
-        kms_kwargs['botocore_session'] = botocore_session
+        kms_kwargs["botocore_session"] = botocore_session
     master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
 
     # Encrypt the plaintext source data
-    ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
-        source=source_plaintext,
-        key_provider=master_key_provider
-    )
+    ciphertext, encryptor_header = aws_encryption_sdk.encrypt(source=source_plaintext, key_provider=master_key_provider)
 
     # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = aws_encryption_sdk.decrypt(
-        source=ciphertext,
-        key_provider=master_key_provider
-    )
+    cycled_plaintext, decrypted_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=master_key_provider)
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == source_plaintext
@@ -49,6 +43,5 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     # In production, always use a meaningful encryption context. In this sample, we omit the
     # encryption context (no key pairs).
     assert all(
-        pair in decrypted_header.encryption_context.items()
-        for pair in encryptor_header.encryption_context.items()
+        pair in decrypted_header.encryption_context.items() for pair in encryptor_header.encryption_context.items()
     )

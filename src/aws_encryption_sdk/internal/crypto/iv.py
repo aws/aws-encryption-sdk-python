@@ -54,13 +54,14 @@ def frame_iv(algorithm, sequence_number):
     :raises ActionNotAllowedError: if sequence number of out bounds
     """
     if sequence_number < 1 or sequence_number > MAX_FRAME_COUNT:
-        raise ActionNotAllowedError('Invalid frame sequence number: {actual}\nMust be between 1 and {max}'.format(
-            actual=sequence_number,
-            max=MAX_FRAME_COUNT
-        ))
+        raise ActionNotAllowedError(
+            "Invalid frame sequence number: {actual}\nMust be between 1 and {max}".format(
+                actual=sequence_number, max=MAX_FRAME_COUNT
+            )
+        )
     prefix_len = algorithm.iv_len - 4
-    prefix = b'\x00' * prefix_len
-    return prefix + struct.pack('>I', sequence_number)
+    prefix = b"\x00" * prefix_len
+    return prefix + struct.pack(">I", sequence_number)
 
 
 def non_framed_body_iv(algorithm):
@@ -82,4 +83,4 @@ def header_auth_iv(algorithm):
     :returns: Generated IV
     :rtype: bytes
     """
-    return b'\x00' * algorithm.iv_len
+    return b"\x00" * algorithm.iv_len

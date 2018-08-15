@@ -43,16 +43,11 @@ class EncryptionMaterialsRequest(object):
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
     frame_length = attr.ib(validator=attr.validators.instance_of(six.integer_types))
     plaintext_rostream = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(ROStream))
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(ROStream))
     )
-    algorithm = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(Algorithm))
-    )
+    algorithm = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(Algorithm)))
     plaintext_length = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
 
 
@@ -76,10 +71,7 @@ class EncryptionMaterials(object):
     data_encryption_key = attr.ib(validator=attr.validators.instance_of(DataKey))
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
-    signing_key = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(bytes))
-    )
+    signing_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
 
 
 @attr.s(hash=False)
@@ -112,7 +104,4 @@ class DecryptionMaterials(object):
     """
 
     data_key = attr.ib(validator=attr.validators.instance_of(DataKey))
-    verification_key = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(bytes))
-    )
+    verification_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))

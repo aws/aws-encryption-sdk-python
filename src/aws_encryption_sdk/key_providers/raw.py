@@ -41,7 +41,7 @@ class RawMasterKeyConfig(MasterKeyConfig):
     provider_id = attr.ib(
         hash=True,
         validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=aws_encryption_sdk.internal.str_ops.to_str
+        converter=aws_encryption_sdk.internal.str_ops.to_str,
     )
     wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
 
@@ -84,8 +84,8 @@ class RawMasterKey(MasterKey):
         """
         expected_key_info_len = -1
         if (
-                self.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC
-                and data_key.key_provider == self.key_provider
+            self.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC
+            and data_key.key_provider == self.key_provider
         ):
             return True
         elif self.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.SYMMETRIC:
@@ -93,22 +93,22 @@ class RawMasterKey(MasterKey):
                 len(self._key_info_prefix) + self.config.wrapping_key.wrapping_algorithm.algorithm.iv_len
             )
             if (
-                    data_key.key_provider.provider_id == self.provider_id
-                    and len(data_key.key_provider.key_info) == expected_key_info_len
-                    and data_key.key_provider.key_info.startswith(self._key_info_prefix)
+                data_key.key_provider.provider_id == self.provider_id
+                and len(data_key.key_provider.key_info) == expected_key_info_len
+                and data_key.key_provider.key_info.startswith(self._key_info_prefix)
             ):
                 return True
         _LOGGER.debug(
             (
-                'RawMasterKey does not own data_key: %s\n'
-                'Expected provider_id: %s\n'
-                'Expected key_info len: %s\n'
-                'Expected key_info prefix: %s'
+                "RawMasterKey does not own data_key: %s\n"
+                "Expected provider_id: %s\n"
+                "Expected key_info len: %s\n"
+                "Expected key_info prefix: %s"
             ),
             data_key,
             self.provider_id,
             expected_key_info_len,
-            self._key_info_prefix
+            self._key_info_prefix,
         )
         return False
 
@@ -123,17 +123,14 @@ class RawMasterKey(MasterKey):
         """
         plaintext_data_key = os.urandom(algorithm.kdf_input_len)
         encrypted_data_key = self._encrypt_data_key(
-            data_key=RawDataKey(
-                key_provider=self.key_provider,
-                data_key=plaintext_data_key
-            ),
+            data_key=RawDataKey(key_provider=self.key_provider, data_key=plaintext_data_key),
             algorithm=algorithm,
-            encryption_context=encryption_context
+            encryption_context=encryption_context,
         )
         return DataKey(
             key_provider=encrypted_data_key.key_provider,
             data_key=plaintext_data_key,
-            encrypted_data_key=encrypted_data_key.encrypted_data_key
+            encrypted_data_key=encrypted_data_key.encrypted_data_key,
         )
 
     def _encrypt_data_key(self, data_key, algorithm, encryption_context):
@@ -151,15 +148,14 @@ class RawMasterKey(MasterKey):
         """
         # Raw key string to EncryptedData
         encrypted_wrapped_key = self.config.wrapping_key.encrypt(
-            plaintext_data_key=data_key.data_key,
-            encryption_context=encryption_context
+            plaintext_data_key=data_key.data_key, encryption_context=encryption_context
         )
         # EncryptedData to EncryptedDataKey
         return aws_encryption_sdk.internal.formatting.serialize.serialize_wrapped_key(
             key_provider=self.key_provider,
             wrapping_algorithm=self.config.wrapping_key.wrapping_algorithm,
             wrapping_key_id=self.key_id,
-            encrypted_wrapped_key=encrypted_wrapped_key
+            encrypted_wrapped_key=encrypted_wrapped_key,
         )
 
     def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
@@ -178,18 +174,17 @@ class RawMasterKey(MasterKey):
         encrypted_wrapped_key = aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
             wrapping_algorithm=self.config.wrapping_key.wrapping_algorithm,
             wrapping_key_id=self.key_id,
-            wrapped_encrypted_key=encrypted_data_key
+            wrapped_encrypted_key=encrypted_data_key,
         )
         # EncryptedData to raw key string
         plaintext_data_key = self.config.wrapping_key.decrypt(
-            encrypted_wrapped_data_key=encrypted_wrapped_key,
-            encryption_context=encryption_context
+            encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=encryption_context
         )
         # Raw key string to DataKey
         return DataKey(
             key_provider=encrypted_data_key.key_provider,
             data_key=plaintext_data_key,
-            encrypted_data_key=encrypted_data_key.encrypted_data_key
+            encrypted_data_key=encrypted_data_key.encrypted_data_key,
         )
 
 
@@ -224,10 +219,8 @@ class RawMasterKeyProvider(MasterKeyProvider):
         :returns: RawMasterKey based on retrieved wrapping key
         :rtype: aws_encryption_sdk.key_providers.raw.RawMasterKey
         """
-        _LOGGER.debug('Retrieving wrapping key with id: %s', key_id)
+        _LOGGER.debug("Retrieving wrapping key with id: %s", key_id)
         wrapping_key = self._get_raw_key(key_id)
-        return self._master_key_class(config=RawMasterKeyConfig(
-            key_id=key_id,
-            provider_id=self.provider_id,
-            wrapping_key=wrapping_key
-        ))
+        return self._master_key_class(
+            config=RawMasterKeyConfig(key_id=key_id, provider_id=self.provider_id, wrapping_key=wrapping_key)
+        )

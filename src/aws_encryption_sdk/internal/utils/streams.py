@@ -29,7 +29,7 @@ class ROStream(ObjectProxy):
 
         :raises ActionNotAllowedError: when called
         """
-        raise ActionNotAllowedError('Write not allowed on ROStream objects')
+        raise ActionNotAllowedError("Write not allowed on ROStream objects")
 
 
 class TeeStream(ObjectProxy):

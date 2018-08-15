@@ -29,12 +29,12 @@ pytestmark = [pytest.mark.integ]
 
 
 PLAINTEXT = (
-    b'\xa3\xf6\xbc\x89\x95\x15(\xc8}\\\x8d=zu^{JA\xc1\xe9\xf0&m\xe6TD\x03'
-    b'\x165F\x85\xae\x96\xd9~ \xa6\x13\x88\xf8\xdb\xc9\x0c\xd8\xd8\xd4\xe0'
-    b'\x02\xe9\xdb+\xd4l\xeaq\xf6\xba.cg\xda\xe4V\xd9\x9a\x96\xe8\xf4:\xf5'
-    b'\xfd\xd7\xa6\xfa\xd1\x85\xa7o\xf5\x94\xbcE\x14L\xa1\x87\xd9T\xa6\x95'
-    b'eZVv\xfe[\xeeJ$a<9\x1f\x97\xe1\xd6\x9dQc\x8b7n\x0f\x1e\xbd\xf5\xba'
-    b'\x0e\xae|%\xd8L]\xa2\xa2\x08\x1f'
+    b"\xa3\xf6\xbc\x89\x95\x15(\xc8}\\\x8d=zu^{JA\xc1\xe9\xf0&m\xe6TD\x03"
+    b"\x165F\x85\xae\x96\xd9~ \xa6\x13\x88\xf8\xdb\xc9\x0c\xd8\xd8\xd4\xe0"
+    b"\x02\xe9\xdb+\xd4l\xeaq\xf6\xba.cg\xda\xe4V\xd9\x9a\x96\xe8\xf4:\xf5"
+    b"\xfd\xd7\xa6\xfa\xd1\x85\xa7o\xf5\x94\xbcE\x14L\xa1\x87\xd9T\xa6\x95"
+    b"eZVv\xfe[\xeeJ$a<9\x1f\x97\xe1\xd6\x9dQc\x8b7n\x0f\x1e\xbd\xf5\xba"
+    b"\x0e\xae|%\xd8L]\xa2\xa2\x08\x1f"
 )
 
 
@@ -55,14 +55,9 @@ def crypto_thread_worker(crypto_function, start_pause, input_value, output_queue
         # For simplicity, always use a caching CMM; just use a null cache if no cache is specified.
         cache = aws_encryption_sdk.NullCryptoMaterialsCache()
     materials_manager = aws_encryption_sdk.CachingCryptoMaterialsManager(
-        master_key_provider=kms_master_key_provider,
-        cache=cache,
-        max_age=60.0
+        master_key_provider=kms_master_key_provider, cache=cache, max_age=60.0
     )
-    output_value, _header = crypto_function(
-        source=input_value,
-        materials_manager=materials_manager
-    )
+    output_value, _header = crypto_function(source=input_value, materials_manager=materials_manager)
     output_queue.put(output_value)
 
 
@@ -80,11 +75,7 @@ def get_all_thread_outputs(crypto_function, thread_inputs):
     for values in thread_inputs:
         _thread = threading.Thread(
             target=crypto_thread_worker,
-            kwargs=dict(
-                crypto_function=crypto_function,
-                output_queue=output_queue,
-                **values
-            )
+            kwargs=dict(crypto_function=crypto_function, output_queue=output_queue, **values),
         )
         _thread.start()
         active_threads.append(_thread)
@@ -110,22 +101,18 @@ def test_threading_loop():
     get_cmk_arn()
     rounds = 20
     plaintext_inputs = [
-        dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time())
-        for _round in range(rounds)
+        dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time()) for _round in range(rounds)
     ]
 
     ciphertext_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.encrypt,
-        thread_inputs=plaintext_inputs
+        crypto_function=aws_encryption_sdk.encrypt, thread_inputs=plaintext_inputs
     )
     ciphertext_inputs = [
-        dict(input_value=ciphertext, start_pause=random_pause_time())
-        for ciphertext in ciphertext_values
+        dict(input_value=ciphertext, start_pause=random_pause_time()) for ciphertext in ciphertext_values
     ]
 
     decrypted_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.decrypt,
-        thread_inputs=ciphertext_inputs
+        crypto_function=aws_encryption_sdk.decrypt, thread_inputs=ciphertext_inputs
     )
 
     assert all(value == PLAINTEXT for value in decrypted_values)
@@ -138,22 +125,18 @@ def test_threading_loop_with_common_cache():
     rounds = 20
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(capacity=40)
     plaintext_inputs = [
-        dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time(), cache=cache)
-        for _round in range(rounds)
+        dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time(), cache=cache) for _round in range(rounds)
     ]
 
     ciphertext_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.encrypt,
-        thread_inputs=plaintext_inputs
+        crypto_function=aws_encryption_sdk.encrypt, thread_inputs=plaintext_inputs
     )
     ciphertext_inputs = [
-        dict(input_value=ciphertext, start_pause=random_pause_time(), cache=cache)
-        for ciphertext in ciphertext_values
+        dict(input_value=ciphertext, start_pause=random_pause_time(), cache=cache) for ciphertext in ciphertext_values
     ]
 
     decrypted_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.decrypt,
-        thread_inputs=ciphertext_inputs
+        crypto_function=aws_encryption_sdk.decrypt, thread_inputs=ciphertext_inputs
     )
 
     assert all(value == PLAINTEXT for value in decrypted_values)

@@ -23,7 +23,7 @@ from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
     """Randomly generates 256-bit keys for each unique key ID."""
 
-    provider_id = 'static-random'
+    provider_id = "static-random"
 
     def __init__(self, **kwargs):  # pylint: disable=unused-argument
         """Initialize empty map of keys."""
@@ -44,7 +44,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         return WrappingKey(
             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             wrapping_key=static_key,
-            wrapping_key_type=EncryptionKeyType.SYMMETRIC
+            wrapping_key_type=EncryptionKeyType.SYMMETRIC,
         )
 
 
@@ -58,26 +58,18 @@ def cycle_file(source_plaintext_filename):
     master_key_provider = StaticRandomMasterKeyProvider()
     master_key_provider.add_master_key(key_id)
 
-    ciphertext_filename = source_plaintext_filename + '.encrypted'
-    cycled_plaintext_filename = source_plaintext_filename + '.decrypted'
+    ciphertext_filename = source_plaintext_filename + ".encrypted"
+    cycled_plaintext_filename = source_plaintext_filename + ".decrypted"
 
     # Encrypt the plaintext source data
-    with open(source_plaintext_filename, 'rb') as plaintext, open(ciphertext_filename, 'wb') as ciphertext:
-        with aws_encryption_sdk.stream(
-            mode='e',
-            source=plaintext,
-            key_provider=master_key_provider
-        ) as encryptor:
+    with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
+        with aws_encryption_sdk.stream(mode="e", source=plaintext, key_provider=master_key_provider) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
     # Decrypt the ciphertext
-    with open(ciphertext_filename, 'rb') as ciphertext, open(cycled_plaintext_filename, 'wb') as plaintext:
-        with aws_encryption_sdk.stream(
-            mode='d',
-            source=ciphertext,
-            key_provider=master_key_provider
-        ) as decryptor:
+    with open(ciphertext_filename, "rb") as ciphertext, open(cycled_plaintext_filename, "wb") as plaintext:
+        with aws_encryption_sdk.stream(mode="d", source=ciphertext, key_provider=master_key_provider) as decryptor:
             for chunk in decryptor:
                 plaintext.write(chunk)
 
@@ -91,7 +83,6 @@ def cycle_file(source_plaintext_filename):
     # In production, always use a meaningful encryption context. In this sample, we omit the
     # encryption context (no key pairs).
     assert all(
-        pair in decryptor.header.encryption_context.items()
-        for pair in encryptor.header.encryption_context.items()
+        pair in decryptor.header.encryption_context.items() for pair in encryptor.header.encryption_context.items()
     )
     return ciphertext_filename, cycled_plaintext_filename

@@ -33,10 +33,7 @@ class NullCryptoMaterialsCache(CryptoMaterialsCache):
         :type entry_hints: aws_encryption_sdk.caches.CryptoCacheEntryHints
         :rtype: aws_encryption_sdk.caches.CryptoMaterialsCacheEntry
         """
-        return CryptoMaterialsCacheEntry(
-            cache_key=cache_key,
-            value=encryption_materials
-        )
+        return CryptoMaterialsCacheEntry(cache_key=cache_key, value=encryption_materials)
 
     def put_decryption_materials(self, cache_key, decryption_materials):
         """Does not add decryption materials to the cache since there is no cache to which to add them.
@@ -46,10 +43,7 @@ class NullCryptoMaterialsCache(CryptoMaterialsCache):
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :rtype: aws_encryption_sdk.caches.CryptoMaterialsCacheEntry
         """
-        return CryptoMaterialsCacheEntry(
-            cache_key=cache_key,
-            value=decryption_materials
-        )
+        return CryptoMaterialsCacheEntry(cache_key=cache_key, value=decryption_materials)
 
     def get_encryption_materials(self, cache_key, plaintext_length):
         """Always raises a CacheKeyError.
@@ -59,7 +53,7 @@ class NullCryptoMaterialsCache(CryptoMaterialsCache):
         :rtype: aws_encryption_sdk.caches.CryptoCacheEntry
         :raises CacheKeyError: when called
         """
-        raise CacheKeyError('Key not found in cache')
+        raise CacheKeyError("Key not found in cache")
 
     def get_decryption_materials(self, cache_key):
         """Always raises a CacheKeyError.
@@ -68,4 +62,4 @@ class NullCryptoMaterialsCache(CryptoMaterialsCache):
         :rtype: aws_encryption_sdk.caches.CryptoCacheEntry
         :raises CacheKeyError: when called
         """
-        raise CacheKeyError('Key not found in cache')
+        raise CacheKeyError("Key not found in cache")

@@ -13,10 +13,13 @@
 """Unit test suite for the basic data key caching example in the AWS-hosted documentation."""
 import os
 import sys
-sys.path.extend([  # noqa
-    os.sep.join([os.path.dirname(__file__), '..', '..', 'test', 'integration']),
-    os.sep.join([os.path.dirname(__file__), '..', 'src'])
-])
+
+sys.path.extend(
+    [  # noqa
+        os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"]),
+        os.sep.join([os.path.dirname(__file__), "..", "src"]),
+    ]
+)
 
 import pytest
 
@@ -29,8 +32,4 @@ pytestmark = [pytest.mark.examples]
 
 def test_encrypt_with_caching():
     cmk_arn = get_cmk_arn()
-    encrypt_with_caching(
-        kms_cmk_arn=cmk_arn,
-        max_age_in_cache=10.0,
-        cache_capacity=10
-    )
+    encrypt_with_caching(kms_cmk_arn=cmk_arn, max_age_in_cache=10.0, cache_capacity=10)

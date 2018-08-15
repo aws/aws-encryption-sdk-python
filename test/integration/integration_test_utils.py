@@ -15,7 +15,7 @@ import os
 
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
-AWS_KMS_KEY_ID = 'AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID'
+AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
 _KMS_MKP = None
 
 
@@ -28,9 +28,9 @@ def get_cmk_arn():
                 AWS_KMS_KEY_ID
             )
         )
-    if arn.startswith('arn:') and ':alias/' not in arn:
+    if arn.startswith("arn:") and ":alias/" not in arn:
         return arn
-    raise ValueError('KMS CMK ARN provided for integration tests much be a key not an alias')
+    raise ValueError("KMS CMK ARN provided for integration tests much be a key not an alias")
 
 
 def setup_kms_master_key_provider(cache=True):

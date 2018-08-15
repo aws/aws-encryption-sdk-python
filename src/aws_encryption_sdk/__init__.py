@@ -13,6 +13,7 @@
 """High level AWS Encryption SDK client functions."""
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
+
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.identifiers import Algorithm, __version__  # noqa
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig  # noqa
@@ -176,21 +177,12 @@ def stream(**kwargs):
         or :class:`aws_encryption_sdk.streaming_client.StreamDecryptor`
     :raises ValueError: if supplied with an unsupported mode value
     """
-    mode = kwargs.pop('mode')
-    _stream_map = {
-        'e': StreamEncryptor,
-        'encrypt': StreamEncryptor,
-        'd': StreamDecryptor,
-        'decrypt': StreamDecryptor
-    }
+    mode = kwargs.pop("mode")
+    _stream_map = {"e": StreamEncryptor, "encrypt": StreamEncryptor, "d": StreamDecryptor, "decrypt": StreamDecryptor}
     try:
         return _stream_map[mode.lower()](**kwargs)
     except KeyError:
-        raise ValueError('Unsupported mode: {}'.format(mode))
+        raise ValueError("Unsupported mode: {}".format(mode))
 
 
-__all__ = (
-    'encrypt',
-    'decrypt',
-    'stream'
-)
+__all__ = ("encrypt", "decrypt", "stream")

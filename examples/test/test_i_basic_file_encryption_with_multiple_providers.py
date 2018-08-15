@@ -13,10 +13,13 @@
 """Unit test suite for the Bytes Streams Multiple Providers examples in the AWS-hosted documentation."""
 import os
 import sys
-sys.path.extend([  # noqa
-    os.sep.join([os.path.dirname(__file__), '..', '..', 'test', 'integration']),
-    os.sep.join([os.path.dirname(__file__), '..', 'src'])
-])
+
+sys.path.extend(
+    [  # noqa
+        os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"]),
+        os.sep.join([os.path.dirname(__file__), "..", "src"]),
+    ]
+)
 import tempfile
 
 import botocore.session
@@ -26,21 +29,17 @@ from basic_file_encryption_with_multiple_providers import cycle_file
 from integration_test_utils import get_cmk_arn
 
 
-
-
 pytestmark = [pytest.mark.examples]
 
 
 def test_cycle_file():
     cmk_arn = get_cmk_arn()
     handle, filename = tempfile.mkstemp()
-    with open(filename, 'wb') as f:
+    with open(filename, "wb") as f:
         f.write(os.urandom(1024))
     try:
         new_files = cycle_file(
-            key_arn=cmk_arn,
-            source_plaintext_filename=filename,
-            botocore_session=botocore.session.Session()
+            key_arn=cmk_arn, source_plaintext_filename=filename, botocore_session=botocore.session.Session()
         )
         for f in new_files:
             os.remove(f)

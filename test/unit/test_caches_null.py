@@ -23,49 +23,36 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 def test_put_encryption_materials():
-    cache_key = b'ex_cache_key'
+    cache_key = b"ex_cache_key"
     value = MagicMock(__class__=EncryptionMaterials)
-    check_value = CryptoMaterialsCacheEntry(
-        cache_key=cache_key,
-        value=value
-    )
+    check_value = CryptoMaterialsCacheEntry(cache_key=cache_key, value=value)
     cache = NullCryptoMaterialsCache()
 
     test = cache.put_encryption_materials(
-        cache_key=cache_key,
-        encryption_materials=value,
-        plaintext_length=0,
-        entry_hints=None
+        cache_key=cache_key, encryption_materials=value, plaintext_length=0, entry_hints=None
     )
 
     assert test == check_value
 
 
 def test_put_decryption_materials():
-    cache_key = b'ex_cache_key'
+    cache_key = b"ex_cache_key"
     value = MagicMock(__class__=DecryptionMaterials)
-    check_value = CryptoMaterialsCacheEntry(
-        cache_key=cache_key,
-        value=value
-    )
+    check_value = CryptoMaterialsCacheEntry(cache_key=cache_key, value=value)
     cache = NullCryptoMaterialsCache()
 
-    test = cache.put_decryption_materials(
-        cache_key=cache_key,
-        decryption_materials=value
-    )
+    test = cache.put_decryption_materials(cache_key=cache_key, decryption_materials=value)
 
     assert test == check_value
 
 
-@pytest.mark.parametrize('method_name, args', (
-    ('get_encryption_materials', (None, None)),
-    ('get_decryption_materials', (None,))
-))
+@pytest.mark.parametrize(
+    "method_name, args", (("get_encryption_materials", (None, None)), ("get_decryption_materials", (None,)))
+)
 def test_gets(method_name, args):
     test = NullCryptoMaterialsCache()
 
     with pytest.raises(CacheKeyError) as excinfo:
         getattr(test, method_name)(*args)
 
-    excinfo.match(r'Key not found in cache')
+    excinfo.match(r"Key not found in cache")

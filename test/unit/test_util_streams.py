@@ -22,16 +22,16 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 def data():
-    return io.BytesIO(b'asdijfhoaisjdfoiasjdfoijawef')
+    return io.BytesIO(b"asdijfhoaisjdfoiasjdfoijawef")
 
 
 def test_rostream():
     test = ROStream(data())
 
     with pytest.raises(ActionNotAllowedError) as excinfo:
-        test.write(b'')
+        test.write(b"")
 
-    excinfo.match(r'Write not allowed on ROStream objects')
+    excinfo.match(r"Write not allowed on ROStream objects")
 
 
 def test_teestream_full():

@@ -26,71 +26,57 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'default_backend')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "default_backend")
     yield aws_encryption_sdk.internal.crypto.authentication.default_backend
 
 
 @pytest.yield_fixture
 def patch_serialization(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'serialization')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "serialization")
     yield aws_encryption_sdk.internal.crypto.authentication.serialization
 
 
 @pytest.yield_fixture
 def patch_ecc_encode_compressed_point(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, '_ecc_encode_compressed_point')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "_ecc_encode_compressed_point")
     yield aws_encryption_sdk.internal.crypto.authentication._ecc_encode_compressed_point
 
 
 @pytest.yield_fixture
 def patch_ecc_static_length_signature(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, '_ecc_static_length_signature')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "_ecc_static_length_signature")
     yield aws_encryption_sdk.internal.crypto.authentication._ecc_static_length_signature
 
 
 @pytest.yield_fixture
 def patch_base64(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, 'base64')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "base64")
     yield aws_encryption_sdk.internal.crypto.authentication.base64
 
 
 @pytest.yield_fixture
 def patch_build_hasher(mocker):
-    mocker.patch.object(Signer, '_build_hasher')
+    mocker.patch.object(Signer, "_build_hasher")
     yield Signer._build_hasher
 
 
 def test_f_signer_from_key_bytes():
-    check = Signer(
-        algorithm=ALGORITHM,
-        key=VALUES['ecc_private_key_prime']
-    )
-    test = Signer.from_key_bytes(
-        algorithm=ALGORITHM,
-        key_bytes=VALUES['ecc_private_key_prime_private_bytes']
-    )
+    check = Signer(algorithm=ALGORITHM, key=VALUES["ecc_private_key_prime"])
+    test = Signer.from_key_bytes(algorithm=ALGORITHM, key_bytes=VALUES["ecc_private_key_prime_private_bytes"])
     assert check.key.private_numbers().private_value == test.key.private_numbers().private_value
 
 
 def test_f_signer_key_bytes():
-    test = Signer(
-        algorithm=ALGORITHM,
-        key=VALUES['ecc_private_key_prime']
-    )
-    assert test.key_bytes() == VALUES['ecc_private_key_prime_private_bytes']
+    test = Signer(algorithm=ALGORITHM, key=VALUES["ecc_private_key_prime"])
+    assert test.key_bytes() == VALUES["ecc_private_key_prime_private_bytes"]
 
 
 def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher):
     _algorithm = MagicMock()
-    signer = Signer.from_key_bytes(
-        algorithm=_algorithm,
-        key_bytes=sentinel.key_bytes
-    )
+    signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
 
     patch_serialization.load_der_private_key.assert_called_once_with(
-        data=sentinel.key_bytes,
-        password=None,
-        backend=patch_default_backend.return_value
+        data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
     )
     assert isinstance(signer, Signer)
     assert signer.algorithm is _algorithm
@@ -107,16 +93,12 @@ def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_buil
     private_key.private_bytes.assert_called_once_with(
         encoding=patch_serialization.Encoding.DER,
         format=patch_serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=patch_serialization.NoEncryption.return_value
+        encryption_algorithm=patch_serialization.NoEncryption.return_value,
     )
 
 
 def test_signer_encoded_public_key(
-        patch_default_backend,
-        patch_serialization,
-        patch_build_hasher,
-        patch_ecc_encode_compressed_point,
-        patch_base64
+    patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_encode_compressed_point, patch_base64
 ):
     patch_ecc_encode_compressed_point.return_value = sentinel.compressed_point
     patch_base64.b64encode.return_value = sentinel.encoded_point
@@ -137,10 +119,7 @@ def test_signer_update(patch_default_backend, patch_serialization, patch_build_h
 
 
 def test_signer_finalize(
-        patch_default_backend,
-        patch_serialization,
-        patch_build_hasher,
-        patch_ecc_static_length_signature
+    patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_static_length_signature
 ):
     algorithm = MagicMock()
     private_key = MagicMock()
@@ -150,8 +129,6 @@ def test_signer_finalize(
 
     patch_build_hasher.return_value.finalize.assert_called_once_with()
     patch_ecc_static_length_signature.assert_called_once_with(
-        key=private_key,
-        algorithm=algorithm,
-        digest=patch_build_hasher.return_value.finalize.return_value
+        key=private_key, algorithm=algorithm, digest=patch_build_hasher.return_value.finalize.return_value
     )
     assert test_signature is patch_ecc_static_length_signature.return_value

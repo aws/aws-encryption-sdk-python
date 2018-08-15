@@ -21,7 +21,6 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestDefaults(unittest.TestCase):
-
     def test_max_frame_count(self):
         max_frame_count = pow(2, 32) - 1
         assert aws_encryption_sdk.internal.defaults.MAX_FRAME_COUNT == max_frame_count

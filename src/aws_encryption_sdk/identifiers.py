@@ -21,8 +21,8 @@ from cryptography.hazmat.primitives.kdf import hkdf
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
-__version__ = '1.3.5'
-USER_AGENT_SUFFIX = 'AwsEncryptionSdkPython/{}'.format(__version__)
+__version__ = "1.3.5"
+USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
 
 class EncryptionSuite(Enum):
@@ -66,7 +66,7 @@ class EncryptionSuite(Enum):
 
         if self.data_key_length > kdf.input_length(self):
             raise InvalidAlgorithmError(
-                'Invalid Algorithm definition: data_key_len must not be greater than kdf_input_len'
+                "Invalid Algorithm definition: data_key_len must not be greater than kdf_input_len"
             )
 
         return True
@@ -155,22 +155,31 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
     AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (0x0146, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
     AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (0x0178, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
     AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256 = (
-        0x0214, EncryptionSuite.AES_128_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256, AuthenticationSuite.SHA256_ECDSA_P256
+        0x0214,
+        EncryptionSuite.AES_128_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA256,
+        AuthenticationSuite.SHA256_ECDSA_P256,
     )
     AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0346, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA384, AuthenticationSuite.SHA256_ECDSA_P384
+        0x0346,
+        EncryptionSuite.AES_192_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA384,
+        AuthenticationSuite.SHA256_ECDSA_P384,
     )
     AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
-        0x0378, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA384, AuthenticationSuite.SHA256_ECDSA_P384
+        0x0378,
+        EncryptionSuite.AES_256_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA384,
+        AuthenticationSuite.SHA256_ECDSA_P384,
     )
 
     def __init__(
-            self,
-            algorithm_id,  # type: int
-            encryption,  # type: EncryptionSuite
-            kdf=KDFSuite.NONE,  # type: Optional[KDFSuite]
-            authentication=AuthenticationSuite.NONE,  # type: Optional[AuthenticationSuite]
-            allowed=True  # type: bool
+        self,
+        algorithm_id,  # type: int
+        encryption,  # type: EncryptionSuite
+        kdf=KDFSuite.NONE,  # type: Optional[KDFSuite]
+        authentication=AuthenticationSuite.NONE,  # type: Optional[AuthenticationSuite]
+        allowed=True,  # type: bool
     ):
         # type: (...) -> None
         """Prepare a new AlgorithmSuite."""
@@ -218,7 +227,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
 
     def id_as_bytes(self):
         """Return the algorithm suite ID as a 2-byte array"""
-        return struct.pack('>H', self.algorithm_id)
+        return struct.pack(">H", self.algorithm_id)
 
     def safe_to_cache(self):
         """Determine whether encryption materials for this algorithm suite should be cached."""
@@ -269,11 +278,9 @@ class WrappingAlgorithm(Enum):
         self.algorithm = algorithm
         if padding_type == padding.OAEP:
             padding_args = {
-                'mgf': padding_mgf(
-                    algorithm=padding_algorithm()
-                ),
-                'algorithm': padding_algorithm(),
-                'label': None
+                "mgf": padding_mgf(algorithm=padding_algorithm()),
+                "algorithm": padding_algorithm(),
+                "label": None,
             }
         else:
             padding_args = {}
@@ -310,6 +317,6 @@ class ContentType(Enum):
 class ContentAADString(Enum):
     """Body Additional Authenticated Data values for building the AAD for a message body."""
 
-    FRAME_STRING_ID = b'AWSKMSEncryptionClient Frame'
-    FINAL_FRAME_STRING_ID = b'AWSKMSEncryptionClient Final Frame'
-    NON_FRAMED_STRING_ID = b'AWSKMSEncryptionClient Single Block'
+    FRAME_STRING_ID = b"AWSKMSEncryptionClient Frame"
+    FINAL_FRAME_STRING_ID = b"AWSKMSEncryptionClient Final Frame"
+    NON_FRAMED_STRING_ID = b"AWSKMSEncryptionClient Single Block"

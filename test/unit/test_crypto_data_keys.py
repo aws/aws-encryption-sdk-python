@@ -23,13 +23,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.data_keys, 'default_backend')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.data_keys, "default_backend")
     yield aws_encryption_sdk.internal.crypto.data_keys.default_backend
 
 
 @pytest.yield_fixture
 def patch_struct(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.data_keys, 'struct')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.data_keys, "struct")
     yield aws_encryption_sdk.internal.crypto.data_keys.struct
 
 
@@ -37,33 +37,23 @@ def test_derive_data_encryption_key_with_hkdf(patch_default_backend, patch_struc
     algorithm = MagicMock()
     algorithm.kdf_hash_type.return_value = sentinel.kdf_hash_type
     test = derive_data_encryption_key(
-        source_key=sentinel.source_key,
-        algorithm=algorithm,
-        message_id=sentinel.message_id
+        source_key=sentinel.source_key, algorithm=algorithm, message_id=sentinel.message_id
     )
-    patch_struct.pack.assert_called_with(
-        '>H16s',
-        algorithm.algorithm_id,
-        sentinel.message_id
-    )
+    patch_struct.pack.assert_called_with(">H16s", algorithm.algorithm_id, sentinel.message_id)
     algorithm.kdf_type.assert_called_with(
         algorithm=sentinel.kdf_hash_type,
         length=algorithm.data_key_len,
         salt=None,
         info=patch_struct.pack.return_value,
-        backend=patch_default_backend.return_value
+        backend=patch_default_backend.return_value,
     )
-    algorithm.kdf_type.return_value.derive.assert_called_with(
-        sentinel.source_key
-    )
+    algorithm.kdf_type.return_value.derive.assert_called_with(sentinel.source_key)
     assert test == algorithm.kdf_type.return_value.derive.return_value
 
 
 def test_derive_data_encryption_key_no_hkdf(patch_default_backend):
     algorithm = MagicMock(kdf_type=None)
     test = derive_data_encryption_key(
-        source_key=sentinel.source_key,
-        algorithm=algorithm,
-        message_id=sentinel.message_id
+        source_key=sentinel.source_key, algorithm=algorithm, message_id=sentinel.message_id
     )
     assert test == sentinel.source_key

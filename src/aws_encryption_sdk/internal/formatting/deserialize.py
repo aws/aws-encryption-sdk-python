@@ -55,16 +55,16 @@ def validate_header(header, header_auth, raw_header, data_key):
     :param bytes data_key: Data key with which to perform validation
     :raises SerializationError: if header authorization fails
     """
-    _LOGGER.debug('Starting header validation')
+    _LOGGER.debug("Starting header validation")
     try:
         decrypt(
             algorithm=header.algorithm,
             key=data_key,
-            encrypted_data=EncryptedData(header_auth.iv, b'', header_auth.tag),
-            associated_data=raw_header
+            encrypted_data=EncryptedData(header_auth.iv, b"", header_auth.tag),
+            associated_data=raw_header,
         )
     except InvalidTag:
-        raise SerializationError('Header authorization failed')
+        raise SerializationError("Header authorization failed")
 
 
 def _verified_version_from_id(version_id):
@@ -79,7 +79,7 @@ def _verified_version_from_id(version_id):
     try:
         return SerializationVersion(version_id)
     except ValueError as error:
-        raise NotSupportedError('Unsupported version {}'.format(version_id), error)
+        raise NotSupportedError("Unsupported version {}".format(version_id), error)
 
 
 def _verified_message_type_from_id(message_type_id):
@@ -94,10 +94,7 @@ def _verified_message_type_from_id(message_type_id):
     try:
         return ObjectType(message_type_id)
     except ValueError as error:
-        raise NotSupportedError(
-            'Unsupported type {} discovered in data stream'.format(message_type_id),
-            error
-        )
+        raise NotSupportedError("Unsupported type {} discovered in data stream".format(message_type_id), error)
 
 
 def _verified_algorithm_from_id(algorithm_id):
@@ -113,10 +110,10 @@ def _verified_algorithm_from_id(algorithm_id):
     try:
         algorithm_suite = AlgorithmSuite.get_by_id(algorithm_id)
     except KeyError as error:
-        raise UnknownIdentityError('Unknown algorithm {}'.format(algorithm_id), error)
+        raise UnknownIdentityError("Unknown algorithm {}".format(algorithm_id), error)
 
     if not algorithm_suite.allowed:
-        raise NotSupportedError('Unsupported algorithm: {}'.format(algorithm_suite))
+        raise NotSupportedError("Unsupported algorithm: {}".format(algorithm_suite))
 
     return algorithm_suite
 
@@ -129,28 +126,23 @@ def _deserialize_encrypted_data_keys(stream):
     :return: Loaded encrypted data keys
     :rtype: set of :class:`EncryptedDataKey`
     """
-    (encrypted_data_key_count,) = unpack_values('>H', stream)
+    (encrypted_data_key_count,) = unpack_values(">H", stream)
     encrypted_data_keys = set([])
     for _ in range(encrypted_data_key_count):
-        (key_provider_length,) = unpack_values('>H', stream)
-        (key_provider_identifier,) = unpack_values(
-            '>{}s'.format(key_provider_length),
-            stream
-        )
-        (key_provider_information_length,) = unpack_values('>H', stream)
-        (key_provider_information,) = unpack_values(
-            '>{}s'.format(key_provider_information_length),
-            stream
-        )
-        (encrypted_data_key_length,) = unpack_values('>H', stream)
+        (key_provider_length,) = unpack_values(">H", stream)
+        (key_provider_identifier,) = unpack_values(">{}s".format(key_provider_length), stream)
+        (key_provider_information_length,) = unpack_values(">H", stream)
+        (key_provider_information,) = unpack_values(">{}s".format(key_provider_information_length), stream)
+        (encrypted_data_key_length,) = unpack_values(">H", stream)
         encrypted_data_key = stream.read(encrypted_data_key_length)
-        encrypted_data_keys.add(EncryptedDataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=to_str(key_provider_identifier),
-                key_info=key_provider_information
-            ),
-            encrypted_data_key=encrypted_data_key
-        ))
+        encrypted_data_keys.add(
+            EncryptedDataKey(
+                key_provider=MasterKeyInfo(
+                    provider_id=to_str(key_provider_identifier), key_info=key_provider_information
+                ),
+                encrypted_data_key=encrypted_data_key,
+            )
+        )
     return encrypted_data_keys
 
 
@@ -166,10 +158,7 @@ def _verified_content_type_from_id(content_type_id):
     try:
         return ContentType(content_type_id)
     except ValueError as error:
-        raise UnknownIdentityError(
-            'Unknown content type {}'.format(content_type_id),
-            error
-        )
+        raise UnknownIdentityError("Unknown content type {}".format(content_type_id), error)
 
 
 def _verified_content_aad_length(content_aad_length):
@@ -182,9 +171,7 @@ def _verified_content_aad_length(content_aad_length):
     :raises SerializationError: if ``content_aad_length`` is not ``0``
     """
     if content_aad_length != 0:
-        raise SerializationError(
-            'Content AAD length field is currently unused, its value must be always 0'
-        )
+        raise SerializationError("Content AAD length field is currently unused, its value must be always 0")
 
     return 0
 
@@ -201,9 +188,8 @@ def _verified_iv_length(iv_length, algorithm_suite):
     """
     if iv_length != algorithm_suite.iv_len:
         raise SerializationError(
-            'Specified IV length ({length}) does not match algorithm IV length ({algorithm})'.format(
-                length=iv_length,
-                algorithm=algorithm_suite
+            "Specified IV length ({length}) does not match algorithm IV length ({algorithm})".format(
+                length=iv_length, algorithm=algorithm_suite
             )
         )
 
@@ -222,13 +208,14 @@ def _verified_frame_length(frame_length, content_type):
     :raises SerializationError: if frame length is not zero for unframed content type
     """
     if content_type == ContentType.FRAMED_DATA and frame_length > MAX_FRAME_SIZE:
-        raise SerializationError('Specified frame length larger than allowed maximum: {found} > {max}'.format(
-            found=frame_length,
-            max=MAX_FRAME_SIZE
-        ))
+        raise SerializationError(
+            "Specified frame length larger than allowed maximum: {found} > {max}".format(
+                found=frame_length, max=MAX_FRAME_SIZE
+            )
+        )
 
     if content_type == ContentType.NO_FRAMING and frame_length != 0:
-        raise SerializationError('Non-zero frame length found for non-framed message')
+        raise SerializationError("Non-zero frame length found for non-framed message")
 
     return frame_length
 
@@ -245,36 +232,34 @@ def deserialize_header(stream):
     :raises UnknownIdentityError: if unknown data types are found
     :raises SerializationError: if IV length does not match algorithm
     """
-    _LOGGER.debug('Starting header deserialization')
+    _LOGGER.debug("Starting header deserialization")
     tee = io.BytesIO()
     tee_stream = TeeStream(stream, tee)
-    version_id, message_type_id = unpack_values('>BB', tee_stream)
+    version_id, message_type_id = unpack_values(">BB", tee_stream)
     header = dict()
-    header['version'] = _verified_version_from_id(version_id)
-    header['type'] = _verified_message_type_from_id(message_type_id)
+    header["version"] = _verified_version_from_id(version_id)
+    header["type"] = _verified_message_type_from_id(message_type_id)
 
-    algorithm_id, message_id, ser_encryption_context_length = unpack_values('>H16sH', tee_stream)
+    algorithm_id, message_id, ser_encryption_context_length = unpack_values(">H16sH", tee_stream)
 
-    header['algorithm'] = _verified_algorithm_from_id(algorithm_id)
-    header['message_id'] = message_id
+    header["algorithm"] = _verified_algorithm_from_id(algorithm_id)
+    header["message_id"] = message_id
 
-    header['encryption_context'] = deserialize_encryption_context(
-        tee_stream.read(ser_encryption_context_length)
-    )
+    header["encryption_context"] = deserialize_encryption_context(tee_stream.read(ser_encryption_context_length))
 
-    header['encrypted_data_keys'] = _deserialize_encrypted_data_keys(tee_stream)
+    header["encrypted_data_keys"] = _deserialize_encrypted_data_keys(tee_stream)
 
-    (content_type_id,) = unpack_values('>B', tee_stream)
-    header['content_type'] = _verified_content_type_from_id(content_type_id)
+    (content_type_id,) = unpack_values(">B", tee_stream)
+    header["content_type"] = _verified_content_type_from_id(content_type_id)
 
-    (content_aad_length,) = unpack_values('>I', tee_stream)
-    header['content_aad_length'] = _verified_content_aad_length(content_aad_length)
+    (content_aad_length,) = unpack_values(">I", tee_stream)
+    header["content_aad_length"] = _verified_content_aad_length(content_aad_length)
 
-    (iv_length,) = unpack_values('>B', tee_stream)
-    header['header_iv_length'] = _verified_iv_length(iv_length, header['algorithm'])
+    (iv_length,) = unpack_values(">B", tee_stream)
+    header["header_iv_length"] = _verified_iv_length(iv_length, header["algorithm"])
 
-    (frame_length,) = unpack_values('>I', tee_stream)
-    header['frame_length'] = _verified_frame_length(frame_length, header['content_type'])
+    (frame_length,) = unpack_values(">I", tee_stream)
+    header["frame_length"] = _verified_frame_length(frame_length, header["content_type"])
 
     return MessageHeader(**header), tee.getvalue()
 
@@ -291,11 +276,8 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
     :returns: Deserialized MessageHeaderAuthentication object
     :rtype: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
     """
-    _LOGGER.debug('Starting header auth deserialization')
-    format_string = '>{iv_len}s{tag_len}s'.format(
-        iv_len=algorithm.iv_len,
-        tag_len=algorithm.tag_len
-    )
+    _LOGGER.debug("Starting header auth deserialization")
+    format_string = ">{iv_len}s{tag_len}s".format(iv_len=algorithm.iv_len, tag_len=algorithm.tag_len)
     return MessageHeaderAuthentication(*unpack_values(format_string, stream, verifier))
 
 
@@ -311,18 +293,12 @@ def deserialize_non_framed_values(stream, header, verifier=None):
     :returns: IV, Tag, and Data Length values for body
     :rtype: tuple of bytes, bytes, and int
     """
-    _LOGGER.debug('Starting non-framed body iv/tag deserialization')
-    (data_iv, data_length) = unpack_values(
-        '>{}sQ'.format(header.algorithm.iv_len),
-        stream,
-        verifier
-    )
+    _LOGGER.debug("Starting non-framed body iv/tag deserialization")
+    (data_iv, data_length) = unpack_values(">{}sQ".format(header.algorithm.iv_len), stream, verifier)
     body_start = stream.tell()
     stream.seek(data_length, 1)
     (data_tag,) = unpack_values(
-        format_string='>{auth_len}s'.format(auth_len=header.algorithm.auth_len),
-        stream=stream,
-        verifier=None
+        format_string=">{auth_len}s".format(auth_len=header.algorithm.auth_len), stream=stream, verifier=None
     )
     stream.seek(body_start, 0)
     return data_iv, data_tag, data_length
@@ -344,11 +320,7 @@ def update_verifier_with_tag(stream, header, verifier):
     :returns: Data authentication tag value
     :rtype: bytes
     """
-    return unpack_values(
-        '>{auth_len}s'.format(auth_len=header.algorithm.auth_len),
-        stream,
-        verifier
-    )
+    return unpack_values(">{auth_len}s".format(auth_len=header.algorithm.auth_len), stream, verifier)
 
 
 def deserialize_frame(stream, header, verifier=None):
@@ -363,43 +335,37 @@ def deserialize_frame(stream, header, verifier=None):
     :returns: Deserialized frame and a boolean stating if this is the final frame
     :rtype: :class:`aws_encryption_sdk.internal.structures.MessageFrameBody` and bool
     """
-    _LOGGER.debug('Starting frame deserialization')
+    _LOGGER.debug("Starting frame deserialization")
     frame_data = {}
     final_frame = False
-    (sequence_number,) = unpack_values('>I', stream, verifier)
+    (sequence_number,) = unpack_values(">I", stream, verifier)
     if sequence_number == SequenceIdentifier.SEQUENCE_NUMBER_END.value:
-        _LOGGER.debug('Deserializing final frame')
-        (sequence_number,) = unpack_values('>I', stream, verifier)
+        _LOGGER.debug("Deserializing final frame")
+        (sequence_number,) = unpack_values(">I", stream, verifier)
         final_frame = True
     else:
-        _LOGGER.debug('Deserializing frame sequence number %s', int(sequence_number))
-    frame_data['final_frame'] = final_frame
-    frame_data['sequence_number'] = sequence_number
-    (frame_iv,) = unpack_values(
-        '>{iv_len}s'.format(iv_len=header.algorithm.iv_len),
-        stream,
-        verifier
-    )
-    frame_data['iv'] = frame_iv
+        _LOGGER.debug("Deserializing frame sequence number %s", int(sequence_number))
+    frame_data["final_frame"] = final_frame
+    frame_data["sequence_number"] = sequence_number
+    (frame_iv,) = unpack_values(">{iv_len}s".format(iv_len=header.algorithm.iv_len), stream, verifier)
+    frame_data["iv"] = frame_iv
     if final_frame is True:
-        (content_length,) = unpack_values('>I', stream, verifier)
+        (content_length,) = unpack_values(">I", stream, verifier)
         if content_length >= header.frame_length:
-            raise SerializationError('Invalid final frame length: {final} >= {normal}'.format(
-                final=content_length,
-                normal=header.frame_length
-            ))
+            raise SerializationError(
+                "Invalid final frame length: {final} >= {normal}".format(
+                    final=content_length, normal=header.frame_length
+                )
+            )
     else:
         content_length = header.frame_length
     (frame_content, frame_tag) = unpack_values(
-        '>{content_len}s{auth_len}s'.format(
-            content_len=content_length,
-            auth_len=header.algorithm.auth_len
-        ),
+        ">{content_len}s{auth_len}s".format(content_len=content_length, auth_len=header.algorithm.auth_len),
         stream,
-        verifier
+        verifier,
     )
-    frame_data['ciphertext'] = frame_content
-    frame_data['tag'] = frame_tag
+    frame_data["ciphertext"] = frame_content
+    frame_data["tag"] = frame_tag
     return MessageFrameBody(**frame_data), final_frame
 
 
@@ -414,18 +380,15 @@ def deserialize_footer(stream, verifier=None):
     :rtype: aws_encryption_sdk.internal.structures.MessageFooter
     :raises SerializationError: if verifier supplied and no footer found
     """
-    _LOGGER.debug('Starting footer deserialization')
-    signature = b''
+    _LOGGER.debug("Starting footer deserialization")
+    signature = b""
     if verifier is None:
         return MessageFooter(signature=signature)
     try:
-        (sig_len,) = unpack_values('>H', stream)
-        (signature,) = unpack_values(
-            '>{sig_len}s'.format(sig_len=sig_len),
-            stream
-        )
+        (sig_len,) = unpack_values(">H", stream)
+        (signature,) = unpack_values(">{sig_len}s".format(sig_len=sig_len), stream)
     except SerializationError:
-        raise SerializationError('No signature found in message')
+        raise SerializationError("No signature found in message")
     if verifier:
         verifier.verify(signature)
     return MessageFooter(signature=signature)
@@ -448,7 +411,7 @@ def unpack_values(format_string, stream, verifier=None):
             verifier.update(message_bytes)
         values = struct.unpack(format_string, message_bytes)
     except struct.error as error:
-        raise SerializationError('Unexpected deserialization error', type(error), error.args)
+        raise SerializationError("Unexpected deserialization error", type(error), error.args)
     return values
 
 
@@ -466,32 +429,24 @@ def deserialize_wrapped_key(wrapping_algorithm, wrapping_key_id, wrapped_encrypt
     :raises SerializationError: if wrapping_algorithm IV length does not match deserialized IV length
     """
     if wrapping_key_id == wrapped_encrypted_key.key_provider.key_info:
-        encrypted_wrapped_key = EncryptedData(
-            iv=None,
-            ciphertext=wrapped_encrypted_key.encrypted_data_key,
-            tag=None
-        )
+        encrypted_wrapped_key = EncryptedData(iv=None, ciphertext=wrapped_encrypted_key.encrypted_data_key, tag=None)
     else:
         if not wrapped_encrypted_key.key_provider.key_info.startswith(wrapping_key_id):
-            raise SerializationError('Master Key mismatch for wrapped data key')
-        _key_info = wrapped_encrypted_key.key_provider.key_info[len(wrapping_key_id):]
+            raise SerializationError("Master Key mismatch for wrapped data key")
+        _key_info = wrapped_encrypted_key.key_provider.key_info[len(wrapping_key_id) :]
         try:
-            tag_len, iv_len = struct.unpack('>II', _key_info[:8])
+            tag_len, iv_len = struct.unpack(">II", _key_info[:8])
         except struct.error:
-            raise SerializationError('Malformed key info: key info missing data')
+            raise SerializationError("Malformed key info: key info missing data")
         tag_len //= 8  # Tag Length is stored in bits, not bytes
         if iv_len != wrapping_algorithm.algorithm.iv_len:
-            raise SerializationError('Wrapping AlgorithmSuite mismatch for wrapped data key')
+            raise SerializationError("Wrapping AlgorithmSuite mismatch for wrapped data key")
         iv = _key_info[8:]
         if len(iv) != iv_len:
-            raise SerializationError('Malformed key info: incomplete iv')
-        ciphertext = wrapped_encrypted_key.encrypted_data_key[:-1 * tag_len]
-        tag = wrapped_encrypted_key.encrypted_data_key[-1 * tag_len:]
+            raise SerializationError("Malformed key info: incomplete iv")
+        ciphertext = wrapped_encrypted_key.encrypted_data_key[: -1 * tag_len]
+        tag = wrapped_encrypted_key.encrypted_data_key[-1 * tag_len :]
         if not ciphertext or len(tag) != tag_len:
-            raise SerializationError('Malformed key info: incomplete ciphertext or tag')
-        encrypted_wrapped_key = EncryptedData(
-            iv=iv,
-            ciphertext=ciphertext,
-            tag=tag
-        )
+            raise SerializationError("Malformed key info: incomplete ciphertext or tag")
+        encrypted_wrapped_key = EncryptedData(iv=iv, ciphertext=ciphertext, tag=tag)
     return encrypted_wrapped_key

@@ -13,9 +13,8 @@
 """Unit test suite for the Bytes Streams examples in the AWS-hosted documentation."""
 import os
 import sys
-sys.path.extend([  # noqa
-    os.sep.join([os.path.dirname(__file__), '..', 'src'])
-])
+
+sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "src"])])  # noqa
 import tempfile
 
 import pytest
@@ -28,7 +27,7 @@ pytestmark = [pytest.mark.examples]
 
 def test_cycle_file():
     handle, filename = tempfile.mkstemp()
-    with open(filename, 'wb') as f:
+    with open(filename, "wb") as f:
         f.write(os.urandom(1024))
     try:
         new_files = cycle_file(source_plaintext_filename=filename)
