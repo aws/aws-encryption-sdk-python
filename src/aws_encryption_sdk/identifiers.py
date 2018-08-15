@@ -95,6 +95,7 @@ class KDFSuite(Enum):
         self.hash_algorithm = hash_algorithm
 
     def input_length(self, encryption):
+        # type: (EncryptionSuite) -> int
         """Determine the correct KDF input value length for this KDFSuite when used with
         a specific EncryptionSuite.
 
@@ -102,7 +103,6 @@ class KDFSuite(Enum):
         :type encryption: aws_encryption_sdk.identifiers.EncryptionSuite
         :rtype: int
         """
-        # type: (EncryptionSuite) -> bool
         if self._input_length is None:
             return encryption.data_key_length
 
