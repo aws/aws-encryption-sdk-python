@@ -21,7 +21,7 @@ from cryptography.exceptions import InvalidTag
 
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import (
-    Algorithm, ContentType, ObjectType, SequenceIdentifier, SerializationVersion
+    AlgorithmSuite, ContentType, ObjectType, SequenceIdentifier, SerializationVersion
 )
 from aws_encryption_sdk.internal.crypto.encryption import decrypt
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
@@ -61,7 +61,174 @@ def validate_header(header, header_auth, raw_header, data_key):
         raise SerializationError('Header authorization failed')
 
 
+def _verified_version_from_id(version_id):
+    # type: (int) -> SerializationVersion
+    """Load a message :class:`SerializationVersion` for the specified version ID.
+
+    :param int version_id: Message format version ID
+    :return: Message format version
+    :rtype: SerializationVersion
+    :raises NotSupportedError: if unsupported version ID is received
+    """
+    try:
+        return SerializationVersion(version_id)
+    except ValueError as error:
+        raise NotSupportedError('Unsupported version {}'.format(version_id), error)
+
+
+def _verified_message_type_from_id(message_type_id):
+    # type: (int) -> ObjectType
+    """Load a message :class:`ObjectType` for the specified message type ID.
+
+    :param int message_type_id: Message type ID
+    :return: Message type
+    :rtype: ObjectType
+    :raises NotSupportedError: if unsupported message type ID is received
+    """
+    try:
+        return ObjectType(message_type_id)
+    except ValueError as error:
+        raise NotSupportedError(
+            'Unsupported type {} discovered in data stream'.format(message_type_id),
+            error
+        )
+
+
+def _verified_algorithm_from_id(algorithm_id):
+    # type: (int) -> AlgorithmSuite
+    """Load a message :class:`AlgorithmSuite` for the specified algorithm suite ID.
+
+    :param int algorithm_id: Algorithm suite ID
+    :return: Algorithm suite
+    :rtype: AlgorithmSuite
+    :raises UnknownIdentityError: if unknown algorithm ID is received
+    :raises NotSupportedError: if unsupported algorithm ID is received
+    """
+    try:
+        alg = AlgorithmSuite.get_by_id(algorithm_id)
+    except KeyError as error:
+        raise UnknownIdentityError('Unknown algorithm {}'.format(algorithm_id), error)
+
+    if not alg.allowed:
+        raise NotSupportedError('Unsupported algorithm: {}'.format(alg))
+
+    return alg
+
+
+def _deserialize_encrypted_data_keys(stream):
+    # type: (IO) -> Set[EncryptedDataKey]
+    """Deserialize some encrypted data keys from a stream.
+
+    :param stream: Stream from which to read encrypted data keys
+    :return: Loaded encrypted data keys
+    :rtype: set of :class:`EncryptedDataKey`
+    """
+    (encrypted_data_key_count,) = unpack_values('>H', stream)
+    encrypted_data_keys = set([])
+    for _ in range(encrypted_data_key_count):
+        (key_provider_length,) = unpack_values('>H', stream)
+        (key_provider_identifier,) = unpack_values(
+            '>{}s'.format(key_provider_length),
+            stream
+        )
+        (key_provider_information_length,) = unpack_values('>H', stream)
+        (key_provider_information,) = unpack_values(
+            '>{}s'.format(key_provider_information_length),
+            stream
+        )
+        (encrypted_data_key_length,) = unpack_values('>H', stream)
+        encrypted_data_key = stream.read(encrypted_data_key_length)
+        encrypted_data_keys.add(EncryptedDataKey(
+            key_provider=MasterKeyInfo(
+                provider_id=to_str(key_provider_identifier),
+                key_info=key_provider_information
+            ),
+            encrypted_data_key=encrypted_data_key
+        ))
+    return encrypted_data_keys
+
+
+def _verified_content_type_from_id(content_type_id):
+    # type: (int) -> ContentType
+    """Load a message :class:`ContentType` for the specified content type ID.
+
+    :param int content_type_id: Content type ID
+    :return: Message content type
+    :rtype: ContentType
+    :raises UnknownIdentityError: if unknown content type ID is received
+    """
+    try:
+        return ContentType(content_type_id)
+    except ValueError as error:
+        raise UnknownIdentityError(
+            'Unknown content type {}'.format(content_type_id),
+            error
+        )
+
+
+def _verified_content_aad_length(content_aad_length):
+    # type: (int) -> int
+    """Verify that content aad length is ``0``.
+
+    :param int content_aad_length: Content aad length to verify
+    :return: ``0``
+    :rtype: int
+    :raises SerializationError: if ``content_aad_length`` is not ``0``
+    """
+    if content_aad_length != 0:
+        raise SerializationError(
+            'Content AAD length field is currently unused, its value must be always 0'
+        )
+
+    return 0
+
+
+def _verified_iv_length(iv_length, algorithm):
+    # type: (int, AlgorithmSuite) -> int
+    """Verify an IV length for an algorithm suite.
+
+    :param int iv_length: IV length to verify
+    :param AlgorithmSuite algorithm: Algorithm suite to verify against
+    :return: IV length
+    :rtype: int
+    :raises SerializationError: if IV length does not match algorithm suite
+    """
+    if iv_length != algorithm.iv_len:
+        raise SerializationError(
+            'Specified IV length ({length}) does not match algorithm IV length ({algorithm})'.format(
+                length=iv_length,
+                algorithm=algorithm
+            )
+        )
+
+    return iv_length
+
+
+def _verified_frame_length(frame_length, content_type):
+    # type: (int, ContentType) -> int
+    """Verify a frame length value for a message content type.
+
+    :param int frame_length: Frame length to verify
+    :param ContentType content_type: Message content type to verify against
+    :return: frame length
+    :rtype: int
+    :raises SerializationError: if frame length is too large
+    :raises SerializationError: if frame length is not zero for unframed content type
+    """
+    if content_type == ContentType.FRAMED_DATA and frame_length > MAX_FRAME_SIZE:
+        raise SerializationError('Specified frame length larger than allowed maximum: {found} > {max}'.format(
+            found=frame_length,
+            max=MAX_FRAME_SIZE
+        ))
+
+    if content_type == ContentType.NO_FRAMING and frame_length != 0:
+        raise SerializationError('Non-zero frame length found for non-framed message')
+
+    return frame_length
+
+
 def deserialize_header(stream):
+    # type: (IO) -> MessageHeader
     """Deserializes the header from a source stream
 
     :param stream: Source data stream
@@ -76,94 +243,32 @@ def deserialize_header(stream):
     tee = io.BytesIO()
     tee_stream = TeeStream(stream, tee)
     version_id, message_type_id = unpack_values('>BB', tee_stream)
-    try:
-        message_type = ObjectType(message_type_id)
-    except ValueError as error:
-        raise NotSupportedError(
-            'Unsupported type {} discovered in data stream'.format(message_type_id),
-            error
-        )
-    try:
-        version = SerializationVersion(version_id)
-    except ValueError as error:
-        raise NotSupportedError('Unsupported version {}'.format(version_id), error)
-    header = {'version': version, 'type': message_type}
+    header = dict()
+    header['version'] = _verified_version_from_id(version_id)
+    header['type'] = _verified_message_type_from_id(message_type_id)
 
     algorithm_id, message_id, ser_encryption_context_length = unpack_values('>H16sH', tee_stream)
 
-    try:
-        alg = Algorithm.get_by_id(algorithm_id)
-    except KeyError as error:
-        raise UnknownIdentityError('Unknown algorithm {}'.format(algorithm_id), error)
-    if not alg.allowed:
-        raise NotSupportedError('Unsupported algorithm: {}'.format(alg))
-    header['algorithm'] = alg
+    header['algorithm'] = _verified_algorithm_from_id(algorithm_id)
     header['message_id'] = message_id
 
     header['encryption_context'] = deserialize_encryption_context(
         tee_stream.read(ser_encryption_context_length)
     )
-    (encrypted_data_key_count,) = unpack_values('>H', tee_stream)
 
-    encrypted_data_keys = set([])
-    for _ in range(encrypted_data_key_count):
-        (key_provider_length,) = unpack_values('>H', tee_stream)
-        (key_provider_identifier,) = unpack_values(
-            '>{}s'.format(key_provider_length),
-            tee_stream
-        )
-        (key_provider_information_length,) = unpack_values('>H', tee_stream)
-        (key_provider_information,) = unpack_values(
-            '>{}s'.format(key_provider_information_length),
-            tee_stream
-        )
-        (encrypted_data_key_length,) = unpack_values('>H', tee_stream)
-        encrypted_data_key = tee_stream.read(encrypted_data_key_length)
-        encrypted_data_keys.add(EncryptedDataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=to_str(key_provider_identifier),
-                key_info=key_provider_information
-            ),
-            encrypted_data_key=encrypted_data_key
-        ))
-    header['encrypted_data_keys'] = encrypted_data_keys
+    header['encrypted_data_keys'] = _deserialize_encrypted_data_keys(tee_stream)
 
     (content_type_id,) = unpack_values('>B', tee_stream)
-    try:
-        content_type = ContentType(content_type_id)
-    except ValueError as error:
-        raise UnknownIdentityError(
-            'Unknown content type {}'.format(content_type_id),
-            error
-        )
-    header['content_type'] = content_type
+    header['content_type'] = _verified_content_type_from_id(content_type_id)
 
     (content_aad_length,) = unpack_values('>I', tee_stream)
-    if content_aad_length != 0:
-        raise SerializationError(
-            'Content AAD length field is currently unused, its value must be always 0'
-        )
-    header['content_aad_length'] = 0
+    header['content_aad_length'] = _verified_content_aad_length(content_aad_length)
 
     (iv_length,) = unpack_values('>B', tee_stream)
-    if iv_length != alg.iv_len:
-        raise SerializationError(
-            'Specified IV length ({length}) does not match algorithm IV length ({alg})'.format(
-                length=iv_length,
-                alg=alg
-            )
-        )
-    header['header_iv_length'] = iv_length
+    header['header_iv_length'] = _verified_iv_length(iv_length, header['algorithm'])
 
     (frame_length,) = unpack_values('>I', tee_stream)
-    if content_type == ContentType.FRAMED_DATA and frame_length > MAX_FRAME_SIZE:
-        raise SerializationError('Specified frame length larger than allowed maximum: {found} > {max}'.format(
-            found=frame_length,
-            max=MAX_FRAME_SIZE
-        ))
-    elif content_type == ContentType.NO_FRAMING and frame_length != 0:
-        raise SerializationError('Non-zero frame length found for non-framed message')
-    header['frame_length'] = frame_length
+    header['frame_length'] = _verified_frame_length(frame_length, header['content_type'])
 
     return MessageHeader(**header), tee.getvalue()
 
@@ -173,8 +278,8 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
 
     :param stream: Source data stream
     :type stream: io.BytesIO
-    :param algorithm: The Algorithm object type contained in the header
-    :type algorith: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: The AlgorithmSuite object type contained in the header
+    :type algorith: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param verifier: Signature verifier object (optional)
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
     :returns: Deserialized MessageHeaderAuthentication object
@@ -370,7 +475,7 @@ def deserialize_wrapped_key(wrapping_algorithm, wrapping_key_id, wrapped_encrypt
             raise SerializationError('Malformed key info: key info missing data')
         tag_len //= 8  # Tag Length is stored in bits, not bytes
         if iv_len != wrapping_algorithm.algorithm.iv_len:
-            raise SerializationError('Wrapping Algorithm mismatch for wrapped data key')
+            raise SerializationError('Wrapping AlgorithmSuite mismatch for wrapped data key')
         iv = _key_info[8:]
         if len(iv) != iv_len:
             raise SerializationError('Malformed key info: incomplete iv')
