@@ -14,7 +14,6 @@
 import os
 import sys
 sys.path.extend([  # noqa
-    os.sep.join([os.path.dirname(__file__), '..', '..', 'test', 'integration']),
     os.sep.join([os.path.dirname(__file__), '..', 'src'])
 ])
 import tempfile
@@ -22,6 +21,7 @@ import tempfile
 import pytest
 
 from basic_file_encryption_with_raw_key_provider import cycle_file
+
 
 pytestmark = [pytest.mark.examples]
 

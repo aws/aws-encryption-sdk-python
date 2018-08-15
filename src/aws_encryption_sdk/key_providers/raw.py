@@ -18,13 +18,11 @@ import os
 import attr
 import six
 
-from aws_encryption_sdk.identifiers import EncryptionType
-from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
-from aws_encryption_sdk.key_providers.base import (
-    MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
-)
+from aws_encryption_sdk.identifiers import EncryptionType
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, RawDataKey
 
 _LOGGER = logging.getLogger(__name__)

@@ -11,14 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for CryptoMaterialsCacheEntry and CryptoMaterialsCacheEntryHints"""
-from mock import MagicMock
 import pytest
+from mock import MagicMock
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.caches
-from aws_encryption_sdk.caches import (
-    CryptoMaterialsCacheEntry, CryptoMaterialsCacheEntryHints
-)
+from aws_encryption_sdk.caches import CryptoMaterialsCacheEntry, CryptoMaterialsCacheEntryHints
 from aws_encryption_sdk.exceptions import NotSupportedError
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 

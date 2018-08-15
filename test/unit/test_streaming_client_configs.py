@@ -20,7 +20,8 @@ from aws_encryption_sdk.internal.defaults import ALGORITHM, FRAME_LENGTH, LINE_L
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
-from aws_encryption_sdk.streaming_client import _ClientConfig, DecryptorConfig, EncryptorConfig
+from aws_encryption_sdk.streaming_client import DecryptorConfig, EncryptorConfig, _ClientConfig
+
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs, build_valid_kwargs_list
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

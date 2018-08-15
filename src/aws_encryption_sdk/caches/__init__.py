@@ -14,8 +14,8 @@
 
 .. versionadded:: 1.3.0
 """
-from threading import Lock
 import time
+from threading import Lock
 
 import attr
 from cryptography.hazmat.backends import default_backend

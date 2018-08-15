@@ -14,8 +14,13 @@
 import pytest
 
 from aws_encryption_sdk.internal.structures import (
-    EncryptedData, MessageFooter, MessageFrameBody, MessageHeaderAuthentication, MessageNoFrameBody
+    EncryptedData,
+    MessageFooter,
+    MessageFrameBody,
+    MessageHeaderAuthentication,
+    MessageNoFrameBody,
 )
+
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

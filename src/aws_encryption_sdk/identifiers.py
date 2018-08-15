@@ -11,8 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """AWS Encryption SDK native data structures for defining implementation-specific characteristics."""
-from enum import Enum
 import struct
+from enum import Enum
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa

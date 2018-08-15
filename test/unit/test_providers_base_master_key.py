@@ -14,14 +14,15 @@
 import unittest
 
 import attr
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.exceptions import ConfigMismatchError, IncorrectMasterKeyError, InvalidKeyIdError
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider
 from aws_encryption_sdk.structures import MasterKeyInfo
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

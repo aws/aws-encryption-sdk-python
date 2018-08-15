@@ -11,17 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Contains elliptic curve functionality."""
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
+import six
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature, Prehashed
-from cryptography.utils import int_from_bytes, int_to_bytes, InterfaceNotImplemented, verify_interface
-import six
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
+from cryptography.utils import InterfaceNotImplemented, int_from_bytes, int_to_bytes, verify_interface
 
-from ..str_ops import to_bytes
 from ...exceptions import NotSupportedError
+from ..str_ops import to_bytes
 
 _LOGGER = logging.getLogger(__name__)
 

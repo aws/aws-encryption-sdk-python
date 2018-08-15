@@ -17,9 +17,9 @@ import os
 
 import six
 
+import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
-import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import EncryptedDataKey
 

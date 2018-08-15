@@ -12,8 +12,8 @@
 # language governing permissions and limitations under the License.
 """Null cache: a cache which does not cache."""
 from . import CryptoMaterialsCacheEntry
-from .base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError
+from .base import CryptoMaterialsCache
 
 
 class NullCryptoMaterialsCache(CryptoMaterialsCache):

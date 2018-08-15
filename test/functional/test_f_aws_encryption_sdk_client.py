@@ -16,12 +16,11 @@ import io
 import attr
 import botocore.client
 import cryptography.exceptions
+import pytest
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from mock import MagicMock
-import pytest
 
 import aws_encryption_sdk
 from aws_encryption_sdk import KMSMasterKeyProvider

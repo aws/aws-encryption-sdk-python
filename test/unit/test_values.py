@@ -14,16 +14,17 @@
 import copy
 import struct
 
-from mock import MagicMock
 import six
+from mock import MagicMock
 
-from aws_encryption_sdk.identifiers import (
-    Algorithm, ContentType, ObjectType, SerializationVersion
-)
 import aws_encryption_sdk.internal.defaults
+from aws_encryption_sdk.identifiers import Algorithm, ContentType, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.structures import (
-    EncryptedData, MessageFooter, MessageFrameBody,
-    MessageHeaderAuthentication, MessageNoFrameBody
+    EncryptedData,
+    MessageFooter,
+    MessageFrameBody,
+    MessageHeaderAuthentication,
+    MessageNoFrameBody,
 )
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader
 

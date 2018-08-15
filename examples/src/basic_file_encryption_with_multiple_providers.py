@@ -17,13 +17,14 @@ provider can then be used independently to decrypt the same encrypted message.
 import filecmp
 import os
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 class StaticRandomMasterKeyProvider(RawMasterKeyProvider):

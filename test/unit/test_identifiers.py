@@ -11,8 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.identifiers"""
-from mock import Mock
 import pytest
+from mock import Mock
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 from aws_encryption_sdk.identifiers import Algorithm, EncryptionSuite, KDFSuite

@@ -14,16 +14,17 @@
 import unittest
 
 import botocore.client
-from botocore.exceptions import ClientError
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from botocore.exceptions import ClientError
+from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

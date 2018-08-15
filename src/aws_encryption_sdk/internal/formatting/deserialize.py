@@ -21,15 +21,21 @@ from cryptography.exceptions import InvalidTag
 
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import (
-    AlgorithmSuite, ContentType, ObjectType, SequenceIdentifier, SerializationVersion
+    AlgorithmSuite,
+    ContentType,
+    ObjectType,
+    SequenceIdentifier,
+    SerializationVersion,
 )
 from aws_encryption_sdk.internal.crypto.encryption import decrypt
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
 from aws_encryption_sdk.internal.formatting.encryption_context import deserialize_encryption_context
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.internal.structures import (
-    EncryptedData, MessageFooter,
-    MessageFrameBody, MessageHeaderAuthentication
+    EncryptedData,
+    MessageFooter,
+    MessageFrameBody,
+    MessageHeaderAuthentication,
 )
 from aws_encryption_sdk.internal.utils.streams import TeeStream
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, MessageHeader

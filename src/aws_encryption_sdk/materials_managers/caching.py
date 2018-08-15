@@ -17,18 +17,19 @@ import uuid
 import attr
 import six
 
-
 from . import EncryptionMaterialsRequest
-from .base import CryptoMaterialsManager
-from .default import DefaultCryptoMaterialsManager
 from ..caches import (
-    build_decryption_materials_cache_key, build_encryption_materials_cache_key, CryptoMaterialsCacheEntryHints
+    CryptoMaterialsCacheEntryHints,
+    build_decryption_materials_cache_key,
+    build_encryption_materials_cache_key,
 )
 from ..caches.base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError
 from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
+from .base import CryptoMaterialsManager
+from .default import DefaultCryptoMaterialsManager
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -14,19 +14,23 @@
 import io
 import unittest
 
-from mock import call, MagicMock, patch, sentinel
 import pytest
 import six
+from mock import MagicMock, call, patch, sentinel
 
+import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, MasterKeyProviderError, NotSupportedError, SerializationError
+    ActionNotAllowedError,
+    MasterKeyProviderError,
+    NotSupportedError,
+    SerializationError,
 )
 from aws_encryption_sdk.identifiers import Algorithm, ContentType
-import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
 from aws_encryption_sdk.structures import MessageHeader
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

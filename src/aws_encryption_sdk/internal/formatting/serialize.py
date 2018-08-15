@@ -14,12 +14,12 @@
 import logging
 import struct
 
+import aws_encryption_sdk.internal.defaults
+import aws_encryption_sdk.internal.formatting.encryption_context
 from aws_encryption_sdk.exceptions import SerializationError
 from aws_encryption_sdk.identifiers import ContentAADString, EncryptionType, SequenceIdentifier
 from aws_encryption_sdk.internal.crypto.encryption import encrypt
 from aws_encryption_sdk.internal.crypto.iv import frame_iv, header_auth_iv
-import aws_encryption_sdk.internal.defaults
-import aws_encryption_sdk.internal.formatting.encryption_context
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 

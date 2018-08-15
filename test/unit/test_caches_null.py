@@ -11,8 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit testing suite for NullCryptoMaterialsCache"""
-from mock import MagicMock
 import pytest
+from mock import MagicMock
 
 from aws_encryption_sdk.caches import CryptoMaterialsCacheEntry
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache

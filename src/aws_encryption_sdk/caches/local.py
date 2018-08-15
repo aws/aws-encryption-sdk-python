@@ -11,17 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Local, in-memory, LRU, cryptographic materials cache for use with caching cryptographic materials providers."""
-from collections import deque, OrderedDict
 import logging
-from threading import RLock
 import weakref
+from collections import OrderedDict, deque
+from threading import RLock
 
 import attr
 import six
 
 from . import CryptoMaterialsCacheEntry
-from .base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError, NotSupportedError
+from .base import CryptoMaterialsCache
 
 _OPPORTUNISTIC_EVICTION_ROUNDS = 10
 _LOGGER = logging.getLogger(__name__)

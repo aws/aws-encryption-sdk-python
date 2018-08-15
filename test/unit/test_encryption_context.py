@@ -16,10 +16,11 @@ import unittest
 import pytest
 import six
 
-from aws_encryption_sdk.exceptions import SerializationError
-from aws_encryption_sdk.identifiers import ContentAADString
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
+from aws_encryption_sdk.exceptions import SerializationError
+from aws_encryption_sdk.identifiers import ContentAADString
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

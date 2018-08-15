@@ -17,12 +17,15 @@ import logging
 import attr
 import six
 
+import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
-    ConfigMismatchError, DecryptKeyError, IncorrectMasterKeyError,
-    InvalidKeyIdError, MasterKeyProviderError
+    ConfigMismatchError,
+    DecryptKeyError,
+    IncorrectMasterKeyError,
+    InvalidKeyIdError,
+    MasterKeyProviderError,
 )
 from aws_encryption_sdk.internal.str_ops import to_bytes
-import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.structures import MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)

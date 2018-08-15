@@ -13,15 +13,16 @@
 """Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
 import unittest
 
-from mock import MagicMock, patch, sentinel
 import pytest
+from mock import MagicMock, patch, sentinel
 
+import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.exceptions import SerializationError
 from aws_encryption_sdk.identifiers import ContentAADString
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_COUNT
-import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

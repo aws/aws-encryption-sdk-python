@@ -11,17 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for CachingCryptoMaterialsManager"""
-from mock import MagicMock, sentinel
 import pytest
+from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
+import aws_encryption_sdk.materials_managers.caching
 from aws_encryption_sdk.caches.base import CryptoMaterialsCache
 from aws_encryption_sdk.exceptions import CacheKeyError
 from aws_encryption_sdk.internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
-import aws_encryption_sdk.materials_managers.caching
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

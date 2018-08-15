@@ -14,12 +14,13 @@
 import unittest
 
 import attr
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

@@ -13,19 +13,24 @@
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.elliptic_curve``."""
 import sys
 
+import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel
-import pytest
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from aws_encryption_sdk.exceptions import NotSupportedError
 import aws_encryption_sdk.internal.crypto.elliptic_curve
+from aws_encryption_sdk.exceptions import NotSupportedError
 from aws_encryption_sdk.internal.crypto.elliptic_curve import (
-    _ECC_CURVE_PARAMETERS, _ecc_decode_compressed_point, _ecc_encode_compressed_point,
-    _ecc_public_numbers_from_compressed_point, _ecc_static_length_signature,
-    _ECCCurveParameters, generate_ecc_signing_key
+    _ECC_CURVE_PARAMETERS,
+    _ecc_decode_compressed_point,
+    _ecc_encode_compressed_point,
+    _ecc_public_numbers_from_compressed_point,
+    _ecc_static_length_signature,
+    _ECCCurveParameters,
+    generate_ecc_signing_key,
 )
+
 from .test_crypto import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

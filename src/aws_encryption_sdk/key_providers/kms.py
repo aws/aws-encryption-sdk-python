@@ -17,15 +17,13 @@ import attr
 import boto3
 import botocore.client
 import botocore.config
-from botocore.exceptions import ClientError
 import botocore.session
+from botocore.exceptions import ClientError
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError, UnknownRegionError
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.str_ops import to_str
-from aws_encryption_sdk.key_providers.base import (
-    MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
-)
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)

@@ -20,10 +20,12 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.utils import InterfaceNotImplemented, verify_interface
 
-from .elliptic_curve import (
-    _ecc_encode_compressed_point, _ecc_public_numbers_from_compressed_point, _ecc_static_length_signature
-)
 from ...exceptions import NotSupportedError
+from .elliptic_curve import (
+    _ecc_encode_compressed_point,
+    _ecc_public_numbers_from_compressed_point,
+    _ecc_static_length_signature,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

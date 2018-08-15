@@ -13,15 +13,16 @@
 """Test suite for aws_encryption_sdk.internal.utils"""
 import unittest
 
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from mock import MagicMock, patch, sentinel
 
-from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 import aws_encryption_sdk.identifiers
-from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

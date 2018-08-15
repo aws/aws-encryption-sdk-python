@@ -14,14 +14,18 @@
 import unittest
 
 import attr
-from mock import call, MagicMock, patch, PropertyMock, sentinel
 import pytest
 import six
+from mock import MagicMock, PropertyMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import (
-    DecryptKeyError, IncorrectMasterKeyError, InvalidKeyIdError, MasterKeyProviderError
+    DecryptKeyError,
+    IncorrectMasterKeyError,
+    InvalidKeyIdError,
+    MasterKeyProviderError,
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

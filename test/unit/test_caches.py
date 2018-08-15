@@ -11,16 +11,19 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.caches common functions."""
-from base64 import b64decode
 import struct
+from base64 import b64decode
 
+import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-import pytest
 
 from aws_encryption_sdk.caches import (
-    _512_BIT_PAD, _encrypted_data_keys_hash, _encryption_context_hash,
-    build_decryption_materials_cache_key, build_encryption_materials_cache_key
+    _512_BIT_PAD,
+    _encrypted_data_keys_hash,
+    _encryption_context_hash,
+    build_decryption_materials_cache_key,
+    build_encryption_materials_cache_key,
 )
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest

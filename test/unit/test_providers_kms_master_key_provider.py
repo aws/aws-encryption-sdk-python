@@ -14,9 +14,9 @@
 import unittest
 
 import botocore.client
-from mock import ANY, call, MagicMock, patch, sentinel
 import pytest
 import six
+from mock import ANY, MagicMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider

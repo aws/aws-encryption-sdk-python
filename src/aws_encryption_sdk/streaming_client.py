@@ -21,20 +21,23 @@ import math
 import attr
 import six
 
-from aws_encryption_sdk.exceptions import (
-    ActionNotAllowedError, AWSEncryptionSDKClientError, CustomMaximumValueExceeded,
-    NotSupportedError, SerializationError
-)
-from aws_encryption_sdk.identifiers import Algorithm, ContentType
-from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
-from aws_encryption_sdk.internal.crypto.data_keys import derive_data_encryption_key
-from aws_encryption_sdk.internal.crypto.encryption import decrypt, Decryptor, Encryptor
-from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
-from aws_encryption_sdk.internal.defaults import FRAME_LENGTH, LINE_LENGTH, MAX_NON_FRAMED_SIZE, TYPE, VERSION
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.encryption_context
 import aws_encryption_sdk.internal.formatting.serialize
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.exceptions import (
+    ActionNotAllowedError,
+    AWSEncryptionSDKClientError,
+    CustomMaximumValueExceeded,
+    NotSupportedError,
+    SerializationError,
+)
+from aws_encryption_sdk.identifiers import Algorithm, ContentType
+from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
+from aws_encryption_sdk.internal.crypto.data_keys import derive_data_encryption_key
+from aws_encryption_sdk.internal.crypto.encryption import Decryptor, Encryptor, decrypt
+from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
+from aws_encryption_sdk.internal.defaults import FRAME_LENGTH, LINE_LENGTH, MAX_NON_FRAMED_SIZE, TYPE, VERSION
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager

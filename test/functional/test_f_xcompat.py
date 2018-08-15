@@ -12,11 +12,11 @@
 # language governing permissions and limitations under the License.
 """Functional test suite testing decryption of known good test files encrypted using static RawMasterKeyProvider."""
 import base64
-from collections import defaultdict
 import json
 import logging
 import os
 import sys
+from collections import defaultdict
 
 import attr
 import pytest

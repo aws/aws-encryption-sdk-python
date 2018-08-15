@@ -18,10 +18,10 @@ import codecs
 import logging
 import struct
 
-from aws_encryption_sdk.exceptions import SerializationError
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.str_ops
+from aws_encryption_sdk.exceptions import SerializationError
 
 _LOGGER = logging.getLogger(__name__)
 

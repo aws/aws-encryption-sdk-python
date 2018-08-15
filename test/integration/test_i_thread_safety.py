@@ -14,14 +14,15 @@
 from __future__ import division
 
 import copy
-from random import SystemRandom
 import threading
 import time
+from random import SystemRandom
 
 import pytest
 from six.moves import queue  # six.moves confuses pylint: disable=import-error
 
 import aws_encryption_sdk
+
 from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]

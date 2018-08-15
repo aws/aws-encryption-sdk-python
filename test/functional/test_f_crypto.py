@@ -11,10 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Functional test suite for Elliptic Curve static length signature calculation."""
+import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-import pytest
 
 import aws_encryption_sdk
 from aws_encryption_sdk.internal.crypto.authentication import Signer

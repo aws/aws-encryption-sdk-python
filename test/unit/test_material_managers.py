@@ -11,15 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers"""
-from mock import MagicMock
 import pytest
+from mock import MagicMock
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.materials_managers import (
-    DecryptionMaterials, DecryptionMaterialsRequest,
-    EncryptionMaterials, EncryptionMaterialsRequest
+    DecryptionMaterials,
+    DecryptionMaterialsRequest,
+    EncryptionMaterials,
+    EncryptionMaterialsRequest,
 )
 from aws_encryption_sdk.structures import DataKey
 

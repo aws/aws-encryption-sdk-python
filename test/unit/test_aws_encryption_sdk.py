@@ -13,9 +13,9 @@
 """Unit test suite for high-level functions in aws_encryption_sdk module"""
 import unittest
 
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk
 import aws_encryption_sdk.internal.defaults

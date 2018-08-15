@@ -11,13 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Signer``."""
-from mock import MagicMock, sentinel
 import pytest
+from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.internal.crypto.authentication import Signer
 from aws_encryption_sdk.internal.defaults import ALGORITHM
+
 from .test_crypto import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
