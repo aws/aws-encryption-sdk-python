@@ -19,7 +19,7 @@ import aws_encryption_sdk.identifiers
 LINE_LENGTH = io.DEFAULT_BUFFER_SIZE
 
 #: Standard string encoding where needed
-ENCODING = 'utf-8'
+ENCODING = "utf-8"
 #: Default frame length when using framing
 FRAME_LENGTH = 4096
 #: Message ID length as defined in specification
@@ -32,7 +32,7 @@ TYPE = aws_encryption_sdk.identifiers.ObjectType.CUSTOMER_AE_DATA
 ALGORITHM = aws_encryption_sdk.identifiers.Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384
 
 #: Key to add encoded signing key to encryption context dictionary as defined in specification
-ENCODED_SIGNER_KEY = 'aws-crypto-public-key'
+ENCODED_SIGNER_KEY = "aws-crypto-public-key"
 
 #: Maximum number of messages which are allowed to be encrypted under a single cached data key
 MAX_MESSAGES_PER_KEY = 4294967296  # 2 ** 32

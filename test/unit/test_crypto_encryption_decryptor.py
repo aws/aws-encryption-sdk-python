@@ -11,42 +11,38 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.encryption.Decryptor``."""
-from mock import MagicMock, sentinel
 import pytest
+from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.encryption
-from aws_encryption_sdk.internal.crypto.encryption import decrypt, Decryptor
+from aws_encryption_sdk.internal.crypto.encryption import Decryptor, decrypt
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 @pytest.yield_fixture
 def patch_default_backend(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, 'default_backend')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "default_backend")
     yield aws_encryption_sdk.internal.crypto.encryption.default_backend
 
 
 @pytest.yield_fixture
 def patch_cipher(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, 'Cipher')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "Cipher")
     yield aws_encryption_sdk.internal.crypto.encryption.Cipher
 
 
 @pytest.yield_fixture
 def patch_decryptor(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, 'Decryptor')
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "Decryptor")
     yield aws_encryption_sdk.internal.crypto.encryption.Decryptor
 
 
 def test_decryptor_init(patch_default_backend, patch_cipher):
     mock_algorithm = MagicMock()
     tester = Decryptor(
-        algorithm=mock_algorithm,
-        key=sentinel.key,
-        associated_data=sentinel.aad,
-        iv=sentinel.iv,
-        tag=sentinel.tag
+        algorithm=mock_algorithm, key=sentinel.key, associated_data=sentinel.aad, iv=sentinel.iv, tag=sentinel.tag
     )
 
     assert tester.source_key is sentinel.key
@@ -56,7 +52,7 @@ def test_decryptor_init(patch_default_backend, patch_cipher):
     patch_cipher.assert_called_once_with(
         mock_algorithm.encryption_algorithm.return_value,
         mock_algorithm.encryption_mode.return_value,
-        backend=patch_default_backend.return_value
+        backend=patch_default_backend.return_value,
     )
     patch_cipher.return_value.decryptor.assert_called_once_with()
     assert tester._decryptor is patch_cipher.return_value.decryptor.return_value
@@ -65,11 +61,7 @@ def test_decryptor_init(patch_default_backend, patch_cipher):
 
 def test_decryptor_update(patch_default_backend, patch_cipher):
     tester = Decryptor(
-        algorithm=MagicMock(),
-        key=sentinel.key,
-        associated_data=sentinel.aad,
-        iv=sentinel.iv,
-        tag=sentinel.tag
+        algorithm=MagicMock(), key=sentinel.key, associated_data=sentinel.aad, iv=sentinel.iv, tag=sentinel.tag
     )
 
     test = tester.update(sentinel.ciphertext)
@@ -80,11 +72,7 @@ def test_decryptor_update(patch_default_backend, patch_cipher):
 
 def test_decryptor_finalize(patch_default_backend, patch_cipher):
     tester = Decryptor(
-        algorithm=MagicMock(),
-        key=sentinel.key,
-        associated_data=sentinel.aad,
-        iv=sentinel.iv,
-        tag=sentinel.tag
+        algorithm=MagicMock(), key=sentinel.key, associated_data=sentinel.aad, iv=sentinel.iv, tag=sentinel.tag
     )
 
     test = tester.finalize()
@@ -94,27 +82,17 @@ def test_decryptor_finalize(patch_default_backend, patch_cipher):
 
 
 def test_decrypt(patch_decryptor):
-    patch_decryptor.return_value.update.return_value = b'some data-'
-    patch_decryptor.return_value.finalize.return_value = b'some more data'
+    patch_decryptor.return_value.update.return_value = b"some data-"
+    patch_decryptor.return_value.finalize.return_value = b"some more data"
 
     test = decrypt(
         algorithm=sentinel.algorithm,
         key=sentinel.key,
-        encrypted_data=MagicMock(
-            iv=sentinel.iv,
-            tag=sentinel.tag,
-            ciphertext=sentinel.ciphertext
-        ),
-        associated_data=sentinel.aad
+        encrypted_data=MagicMock(iv=sentinel.iv, tag=sentinel.tag, ciphertext=sentinel.ciphertext),
+        associated_data=sentinel.aad,
     )
 
-    patch_decryptor.assert_called_once_with(
-        sentinel.algorithm,
-        sentinel.key,
-        sentinel.aad,
-        sentinel.iv,
-        sentinel.tag
-    )
+    patch_decryptor.assert_called_once_with(sentinel.algorithm, sentinel.key, sentinel.aad, sentinel.iv, sentinel.tag)
     patch_decryptor.return_value.update.assert_called_once_with(sentinel.ciphertext)
     patch_decryptor.return_value.finalize.assert_called_once_with()
-    assert test == b'some data-some more data'
+    assert test == b"some data-some more data"

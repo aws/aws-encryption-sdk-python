@@ -17,12 +17,12 @@ import os
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
-from .data_keys import derive_data_encryption_key
-from .encryption import decrypt, encrypt
-from ..formatting.encryption_context import serialize_encryption_context
-from ..structures import EncryptedData
 from ...exceptions import IncorrectMasterKeyError, InvalidDataKeyError
 from ...identifiers import EncryptionKeyType, EncryptionType
+from ..formatting.encryption_context import serialize_encryption_context
+from ..structures import EncryptedData
+from .data_keys import derive_data_encryption_key
+from .encryption import decrypt, encrypt
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,24 +46,17 @@ class WrappingKey(object):
         self.wrapping_key_type = wrapping_key_type
         if wrapping_key_type is EncryptionKeyType.PRIVATE:
             self._wrapping_key = serialization.load_pem_private_key(
-                data=wrapping_key,
-                password=password,
-                backend=default_backend()
+                data=wrapping_key, password=password, backend=default_backend()
             )
         elif wrapping_key_type is EncryptionKeyType.PUBLIC:
-            self._wrapping_key = serialization.load_pem_public_key(
-                data=wrapping_key,
-                backend=default_backend()
-            )
+            self._wrapping_key = serialization.load_pem_public_key(data=wrapping_key, backend=default_backend())
         elif wrapping_key_type is EncryptionKeyType.SYMMETRIC:
             self._wrapping_key = wrapping_key
             self._derived_wrapping_key = derive_data_encryption_key(
-                source_key=self._wrapping_key,
-                algorithm=self.wrapping_algorithm.algorithm,
-                message_id=None
+                source_key=self._wrapping_key, algorithm=self.wrapping_algorithm.algorithm, message_id=None
             )
         else:
-            raise InvalidDataKeyError('Invalid wrapping_key_type: {}'.format(wrapping_key_type))
+            raise InvalidDataKeyError("Invalid wrapping_key_type: {}".format(wrapping_key_type))
 
     def encrypt(self, plaintext_data_key, encryption_context):
         """Encrypts a data key using a direct wrapping key.
@@ -76,29 +69,21 @@ class WrappingKey(object):
         if self.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC:
             if self.wrapping_key_type is EncryptionKeyType.PRIVATE:
                 encrypted_key = self._wrapping_key.public_key().encrypt(
-                    plaintext=plaintext_data_key,
-                    padding=self.wrapping_algorithm.padding
+                    plaintext=plaintext_data_key, padding=self.wrapping_algorithm.padding
                 )
             else:
                 encrypted_key = self._wrapping_key.encrypt(
-                    plaintext=plaintext_data_key,
-                    padding=self.wrapping_algorithm.padding
+                    plaintext=plaintext_data_key, padding=self.wrapping_algorithm.padding
                 )
-            return EncryptedData(
-                iv=None,
-                ciphertext=encrypted_key,
-                tag=None
-            )
-        serialized_encryption_context = serialize_encryption_context(
-            encryption_context=encryption_context
-        )
+            return EncryptedData(iv=None, ciphertext=encrypted_key, tag=None)
+        serialized_encryption_context = serialize_encryption_context(encryption_context=encryption_context)
         iv = os.urandom(self.wrapping_algorithm.algorithm.iv_len)
         return encrypt(
             algorithm=self.wrapping_algorithm.algorithm,
             key=self._derived_wrapping_key,
             plaintext=plaintext_data_key,
             associated_data=serialized_encryption_context,
-            iv=iv
+            iv=iv,
         )
 
     def decrypt(self, encrypted_wrapped_data_key, encryption_context):
@@ -111,18 +96,15 @@ class WrappingKey(object):
         :rtype: bytes
         """
         if self.wrapping_key_type is EncryptionKeyType.PUBLIC:
-            raise IncorrectMasterKeyError('Public key cannot decrypt')
+            raise IncorrectMasterKeyError("Public key cannot decrypt")
         if self.wrapping_key_type is EncryptionKeyType.PRIVATE:
             return self._wrapping_key.decrypt(
-                ciphertext=encrypted_wrapped_data_key.ciphertext,
-                padding=self.wrapping_algorithm.padding
+                ciphertext=encrypted_wrapped_data_key.ciphertext, padding=self.wrapping_algorithm.padding
             )
-        serialized_encryption_context = serialize_encryption_context(
-            encryption_context=encryption_context
-        )
+        serialized_encryption_context = serialize_encryption_context(encryption_context=encryption_context)
         return decrypt(
             algorithm=self.wrapping_algorithm.algorithm,
             key=self._derived_wrapping_key,
             encrypted_data=encrypted_wrapped_data_key,
-            associated_data=serialized_encryption_context
+            associated_data=serialized_encryption_context,
         )

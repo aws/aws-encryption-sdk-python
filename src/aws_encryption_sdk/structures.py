@@ -39,21 +39,15 @@ class MessageHeader(object):
     :param int frame_length: Length of message frame in bytes
     """
 
-    version = attr.ib(hash=True, validator=attr.validators.instance_of(
-        aws_encryption_sdk.identifiers.SerializationVersion
-    ))
-    type = attr.ib(hash=True, validator=attr.validators.instance_of(
-        aws_encryption_sdk.identifiers.ObjectType
-    ))
-    algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(
-        aws_encryption_sdk.identifiers.Algorithm
-    ))
+    version = attr.ib(
+        hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.SerializationVersion)
+    )
+    type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ObjectType))
+    algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.Algorithm))
     message_id = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
     encryption_context = attr.ib(hash=True, validator=attr.validators.instance_of(dict))
     encrypted_data_keys = attr.ib(hash=True, validator=attr.validators.instance_of(set))
-    content_type = attr.ib(hash=True, validator=attr.validators.instance_of(
-        aws_encryption_sdk.identifiers.ContentType
-    ))
+    content_type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ContentType))
     content_aad_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
     header_iv_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
     frame_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
@@ -67,16 +61,8 @@ class MasterKeyInfo(object):
     :param bytes key_info: MasterKey key_info value
     """
 
-    provider_id = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=to_str
-    )
-    key_info = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=to_bytes
-    )
+    provider_id = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_str)
+    key_info = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_bytes)
 
 
 @attr.s(hash=True)

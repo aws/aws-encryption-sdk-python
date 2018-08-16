@@ -35,7 +35,7 @@ def derive_data_encryption_key(source_key, algorithm, message_id):
             algorithm=algorithm.kdf_hash_type(),
             length=algorithm.data_key_len,
             salt=None,
-            info=struct.pack('>H16s', algorithm.algorithm_id, message_id),
-            backend=default_backend()
+            info=struct.pack(">H16s", algorithm.algorithm_id, message_id),
+            backend=default_backend(),
         ).derive(source_key)
     return key

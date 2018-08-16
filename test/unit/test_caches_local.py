@@ -11,11 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit testing suite for LocalCryptoMaterialsCache"""
-from collections import deque, OrderedDict
 import weakref
+from collections import OrderedDict, deque
 
-from mock import call, MagicMock, sentinel
 import pytest
+from mock import MagicMock, call, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.caches.local
@@ -35,17 +35,15 @@ def test_opportunistic_eviction_rounds():
     assert _OPPORTUNISTIC_EVICTION_ROUNDS == 10
 
 
-@pytest.mark.parametrize('invalid_kwargs', (
-    dict(capacity=None),
-))
+@pytest.mark.parametrize("invalid_kwargs", (dict(capacity=None),))
 def test_attrs_fail(invalid_kwargs):
     with pytest.raises(TypeError):
         build_lcmc(**invalid_kwargs)
 
 
-@pytest.mark.parametrize('invalid_kwargs, error_message', (
-    (dict(capacity=0), r'LocalCryptoMaterialsCache capacity cannot be less than 1'),
-))
+@pytest.mark.parametrize(
+    "invalid_kwargs, error_message", ((dict(capacity=0), r"LocalCryptoMaterialsCache capacity cannot be less than 1"),)
+)
 def test_invalid_values(invalid_kwargs, error_message):
     with pytest.raises(ValueError) as excinfo:
         build_lcmc(**invalid_kwargs)
@@ -67,7 +65,7 @@ def test_setattr():
     with pytest.raises(NotSupportedError) as excinfo:
         test.capacity = 0
 
-    excinfo.match(r'capacity may not be modified on LocalCryptoMaterialsCache instances')
+    excinfo.match(r"capacity may not be modified on LocalCryptoMaterialsCache instances")
 
 
 def test_try_to_evict_one_entry_lre_empty():
@@ -136,7 +134,7 @@ def test_try_to_evict_one_entry_entry_valid():
 
 @pytest.yield_fixture
 def patch_try_to_evict_one_entry(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, '_try_to_evict_one_entry')
+    mocker.patch.object(LocalCryptoMaterialsCache, "_try_to_evict_one_entry")
     yield LocalCryptoMaterialsCache._try_to_evict_one_entry
 
 
@@ -169,7 +167,7 @@ def test_prune(patch_try_to_evict_one_entry):
 
 @pytest.yield_fixture
 def patch_prune(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, '_prune')
+    mocker.patch.object(LocalCryptoMaterialsCache, "_prune")
     yield LocalCryptoMaterialsCache._prune
 
 
@@ -187,19 +185,19 @@ def test_add_value_to_cache(patch_prune):
 
 @pytest.yield_fixture
 def patch_try_to_evict_some_entries(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, '_try_to_evict_some_entries')
+    mocker.patch.object(LocalCryptoMaterialsCache, "_try_to_evict_some_entries")
     yield LocalCryptoMaterialsCache._try_to_evict_some_entries
 
 
 @pytest.yield_fixture
 def patch_add_value_to_cache(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, '_add_value_to_cache')
+    mocker.patch.object(LocalCryptoMaterialsCache, "_add_value_to_cache")
     yield LocalCryptoMaterialsCache._add_value_to_cache
 
 
 @pytest.yield_fixture
 def patch_crypto_cache_entry(mocker):
-    mocker.patch.object(aws_encryption_sdk.caches.local, 'CryptoMaterialsCacheEntry')
+    mocker.patch.object(aws_encryption_sdk.caches.local, "CryptoMaterialsCacheEntry")
     yield aws_encryption_sdk.caches.local.CryptoMaterialsCacheEntry
 
 
@@ -210,13 +208,11 @@ def test_put_encryption_materials(patch_add_value_to_cache, patch_try_to_evict_s
         cache_key=sentinel.cache_key,
         encryption_materials=sentinel.encryption_materials,
         plaintext_length=sentinel.plaintext_length,
-        entry_hints=sentinel.entry_hints
+        entry_hints=sentinel.entry_hints,
     )
 
     patch_crypto_cache_entry.assert_called_once_with(
-        cache_key=sentinel.cache_key,
-        value=sentinel.encryption_materials,
-        hints=sentinel.entry_hints
+        cache_key=sentinel.cache_key, value=sentinel.encryption_materials, hints=sentinel.entry_hints
     )
     patch_crypto_cache_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(
         sentinel.plaintext_length
@@ -228,15 +224,9 @@ def test_put_encryption_materials(patch_add_value_to_cache, patch_try_to_evict_s
 def test_put_decryption_materials(patch_add_value_to_cache, patch_try_to_evict_some_entries, patch_crypto_cache_entry):
     cache = build_lcmc()
 
-    cache.put_decryption_materials(
-        cache_key=sentinel.cache_key,
-        decryption_materials=sentinel.decryption_materials
-    )
+    cache.put_decryption_materials(cache_key=sentinel.cache_key, decryption_materials=sentinel.decryption_materials)
 
-    patch_crypto_cache_entry.assert_called_once_with(
-        cache_key=sentinel.cache_key,
-        value=sentinel.decryption_materials
-    )
+    patch_crypto_cache_entry.assert_called_once_with(cache_key=sentinel.cache_key, value=sentinel.decryption_materials)
     patch_try_to_evict_some_entries.assert_called_once_with()
     patch_add_value_to_cache.assert_called_once_with(patch_crypto_cache_entry.return_value)
 
@@ -248,7 +238,7 @@ def test_remove_key_not_found():
     with pytest.raises(CacheKeyError) as excinfo:
         cache.remove(MagicMock(cache_key=sentinel.cache_key))
 
-    excinfo.match(r'Key not found in cache')
+    excinfo.match(r"Key not found in cache")
 
 
 def test_remove_success():
@@ -264,7 +254,7 @@ def test_remove_success():
 
 @pytest.yield_fixture
 def patch_remove(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, 'remove')
+    mocker.patch.object(LocalCryptoMaterialsCache, "remove")
     yield LocalCryptoMaterialsCache.remove
 
 
@@ -275,7 +265,7 @@ def test_get_single_entry_cache_miss(patch_remove):
     with pytest.raises(CacheKeyError) as excinfo:
         cache._get_single_entry(sentinel.cache_key)
 
-    excinfo.match(r'Key not found in cache')
+    excinfo.match(r"Key not found in cache")
     assert not patch_remove.called
 
 
@@ -288,7 +278,7 @@ def test_get_single_entry_cache_hit_invalid(patch_remove):
         cache._get_single_entry(sentinel.cache_key)
 
     patch_remove.assert_called_once_with(mock_entry)
-    excinfo.match(r'Key not found in cache')
+    excinfo.match(r"Key not found in cache")
 
 
 def test_get_single_entry_cache_hit_valid():
@@ -303,17 +293,14 @@ def test_get_single_entry_cache_hit_valid():
 
 @pytest.yield_fixture
 def patch_get_single_entry(mocker):
-    mocker.patch.object(LocalCryptoMaterialsCache, '_get_single_entry')
+    mocker.patch.object(LocalCryptoMaterialsCache, "_get_single_entry")
     yield LocalCryptoMaterialsCache._get_single_entry
 
 
 def test_get_encryption_materials(patch_get_single_entry):
     cache = build_lcmc()
 
-    test = cache.get_encryption_materials(
-        cache_key=sentinel.cache_key,
-        plaintext_length=sentinel.plaintext_length
-    )
+    test = cache.get_encryption_materials(cache_key=sentinel.cache_key, plaintext_length=sentinel.plaintext_length)
 
     patch_get_single_entry.assert_called_once_with(sentinel.cache_key)
     patch_get_single_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(

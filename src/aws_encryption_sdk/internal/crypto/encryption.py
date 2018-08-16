@@ -39,9 +39,7 @@ class Encryptor(object):
         # This is intentionally generic to leave an option for non-Cipher encryptor types in the future.
         self.iv = iv
         self._encryptor = Cipher(
-            algorithm.encryption_algorithm(key),
-            algorithm.encryption_mode(self.iv),
-            backend=default_backend()
+            algorithm.encryption_algorithm(key), algorithm.encryption_mode(self.iv), backend=default_backend()
         ).encryptor()
 
         # associated_data will be authenticated but not encrypted,
@@ -110,9 +108,7 @@ class Decryptor(object):
         # Construct a decryptor object with the given key and a provided IV.
         # This is intentionally generic to leave an option for non-Cipher decryptor types in the future.
         self._decryptor = Cipher(
-            algorithm.encryption_algorithm(key),
-            algorithm.encryption_mode(iv, tag),
-            backend=default_backend()
+            algorithm.encryption_algorithm(key), algorithm.encryption_mode(iv, tag), backend=default_backend()
         ).decryptor()
 
         # Put associated_data back in or the tag will fail to verify when the _decryptor is finalized.

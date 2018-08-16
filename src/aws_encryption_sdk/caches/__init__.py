@@ -14,8 +14,8 @@
 
 .. versionadded:: 1.3.0
 """
-from threading import Lock
 import time
+from threading import Lock
 
 import attr
 from cryptography.hazmat.backends import default_backend
@@ -32,10 +32,7 @@ def _new_cache_key_hasher():
 
     :rtype: cryptography.hazmat.primitives.hashes.Hash
     """
-    return hashes.Hash(
-        hashes.SHA512(),
-        backend=default_backend()
-    )
+    return hashes.Hash(hashes.SHA512(), backend=default_backend())
 
 
 def _partition_name_hash(hasher, partition_name):
@@ -75,19 +72,13 @@ def build_encryption_materials_cache_key(partition, request):
     :rtype: bytes
     """
     if request.algorithm is None:
-        _algorithm_info = b'\x00'
+        _algorithm_info = b"\x00"
     else:
-        _algorithm_info = b'\x01' + request.algorithm.id_as_bytes()
+        _algorithm_info = b"\x01" + request.algorithm.id_as_bytes()
 
     hasher = _new_cache_key_hasher()
-    _partition_hash = _partition_name_hash(
-        hasher=hasher.copy(),
-        partition_name=partition
-    )
-    _ec_hash = _encryption_context_hash(
-        hasher=hasher.copy(),
-        encryption_context=request.encryption_context
-    )
+    _partition_hash = _partition_name_hash(hasher=hasher.copy(), partition_name=partition)
+    _ec_hash = _encryption_context_hash(hasher=hasher.copy(), encryption_context=request.encryption_context)
 
     hasher.update(_partition_hash)
     hasher.update(_algorithm_info)
@@ -110,11 +101,11 @@ def _encrypted_data_keys_hash(hasher, encrypted_data_keys):
         _hasher = hasher.copy()
         _hasher.update(serialized_edk)
         hashed_keys.append(_hasher.finalize())
-    return b''.join(sorted(hashed_keys))
+    return b"".join(sorted(hashed_keys))
 
 
 # 512 bits of 0 for padding between hashes in decryption materials cache ID generation.
-_512_BIT_PAD = b'\x00' * 64
+_512_BIT_PAD = b"\x00" * 64
 
 
 def build_decryption_materials_cache_key(partition, request):
@@ -127,19 +118,10 @@ def build_decryption_materials_cache_key(partition, request):
     :rtype: bytes
     """
     hasher = _new_cache_key_hasher()
-    _partition_hash = _partition_name_hash(
-        hasher=hasher.copy(),
-        partition_name=partition
-    )
+    _partition_hash = _partition_name_hash(hasher=hasher.copy(), partition_name=partition)
     _algorithm_info = request.algorithm.id_as_bytes()
-    _edks_hash = _encrypted_data_keys_hash(
-        hasher=hasher.copy(),
-        encrypted_data_keys=request.encrypted_data_keys
-    )
-    _ec_hash = _encryption_context_hash(
-        hasher=hasher.copy(),
-        encryption_context=request.encryption_context
-    )
+    _edks_hash = _encrypted_data_keys_hash(hasher=hasher.copy(), encrypted_data_keys=request.encrypted_data_keys)
+    _ec_hash = _encryption_context_hash(hasher=hasher.copy(), encryption_context=request.encryption_context)
 
     hasher.update(_partition_hash)
     hasher.update(_algorithm_info)
@@ -156,10 +138,7 @@ class CryptoMaterialsCacheEntryHints(object):
     :param float lifetime: Number of seconds to retain entry in cache (optional)
     """
 
-    lifetime = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(float))
-    )
+    lifetime = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(float)))
 
 
 @attr.s(hash=False)
@@ -176,7 +155,7 @@ class CryptoMaterialsCacheEntry(object):
     value = attr.ib(validator=attr.validators.instance_of((EncryptionMaterials, DecryptionMaterials)))
     hints = attr.ib(
         default=attr.Factory(CryptoMaterialsCacheEntryHints),
-        validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsCacheEntryHints))
+        validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsCacheEntryHints)),
     )
 
     def __attrs_post_init__(self):
@@ -195,8 +174,8 @@ class CryptoMaterialsCacheEntry(object):
         """Disable setting of attributes after __attrs_post_init__ has run.  This provides a bit
         more certainty that usage values have not been modified.
         """
-        if hasattr(self, '_init_completed'):
-            raise NotSupportedError('Attributes may not be set on CryptoMaterialsCacheEntry objects')
+        if hasattr(self, "_init_completed"):
+            raise NotSupportedError("Attributes may not be set on CryptoMaterialsCacheEntry objects")
         return super(CryptoMaterialsCacheEntry, self).__setattr__(name, value)
 
     @property
@@ -223,16 +202,12 @@ class CryptoMaterialsCacheEntry(object):
         :param int bytes_encrypted: Number of bytes encrypted in registered use.
         """
         with self._lock:
+            super(CryptoMaterialsCacheEntry, self).__setattr__("messages_encrypted", self.messages_encrypted + 1)
             super(CryptoMaterialsCacheEntry, self).__setattr__(
-                'messages_encrypted',
-                self.messages_encrypted + 1
-            )
-            super(CryptoMaterialsCacheEntry, self).__setattr__(
-                'bytes_encrypted',
-                self.bytes_encrypted + bytes_encrypted
+                "bytes_encrypted", self.bytes_encrypted + bytes_encrypted
             )
 
     def invalidate(self):
         """Marks a cache entry as invalidated."""
         with self._lock:
-            super(CryptoMaterialsCacheEntry, self).__setattr__('valid', False)
+            super(CryptoMaterialsCacheEntry, self).__setattr__("valid", False)

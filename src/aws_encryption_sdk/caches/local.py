@@ -11,17 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Local, in-memory, LRU, cryptographic materials cache for use with caching cryptographic materials providers."""
-from collections import deque, OrderedDict
 import logging
-from threading import RLock
 import weakref
+from collections import OrderedDict, deque
+from threading import RLock
 
 import attr
 import six
 
 from . import CryptoMaterialsCacheEntry
-from .base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError, NotSupportedError
+from .base import CryptoMaterialsCache
 
 _OPPORTUNISTIC_EVICTION_ROUNDS = 10
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
     def __attrs_post_init__(self):
         """Prepares initial values not handled by attrs."""
         if self.capacity < 1:
-            raise ValueError('LocalCryptoMaterialsCache capacity cannot be less than 1')
+            raise ValueError("LocalCryptoMaterialsCache capacity cannot be less than 1")
         self._cache_lock = RLock()
         self._cache = OrderedDict()  # Maps each cache key to the active entry for that key
         self._lre_deque = deque()  # Tracks references to recently evaluated entries
@@ -55,8 +55,8 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
 
     def __setattr__(self, name, value):
         """Disable setting of capacity after __attrs_post_init__ has run."""
-        if hasattr(self, '_init_completed') and name == 'capacity':
-            raise NotSupportedError('capacity may not be modified on LocalCryptoMaterialsCache instances')
+        if hasattr(self, "_init_completed") and name == "capacity":
+            raise NotSupportedError("capacity may not be modified on LocalCryptoMaterialsCache instances")
         return super(LocalCryptoMaterialsCache, self).__setattr__(name, value)
 
     def _try_to_evict_one_entry(self):
@@ -121,11 +121,7 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
         :type entry_hints: aws_encryption_sdk.caches.CryptoCacheEntryHints
         :rtype: aws_encryption_sdk.caches.CryptoMaterialsCacheEntry
         """
-        entry = CryptoMaterialsCacheEntry(
-            cache_key=cache_key,
-            value=encryption_materials,
-            hints=entry_hints
-        )
+        entry = CryptoMaterialsCacheEntry(cache_key=cache_key, value=encryption_materials, hints=entry_hints)
         entry._update_with_message_bytes_encrypted(plaintext_length)  # pylint: disable=protected-access
         with self._cache_lock:
             self._try_to_evict_some_entries()
@@ -140,10 +136,7 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :rtype: aws_encryption_sdk.caches.CryptoMaterialsCacheEntry
         """
-        entry = CryptoMaterialsCacheEntry(
-            cache_key=cache_key,
-            value=decryption_materials
-        )
+        entry = CryptoMaterialsCacheEntry(cache_key=cache_key, value=decryption_materials)
         with self._cache_lock:
             self._try_to_evict_some_entries()
             self._add_value_to_cache(entry)
@@ -165,7 +158,7 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
                 # efficient to simply run through a few eviction attempts to clear out
                 # dead references.
             except KeyError:
-                raise CacheKeyError('Key not found in cache')
+                raise CacheKeyError("Key not found in cache")
             finally:
                 self._try_to_evict_some_entries()
 
@@ -180,11 +173,11 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
             try:
                 cache_entry = self._cache[cache_key]
             except KeyError:
-                raise CacheKeyError('Key not found in cache')
+                raise CacheKeyError("Key not found in cache")
 
             if not cache_entry.valid:
                 self.remove(cache_entry)
-                raise CacheKeyError('Key not found in cache')
+                raise CacheKeyError("Key not found in cache")
 
             return cache_entry
 
@@ -197,7 +190,7 @@ class LocalCryptoMaterialsCache(CryptoMaterialsCache):
         :rtype: aws_encryption_sdk.caches.CryptoMaterialsCacheEntry
         :raises CacheKeyError: if no values found in cache for cache_key
         """
-        _LOGGER.debug('Looking in cache for encryption materials to encrypt %d bytes.', plaintext_length)
+        _LOGGER.debug("Looking in cache for encryption materials to encrypt %d bytes.", plaintext_length)
         with self._cache_lock:
             entry = self._get_single_entry(cache_key)
             entry._update_with_message_bytes_encrypted(plaintext_length)  # pylint: disable=protected-access

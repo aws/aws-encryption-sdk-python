@@ -11,17 +11,16 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers.default"""
-from mock import MagicMock, sentinel
 import pytest
+from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from aws_encryption_sdk.exceptions import MasterKeyProviderError,\
-    SerializationError
+import aws_encryption_sdk.materials_managers.default
+from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
-import aws_encryption_sdk.materials_managers.default
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey
 
@@ -30,10 +29,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def patch_for_dcmm_encrypt(mocker):
-    mocker.patch.object(DefaultCryptoMaterialsManager, '_generate_signing_key_and_update_encryption_context')
-    mock_signing_key = b'ex_signing_key'
+    mocker.patch.object(DefaultCryptoMaterialsManager, "_generate_signing_key_and_update_encryption_context")
+    mock_signing_key = b"ex_signing_key"
     DefaultCryptoMaterialsManager._generate_signing_key_and_update_encryption_context.return_value = mock_signing_key
-    mocker.patch.object(aws_encryption_sdk.materials_managers.default, 'prepare_data_keys')
+    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "prepare_data_keys")
     mock_data_encryption_key = MagicMock(__class__=DataKey)
     mock_encrypted_data_keys = set([mock_data_encryption_key])
     result_pair = mock_data_encryption_key, mock_encrypted_data_keys
@@ -43,8 +42,8 @@ def patch_for_dcmm_encrypt(mocker):
 
 @pytest.fixture
 def patch_for_dcmm_decrypt(mocker):
-    mocker.patch.object(DefaultCryptoMaterialsManager, '_load_verification_key_from_encryption_context')
-    mock_verification_key = b'ex_verification_key'
+    mocker.patch.object(DefaultCryptoMaterialsManager, "_load_verification_key_from_encryption_context")
+    mock_verification_key = b"ex_verification_key"
     DefaultCryptoMaterialsManager._load_verification_key_from_encryption_context.return_value = mock_verification_key
     yield mock_verification_key
 
@@ -54,7 +53,7 @@ def build_cmm():
     mock_mkp.decrypt_data_key_from_list.return_value = MagicMock(__class__=DataKey)
     mock_mkp.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
-        set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b])
+        set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b]),
     )
     return DefaultCryptoMaterialsManager(master_key_provider=mock_mkp)
 
@@ -73,27 +72,25 @@ def test_generate_signing_key_and_update_encryption_context_no_signer():
     cmm = build_cmm()
 
     test = cmm._generate_signing_key_and_update_encryption_context(
-        algorithm=MagicMock(signing_algorithm_info=None),
-        encryption_context={}
+        algorithm=MagicMock(signing_algorithm_info=None), encryption_context={}
     )
 
     assert test is None
 
 
 def test_generate_signing_key_and_update_encryption_context(mocker):
-    mocker.patch.object(aws_encryption_sdk.materials_managers.default, 'Signer')
+    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "Signer")
     mock_signer = MagicMock()
     aws_encryption_sdk.materials_managers.default.Signer.return_value = mock_signer
-    mocker.patch.object(aws_encryption_sdk.materials_managers.default, 'generate_ecc_signing_key')
+    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "generate_ecc_signing_key")
     cmm = build_cmm()
     mock_algorithm = MagicMock(signing_algorithm_info=sentinel.eccurve)
-    encryption_context = {'a': 'b', 'c': 'd'}
+    encryption_context = {"a": "b", "c": "d"}
     check_encryption_context = encryption_context.copy()
     check_encryption_context[ENCODED_SIGNER_KEY] = mock_signer.encoded_public_key.return_value
 
     test = cmm._generate_signing_key_and_update_encryption_context(
-        algorithm=mock_algorithm,
-        encryption_context=encryption_context
+        algorithm=mock_algorithm, encryption_context=encryption_context
     )
 
     aws_encryption_sdk.materials_managers.default.generate_ecc_signing_key.assert_called_once_with(
@@ -101,7 +98,7 @@ def test_generate_signing_key_and_update_encryption_context(mocker):
     )
     aws_encryption_sdk.materials_managers.default.Signer.assert_called_once_with(
         algorithm=mock_algorithm,
-        key=aws_encryption_sdk.materials_managers.default.generate_ecc_signing_key.return_value
+        key=aws_encryption_sdk.materials_managers.default.generate_ecc_signing_key.return_value,
     )
     assert encryption_context[ENCODED_SIGNER_KEY] is mock_signer.encoded_public_key.return_value
     assert test is mock_signer.key_bytes.return_value
@@ -110,7 +107,7 @@ def test_generate_signing_key_and_update_encryption_context(mocker):
 
 
 def test_get_encryption_materials(patch_for_dcmm_encrypt):
-    encryption_context = {'a': 'b'}
+    encryption_context = {"a": "b"}
     mock_request = MagicMock(algorithm=None, encryption_context=encryption_context)
     cmm = build_cmm()
 
@@ -119,14 +116,14 @@ def test_get_encryption_materials(patch_for_dcmm_encrypt):
     cmm.master_key_provider.master_keys_for_encryption.assert_called_once_with(
         encryption_context=encryption_context,
         plaintext_rostream=mock_request.plaintext_rostream,
-        plaintext_length=mock_request.plaintext_length
+        plaintext_length=mock_request.plaintext_length,
     )
     cmm._generate_signing_key_and_update_encryption_context.assert_called_once_with(cmm.algorithm, encryption_context)
     aws_encryption_sdk.materials_managers.default.prepare_data_keys.assert_called_once_with(
         primary_master_key=cmm.master_key_provider.master_keys_for_encryption.return_value[0],
         master_keys=cmm.master_key_provider.master_keys_for_encryption.return_value[1],
         algorithm=cmm.algorithm,
-        encryption_context=encryption_context
+        encryption_context=encryption_context,
     )
     assert isinstance(test, EncryptionMaterials)
     assert test.algorithm is cmm.algorithm
@@ -148,15 +145,12 @@ def test_get_encryption_materials_override_algorithm(patch_for_dcmm_encrypt):
 def test_get_encryption_materials_no_mks(patch_for_dcmm_encrypt):
     mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
     cmm = build_cmm()
-    cmm.master_key_provider.master_keys_for_encryption.return_value = (
-        None,
-        set([])
-    )
+    cmm.master_key_provider.master_keys_for_encryption.return_value = (None, set([]))
 
     with pytest.raises(MasterKeyProviderError) as excinfo:
         cmm.get_encryption_materials(request=mock_request)
 
-    excinfo.match(r'No Master Keys available from Master Key Provider')
+    excinfo.match(r"No Master Keys available from Master Key Provider")
 
 
 def test_get_encryption_materials_primary_mk_not_in_mks(patch_for_dcmm_encrypt):
@@ -164,21 +158,20 @@ def test_get_encryption_materials_primary_mk_not_in_mks(patch_for_dcmm_encrypt):
     cmm = build_cmm()
     cmm.master_key_provider.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
-        set([sentinel.mk_a, sentinel.mk_b])
+        set([sentinel.mk_a, sentinel.mk_b]),
     )
 
     with pytest.raises(MasterKeyProviderError) as excinfo:
         cmm.get_encryption_materials(request=mock_request)
 
-    excinfo.match(r'Primary Master Key not in provided Master Keys')
+    excinfo.match(r"Primary Master Key not in provided Master Keys")
 
 
 def test_load_verification_key_from_encryption_context_key_not_needed_and_not_found():
     cmm = build_cmm()
 
     test = cmm._load_verification_key_from_encryption_context(
-        algorithm=MagicMock(signing_algorithm_info=None),
-        encryption_context={}
+        algorithm=MagicMock(signing_algorithm_info=None), encryption_context={}
     )
 
     assert test is None
@@ -189,11 +182,10 @@ def test_load_verification_key_from_encryption_context_key_is_needed_and_not_fou
 
     with pytest.raises(SerializationError) as excinfo:
         cmm._load_verification_key_from_encryption_context(
-            algorithm=MagicMock(signing_algorithm_info=sentinel.not_none),
-            encryption_context={}
+            algorithm=MagicMock(signing_algorithm_info=sentinel.not_none), encryption_context={}
         )
 
-    excinfo.match(r'No signature verification key found in header for signed algorithm.')
+    excinfo.match(r"No signature verification key found in header for signed algorithm.")
 
 
 def test_load_verification_key_from_encryption_context_key_found_but_not_needed():
@@ -202,28 +194,26 @@ def test_load_verification_key_from_encryption_context_key_found_but_not_needed(
     with pytest.raises(SerializationError) as excinfo:
         cmm._load_verification_key_from_encryption_context(
             algorithm=MagicMock(signing_algorithm_info=None),
-            encryption_context={ENCODED_SIGNER_KEY: 'something that exists'}
+            encryption_context={ENCODED_SIGNER_KEY: "something that exists"},
         )
 
-    excinfo.match(r'Signature verification key found in header for non-signed algorithm.')
+    excinfo.match(r"Signature verification key found in header for non-signed algorithm.")
 
 
 def test_load_verification_key_from_encryption_context_key_is_needed_and_is_found(mocker):
     mock_verifier = MagicMock()
-    mocker.patch.object(aws_encryption_sdk.materials_managers.default, 'Verifier')
+    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "Verifier")
     aws_encryption_sdk.materials_managers.default.Verifier.from_encoded_point.return_value = mock_verifier
     encryption_context = {ENCODED_SIGNER_KEY: sentinel.encoded_verification_key}
     mock_algorithm = MagicMock(signing_algorithm_info=sentinel.not_none)
     cmm = build_cmm()
 
     test = cmm._load_verification_key_from_encryption_context(
-        algorithm=mock_algorithm,
-        encryption_context=encryption_context
+        algorithm=mock_algorithm, encryption_context=encryption_context
     )
 
     aws_encryption_sdk.materials_managers.default.Verifier.from_encoded_point.assert_called_once_with(
-        algorithm=mock_algorithm,
-        encoded_point=sentinel.encoded_verification_key
+        algorithm=mock_algorithm, encoded_point=sentinel.encoded_verification_key
     )
     assert test is mock_verifier.key_bytes.return_value
 
@@ -237,11 +227,10 @@ def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
     cmm.master_key_provider.decrypt_data_key_from_list.assert_called_once_with(
         encrypted_data_keys=mock_request.encrypted_data_keys,
         algorithm=mock_request.algorithm,
-        encryption_context=mock_request.encryption_context
+        encryption_context=mock_request.encryption_context,
     )
     cmm._load_verification_key_from_encryption_context.assert_called_once_with(
-        algorithm=mock_request.algorithm,
-        encryption_context=mock_request.encryption_context
+        algorithm=mock_request.algorithm, encryption_context=mock_request.encryption_context
     )
     assert test.data_key is cmm.master_key_provider.decrypt_data_key_from_list.return_value
     assert test.verification_key == patch_for_dcmm_decrypt

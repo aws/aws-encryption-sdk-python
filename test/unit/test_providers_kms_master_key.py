@@ -14,65 +14,51 @@
 import unittest
 
 import botocore.client
-from botocore.exceptions import ClientError
-from mock import MagicMock, patch, sentinel
 import pytest
 import six
+from botocore.exceptions import ClientError
+from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
+
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 class TestKMSMasterKey(unittest.TestCase):
-
     def setUp(self):
         self.mock_client = MagicMock()
         self.mock_client.__class__ = botocore.client.BaseClient
         self.mock_client.generate_data_key.return_value = {
-            'Plaintext': VALUES['data_key'],
-            'CiphertextBlob': VALUES['encrypted_data_key'],
-            'KeyId': VALUES['arn']
+            "Plaintext": VALUES["data_key"],
+            "CiphertextBlob": VALUES["encrypted_data_key"],
+            "KeyId": VALUES["arn"],
         }
-        self.mock_client.encrypt.return_value = {
-            'CiphertextBlob': VALUES['encrypted_data_key'],
-            'KeyId': VALUES['arn']
-        }
-        self.mock_client.decrypt.return_value = {
-            'Plaintext': VALUES['data_key'],
-            'KeyId': VALUES['arn']
-        }
+        self.mock_client.encrypt.return_value = {"CiphertextBlob": VALUES["encrypted_data_key"], "KeyId": VALUES["arn"]}
+        self.mock_client.decrypt.return_value = {"Plaintext": VALUES["data_key"], "KeyId": VALUES["arn"]}
         self.mock_algorithm = MagicMock()
         self.mock_algorithm.__class__ = Algorithm
         self.mock_algorithm.data_key_len = sentinel.data_key_len
         self.mock_algorithm.kdf_input_len = sentinel.kdf_input_len
         self.mock_data_key = MagicMock()
-        self.mock_data_key.data_key = VALUES['data_key']
+        self.mock_data_key.data_key = VALUES["data_key"]
         self.mock_encrypted_data_key = MagicMock()
-        self.mock_encrypted_data_key.encrypted_data_key = VALUES['encrypted_data_key']
+        self.mock_encrypted_data_key.encrypted_data_key = VALUES["encrypted_data_key"]
 
-        self.mock_data_key_len_check_patcher = patch('aws_encryption_sdk.internal.utils.source_data_key_length_check')
+        self.mock_data_key_len_check_patcher = patch("aws_encryption_sdk.internal.utils.source_data_key_length_check")
         self.mock_data_key_len_check = self.mock_data_key_len_check_patcher.start()
 
         self.mock_grant_tokens = (sentinel.grant_token_1, sentinel.grant_token_2)
-        self.mock_kms_mkc_1 = KMSMasterKeyConfig(
-            key_id=VALUES['arn'],
-            client=self.mock_client
-        )
+        self.mock_kms_mkc_1 = KMSMasterKeyConfig(key_id=VALUES["arn"], client=self.mock_client)
         self.mock_kms_mkc_2 = KMSMasterKeyConfig(
-            key_id=VALUES['arn'],
-            client=self.mock_client,
-            grant_tokens=self.mock_grant_tokens
+            key_id=VALUES["arn"], client=self.mock_client, grant_tokens=self.mock_grant_tokens
         )
-        self.mock_kms_mkc_3 = KMSMasterKeyConfig(
-            key_id='ex_key_info',
-            client=self.mock_client
-        )
+        self.mock_kms_mkc_3 = KMSMasterKeyConfig(key_id="ex_key_info", client=self.mock_client)
 
     def test_parent(self):
         assert issubclass(KMSMasterKey, MasterKey)
@@ -81,130 +67,102 @@ class TestKMSMasterKey(unittest.TestCase):
         self.mock_data_key_len_check_patcher.stop()
 
     def test_config_bare(self):
-        test = KMSMasterKeyConfig(
-            key_id=VALUES['arn'],
-            client=self.mock_client
-        )
+        test = KMSMasterKeyConfig(key_id=VALUES["arn"], client=self.mock_client)
         assert test.client is self.mock_client
         assert test.grant_tokens == ()
 
     def test_config_grant_tokens(self):
-        test = KMSMasterKeyConfig(
-            key_id=VALUES['arn'],
-            client=self.mock_client,
-            grant_tokens=self.mock_grant_tokens
-        )
+        test = KMSMasterKeyConfig(key_id=VALUES["arn"], client=self.mock_client, grant_tokens=self.mock_grant_tokens)
         assert test.grant_tokens is self.mock_grant_tokens
 
     def test_init(self):
         self.mock_client.meta.config.user_agent_extra = sentinel.user_agent_extra
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
-        assert test._key_id == VALUES['arn'].decode('utf-8')
+        assert test._key_id == VALUES["arn"].decode("utf-8")
 
     def test_generate_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         generated_key = test._generate_data_key(self.mock_algorithm)
         self.mock_client.generate_data_key.assert_called_once_with(
-            KeyId='ex_key_info',
-            NumberOfBytes=sentinel.kdf_input_len
+            KeyId="ex_key_info", NumberOfBytes=sentinel.kdf_input_len
         )
         assert generated_key == DataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=test.provider_id,
-                key_info=VALUES['arn']
-            ),
-            data_key=VALUES['data_key'],
-            encrypted_data_key=VALUES['encrypted_data_key']
+            key_provider=MasterKeyInfo(provider_id=test.provider_id, key_info=VALUES["arn"]),
+            data_key=VALUES["data_key"],
+            encrypted_data_key=VALUES["encrypted_data_key"],
         )
 
     def test_generate_data_key_with_encryption_context(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
-        test._generate_data_key(self.mock_algorithm, VALUES['encryption_context'])
+        test._generate_data_key(self.mock_algorithm, VALUES["encryption_context"])
         self.mock_client.generate_data_key.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
+            KeyId=VALUES["arn_str"],
             NumberOfBytes=sentinel.kdf_input_len,
-            EncryptionContext=VALUES['encryption_context']
+            EncryptionContext=VALUES["encryption_context"],
         )
 
     def test_generate_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
         test._generate_data_key(self.mock_algorithm)
         self.mock_client.generate_data_key.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
-            NumberOfBytes=sentinel.kdf_input_len,
-            GrantTokens=self.mock_grant_tokens
+            KeyId=VALUES["arn_str"], NumberOfBytes=sentinel.kdf_input_len, GrantTokens=self.mock_grant_tokens
         )
 
     def test_generate_data_key_unsuccessful_clienterror(self):
-        self.mock_client.generate_data_key.side_effect = ClientError({'Error': {}}, 'This is an error!')
+        self.mock_client.generate_data_key.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, GenerateKeyError, 'Master Key .* unable to generate data key'):
+        with six.assertRaisesRegex(self, GenerateKeyError, "Master Key .* unable to generate data key"):
             test._generate_data_key(self.mock_algorithm)
 
     def test_generate_data_key_unsuccessful_keyerror(self):
         self.mock_client.generate_data_key.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, GenerateKeyError, 'Master Key .* unable to generate data key'):
+        with six.assertRaisesRegex(self, GenerateKeyError, "Master Key .* unable to generate data key"):
             test._generate_data_key(self.mock_algorithm)
 
     def test_encrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         encrypted_key = test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
-        self.mock_client.encrypt.assert_called_once_with(
-            KeyId='ex_key_info',
-            Plaintext=VALUES['data_key']
-        )
+        self.mock_client.encrypt.assert_called_once_with(KeyId="ex_key_info", Plaintext=VALUES["data_key"])
         assert encrypted_key == EncryptedDataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=test.provider_id,
-                key_info=VALUES['arn']
-            ),
-            encrypted_data_key=VALUES['encrypted_data_key']
+            key_provider=MasterKeyInfo(provider_id=test.provider_id, key_info=VALUES["arn"]),
+            encrypted_data_key=VALUES["encrypted_data_key"],
         )
 
     def test_encrypt_data_key_with_encryption_context(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
-        test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, VALUES['encryption_context'])
+        test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, VALUES["encryption_context"])
         self.mock_client.encrypt.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
-            Plaintext=VALUES['data_key'],
-            EncryptionContext=VALUES['encryption_context']
+            KeyId=VALUES["arn_str"], Plaintext=VALUES["data_key"], EncryptionContext=VALUES["encryption_context"]
         )
 
     def test_encrypt_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
         test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
         self.mock_client.encrypt.assert_called_once_with(
-            KeyId=VALUES['arn_str'],
-            Plaintext=VALUES['data_key'],
-            GrantTokens=self.mock_grant_tokens
+            KeyId=VALUES["arn_str"], Plaintext=VALUES["data_key"], GrantTokens=self.mock_grant_tokens
         )
 
     def test_encrypt_data_key_unsuccessful_clienterror(self):
-        self.mock_client.encrypt.side_effect = ClientError({'Error': {}}, 'This is an error!')
+        self.mock_client.encrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, EncryptKeyError, 'Master Key .* unable to encrypt data key'):
+        with six.assertRaisesRegex(self, EncryptKeyError, "Master Key .* unable to encrypt data key"):
             test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
 
     def test_encrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.encrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, EncryptKeyError, 'Master Key .* unable to encrypt data key'):
+        with six.assertRaisesRegex(self, EncryptKeyError, "Master Key .* unable to encrypt data key"):
             test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
 
     def test_decrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
         decrypted_key = test._decrypt_data_key(
-            encrypted_data_key=self.mock_encrypted_data_key,
-            algorithm=sentinel.algorithm
+            encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm
         )
-        self.mock_client.decrypt.assert_called_once_with(
-            CiphertextBlob=VALUES['encrypted_data_key']
-        )
+        self.mock_client.decrypt.assert_called_once_with(CiphertextBlob=VALUES["encrypted_data_key"])
         assert decrypted_key == DataKey(
-            key_provider=test.key_provider,
-            data_key=VALUES['data_key'],
-            encrypted_data_key=VALUES['encrypted_data_key']
+            key_provider=test.key_provider, data_key=VALUES["data_key"], encrypted_data_key=VALUES["encrypted_data_key"]
         )
 
     def test_decrypt_data_key_with_encryption_context(self):
@@ -212,38 +170,27 @@ class TestKMSMasterKey(unittest.TestCase):
         test._decrypt_data_key(
             encrypted_data_key=self.mock_encrypted_data_key,
             algorithm=sentinel.algorithm,
-            encryption_context=VALUES['encryption_context']
+            encryption_context=VALUES["encryption_context"],
         )
         self.mock_client.decrypt.assert_called_once_with(
-            CiphertextBlob=VALUES['encrypted_data_key'],
-            EncryptionContext=VALUES['encryption_context']
+            CiphertextBlob=VALUES["encrypted_data_key"], EncryptionContext=VALUES["encryption_context"]
         )
 
     def test_decrypt_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
-        test._decrypt_data_key(
-            encrypted_data_key=self.mock_encrypted_data_key,
-            algorithm=sentinel.algorithm
-        )
+        test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
         self.mock_client.decrypt.assert_called_once_with(
-            CiphertextBlob=VALUES['encrypted_data_key'],
-            GrantTokens=self.mock_grant_tokens
+            CiphertextBlob=VALUES["encrypted_data_key"], GrantTokens=self.mock_grant_tokens
         )
 
     def test_decrypt_data_key_unsuccessful_clienterror(self):
-        self.mock_client.decrypt.side_effect = ClientError({'Error': {}}, 'This is an error!')
+        self.mock_client.decrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, DecryptKeyError, 'Master Key .* unable to decrypt data key'):
-            test._decrypt_data_key(
-                encrypted_data_key=self.mock_encrypted_data_key,
-                algorithm=sentinel.algorithm
-            )
+        with six.assertRaisesRegex(self, DecryptKeyError, "Master Key .* unable to decrypt data key"):
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
 
     def test_decrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.decrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, DecryptKeyError, 'Master Key .* unable to decrypt data key'):
-            test._decrypt_data_key(
-                encrypted_data_key=self.mock_encrypted_data_key,
-                algorithm=sentinel.algorithm
-            )
+        with six.assertRaisesRegex(self, DecryptKeyError, "Master Key .* unable to decrypt data key"):
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)

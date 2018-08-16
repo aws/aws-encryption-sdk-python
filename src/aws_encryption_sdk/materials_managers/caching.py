@@ -17,18 +17,19 @@ import uuid
 import attr
 import six
 
-
 from . import EncryptionMaterialsRequest
-from .base import CryptoMaterialsManager
-from .default import DefaultCryptoMaterialsManager
 from ..caches import (
-    build_decryption_materials_cache_key, build_encryption_materials_cache_key, CryptoMaterialsCacheEntryHints
+    CryptoMaterialsCacheEntryHints,
+    build_decryption_materials_cache_key,
+    build_encryption_materials_cache_key,
 )
 from ..caches.base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError
 from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
+from .base import CryptoMaterialsManager
+from .default import DefaultCryptoMaterialsManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,44 +81,36 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
     cache = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsCache))
     max_age = attr.ib(validator=attr.validators.instance_of(float))
     max_messages_encrypted = attr.ib(
-        default=MAX_MESSAGES_PER_KEY,
-        validator=attr.validators.instance_of(six.integer_types)
+        default=MAX_MESSAGES_PER_KEY, validator=attr.validators.instance_of(six.integer_types)
     )
-    max_bytes_encrypted = attr.ib(
-        default=MAX_BYTES_PER_KEY,
-        validator=attr.validators.instance_of(six.integer_types)
-    )
+    max_bytes_encrypted = attr.ib(default=MAX_BYTES_PER_KEY, validator=attr.validators.instance_of(six.integer_types))
     partition_name = attr.ib(
-        default=None,
-        converter=to_bytes,
-        validator=attr.validators.optional(attr.validators.instance_of(bytes))
+        default=None, converter=to_bytes, validator=attr.validators.optional(attr.validators.instance_of(bytes))
     )
     master_key_provider = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
     backing_materials_manager = attr.ib(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
     )
 
     def __attrs_post_init__(self):
         """Applies post-processing which cannot be handled by attrs."""
         if self.max_messages_encrypted < 1:
-            raise ValueError('max_messages_encrypted cannot be less than 1')
+            raise ValueError("max_messages_encrypted cannot be less than 1")
 
         if self.max_bytes_encrypted < 0:
-            raise ValueError('max_bytes_encrypted cannot be less than 0')
+            raise ValueError("max_bytes_encrypted cannot be less than 0")
 
         if self.max_messages_encrypted > MAX_MESSAGES_PER_KEY:
-            raise ValueError('max_messages_encrypted cannot exceed {}'.format(MAX_MESSAGES_PER_KEY))
+            raise ValueError("max_messages_encrypted cannot exceed {}".format(MAX_MESSAGES_PER_KEY))
 
         if self.max_bytes_encrypted > MAX_BYTES_PER_KEY:
-            raise ValueError('max_bytes_encrypted cannot exceed {}'.format(MAX_BYTES_PER_KEY))
+            raise ValueError("max_bytes_encrypted cannot exceed {}".format(MAX_BYTES_PER_KEY))
 
         if self.backing_materials_manager is None:
             if self.master_key_provider is None:
-                raise TypeError('Either backing_materials_manager or master_key_provider must be defined')
+                raise TypeError("Either backing_materials_manager or master_key_provider must be defined")
             self.backing_materials_manager = DefaultCryptoMaterialsManager(self.master_key_provider)
 
         if self.partition_name is None:
@@ -171,11 +164,11 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         :rtype: bool
         """
         if request.plaintext_length is None:
-            _LOGGER.debug('Encryption materials request not cached because plaintext length is unknown')
+            _LOGGER.debug("Encryption materials request not cached because plaintext length is unknown")
             return False
 
         if request.algorithm is not None and not request.algorithm.safe_to_cache():
-            _LOGGER.debug('Encryption materials request not cached because algorithm suite is not safe to cache')
+            _LOGGER.debug("Encryption materials request not cached because algorithm suite is not safe to cache")
             return False
 
         return True
@@ -197,15 +190,14 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         inner_request = EncryptionMaterialsRequest(
             encryption_context=request.encryption_context,
             frame_length=request.frame_length,
-            algorithm=request.algorithm
+            algorithm=request.algorithm,
         )
         cache_key = build_encryption_materials_cache_key(partition=self.partition_name, request=inner_request)
 
         # Attempt to retrieve from cache
         try:
             cache_entry = self.cache.get_encryption_materials(
-                cache_key=cache_key,
-                plaintext_length=request.plaintext_length
+                cache_key=cache_key, plaintext_length=request.plaintext_length
             )
         except CacheKeyError:
             pass
@@ -226,7 +218,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
             cache_key=cache_key,
             encryption_materials=new_result,
             plaintext_length=request.plaintext_length,
-            entry_hints=CryptoMaterialsCacheEntryHints(lifetime=self.max_age)
+            entry_hints=CryptoMaterialsCacheEntryHints(lifetime=self.max_age),
         )
         return new_result
 
@@ -255,8 +247,5 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         new_result = self.backing_materials_manager.decrypt_materials(request)
 
         # Add results into cache
-        self.cache.put_decryption_materials(
-            cache_key=cache_key,
-            decryption_materials=new_result
-        )
+        self.cache.put_decryption_materials(cache_key=cache_key, decryption_materials=new_result)
         return new_result

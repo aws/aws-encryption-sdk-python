@@ -13,10 +13,13 @@
 """Unit test suite for the Strings examples in the AWS-hosted documentation."""
 import os
 import sys
-sys.path.extend([  # noqa
-    os.sep.join([os.path.dirname(__file__), '..', '..', 'test', 'integration']),
-    os.sep.join([os.path.dirname(__file__), '..', 'src'])
-])
+
+sys.path.extend(
+    [  # noqa
+        os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"]),
+        os.sep.join([os.path.dirname(__file__), "..", "src"]),
+    ]
+)
 
 import botocore.session
 import pytest
@@ -24,14 +27,11 @@ import pytest
 from basic_encryption import cycle_string
 from integration_test_utils import get_cmk_arn
 
+
 pytestmark = [pytest.mark.examples]
 
 
 def test_cycle_string():
     plaintext = os.urandom(1024)
     cmk_arn = get_cmk_arn()
-    cycle_string(
-        key_arn=cmk_arn,
-        source_plaintext=plaintext,
-        botocore_session=botocore.session.Session()
-    )
+    cycle_string(key_arn=cmk_arn, source_plaintext=plaintext, botocore_session=botocore.session.Session())

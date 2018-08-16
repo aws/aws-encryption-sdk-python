@@ -22,14 +22,14 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
     :param int cache_capacity: Maximum number of entries to retain in cache at once
     """
     # Data to be encrypted
-    my_data = 'My plaintext data'
+    my_data = "My plaintext data"
 
     # Security thresholds
     #   Max messages (or max bytes per) data key are optional
     MAX_ENTRY_MESSAGES = 100
 
     # Create an encryption context.
-    encryption_context = {'purpose': 'test'}
+    encryption_context = {"purpose": "test"}
 
     # Create a master key provider for the KMS master key
     key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[kms_cmk_arn])
@@ -42,15 +42,13 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
         master_key_provider=key_provider,
         cache=cache,
         max_age=max_age_in_cache,
-        max_messages_encrypted=MAX_ENTRY_MESSAGES
+        max_messages_encrypted=MAX_ENTRY_MESSAGES,
     )
 
     # When the call to encryptData specifies a caching CMM,
     # the encryption operation uses the data key cache
     encrypted_message, _header = aws_encryption_sdk.encrypt(
-        source=my_data,
-        materials_manager=caching_cmm,
-        encryption_context=encryption_context
+        source=my_data, materials_manager=caching_cmm, encryption_context=encryption_context
     )
 
     return encrypted_message
