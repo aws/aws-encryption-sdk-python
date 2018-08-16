@@ -34,6 +34,22 @@ matrix:
       env: TOXENV=py36-accept
     - python: 3.6
       env: TOXENV=py36-examples
+    - python: 3.7
+      env: TOXENV=py37-local
+      dist: xenial
+      sudo: true
+    - python: 3.7
+      env: TOXENV=py37-integ
+      dist: xenial
+      sudo: true
+    - python: 3.7
+      env: TOXENV=py37-accept
+      dist: xenial
+      sudo: true
+    - python: 3.7
+      env: TOXENV=py37-examples
+      dist: xenial
+      sudo: true
     - python: 3.6
       env: TOXENV=nocmk
     - python: 3.6
