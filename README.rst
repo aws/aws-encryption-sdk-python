@@ -6,6 +6,10 @@ aws-encryption-sdk
    :target: https://pypi.python.org/pypi/aws-encryption-sdk
    :alt: Latest Version
 
+.. image:: https://img.shields.io/pypi/pyversions/aws-encryption-sdk-cli.svg
+   :target: https://pypi.python.org/pypi/aws-encryption-sdk
+   :alt: Supported Python Versions
+
 .. image:: https://img.shields.io/badge/code_style-black-000000.svg
    :target: https://github.com/ambv/black
    :alt: Code style: black
