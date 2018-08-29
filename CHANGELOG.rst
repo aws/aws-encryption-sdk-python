@@ -2,6 +2,14 @@
 Changelog
 *********
 
+1.3.6 -- 2018-08-29
+===================
+
+Bugfixes
+--------
+* :class:`StreamEncryptor` and :class:`StreamDecryptor` should always report as readable if they are open.
+  `#73 <https://github.com/aws/aws-encryption-sdk-python/issues/73>`_
+
 1.3.5 -- 2018-08-01
 ===================
 * Move the ``aws-encryption-sdk-python`` repository from ``awslabs`` to ``aws``.
@@ -18,7 +26,7 @@ Maintenance
 -----------
 * New minimum pytest version 3.3.1 to avoid bugs in 3.3.0
   `#32 <https://github.com/aws/aws-encryption-sdk-python/issues/32>`_
-* New minimum attrs version 17.4.0 to allow use of `converter` rather than `convert`
+* New minimum attrs version 17.4.0 to allow use of ``converter`` rather than ``convert``
   `#39 <https://github.com/aws/aws-encryption-sdk-python/issues/39>`_
 * Algorithm Suites are modeled as collections of sub-suites now
   `#36 <https://github.com/aws/aws-encryption-sdk-python/pull/36>`_

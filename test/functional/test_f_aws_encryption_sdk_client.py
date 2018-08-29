@@ -574,3 +574,24 @@ def test_decrypt_oneshot_no_seek_input():
     ciphertext_no_seek = NoSeekBytesIO(ciphertext)
     decrypted, _header = aws_encryption_sdk.decrypt(source=ciphertext_no_seek, key_provider=key_provider)
     assert decrypted == VALUES["plaintext_128"]
+
+
+def test_stream_encryptor_readable():
+    """Verify that open StreamEncryptor instances report as readable."""
+    key_provider = fake_kms_key_provider()
+    plaintext = io.BytesIO(VALUES["plaintext_128"])
+    with aws_encryption_sdk.StreamEncryptor(source=plaintext, key_provider=key_provider) as handler:
+        assert handler.readable()
+        handler.read()
+    assert not handler.readable()
+
+
+def test_stream_decryptor_readable():
+    """Verify that open StreamEncryptor instances report as readable."""
+    key_provider = fake_kms_key_provider()
+    plaintext = io.BytesIO(VALUES["plaintext_128"])
+    ciphertext, _header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider)
+    with aws_encryption_sdk.StreamDecryptor(source=ciphertext, key_provider=key_provider) as handler:
+        assert handler.readable()
+        handler.read()
+    assert not handler.readable()

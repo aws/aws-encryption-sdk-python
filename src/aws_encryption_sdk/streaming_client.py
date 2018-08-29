@@ -193,6 +193,15 @@ class _EncryptionStream(io.IOBase):
             _LOGGER.exception("Error on closing")
         return False
 
+    def readable(self):
+        # () -> bool
+        """Return `True` if the stream can be read from.
+
+        :rtype: bool
+        """
+        # Open streams are currently always readable.
+        return not self.closed
+
     def read(self, b=None):
         """Returns either the requested number of bytes or the entire stream.
 
