@@ -2,13 +2,15 @@
 Changelog
 *********
 
-1.3.6 -- 2018-08-29
+1.3.6 -- 2018-08-xx
 ===================
 
 Bugfixes
 --------
 * :class:`StreamEncryptor` and :class:`StreamDecryptor` should always report as readable if they are open.
   `#73 <https://github.com/aws/aws-encryption-sdk-python/issues/73>`_
+* Allow duck-typing of source streams.
+  `#75 <https://github.com/aws/aws-encryption-sdk-python/issues/75>`_
 
 1.3.5 -- 2018-08-01
 ===================
