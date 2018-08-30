@@ -127,24 +127,17 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
     return data_encryption_key, encrypted_data_keys
 
 
-try:
-    _FILE_TYPE = file  # Python 2
-except NameError:
-    _FILE_TYPE = io.IOBase  # Python 3 pylint: disable=invalid-name
-
-
 def prep_stream_data(data):
-    """Takes an input str, bytes, io.IOBase, or file object and returns an appropriate
-    stream for _EncryptionStream objects.
+    """Take an input and prepare it for use as a stream.
 
     :param data: Input data
-    :type data: str, bytes, io.IOBase, or file
     :returns: Prepared stream
     :rtype: io.BytesIO
     """
-    if isinstance(data, (_FILE_TYPE, io.IOBase, six.StringIO)):
-        return data
-    return io.BytesIO(to_bytes(data))
+    if isinstance(data, (six.string_types, six.binary_type)):
+        return io.BytesIO(to_bytes(data))
+
+    return data
 
 
 def source_data_key_length_check(source_data_key, algorithm):

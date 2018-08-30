@@ -1,3 +1,4 @@
+# coding: utf-8
 # Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
@@ -11,6 +12,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.internal.utils"""
+import io
 import unittest
 
 import pytest
@@ -26,6 +28,19 @@ from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyIn
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+def test_prep_stream_data_passthrough():
+    test = aws_encryption_sdk.internal.utils.prep_stream_data(sentinel.not_a_string_or_bytes)
+
+    assert test is sentinel.not_a_string_or_bytes
+
+
+@pytest.mark.parametrize("source", (u"some unicode data ловие", b"\x00\x01\x02"))
+def test_prep_stream_data_wrap(source):
+    test = aws_encryption_sdk.internal.utils.prep_stream_data(source)
+
+    assert isinstance(test, io.BytesIO)
 
 
 class TestUtils(unittest.TestCase):
@@ -234,14 +249,6 @@ class TestUtils(unittest.TestCase):
         assert test_encrypted_data_keys == set(
             [mock_encrypted_data_encryption_key, sentinel.encrypted_data_key_1, sentinel.encrypted_data_key_2]
         )
-
-    @patch("aws_encryption_sdk.internal.utils.to_bytes", return_value=sentinel.bytes)
-    @patch("aws_encryption_sdk.internal.utils.io.BytesIO", return_value=sentinel.bytesio)
-    def test_prep_stream_data(self, mock_bytesio, mock_to_bytes):
-        test = aws_encryption_sdk.internal.utils.prep_stream_data(sentinel.data)
-        mock_to_bytes.assert_called_once_with(sentinel.data)
-        mock_bytesio.assert_called_once_with(sentinel.bytes)
-        assert test is sentinel.bytesio
 
     def test_source_data_key_length_check_valid(self):
         mock_algorithm = MagicMock()
