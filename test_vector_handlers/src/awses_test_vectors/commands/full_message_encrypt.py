@@ -30,8 +30,10 @@ def cli(args=None):
     parser = argparse.ArgumentParser(
         description="Build ciphertexts and decrypt manifest from keys and encrypt manifests"
     )
-    parser.add_argument("--output", help="Directory in which to store results")
-    parser.add_argument("--input", type=argparse.FileType("r"), help="Existing full message encrypt manifest")
+    parser.add_argument("--output", required=True, help="Directory in which to store results")
+    parser.add_argument(
+        "--input", required=True, type=argparse.FileType("r"), help="Existing full message encrypt manifest"
+    )
     parser.add_argument(
         "--human",
         required=False,
