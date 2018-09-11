@@ -13,7 +13,10 @@
 """
 Helper utilities for interacting with AWS KMS.
 """
-from aws_encryption_sdk.identifiers import AlgorithmSuite
+try:
+    from aws_encryption_sdk.identifiers import AlgorithmSuite
+except ImportError:
+    from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING

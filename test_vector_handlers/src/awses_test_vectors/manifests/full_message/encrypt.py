@@ -23,7 +23,6 @@ import uuid
 import attr
 import aws_encryption_sdk
 import six
-from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -39,6 +38,12 @@ from awses_test_vectors.internal.util import (
 from awses_test_vectors.manifests.full_message.decrypt import MessageDecryptionManifest, MessageDecryptionTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
+
+try:
+    from aws_encryption_sdk.identifiers import AlgorithmSuite
+except ImportError:
+    from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
+
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
