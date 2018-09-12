@@ -94,5 +94,116 @@ matrix:
       env: TOXENV=black-check
     - python: 3.6
       env: TOXENV=isort-check
+    ########################
+    # Test Vector Handlers #
+    ########################
+    # CPython 2.7
+    - python: 2.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py27-awses_1.3.0
+    - python: 2.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py27-awses_1.3.max
+    - python: 2.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py27-awses_latest
+    # CPython 3.4
+    - python: 3.4
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py34-awses_1.3.0
+    - python: 3.4
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py34-awses_1.3.max
+    - python: 3.4
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py34-awses_latest
+    # CPython 3.5
+    - python: 3.5
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py35-awses_1.3.0
+    - python: 3.5
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py35-awses_1.3.max
+    - python: 3.5
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py35-awses_latest
+    # CPython 3.6
+    - python: 3.6
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py36-awses_1.3.0
+    - python: 3.6
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py36-awses_1.3.max
+    - python: 3.6
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py36-awses_latest
+    # CPython 3.7
+    - python: 3.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py37-awses_1.3.0
+      dist: xenial
+      sudo: true
+    - python: 3.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py37-awses_1.3.max
+      dist: xenial
+      sudo: true
+    - python: 3.7
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py37-awses_latest
+      dist: xenial
+      sudo: true
+    # Linters
+    - python: 3.6
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=bandit
+    - python: 3.6
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=readme
+    # Pending buildout of docs
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=docs
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=doc8
+    # Pending linting cleanup
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=flake8
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=pylint
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=flake8-tests
+    #- python: 3.6
+    #  env:
+    #    TEST_VECTOR_HANDLERS=1
+    #    TOXENV=pylint-tests
 install: pip install tox
-script: tox
+script:
+    if [[ -n $TEST_VECTOR_HANDLERS ]]; then cd test_vector_handlers; fi
+    tox
