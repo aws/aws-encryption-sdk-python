@@ -205,5 +205,5 @@ matrix:
     #    TOXENV=pylint-tests
 install: pip install tox
 script:
-    if [[ -n $TEST_VECTOR_HANDLERS ]]; then cd test_vector_handlers; fi
-    tox
+  - if [[ -n $TEST_VECTOR_HANDLERS ]]; then cd test_vector_handlers; fi
+  - tox
