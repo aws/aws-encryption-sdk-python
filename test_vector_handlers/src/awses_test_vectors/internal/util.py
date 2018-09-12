@@ -19,7 +19,11 @@ from binascii import unhexlify
 
 import six
 from attr import Attribute  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.identifiers import AlgorithmSuite
+
+try:
+    from aws_encryption_sdk.identifiers import AlgorithmSuite
+except ImportError:
+    from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Any, Callable, Dict, Iterable, Type  # noqa pylint: disable=unused-import

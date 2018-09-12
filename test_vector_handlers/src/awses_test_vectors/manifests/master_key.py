@@ -18,7 +18,6 @@ Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 import attr
 import six
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
-from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
@@ -26,6 +25,12 @@ from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER
 from awses_test_vectors.internal.util import membership_validator
 from awses_test_vectors.manifests.keys import KeysManifest, KeySpec  # noqa pylint: disable=unused-import
+
+try:
+    from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+except ImportError:
+    from aws_encryption_sdk.internal.crypto import WrappingKey
+
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
