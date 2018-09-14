@@ -2,6 +2,16 @@
 Changelog
 *********
 
+1.3.7 -- 2018-09-17
+===================
+
+Bugfixes
+--------
+
+* Fix KMSMasterKeyProvider to determine the default region before trying to create the requested master keys.
+  `#83 <https://github.com/aws/aws-encryption-sdk-python/issues/83>`_
+
+
 1.3.6 -- 2018-09-04
 ===================
 
