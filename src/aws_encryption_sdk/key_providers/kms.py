@@ -116,8 +116,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
     def _process_config(self):
         """Traverses the config and adds master keys and regional clients as needed."""
         self._user_agent_adding_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
-        if self.config.key_ids:
-            self.add_master_keys_from_list(self.config.key_ids)
+
         if self.config.region_names:
             self.add_regional_clients_from_list(self.config.region_names)
             self.default_region = self.config.region_names[0]
@@ -125,6 +124,9 @@ class KMSMasterKeyProvider(MasterKeyProvider):
             self.default_region = self.config.botocore_session.get_config_variable("region")
             if self.default_region is not None:
                 self.add_regional_client(self.default_region)
+
+        if self.config.key_ids:
+            self.add_master_keys_from_list(self.config.key_ids)
 
     def add_regional_client(self, region_name):
         """Adds a regional client for the specified region if it does not already exist.
