@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 def test_init_with_regionless_key_ids_and_region_names():
     key_ids = ("alias/key_1",)
-    region_names = ("test-reqion-1",)
+    region_names = ("test-region-1",)
     provider = KMSMasterKeyProvider(region_names=region_names, key_ids=key_ids)
     assert provider.master_key("alias/key_1").config.client.meta.region_name == region_names[0]
 
