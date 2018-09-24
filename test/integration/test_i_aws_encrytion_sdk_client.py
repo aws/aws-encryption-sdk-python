@@ -16,10 +16,11 @@ import logging
 import unittest
 
 import pytest
+from botocore.exceptions import BotoCoreError
 
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX, Algorithm
-from aws_encryption_sdk.key_providers.kms import KMSMasterKey
+from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
 from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
@@ -56,6 +57,16 @@ def test_encrypt_verify_user_agent_kms_master_key(caplog):
     mk.generate_data_key(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
 
     assert USER_AGENT_SUFFIX in caplog.text
+
+
+def test_remove_bad_client():
+    test = KMSMasterKeyProvider()
+    test.add_regional_client("us-fakey-12")
+
+    with pytest.raises(BotoCoreError):
+        test._regional_clients["us-fakey-12"].list_keys()
+
+    assert not test._regional_clients
 
 
 class TestKMSThickClientIntegration(unittest.TestCase):
