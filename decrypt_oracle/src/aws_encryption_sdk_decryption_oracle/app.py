@@ -40,12 +40,14 @@ def basic_decrypt():
     """
     APP.log.debug("Request:")
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
-    APP.log.debug("Request body:")
+    APP.log.debug("Ciphertext:")
     APP.log.debug(APP.current_request.raw_body)
 
     try:
         ciphertext = APP.current_request.raw_body
         plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
+        APP.log.debug("Plaintext:")
+        APP.log.debug(plaintext)
         response = Response(body=plaintext, headers={"Content-Type": "application/octet-stream"}, status_code=200)
     except Exception as error:  # pylint: disable=broad-except
         response = Response(body=str(error), status_code=400)
