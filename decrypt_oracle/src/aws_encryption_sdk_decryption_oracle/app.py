@@ -4,6 +4,7 @@
 import base64
 import json
 import logging
+import traceback
 
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
@@ -39,22 +40,15 @@ def basic_decrypt():
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
 
     try:
-        request = APP.current_request.json_body
-        ciphertext = base64.b64decode(request["body"].encode("utf-8"))
+        ciphertext = APP.current_request.raw_body
+        # ciphertext = base64.b64decode(request["body"].encode("utf-8"))
         plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
-        response = Response(
-            body=plaintext,
-            headers={'Content-Type': 'application/octet-stream'},
-            status_code=200
-        )
+        response = Response(body=plaintext, headers={"Content-Type": "application/octet-stream"}, status_code=200)
         # response = {"body": base64.b64encode(plaintext), "isBase64Encoded": True, "statusCode": 200}
     except Exception as error:  # pylint: disable=broad-except
-        response = Response(
-            body=str(error),
-            status_code=400
-        )
+        response = Response(body="\n".join([str(error), traceback.format_exc()]), status_code=400)
         # response = {"body": str(error), "isBase64Encoded": False, "statusCode": 400}
 
     APP.log.debug("Response:")
-    APP.log.debug(str(response))
+    APP.log.debug(json.dumps(response.to_dict()))
     return response
