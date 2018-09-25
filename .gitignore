@@ -36,3 +36,7 @@ __pycache__
 
 # Tox
 .tox
+
+# Chalice
+*/.chalice/deployments
+*/.chalice/venv
