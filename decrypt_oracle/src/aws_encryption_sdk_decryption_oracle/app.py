@@ -55,5 +55,5 @@ def basic_decrypt():
         response = Response(body=str(error), status_code=400)
 
     APP.log.debug("Response:")
-    APP.log.debug(json.dumps(response.to_dict()))
+    APP.log.debug(json.dumps(response.to_dict(binary_types=["application/octet-stream"])))
     return response
