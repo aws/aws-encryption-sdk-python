@@ -38,16 +38,14 @@ def basic_decrypt():
     """Basic decrypt handler for decryption oracle v0."""
     APP.log.debug("Request:")
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
+    APP.log.debug(APP.current_request.raw_body)
 
     try:
         ciphertext = APP.current_request.raw_body
-        # ciphertext = base64.b64decode(request["body"].encode("utf-8"))
         plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
         response = Response(body=plaintext, headers={"Content-Type": "application/octet-stream"}, status_code=200)
-        # response = {"body": base64.b64encode(plaintext), "isBase64Encoded": True, "statusCode": 200}
     except Exception as error:  # pylint: disable=broad-except
         response = Response(body="\n".join([str(error), traceback.format_exc()]), status_code=400)
-        # response = {"body": str(error), "isBase64Encoded": False, "statusCode": 400}
 
     APP.log.debug("Response:")
     APP.log.debug(json.dumps(response.to_dict()))
