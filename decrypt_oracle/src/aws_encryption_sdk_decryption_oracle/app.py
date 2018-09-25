@@ -1,6 +1,7 @@
 """Decrypt Oracle using the AWS Encryption SDK for Python."""
 import json
 import logging
+import os
 
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
@@ -9,7 +10,8 @@ from chalice import Chalice, Response
 from .key_providers.counting_master_key import CountingMasterKey
 from .key_providers.null_master_key import NullMasterKey
 
-APP = Chalice(app_name="aws-encryption-sdk-decryption-oracle")
+CHALICE_DEBUG = os.environ.get("CHALICE_DEBUG", "no") == "yes"
+APP = Chalice(app_name="aws-encryption-sdk-decryption-oracle", debug=CHALICE_DEBUG)
 APP.log.setLevel(logging.DEBUG)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
