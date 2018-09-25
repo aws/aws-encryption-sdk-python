@@ -1,10 +1,6 @@
-"""
-
-"""
-import base64
+"""Decrypt Oracle using the AWS Encryption SDK for Python."""
 import json
 import logging
-import traceback
 
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
@@ -35,9 +31,16 @@ def _master_key_provider():
 @APP.route("/v0/decrypt", methods=["POST"], content_types=["application/octet-stream"])
 def basic_decrypt():
     # type: () -> Response
-    """Basic decrypt handler for decryption oracle v0."""
+    """Basic decrypt handler for decryption oracle v0.
+
+    The API expects raw ciphertext bytes as the POST body and responds with either:
+
+    1. A 200 response code with the raw plaintext bytes as the body.
+    2. A 400 response code with whatever error code was encountered as the body.
+    """
     APP.log.debug("Request:")
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
+    APP.log.debug("Request body:")
     APP.log.debug(APP.current_request.raw_body)
 
     try:
@@ -45,7 +48,7 @@ def basic_decrypt():
         plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
         response = Response(body=plaintext, headers={"Content-Type": "application/octet-stream"}, status_code=200)
     except Exception as error:  # pylint: disable=broad-except
-        response = Response(body="\n".join([str(error), traceback.format_exc()]), status_code=400)
+        response = Response(body=str(error), status_code=400)
 
     APP.log.debug("Response:")
     APP.log.debug(json.dumps(response.to_dict()))
