@@ -28,7 +28,7 @@ def _master_key_provider():
     return master_key_provider
 
 
-@APP.route("/v0/decrypt", methods=["POST"])
+@APP.route("/v0/decrypt", methods=["POST"], content_types=['application/octet-stream'])
 def basic_decrypt():
     # type: () -> Dict[Text, Union[Text, bool, int]]
     """Basic decrypt handler for decryption oracle v0."""
