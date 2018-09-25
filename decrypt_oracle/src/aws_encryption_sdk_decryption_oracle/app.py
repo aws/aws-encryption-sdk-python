@@ -7,7 +7,7 @@ import logging
 
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
-from chalice import Chalice
+from chalice import Chalice, Response
 
 from .key_providers.counting_master_key import CountingMasterKey
 from .key_providers.null_master_key import NullMasterKey
@@ -33,7 +33,7 @@ def _master_key_provider():
 
 @APP.route("/v0/decrypt", methods=["POST"], content_types=["application/octet-stream"])
 def basic_decrypt():
-    # type: () -> Dict[Text, Union[Text, bool, int]]
+    # type: () -> Response
     """Basic decrypt handler for decryption oracle v0."""
     APP.log.debug("Request:")
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
@@ -42,10 +42,19 @@ def basic_decrypt():
         request = APP.current_request.json_body
         ciphertext = base64.b64decode(request["body"].encode("utf-8"))
         plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
-        response = {"body": base64.b64encode(plaintext), "isBase64Encoded": True, "statusCode": 200}
+        response = Response(
+            body=plaintext,
+            headers={'Content-Type': 'application/octet-stream'},
+            status_code=200
+        )
+        # response = {"body": base64.b64encode(plaintext), "isBase64Encoded": True, "statusCode": 200}
     except Exception as error:  # pylint: disable=broad-except
-        response = {"body": str(error), "isBase64Encoded": False, "statusCode": 400}
+        response = Response(
+            body=str(error),
+            status_code=400
+        )
+        # response = {"body": str(error), "isBase64Encoded": False, "statusCode": 400}
 
     APP.log.debug("Response:")
-    APP.log.debug(json.dumps(response))
+    APP.log.debug(str(response))
     return response
