@@ -14,18 +14,23 @@ except ImportError:  # pragma: no cover
 
 class CountingMasterKeyConfig(MasterKeyConfig):
     # pylint: disable=too-few-public-methods
-    """"""
+    """Passthrough master key configuration to set the key id to "test_counting_prov_info"."""
 
     provider_id = "test_counting"
 
     def __init__(self):
         # type: () -> None
-        """"""
+        """Set the key id to "test_counting_prov_info"."""
         super(CountingMasterKeyConfig, self).__init__(key_id=b"test_counting_prov_info")
 
 
 class CountingMasterKey(MasterKey):
-    """"""
+    """Master key that generates deterministic data keys and decrypts a pre-defined
+    encrypted data key value to that deterministic data keys.
+
+    Generated/decrypted data keys are of the form: ``\01\02\03\04...`` counting
+    bytes up from one to the data key length required for a given algorithm suite.
+    """
 
     provider_id = "test_counting"
     _config_class = CountingMasterKeyConfig

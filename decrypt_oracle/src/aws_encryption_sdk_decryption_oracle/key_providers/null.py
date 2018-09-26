@@ -13,18 +13,19 @@ except ImportError:  # pragma: no cover
 
 class NullMasterKeyConfig(MasterKeyConfig):
     # pylint: disable=too-few-public-methods
-    """"""
+    """Passthrough master key configuration to set the key id to "null"."""
 
     provider_id = "null"
 
     def __init__(self):
         # type: () -> None
-        """"""
+        """Set the key id to "null"."""
         super(NullMasterKeyConfig, self).__init__(key_id=b"null")
 
 
 class NullMasterKey(MasterKey):
-    """"""
+    """Master key that generates null data keys and decrypts any data key with provider id
+    "null" or "zero" as a null data key."""
 
     provider_id = "null"
     _allowed_provider_ids = (provider_id, "zero")
@@ -56,7 +57,7 @@ class NullMasterKey(MasterKey):
         return b"\x00" * algorithm.data_key_len
 
     def _generate_data_key(self, algorithm, encryption_context):
-        # type: (AlgorithmSuite, Dict[Text, Text]) -> NoReturn
+        # type: (AlgorithmSuite, Dict[Text, Text]) -> DataKey
         """NullMasterKey does not support generate_data_key
 
         :param algorithm: Algorithm on which to base data key
