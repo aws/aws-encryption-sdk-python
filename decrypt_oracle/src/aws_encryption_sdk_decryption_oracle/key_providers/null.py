@@ -43,6 +43,18 @@ class NullMasterKey(MasterKey):
         """
         return data_key.key_provider.provider_id in self._allowed_provider_ids
 
+    @staticmethod
+    def _null_plaintext_data_key(algorithm):
+        # type: (AlgorithmSuite) -> bytes
+        """Build the null data key of the correct length for the requested algorithm suite.
+
+        :param algorithm: Algorithm on which to base data key
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :returns: Null data key
+        :rtype: bytes
+        """
+        return b"\x00" * algorithm.data_key_len
+
     def _generate_data_key(self, algorithm, encryption_context):
         # type: (AlgorithmSuite, Dict[Text, Text]) -> NoReturn
         """NullMasterKey does not support generate_data_key
@@ -52,7 +64,9 @@ class NullMasterKey(MasterKey):
         :param dict encryption_context: Encryption context to use in encryption
         :raises NotImplementedError: when called
         """
-        raise NotImplementedError("NullMasterKey does not support generate_data_key")
+        return DataKey(
+            key_provider=self.key_provider, data_key=self._null_plaintext_data_key(algorithm), encrypted_data_key=b""
+        )
 
     def _encrypt_data_key(self, data_key, algorithm, encryption_context):
         # type: (DataKey, AlgorithmSuite,  Dict[Text, Text]) -> NoReturn
@@ -80,7 +94,8 @@ class NullMasterKey(MasterKey):
         :returns: Data key containing decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey
         """
-        data_key = b"\x00" * algorithm.data_key_len
         return DataKey(
-            key_provider=self.key_provider, data_key=data_key, encrypted_data_key=encrypted_data_key.encrypted_data_key
+            key_provider=self.key_provider,
+            data_key=self._null_plaintext_data_key(algorithm),
+            encrypted_data_key=encrypted_data_key.encrypted_data_key,
         )

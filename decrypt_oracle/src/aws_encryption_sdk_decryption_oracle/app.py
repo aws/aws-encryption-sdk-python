@@ -7,8 +7,8 @@ import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 from chalice import Chalice, Response
 
-from .key_providers.counting_master_key import CountingMasterKey
-from .key_providers.null_master_key import NullMasterKey
+from .key_providers.counting import CountingMasterKey
+from .key_providers.null import NullMasterKey
 
 CHALICE_DEBUG = os.environ.get("CHALICE_DEBUG", "no") == "yes"
 APP = Chalice(app_name="aws-encryption-sdk-decryption-oracle", debug=CHALICE_DEBUG)
@@ -35,10 +35,19 @@ def basic_decrypt():
     # type: () -> Response
     """Basic decrypt handler for decryption oracle v0.
 
-    The API expects raw ciphertext bytes as the POST body and responds with either:
+    **Request**
 
-    1. A 200 response code with the raw plaintext bytes as the body.
-    2. A 400 response code with whatever error code was encountered as the body.
+    * **Method**: POST
+    * **Body**: Raw ciphertext bytes
+    * **Headers**:
+
+       * **Content-Type**: ``application/octet-stream``
+       * **Accept**: ``application/octet-stream``
+
+    **Response**
+
+    * 200 response code with the raw plaintext bytes as the body
+    * 400 response code with whatever error code was encountered as the body
     """
     APP.log.debug("Request:")
     APP.log.debug(json.dumps(APP.current_request.to_dict()))
