@@ -209,7 +209,7 @@ matrix:
     # CPython 2.7
     - python: 2.7
       env:
-        $DECRYPT_ORACLE=1
+        DECRYPT_ORACLE=1
         TOXENV=py27-local
     # CPython 3.4
     - python: 3.4
@@ -270,10 +270,5 @@ matrix:
     #    TOXENV=pylint-tests
 install: pip install tox
 script:
-  - |
-    if [[ -n $TEST_VECTOR_HANDLERS ]];
-      then cd test_vector_handlers;
-    elseif [[ -n $DECRYPT_ORACLE ]];
-      then cd decrypt_oracle;
-    fi
+  - if [[ -n $TEST_VECTOR_HANDLERS ]]; then cd test_vector_handlers; else if [[ -n $DECRYPT_ORACLE ]]; then cd decrypt_oracle; fi
   - tox
