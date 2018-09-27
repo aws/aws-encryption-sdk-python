@@ -14,17 +14,13 @@
 Master key that generates deterministic data keys and decrypts a pre-defined
 encrypted data key value to that deterministic data keys.
 """
-from aws_encryption_sdk.exceptions import DecryptKeyError
-from aws_encryption_sdk.identifiers import AlgorithmSuite  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
-from aws_encryption_sdk.structures import EncryptedDataKey  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.structures import DataKey
+from typing import Dict, NoReturn, Text
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Text, NoReturn  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
+from aws_encryption_sdk.exceptions import DecryptKeyError
+from aws_encryption_sdk.identifiers import AlgorithmSuite
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
+from aws_encryption_sdk.structures import EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey
 
 
 class CountingMasterKeyConfig(MasterKeyConfig):
@@ -33,8 +29,7 @@ class CountingMasterKeyConfig(MasterKeyConfig):
 
     provider_id = "test_counting"
 
-    def __init__(self):
-        # type: () -> None
+    def __init__(self) -> None:
         """Set the key id to "test_counting_prov_info"."""
         super(CountingMasterKeyConfig, self).__init__(key_id=b"test_counting_prov_info")
 
@@ -51,8 +46,7 @@ class CountingMasterKey(MasterKey):
     _config_class = CountingMasterKeyConfig
     _encrypted_data_key = b"\x40\x41\x42\x43\x44"
 
-    def _generate_data_key(self, algorithm, encryption_context):
-        # type: (AlgorithmSuite, Dict[Text, Text]) -> DataKey
+    def _generate_data_key(self, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]) -> DataKey:
         """Perform the provider-specific data key generation task.
 
         :param algorithm: Algorithm on which to base data key
@@ -64,8 +58,9 @@ class CountingMasterKey(MasterKey):
         data_key = b"".join([chr(i).encode("utf-8") for i in range(1, algorithm.data_key_len + 1)])
         return DataKey(key_provider=self.key_provider, data_key=data_key, encrypted_data_key=self._encrypted_data_key)
 
-    def _encrypt_data_key(self, data_key, algorithm, encryption_context):
-        # type: (DataKey, AlgorithmSuite,  Dict[Text, Text]) -> NoReturn
+    def _encrypt_data_key(
+        self, data_key: DataKey, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]
+    ) -> NoReturn:
         """Encrypt a data key and return the ciphertext.
 
         :param data_key: Unencrypted data key
@@ -78,8 +73,9 @@ class CountingMasterKey(MasterKey):
         """
         raise NotImplementedError("CountingMasterKey does not support encrypt_data_key")
 
-    def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
-        # type: (EncryptedDataKey, AlgorithmSuite, Dict[Text, Text]) -> DataKey
+    def _decrypt_data_key(
+        self, encrypted_data_key: EncryptedDataKey, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]
+    ) -> DataKey:
         """Decrypt an encrypted data key and return the plaintext.
 
         :param data_key: Encrypted data key

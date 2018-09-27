@@ -15,22 +15,16 @@ import base64
 import binascii
 import json
 import os
+from typing import Dict, Iterable, Text
 
 import aws_encryption_sdk
 import pytest
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey
-
 from aws_encryption_sdk_decrypt_oracle.key_providers.counting import CountingMasterKey
 from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 
 from .integration.integration_test_utils import test_vectors_filename
-
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Text, Iterable  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 GENERATE_VECTORS = "AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_GENERATE_TEST_VECTORS"
@@ -38,8 +32,7 @@ PUBLIC_CMK = "arn:aws:kms:us-west-2:658956600833:alias/EncryptDecrypt"
 ENCRYPTION_CONTEXT = {"key1": "val1", "key2": "val2"}
 
 
-def _key_providers():
-    # type: () -> Iterable[MasterKeyProvider]
+def _key_providers() -> Iterable[MasterKeyProvider]:
     """Generate all master key providers for test vector generation.
     Each will be used independently.
     """
@@ -48,8 +41,7 @@ def _key_providers():
     yield KMSMasterKey(key_id=PUBLIC_CMK)
 
 
-def _generate_vectors(key_provider, plaintext):
-    # type: (MasterKeyProvider, bytes) -> Iterable[Dict[Text, Text]]
+def _generate_vectors(key_provider: MasterKeyProvider, plaintext: bytes) -> Iterable[Dict[Text, Text]]:
     """Generate all desired test vectors for a given key provider and plaintext."""
     for algorithm_suite in aws_encryption_sdk.Algorithm:
         ciphertext, _header = aws_encryption_sdk.encrypt(

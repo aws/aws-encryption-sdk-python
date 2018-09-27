@@ -26,15 +26,8 @@ CHALICE_DEBUG = os.environ.get("CHALICE_DEBUG", "no") == "yes"
 APP = Chalice(app_name="aws-encryption-sdk-decrypt-oracle", debug=CHALICE_DEBUG)
 APP.log.setLevel(logging.DEBUG)
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Text, NoReturn, Union  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
 
-
-def _master_key_provider():
-    # type: () -> KMSMasterKeyProvider
+def _master_key_provider() -> KMSMasterKeyProvider:
     """Build the V0 master key provider."""
     master_key_provider = KMSMasterKeyProvider()
     master_key_provider.add_master_key_provider(NullMasterKey())
@@ -43,8 +36,7 @@ def _master_key_provider():
 
 
 @APP.route("/v0/decrypt", methods=["POST"], content_types=["application/octet-stream"])
-def basic_decrypt():
-    # type: () -> Response
+def basic_decrypt() -> Response:
     """Basic decrypt handler for decrypt oracle v0.
 
     **Request**

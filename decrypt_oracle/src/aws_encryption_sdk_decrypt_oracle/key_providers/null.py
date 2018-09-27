@@ -11,16 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Master key that provides null data keys."""
-from aws_encryption_sdk.identifiers import AlgorithmSuite  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
-from aws_encryption_sdk.structures import EncryptedDataKey  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.structures import DataKey
+from typing import Dict, NoReturn, Text
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Text, NoReturn  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
+from aws_encryption_sdk.identifiers import AlgorithmSuite
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
+from aws_encryption_sdk.structures import EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey
 
 
 class NullMasterKeyConfig(MasterKeyConfig):
@@ -29,8 +25,7 @@ class NullMasterKeyConfig(MasterKeyConfig):
 
     provider_id = "null"
 
-    def __init__(self):
-        # type: () -> None
+    def __init__(self) -> None:
         """Set the key id to "null"."""
         super(NullMasterKeyConfig, self).__init__(key_id=b"null")
 
@@ -43,8 +38,7 @@ class NullMasterKey(MasterKey):
     _allowed_provider_ids = (provider_id, "zero")
     _config_class = NullMasterKeyConfig
 
-    def owns_data_key(self, data_key):
-        # type: (DataKey) -> bool
+    def owns_data_key(self, data_key: DataKey) -> bool:
         """Determine whether the data key is owned by a ``null`` or ``zero`` provider.
 
         :param data_key: Data key to evaluate
@@ -57,8 +51,7 @@ class NullMasterKey(MasterKey):
         return data_key.key_provider.provider_id in self._allowed_provider_ids
 
     @staticmethod
-    def _null_plaintext_data_key(algorithm):
-        # type: (AlgorithmSuite) -> bytes
+    def _null_plaintext_data_key(algorithm: AlgorithmSuite) -> bytes:
         """Build the null data key of the correct length for the requested algorithm suite.
 
         :param algorithm: Algorithm on which to base data key
@@ -68,8 +61,7 @@ class NullMasterKey(MasterKey):
         """
         return b"\x00" * algorithm.data_key_len
 
-    def _generate_data_key(self, algorithm, encryption_context):
-        # type: (AlgorithmSuite, Dict[Text, Text]) -> DataKey
+    def _generate_data_key(self, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]) -> DataKey:
         """NullMasterKey does not support generate_data_key
 
         :param algorithm: Algorithm on which to base data key
@@ -81,8 +73,9 @@ class NullMasterKey(MasterKey):
             key_provider=self.key_provider, data_key=self._null_plaintext_data_key(algorithm), encrypted_data_key=b""
         )
 
-    def _encrypt_data_key(self, data_key, algorithm, encryption_context):
-        # type: (DataKey, AlgorithmSuite,  Dict[Text, Text]) -> NoReturn
+    def _encrypt_data_key(
+        self, data_key: DataKey, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]
+    ) -> NoReturn:
         """NullMasterKey does not support encrypt_data_key
 
         :param data_key: Unencrypted data key
@@ -95,8 +88,9 @@ class NullMasterKey(MasterKey):
         """
         raise NotImplementedError("NullMasterKey does not support encrypt_data_key")
 
-    def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
-        # type: (EncryptedDataKey, AlgorithmSuite, Dict[Text, Text]) -> DataKey
+    def _decrypt_data_key(
+        self, encrypted_data_key: EncryptedDataKey, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]
+    ) -> DataKey:
         """Decrypt an encrypted data key and return the plaintext.
 
         :param data_key: Encrypted data key

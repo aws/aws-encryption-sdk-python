@@ -13,7 +13,6 @@
 """Unit test for ``aws_encryption_sdk_decrypt_oracle.key_providers.null``."""
 import aws_encryption_sdk
 import pytest
-
 from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 
 from ...integration.integration_test_utils import filtered_test_vectors

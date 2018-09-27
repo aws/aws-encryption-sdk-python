@@ -15,6 +15,7 @@ import base64
 import json
 import os
 from collections import namedtuple
+from typing import Any, Callable, Iterable, Optional, Text
 
 import pytest
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
@@ -27,7 +28,7 @@ _KMS_MKP = None
 _ENDPOINT = None
 
 
-def decrypt_endpoint():
+def decrypt_endpoint() -> Text:
     """Build the API endpoint based on environment variables."""
     global _ENDPOINT  # pylint: disable=global-statement
 
@@ -51,7 +52,7 @@ def decrypt_endpoint():
     return _ENDPOINT
 
 
-def get_cmk_arn():
+def get_cmk_arn() -> Text:
     """Retrieve the target CMK ARN from environment variable."""
     try:
         arn = os.environ[AWS_KMS_KEY_ID]
@@ -68,7 +69,7 @@ def get_cmk_arn():
     raise ValueError("KMS CMK ARN provided for integration tests must be a key not an alias")
 
 
-def kms_master_key_provider(cache=True):
+def kms_master_key_provider(cache: Optional[bool] = True):
     """Build the expected KMS Master Key Provider based on environment variables."""
     global _KMS_MKP  # pylint: disable=global-statement
 
@@ -85,7 +86,7 @@ def kms_master_key_provider(cache=True):
     return _kms_master_key_provider
 
 
-def test_vectors_filename():
+def test_vectors_filename() -> Text:
     """Provide the absolute path to the test vectors file."""
     return os.path.join(HERE, "..", "vectors", "decrypt_vectors.json")
 
@@ -93,7 +94,7 @@ def test_vectors_filename():
 TestVector = namedtuple("TestVector", ["plaintext", "ciphertext", "key_type", "algorithm_suite"])
 
 
-def all_test_vectors():
+def all_test_vectors() -> Iterable[Any]:
     """Collect and iterate through all test vectors."""
 
     with open(test_vectors_filename(), "r") as vectors_file:
@@ -114,7 +115,7 @@ def all_test_vectors():
         )
 
 
-def filtered_test_vectors(filter_function):
+def filtered_test_vectors(filter_function: Callable) -> Iterable[Any]:
     """Collect and iterate through all test vectors that pass the filter function."""
     for vector_param in all_test_vectors():
         if filter_function(vector_param.values[0]):
