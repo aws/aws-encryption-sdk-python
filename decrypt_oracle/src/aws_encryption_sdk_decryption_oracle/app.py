@@ -41,8 +41,8 @@ def basic_decrypt():
     * **Body**: Raw ciphertext bytes
     * **Headers**:
 
-       * **Content-Type**: ``application/octet-stream``
-       * **Accept**: ``application/octet-stream``
+      * **Content-Type**: ``application/octet-stream``
+      * **Accept**: ``application/octet-stream``
 
     **Response**
 
