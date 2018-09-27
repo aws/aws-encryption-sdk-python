@@ -15,7 +15,7 @@ def read(*args):
 
 def get_version():
     """Read the version from this module."""
-    init = read("src", "aws_encryption_sdk_decryption_oracle", "__init__.py")
+    init = read("src", "aws_encryption_sdk_decrypt_oracle", "__init__.py")
     return VERSION_RE.search(init).group(1)
 
 
