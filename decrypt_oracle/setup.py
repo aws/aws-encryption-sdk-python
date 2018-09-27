@@ -26,7 +26,7 @@ def get_requirements():
 
 
 setup(
-    name="aws-encryption-sdk-decryption-oracle",
+    name="aws-encryption-sdk-decrypt-oracle",
     packages=find_packages("src"),
     package_dir={"": "src"},
     version=get_version(),

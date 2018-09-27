@@ -1,4 +1,7 @@
-"""Master key that provides speci."""
+"""
+Master key that generates deterministic data keys and decrypts a pre-defined
+encrypted data key value to that deterministic data keys.
+"""
 from aws_encryption_sdk.exceptions import DecryptKeyError
 from aws_encryption_sdk.identifiers import AlgorithmSuite  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig

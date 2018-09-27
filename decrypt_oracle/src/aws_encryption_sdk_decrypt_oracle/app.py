@@ -11,7 +11,7 @@ from .key_providers.counting import CountingMasterKey
 from .key_providers.null import NullMasterKey
 
 CHALICE_DEBUG = os.environ.get("CHALICE_DEBUG", "no") == "yes"
-APP = Chalice(app_name="aws-encryption-sdk-decryption-oracle", debug=CHALICE_DEBUG)
+APP = Chalice(app_name="aws-encryption-sdk-decrypt-oracle", debug=CHALICE_DEBUG)
 APP.log.setLevel(logging.DEBUG)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -33,7 +33,7 @@ def _master_key_provider():
 @APP.route("/v0/decrypt", methods=["POST"], content_types=["application/octet-stream"])
 def basic_decrypt():
     # type: () -> Response
-    """Basic decrypt handler for decryption oracle v0.
+    """Basic decrypt handler for decrypt oracle v0.
 
     **Request**
 

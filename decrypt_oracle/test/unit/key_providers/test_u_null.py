@@ -10,11 +10,11 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Unit test for ``aws_encryption_sdk_decryption_oracle.key_providers.null``."""
+"""Unit test for ``aws_encryption_sdk_decrypt_oracle.key_providers.null``."""
 import aws_encryption_sdk
 import pytest
 
-from aws_encryption_sdk_decryption_oracle.key_providers.null import NullMasterKey
+from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 
 from ...integration.integration_test_utils import filtered_test_vectors
 
