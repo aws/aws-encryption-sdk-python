@@ -11,6 +11,10 @@ The API is deployed on Amazon API Gateway and backed by AWS Lambda.
 API v0
 ======
 
+**Path**
+
+``/v0/decrypt``
+
 **Request**
 
 * **Method**: POST
