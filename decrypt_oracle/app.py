@@ -11,4 +11,4 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Shim to pull decryption oracle app into expected location for Chalice."""
-from aws_encryption_sdk_decryption_oracle.app import APP as app
+from aws_encryption_sdk_decrypt_oracle.app import APP as app
