@@ -15,8 +15,7 @@ from typing import Dict, NoReturn, Text
 
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
-from aws_encryption_sdk.structures import EncryptedDataKey
-from aws_encryption_sdk.structures import DataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
 
 
 class NullMasterKeyConfig(MasterKeyConfig):
@@ -32,7 +31,13 @@ class NullMasterKeyConfig(MasterKeyConfig):
 
 class NullMasterKey(MasterKey):
     """Master key that generates null data keys and decrypts any data key with provider id
-    "null" or "zero" as a null data key."""
+    "null" or "zero" as a null data key.
+
+    .. warning::
+
+        This master key is NOT secure and should never be used for anything other than testing.
+
+    """
 
     provider_id = "null"
     _allowed_provider_ids = (provider_id, "zero")

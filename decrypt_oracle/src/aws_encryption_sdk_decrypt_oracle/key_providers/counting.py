@@ -19,8 +19,7 @@ from typing import Dict, NoReturn, Text
 from aws_encryption_sdk.exceptions import DecryptKeyError
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig
-from aws_encryption_sdk.structures import EncryptedDataKey
-from aws_encryption_sdk.structures import DataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
 
 
 class CountingMasterKeyConfig(MasterKeyConfig):
@@ -40,6 +39,11 @@ class CountingMasterKey(MasterKey):
 
     Generated/decrypted data keys are of the form: ``\01\02\03\04...`` counting
     bytes up from one to the data key length required for a given algorithm suite.
+
+    .. warning::
+
+        This master key is NOT secure and should never be used for anything other than testing.
+
     """
 
     provider_id = "test_counting"
