@@ -53,6 +53,16 @@ Installation
 
        $ pip install aws-encryption-sdk
 
+Troubleshooting
+===============
+
+Ensure you have the most recent version of pip on your system:
+
+   .. code::
+
+      $ pip install --upgrade pip
+      $ pip install --upgrade aws-encryption-sdk
+
 Concepts
 ========
 There are four main concepts that you need to understand to use this library:
