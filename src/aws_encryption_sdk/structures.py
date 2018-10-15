@@ -11,10 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Public data structures for aws_encryption_sdk."""
+import copy
+
 import attr
 import six
 
-import aws_encryption_sdk.identifiers
+from aws_encryption_sdk.identifiers import AlgorithmSuite, ContentType, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 
 
@@ -23,31 +25,29 @@ class MessageHeader(object):
     """Deserialized message header object.
 
     :param version: Message format version, per spec
-    :type version: aws_encryption_sdk.identifiers.SerializationVersion
+    :type version: SerializationVersion
     :param type: Message content type, per spec
-    :type type: aws_encryption_sdk.identifiers.ObjectType
+    :type type: ObjectType
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: Algorithm
     :param bytes message_id: Message ID
     :param dict encryption_context: Dictionary defining encryption context
     :param encrypted_data_keys: Encrypted data keys
     :type encrypted_data_keys: set of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
     :param content_type: Message content framing type (framed/non-framed)
-    :type content_type: aws_encryption_sdk.identifiers.ContentType
+    :type content_type: ContentType
     :param bytes content_aad_length: empty
     :param int header_iv_length: Bytes in Initialization Vector value found in header
     :param int frame_length: Length of message frame in bytes
     """
 
-    version = attr.ib(
-        hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.SerializationVersion)
-    )
-    type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ObjectType))
-    algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.Algorithm))
+    version = attr.ib(hash=True, validator=attr.validators.instance_of(SerializationVersion))
+    type = attr.ib(hash=True, validator=attr.validators.instance_of(ObjectType))
+    algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(AlgorithmSuite))
     message_id = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
     encryption_context = attr.ib(hash=True, validator=attr.validators.instance_of(dict))
     encrypted_data_keys = attr.ib(hash=True, validator=attr.validators.instance_of(set))
-    content_type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ContentType))
+    content_type = attr.ib(hash=True, validator=attr.validators.instance_of(ContentType))
     content_aad_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
     header_iv_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
     frame_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
@@ -104,3 +104,71 @@ class EncryptedDataKey(object):
 
     key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
     encrypted_data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
+
+
+@attr.s
+class DataKeyMaterials(object):
+    """Container for all values strongly tied to a single data key.
+
+    .. versionadded:: 1.4.0
+
+    :param AlgorithmSuite algorithm_suite: Algorithm suite that the data key must be used with
+    :param dict[str, str] encryption_context: Encryption context that must be used with the data key
+    :param RawDataKey plaintext_data_key: Data key plaintext
+    :param set[EncryptedDataKey] encrypted_data_keys: Encrypted versions of the data key
+    """
+
+    _algorithm_suite = attr.ib(validator=attr.validators.instance_of(AlgorithmSuite))
+    _encryption_context = attr.ib(validator=attr.validators.instance_of(dict), converter=copy.copy)
+    _plaintext_data_key = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(RawDataKey)), default=None
+    )
+    _encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set), default=attr.Factory(set))
+
+    @property
+    def algorithm_suite(self):
+        """Read-only access to the algorithm suite."""
+        return self._algorithm_suite
+
+    @property
+    def encryption_context(self):
+        """Get a copy of the encryption context."""
+        return copy.copy(self._encryption_context)
+
+    @property
+    def plaintext_data_key(self):
+        """Get a copy of the plaintext data key."""
+        return copy.copy(self._plaintext_data_key)
+
+    @plaintext_data_key.setter
+    def plaintext_data_key(self, value):
+        """Set the plaintext data key, but only if it is the correct length for the algorithm suite."""
+        if len(value) != self.algorithm_suite.data_key_len:
+            raise Exception(
+                "TODO: " "Invalid data key length %d bytes for algorithm suite %s.",
+                len(value),
+                self.algorithm_suite.data_key_len,
+            )
+
+        self._plaintext_data_key = value
+
+    @property
+    def encrypted_data_keys(self):
+        """Copy and freeze the encrypted data keys before providing them."""
+        return frozenset(copy.copy(self._encrypted_data_keys))
+
+    @encrypted_data_keys.setter
+    def encrypted_data_keys(self, value):
+        """Do not allow setting of the encrypted data keys directly."""
+        raise Exception("TODO: " 'Encrypted data keys must be modified through the "add_encrypted_data_key" method.')
+
+    def add_encrypted_data_key(self, encrypted_data_key):
+        # type: (EncryptedDataKey) -> None
+        """Add an encrypted data key, but only if the plaintext data key is set.
+
+        :param EncryptedDataKey encrypted_data_key: Encrypted data key to add
+        """
+        if self._plaintext_data_key is None:
+            raise Exception("TODO: " "Cannot add an encrypted data key when plaintext data key is not set")
+
+        self._encrypted_data_keys.add(encrypted_data_key)

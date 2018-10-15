@@ -15,14 +15,16 @@ import logging
 
 import attr
 
-from . import DecryptionMaterials, EncryptionMaterials
-from ..exceptions import MasterKeyProviderError, SerializationError
-from ..internal.crypto.authentication import Signer, Verifier
-from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
-from ..internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
-from ..internal.str_ops import to_str
-from ..internal.utils import prepare_data_keys
-from ..key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.exceptions import SerializationError
+from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
+from aws_encryption_sdk.internal.crypto.elliptic_curve import generate_ecc_signing_key
+from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
+from aws_encryption_sdk.internal.str_ops import to_str
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.keyrings import Keyring
+from aws_encryption_sdk.keyrings.master_key import MasterKeyKeyring
+
+from . import DecryptionMaterials, DecryptionMaterialsRequest, EncryptionMaterials, EncryptionMaterialsRequest
 from .base import CryptoMaterialsManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,9 +41,24 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
     """
 
     algorithm = ALGORITHM
-    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
+    master_key_provider = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider)), default=None
+    )
+    keyring = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(Keyring)), default=None)
 
-    def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):
+    def __attrs_post_init__(self):
+        """"""
+        both_mkp_and_keyring = self.master_key_provider is not None and self.keyring is not None
+        neither_mkp_nor_keyring = self.master_key_provider is None and self.keyring is None
+
+        if both_mkp_and_keyring or neither_mkp_nor_keyring:
+            raise TypeError("Exactly one of keyring or master_key_provider must be provided")
+
+        if self.keyring is None:
+            self.keyring = MasterKeyKeyring(master_key_provider=self.master_key_provider)
+
+    @staticmethod
+    def _generate_signing_key_and_update_encryption_context(algorithm, encryption_context):
         """Generates a signing key based on the provided algorithm.
 
         :param algorithm: Algorithm for which to generate signing key
@@ -59,6 +76,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         return signer.key_bytes()
 
     def get_encryption_materials(self, request):
+        # type: (EncryptionMaterialsRequest) -> EncryptionMaterials
         """Creates encryption materials using underlying master key provider.
 
         :param request: encryption materials request
@@ -74,34 +92,19 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
 
         signing_key = self._generate_signing_key_and_update_encryption_context(algorithm, encryption_context)
 
-        primary_master_key, master_keys = self.master_key_provider.master_keys_for_encryption(
-            encryption_context=encryption_context,
-            plaintext_rostream=request.plaintext_rostream,
-            plaintext_length=request.plaintext_length,
-        )
-        if not master_keys:
-            raise MasterKeyProviderError("No Master Keys available from Master Key Provider")
-        if primary_master_key not in master_keys:
-            raise MasterKeyProviderError("Primary Master Key not in provided Master Keys")
+        data_key_materials = request.to_data_key_materials(algorithm, encryption_context)
+        updated_data_key_materials = self.keyring.with_plaintext(
+            plaintext_rostream=request.plaintext_rostream, plaintext_length=request.plaintext_length
+        ).on_encrypt(data_key_materials)
 
-        data_encryption_key, encrypted_data_keys = prepare_data_keys(
-            primary_master_key=primary_master_key,
-            master_keys=master_keys,
-            algorithm=algorithm,
-            encryption_context=encryption_context,
+        _LOGGER.debug("Post-encrypt encryption context: %s", updated_data_key_materials.encryption_context)
+
+        return EncryptionMaterials.from_data_key_materials(
+            data_key_materials=updated_data_key_materials, signing_key=signing_key
         )
 
-        _LOGGER.debug("Post-encrypt encryption context: %s", encryption_context)
-
-        return EncryptionMaterials(
-            algorithm=algorithm,
-            data_encryption_key=data_encryption_key,
-            encrypted_data_keys=encrypted_data_keys,
-            encryption_context=encryption_context,
-            signing_key=signing_key,
-        )
-
-    def _load_verification_key_from_encryption_context(self, algorithm, encryption_context):
+    @staticmethod
+    def _load_verification_key_from_encryption_context(algorithm, encryption_context):
         """Loads the verification key from the encryption context if used by algorithm suite.
 
         :param algorithm: Algorithm for which to generate signing key
@@ -125,6 +128,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         return verifier.key_bytes()
 
     def decrypt_materials(self, request):
+        # type: (DecryptionMaterialsRequest) -> DecryptionMaterials
         """Obtains a plaintext data key from one or more encrypted data keys
         using underlying master key provider.
 
@@ -133,13 +137,13 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :returns: decryption materials
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
-        data_key = self.master_key_provider.decrypt_data_key_from_list(
-            encrypted_data_keys=request.encrypted_data_keys,
-            algorithm=request.algorithm,
-            encryption_context=request.encryption_context,
-        )
+        encrypted_data_key_materials = request.to_data_key_materials()
+        decrypted_data_key_materials = self.keyring.on_decrypt(encrypted_data_key_materials)
+
         verification_key = self._load_verification_key_from_encryption_context(
             algorithm=request.algorithm, encryption_context=request.encryption_context
         )
 
-        return DecryptionMaterials(data_key=data_key, verification_key=verification_key)
+        return DecryptionMaterials(
+            data_key=decrypted_data_key_materials.plaintext_data_key, verification_key=verification_key
+        )

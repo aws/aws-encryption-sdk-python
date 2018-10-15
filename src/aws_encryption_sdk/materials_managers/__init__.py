@@ -17,9 +17,15 @@
 import attr
 import six
 
-from ..identifiers import Algorithm
-from ..internal.utils.streams import ROStream
-from ..structures import DataKey
+from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.internal.utils.streams import ROStream
+from aws_encryption_sdk.structures import DataKey, DataKeyMaterials, RawDataKey
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Dict, Optional  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 
 @attr.s(hash=False)
@@ -50,6 +56,24 @@ class EncryptionMaterialsRequest(object):
         default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
 
+    def to_data_key_materials(self, override_algorithm_suite=None, override_encryption_context=None):
+        # type: (Optional[Algorithm], Optional[Dict[str, str]]) -> DataKeyMaterials
+        """Build :class:`DataKeyMaterials` from this request.
+        If algorith suite and encryption context are provided, they are used instead of the values in this request.
+
+        .. versionadded:: 1.4.0
+
+        :param AlgorithmSuite override_algorithm_suite: Override value to use for algorithm suite
+        :param dict[str, str] override_encryption_context: Override value to use for encryption context
+        :return: Data key materials built from this request
+        :rtype: DataKeyMaterials
+        """
+        algorithm = override_algorithm_suite if override_algorithm_suite is not None else self.algorithm
+        encryption_context = (
+            override_encryption_context if override_encryption_context is not None else self.encryption_context
+        )
+        return DataKeyMaterials(algorithm_suite=algorithm, encryption_context=encryption_context)
+
 
 @attr.s(hash=False)
 class EncryptionMaterials(object):
@@ -60,18 +84,38 @@ class EncryptionMaterials(object):
     :param algorithm: Algorithm to use for encrypting message
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param data_encryption_key: Plaintext data key to use for encrypting message
-    :type data_encryption_key: aws_encryption_sdk.structures.DataKey
+    :type data_encryption_key: :class`DataKey` or :class:`RawDataKey`
     :param encrypted_data_keys: List of encrypted data keys
-    :type encrypted_data_keys: list of `aws_encryption_sdk.structures.EncryptedDataKey`
+    :type encrypted_data_keys: list of :class:`EncryptedDataKey`
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
     :param bytes signing_key: Encoded signing key
     """
 
     algorithm = attr.ib(validator=attr.validators.instance_of(Algorithm))
-    data_encryption_key = attr.ib(validator=attr.validators.instance_of(DataKey))
+    data_encryption_key = attr.ib(validator=attr.validators.instance_of((DataKey, RawDataKey)))
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
     signing_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
+
+    @classmethod
+    def from_data_key_materials(cls, data_key_materials, signing_key):
+        # type: (DataKeyMaterials, bytes) -> EncryptionMaterials
+        """Load :class:`EncryptionMaterials` from :class:`DataKeyMaterials` with the provided signing key.
+
+        .. versionadded:: 1.4.0
+
+        :param DataKeyMaterials data_key_materials: DataKeyMaterials
+        :param bytes signing_key: Signing key to include in encryption materials
+        :return: Loaded encryption materials
+        :rtype: EncryptionMaterials
+        """
+        return EncryptionMaterials(
+            algorithm=data_key_materials.algorithm_suite,
+            data_encryption_key=data_key_materials.plaintext_data_key,
+            encrypted_data_keys=set(data_key_materials.encrypted_data_keys),
+            encryption_context=data_key_materials.encryption_context,
+            signing_key=signing_key,
+        )
 
 
 @attr.s(hash=False)
@@ -91,6 +135,21 @@ class DecryptionMaterialsRequest(object):
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
 
+    def to_data_key_materials(self):
+        # type: () -> DataKeyMaterials
+        """Build :class:`DataKeyMaterials` from this request.
+
+        .. versionadded:: 1.4.0
+
+        :return: Data key materials built from this request
+        :rtype: DataKeyMaterials
+        """
+        return DataKeyMaterials(
+            algorithm_suite=self.algorithm,
+            encryption_context=self.encryption_context,
+            encrypted_data_keys=self.encrypted_data_keys,
+        )
+
 
 @attr.s(hash=False)
 class DecryptionMaterials(object):
@@ -99,9 +158,23 @@ class DecryptionMaterials(object):
     .. versionadded:: 1.3.0
 
     :param data_key: Plaintext data key to use with message decryption
-    :type data_key: aws_encryption_sdk.structures.DataKey
+    :type data_key: DataKey or RawDataKey
     :param bytes verification_key: Raw signature verification key
     """
 
-    data_key = attr.ib(validator=attr.validators.instance_of(DataKey))
+    data_key = attr.ib(validator=attr.validators.instance_of((DataKey, RawDataKey)))
     verification_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
+
+    @classmethod
+    def from_data_key_materials(cls, data_key_materials, verification_key):
+        # type: (DataKeyMaterials, Optional[bytes]) -> DecryptionMaterials
+        """Load :class:`DecryptionMaterials` from :class:`DataKeyMaterials` with the provided verification key.
+
+        .. versionadded:: 1.4.0
+
+        :param DataKeyMaterials data_key_materials: Data key materials from which to load decryption materials
+        :param bytes verification_key: Verification key to use
+        :return: Loaded decryption materials
+        :rtype: DecryptionMaterials
+        """
+        return DecryptionMaterials(data_key=data_key_materials.plaintext_data_key, verification_key=verification_key)
