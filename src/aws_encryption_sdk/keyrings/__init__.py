@@ -14,65 +14,44 @@
 
 .. versionadded:: 1.4.0
 """
-from zope.interface import Interface, implementer
+import abc
+
+import six
 
 from aws_encryption_sdk.structures import DataKeyMaterials
 
 
-class KeyringPublicInterface(Interface):
-    """The public interface that all keyrings expose."""
+@six.add_metaclass(abc.ABCMeta)
+class Keyring(object):
+    """Parent class for all keyrings."""
 
-    def on_encrypt(self, data_key_materials):
-        # type: (DataKeyMaterials) -> DataKeyMaterials
-        """Complete a data key materials for use on encrypt.
-
-        :param DataKeyMaterials data_key_materials: Data key materials to start with
-        :return: Data key materials with any applicable materials added
-        :rtype: DataKeyMaterials
-        """
-
-    def on_decrypt(self, data_key_materials):
-        # type: (DataKeyMaterials) -> DataKeyMaterials
-        """Complete a data key materials for use on decrypt.
-
-        :param DataKeyMaterials data_key_materials:
-        :return: Data key materials with any applicable materials added
-        :rtype: DataKeyMaterials
-        """
-
-
-class KeyringPrivateInterface(Interface):
-    """The private interface that every ``Keyring`` child must implement.
-
-    .. note::
-
-        This is the interface that keyrings subclassing from :class:`Keyring`
-        should be implementing.
-    """
-
+    @abc.abstractmethod
     def _on_encrypt(self, data_key_materials):
         # type: (DataKeyMaterials) -> DataKeyMaterials
         """Complete a data key materials for use on encrypt.
 
+        .. note::
+
+            Children of :class:`Keyring` must implement this method.
+
         :param DataKeyMaterials data_key_materials: Data key materials to start with
         :return: Data key materials with any applicable materials added
         :rtype: DataKeyMaterials
         """
 
+    @abc.abstractmethod
     def _on_decrypt(self, data_key_materials):
         # type: (DataKeyMaterials) -> DataKeyMaterials
         """Complete a data key materials for use on decrypt.
+
+        .. note::
+
+            Children of :class:`Keyring` must implement this method.
 
         :param DataKeyMaterials data_key_materials:
         :return: Data key materials with any applicable materials added
         :rtype: DataKeyMaterials
         """
-
-
-@implementer(KeyringPublicInterface)
-@implementer(KeyringPrivateInterface)
-class Keyring(object):
-    """Parent class for all keyrings."""
 
     def on_encrypt(self, data_key_materials):
         # type: (DataKeyMaterials) -> DataKeyMaterials
