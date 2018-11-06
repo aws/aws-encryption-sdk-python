@@ -101,7 +101,7 @@ matrix:
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py27-awses_1.3.0
+        TOXENV=py27-awses_1.3.3
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
@@ -114,7 +114,7 @@ matrix:
     - python: 3.4
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py34-awses_1.3.0
+        TOXENV=py34-awses_1.3.3
     - python: 3.4
       env:
         TEST_VECTOR_HANDLERS=1
@@ -127,7 +127,7 @@ matrix:
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py35-awses_1.3.0
+        TOXENV=py35-awses_1.3.3
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
@@ -140,7 +140,7 @@ matrix:
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py36-awses_1.3.0
+        TOXENV=py36-awses_1.3.3
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
@@ -153,7 +153,7 @@ matrix:
     - python: 3.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py37-awses_1.3.0
+        TOXENV=py37-awses_1.3.3
       dist: xenial
       sudo: true
     - python: 3.7
