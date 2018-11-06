@@ -202,10 +202,12 @@ class MessageEncryptionManifest(object):
         raw_keys_manifest = json.loads(reader(raw_manifest["keys"]).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
         plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
-        tests = {
-            name: MessageEncryptionTestScenario.from_scenario(scenario=scenario, keys=keys, plaintexts=plaintexts)
-            for name, scenario in raw_manifest["tests"].items()
-        }
+        tests = {}
+        for name, scenario in raw_manifest["tests"].items():
+            try:
+                tests[name] = MessageEncryptionTestScenario.from_scenario(scenario=scenario, keys=keys, plaintexts=plaintexts)
+            except NotImplementedError:
+                continue
         return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
 
     def run_and_write_to_dir(self, target_directory, json_indent=None):
