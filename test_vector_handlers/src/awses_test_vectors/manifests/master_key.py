@@ -54,7 +54,7 @@ _RAW_WRAPPING_KEY_ALGORITHMS = {
     # 'rsa/oaep-mgf1/sha384': WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
     # 'rsa/oaep-mgf1/sha512': WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
 }
-_NOT_YET_IMPLEMENTED = {'rsa/oaep-mgf1/sha384', 'rsa/oaep-mgf1/sha512'}
+_NOT_YET_IMPLEMENTED = {"rsa/oaep-mgf1/sha384", "rsa/oaep-mgf1/sha512"}
 _RAW_ENCRYPTION_KEY_TYPE = {
     "symmetric": EncryptionKeyType.SYMMETRIC,
     "private": EncryptionKeyType.PRIVATE,
@@ -93,14 +93,10 @@ class MasterKeySpec(object):
 
         if self.type_name == "raw":
             if None in (self.provider_id, self.encryption_algorithm):
-                raise ValueError(
-                    "Provider ID and encryption algorithm are both required for raw keys"
-                )
+                raise ValueError("Provider ID and encryption algorithm are both required for raw keys")
 
             if self.encryption_algorithm == "rsa" and self.padding_algorithm is None:
-                raise ValueError(
-                    "Padding algorithm is required for raw RSA keys"
-                )
+                raise ValueError("Padding algorithm is required for raw RSA keys")
 
             if self.padding_algorithm == "oaep-mgf1" and self.padding_hash is None:
                 raise ValueError('Padding hash must be specified if padding algorithm is "oaep-mgf1"')
@@ -149,7 +145,7 @@ class MasterKeySpec(object):
         key_spec_name = "/".join(key_spec_values)
 
         if key_spec_name in _NOT_YET_IMPLEMENTED:
-            raise NotImplementedError("Key spec \"{}\" is not yet available.")
+            raise NotImplementedError('Key spec "{}" is not yet available.')
 
         return _RAW_WRAPPING_KEY_ALGORITHMS[key_spec_name]
 

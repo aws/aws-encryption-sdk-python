@@ -205,7 +205,9 @@ class MessageEncryptionManifest(object):
         tests = {}
         for name, scenario in raw_manifest["tests"].items():
             try:
-                tests[name] = MessageEncryptionTestScenario.from_scenario(scenario=scenario, keys=keys, plaintexts=plaintexts)
+                tests[name] = MessageEncryptionTestScenario.from_scenario(
+                    scenario=scenario, keys=keys, plaintexts=plaintexts
+                )
             except NotImplementedError:
                 continue
         return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
