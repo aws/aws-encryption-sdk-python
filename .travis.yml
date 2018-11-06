@@ -5,39 +5,55 @@ matrix:
     # CPython 2.7
     - python: 2.7
       env: TOXENV=py27-local
+      stage: Client Tests
     - python: 2.7
       env: TOXENV=py27-integ
+      stage: Client Tests
     - python: 2.7
       env: TOXENV=py27-accept
+      stage: Client Tests
     - python: 2.7
       env: TOXENV=py27-examples
+      stage: Client Tests
     # CPython 3.4
     - python: 3.4
       env: TOXENV=py34-local
+      stage: Client Tests
     - python: 3.4
       env: TOXENV=py34-integ
+      stage: Client Tests
     - python: 3.4
       env: TOXENV=py34-accept
+      stage: Client Tests
     - python: 3.4
       env: TOXENV=py34-examples
+      stage: Client Tests
     # CPython 3.5
     - python: 3.5
       env: TOXENV=py35-local
+      stage: Client Tests
     - python: 3.5
       env: TOXENV=py35-integ
+      stage: Client Tests
     - python: 3.5
       env: TOXENV=py35-accept
+      stage: Client Tests
     - python: 3.5
       env: TOXENV=py35-examples
+      stage: Client Tests
     # CPython 3.6
     - python: 3.6
       env: TOXENV=py36-local
+      stage: Client Tests
     - python: 3.6
       env: TOXENV=py36-integ
+      stage: Client Tests
     - python: 3.6
       env: TOXENV=py36-accept
+      stage: Client Tests
     - python: 3.6
       env: TOXENV=py36-examples
+      stage: Client Tests
     # CPython 3.7
     # xenial + sudo are currently needed to get 3.7
     # https://github.com/travis-ci/travis-ci/issues/9815
@@ -45,55 +61,74 @@ matrix:
       env: TOXENV=py37-local
       dist: xenial
       sudo: true
+      stage: Client Tests
     - python: 3.7
       env: TOXENV=py37-integ
       dist: xenial
       sudo: true
+      stage: Client Tests
     - python: 3.7
       env: TOXENV=py37-accept
       dist: xenial
       sudo: true
+      stage: Client Tests
     - python: 3.7
       env: TOXENV=py37-examples
       dist: xenial
       sudo: true
+      stage: Client Tests
     # Upstream tests
     - python: 3.6
       env: TOXENV=nocmk
+      stage: Upstream Tests
     - python: 2.7
       env: TOXENV=test-upstream-requirements-py27
+      stage: Upstream Tests
     # xenial + sudo are currently needed to get 3.7
     # https://github.com/travis-ci/travis-ci/issues/9815
     - python: 3.7
       env: TOXENV=test-upstream-requirements-py37
       dist: xenial
       sudo: true
+      stage: Upstream Tests
     # Security
     - python: 3.6
       env: TOXENV=bandit
+      stage: Security Checks
     # Linting and autoformatting
     - python: 3.6
       env: TOXENV=doc8
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=docs
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=readme
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=flake8
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=pylint
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=flake8-tests
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=pylint-tests
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=flake8-examples
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=pylint-examples
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=black-check
+      stage: Formatting Checks
     - python: 3.6
       env: TOXENV=isort-check
+      stage: Formatting Checks
     ########################
     # Test Vector Handlers #
     ########################
@@ -102,53 +137,65 @@ matrix:
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_1.3.3
+      stage: Test Vector Handler Tests
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_1.3.max
+      stage: Test Vector Handler Tests
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_latest
+      stage: Test Vector Handler Tests
     # CPython 3.4
     - python: 3.4
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py34-awses_1.3.3
+      stage: Test Vector Handler Tests
     - python: 3.4
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py34-awses_1.3.max
+      stage: Test Vector Handler Tests
     - python: 3.4
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py34-awses_latest
+      stage: Test Vector Handler Tests
     # CPython 3.5
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_1.3.3
+      stage: Test Vector Handler Tests
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_1.3.max
+      stage: Test Vector Handler Tests
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_latest
+      stage: Test Vector Handler Tests
     # CPython 3.6
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_1.3.3
+      stage: Test Vector Handler Tests
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_1.3.max
+      stage: Test Vector Handler Tests
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_latest
+      stage: Test Vector Handler Tests
     # CPython 3.7
     - python: 3.7
       env:
@@ -156,27 +203,32 @@ matrix:
         TOXENV=py37-awses_1.3.3
       dist: xenial
       sudo: true
+      stage: Test Vector Handler Tests
     - python: 3.7
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_1.3.max
       dist: xenial
       sudo: true
+      stage: Test Vector Handler Tests
     - python: 3.7
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_latest
       dist: xenial
       sudo: true
+      stage: Test Vector Handler Tests
     # Linters
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=bandit
+      stage: Test Vector Handler Formatting Checks
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=readme
+      stage: Test Vector Handler Formatting Checks
     # Pending buildout of docs
     #- python: 3.6
     #  env:
@@ -212,15 +264,18 @@ matrix:
       env:
         DECRYPT_ORACLE=1
         TOXENV=py36-local
+      stage: Decrypt Oracle Tests
     # Linters
     - python: 3.6
       env:
         DECRYPT_ORACLE=1
         TOXENV=bandit
+      stage: Decrypt Oracle Formatting Checks
     - python: 3.6
       env:
         DECRYPT_ORACLE=1
         TOXENV=readme
+      stage: Decrypt Oracle Formatting Checks
     # Pending buildout of docs
     #- python: 3.6
     #  env:
