@@ -239,5 +239,5 @@ class MessageEncryptionManifest(object):
         )
 
         root_writer(
-            "decrypt_message.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING)
+            "manifest.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING)
         )
