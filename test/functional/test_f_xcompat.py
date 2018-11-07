@@ -57,6 +57,8 @@ _WRAPPING_ALGORITHM_MAP = {
             b"OAEP-MGF1": {
                 b"SHA-1": WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
                 b"SHA-256": WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                b"SHA-384": WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+                b"SHA-512": WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
             },
         }
     ),

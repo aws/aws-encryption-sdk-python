@@ -334,16 +334,19 @@ def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decry
 
 
 @pytest.mark.skipif(
-    not _mgf1_sha256_supported(), reason="MGF1-SHA256 not supported by this backend: OpenSSL required v1.0.2+"
+    not _mgf1_sha256_supported(), reason="MGF1-SHA2 not supported by this backend: OpenSSL required v1.0.2+"
 )
 @pytest.mark.parametrize(
-    "wrapping_algorithm, encryption_key_type, decryption_key_type",
+    "wrapping_algorithm",
     (
-        (WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, EncryptionKeyType.PRIVATE, EncryptionKeyType.PRIVATE),
-        (WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE),
+        WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+        WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+        WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
     ),
 )
-def test_encryption_cycle_raw_mkp_openssl_102_plus(wrapping_algorithm, encryption_key_type, decryption_key_type):
+@pytest.mark.parametrize("encryption_key_type", (EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE))
+def test_encryption_cycle_raw_mkp_openssl_102_plus(wrapping_algorithm, encryption_key_type):
+    decryption_key_type = EncryptionKeyType.PRIVATE
     encrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type)
     decrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, decryption_key_type)
     ciphertext, _ = aws_encryption_sdk.encrypt(
