@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client._EncryptionStream"""
+import copy
 import io
 import unittest
 
@@ -45,20 +46,23 @@ class MockEncryptionStream(_EncryptionStream):
         return self.config.mock_read_bytes
 
 
-class TestEncryptionStream(unittest.TestCase):
-    def setUp(self):
-        self.mock_source_stream = MagicMock()
-        self.mock_source_stream.__class__ = io.IOBase
-        self.mock_source_stream.tell.side_effect = (10, 500)
+class TestEncryptionStream(object):
 
-        self.mock_key_provider = MagicMock()
-        self.mock_key_provider.__class__ = MasterKeyProvider
+    def _mock_key_provider(self):
+        mock_key_provider = MagicMock()
+        mock_key_provider.__class__ = MasterKeyProvider
+        return mock_key_provider
 
-        self.mock_line_length = MagicMock()
-        self.mock_line_length.__class__ = int
+    def _mock_source_stream(self):
+        mock_source_stream = MagicMock()
+        mock_source_stream.__class__ = io.IOBase
+        mock_source_stream.tell.side_effect = (10, 500)
+        return mock_source_stream
 
-        self.mock_source_length = MagicMock()
-        self.mock_source_length.__class__ = int
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
+        self.mock_key_provider = self._mock_key_provider()
+        self.mock_source_stream = self._mock_source_stream()
 
     def test_read_bytes_enforcement(self):
         class TestStream(_EncryptionStream):
@@ -67,8 +71,10 @@ class TestEncryptionStream(unittest.TestCase):
             def _prep_message(self):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestStream"):
+        with pytest.raises(TypeError) as excinfo:
             TestStream()
+
+        excinfo.match("Can't instantiate abstract class TestStream")
 
     def test_prep_message_enforcement(self):
         class TestStream(_EncryptionStream):
@@ -77,8 +83,10 @@ class TestEncryptionStream(unittest.TestCase):
             def _read_bytes(self):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestStream"):
+        with pytest.raises(TypeError) as excinfo:
             TestStream()
+
+        excinfo.match("Can't instantiate abstract class TestStream")
 
     def test_config_class_enforcement(self):
         class TestStream(_EncryptionStream):
@@ -88,29 +96,32 @@ class TestEncryptionStream(unittest.TestCase):
             def _prep_message(self):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestStream"):
+        with pytest.raises(TypeError) as excinfo:
             TestStream()
 
+        excinfo.match("Can't instantiate abstract class TestStream")
+
     def test_new_with_params(self):
+        mock_int_sentinel = MagicMock(__class__=int)
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream,
             key_provider=self.mock_key_provider,
             mock_read_bytes=sentinel.read_bytes,
-            line_length=self.mock_line_length,
-            source_length=self.mock_source_length,
+            line_length=io.DEFAULT_BUFFER_SIZE,
+            source_length=mock_int_sentinel,
         )
         assert mock_stream.config == MockClientConfig(
             source=self.mock_source_stream,
             key_provider=self.mock_key_provider,
             mock_read_bytes=sentinel.read_bytes,
-            line_length=self.mock_line_length,
-            source_length=self.mock_source_length,
+            line_length=io.DEFAULT_BUFFER_SIZE,
+            source_length=mock_int_sentinel,
         )
         assert mock_stream.bytes_read == 0
         assert mock_stream.output_buffer == b""
         assert not mock_stream._message_prepped
         assert mock_stream.source_stream is self.mock_source_stream
-        assert mock_stream._stream_length is self.mock_source_length
+        assert mock_stream._stream_length is mock_int_sentinel
         assert mock_stream.line_length == io.DEFAULT_BUFFER_SIZE
 
     def test_new_with_config(self):
@@ -154,7 +165,8 @@ class TestEncryptionStream(unittest.TestCase):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
-        with self.assertRaises(CustomUnknownError):
+
+        with pytest.raises(CustomUnknownError):
             mock_stream.__exit__(None, None, None)
 
     def test_stream_length(self):
@@ -173,8 +185,11 @@ class TestEncryptionStream(unittest.TestCase):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
-        with six.assertRaisesRegex(self, aws_encryption_sdk.exceptions.NotSupportedError, "Unexpected exception!"):
+
+        with pytest.raises(aws_encryption_sdk.exceptions.NotSupportedError) as excinfo:
             mock_stream.stream_length  # pylint: disable=pointless-statement
+
+        excinfo.match("Unexpected exception!")
 
     def test_header_property(self):
         mock_prep_message = MagicMock()
@@ -205,21 +220,26 @@ class TestEncryptionStream(unittest.TestCase):
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
         mock_stream.close()
-        with six.assertRaisesRegex(self, ValueError, "I/O operation on closed file"):
+
+        with pytest.raises(ValueError) as excinfo:
             mock_stream.read()
 
-    def test_read_b(self):
+        excinfo.match("I/O operation on closed file")
+
+    @pytest.mark.parametrize('bytes_to_read', range(1, 11))
+    def test_read_b(self, bytes_to_read):
         mock_stream = MockEncryptionStream(
             source=io.BytesIO(VALUES["data_128"]),
             key_provider=self.mock_key_provider,
             mock_read_bytes=sentinel.read_bytes,
         )
+        data = b"1234567890"
         mock_stream._read_bytes = MagicMock()
-        mock_stream.output_buffer = b"1234567890"
-        test = mock_stream.read(5)
-        mock_stream._read_bytes.assert_called_once_with(5)
-        assert test == b"12345"
-        assert mock_stream.output_buffer == b"67890"
+        mock_stream.output_buffer = copy.copy(data)
+        test = mock_stream.read(bytes_to_read)
+        mock_stream._read_bytes.assert_called_once_with(bytes_to_read)
+        assert test == data[:bytes_to_read]
+        assert mock_stream.output_buffer == data[bytes_to_read:]
 
     def test_read_all(self):
         mock_stream = MockEncryptionStream(
@@ -262,22 +282,31 @@ class TestEncryptionStream(unittest.TestCase):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
-        with six.assertRaisesRegex(self, NotImplementedError, "writelines is not available for this object"):
+
+        with pytest.raises(NotImplementedError) as excinfo:
             mock_stream.writelines(None)
+
+        excinfo.match("writelines is not available for this object")
 
     def test_write(self):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
-        with six.assertRaisesRegex(self, NotImplementedError, "write is not available for this object"):
+
+        with pytest.raises(NotImplementedError) as excinfo:
             mock_stream.write(None)
+
+        excinfo.match("write is not available for this object")
 
     def test_seek(self):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
-        with six.assertRaisesRegex(self, NotImplementedError, "seek is not available for this object"):
+
+        with pytest.raises(NotImplementedError) as excinfo:
             mock_stream.seek(None)
+
+        excinfo.match("seek is not available for this object")
 
     def test_readline(self):
         test_line = "TEST_LINE_AAAA"
@@ -319,7 +348,8 @@ class TestEncryptionStream(unittest.TestCase):
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
         mock_stream.close()
-        with self.assertRaises(StopIteration):
+
+        with pytest.raises(StopIteration):
             mock_stream.next()
 
     def test_next_source_stream_closed_and_buffer_empty(self):
@@ -328,7 +358,8 @@ class TestEncryptionStream(unittest.TestCase):
         )
         self.mock_source_stream.closed = True
         mock_stream.output_buffer = b""
-        with self.assertRaises(StopIteration):
+
+        with pytest.raises(StopIteration):
             mock_stream.next()
 
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.closed", new_callable=PropertyMock)
