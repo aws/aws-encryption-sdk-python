@@ -209,6 +209,10 @@ class _EncryptionStream(io.IOBase):
         :returns: Processed (encrypted or decrypted) bytes from source stream
         :rtype: bytes
         """
+        # Any negative value for b is interpreted as a full read
+        if b is not None and b < 0:
+            b = None
+
         _LOGGER.debug("Stream read called, requesting %s bytes", b)
         output = io.BytesIO()
         if not self._message_prepped:

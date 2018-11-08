@@ -47,7 +47,6 @@ class MockEncryptionStream(_EncryptionStream):
 
 
 class TestEncryptionStream(object):
-
     def _mock_key_provider(self):
         mock_key_provider = MagicMock()
         mock_key_provider.__class__ = MasterKeyProvider
@@ -226,7 +225,7 @@ class TestEncryptionStream(object):
 
         excinfo.match("I/O operation on closed file")
 
-    @pytest.mark.parametrize('bytes_to_read', range(1, 11))
+    @pytest.mark.parametrize("bytes_to_read", range(1, 11))
     def test_read_b(self, bytes_to_read):
         mock_stream = MockEncryptionStream(
             source=io.BytesIO(VALUES["data_128"]),
@@ -241,7 +240,8 @@ class TestEncryptionStream(object):
         assert test == data[:bytes_to_read]
         assert mock_stream.output_buffer == data[bytes_to_read:]
 
-    def test_read_all(self):
+    @pytest.mark.parametrize("bytes_to_read", (None, -1, -99))
+    def test_read_all(self, bytes_to_read):
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
         )
@@ -249,7 +249,7 @@ class TestEncryptionStream(object):
         mock_stream.output_buffer = b"1234567890"
         mock_stream.source_stream = MagicMock()
         type(mock_stream.source_stream).closed = PropertyMock(side_effect=(False, False, True))
-        test = mock_stream.read()
+        test = mock_stream.read(bytes_to_read)
         assert test == b"1234567890"
 
     def test_read_all_empty_source(self):
