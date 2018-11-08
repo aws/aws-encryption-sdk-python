@@ -13,11 +13,9 @@
 """Unit test suite for aws_encryption_sdk.streaming_client._EncryptionStream"""
 import copy
 import io
-import unittest
 
 import attr
 import pytest
-import six
 from mock import MagicMock, PropertyMock, call, patch, sentinel
 
 import aws_encryption_sdk.exceptions
