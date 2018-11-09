@@ -209,16 +209,20 @@ class _EncryptionStream(io.IOBase):
         :returns: Processed (encrypted or decrypted) bytes from source stream
         :rtype: bytes
         """
-        # NoneType value for b is interpretted as a full read for legacy compatibility
-        if b is None:
+        # Any negative value for b is interpreted as a full read
+        # None is also accepted for legacy compatibility
+        if b is None or b < 0:
             b = -1
 
         _LOGGER.debug("Stream read called, requesting %s bytes", b)
         output = io.BytesIO()
+
         if not self._message_prepped:
             self._prep_message()
+
         if self.closed:
             raise ValueError("I/O operation on closed file")
+
         if b:
             self._read_bytes(b)
             output.write(self.output_buffer[:b])
@@ -228,6 +232,7 @@ class _EncryptionStream(io.IOBase):
                 self._read_bytes(LINE_LENGTH)
                 output.write(self.output_buffer)
                 self.output_buffer = b""
+
         self.bytes_read += output.tell()
         _LOGGER.debug("Returning %s bytes of %s bytes requested", output.tell(), b)
         return output.getvalue()
@@ -511,14 +516,18 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             _LOGGER.debug("Closing encryptor after receiving only %s bytes of %s bytes requested", plaintext, b)
             self.source_stream.close()
             closing = self.encryptor.finalize()
+
             if self.signer is not None:
                 self.signer.update(closing)
+
             closing += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
                 tag=self.encryptor.tag, signer=self.signer
             )
+
             if self.signer is not None:
                 closing += aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.signer)
             return ciphertext + closing
+
         return ciphertext
 
     def _read_bytes_to_framed_body(self, b):
@@ -535,9 +544,11 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         plaintext = self.source_stream.read(b)
         _LOGGER.debug("%s bytes read from source", len(plaintext))
         finalize = False
+
         if len(plaintext) < b:
             _LOGGER.debug("Final plaintext read from source")
             finalize = True
+
         output = b""
         final_frame_written = False
 
@@ -776,10 +787,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         bytes_to_read = self.body_end - self.source_stream.tell()
         _LOGGER.debug("%s bytes requested; reading %s bytes", b, bytes_to_read)
         ciphertext = self.source_stream.read(bytes_to_read)
+
         if len(self.output_buffer) + len(ciphertext) < self.body_length:
             raise SerializationError("Total message body contents less than specified in body description")
+
         if self.verifier is not None:
             self.verifier.update(ciphertext)
+
         plaintext = self.decryptor.update(ciphertext)
         plaintext += self.decryptor.finalize()
         aws_encryption_sdk.internal.formatting.deserialize.update_verifier_with_tag(
