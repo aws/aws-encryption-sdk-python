@@ -669,4 +669,4 @@ def test_incomplete_read_stream_cycle(caplog, frame_length):
                     "Unexpected error encrypting message: infinite loop detected."
                 )
 
-    assert ciphertext != decrypted == VALUES["plaintext_128"]
+    assert ciphertext != decrypted == plaintext

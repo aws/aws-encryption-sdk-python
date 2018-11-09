@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Utility functions to handle common test framework functions."""
 import copy
+import io
 import itertools
 
 
@@ -50,3 +51,24 @@ def build_valid_kwargs_list(base, optional_kwargs):
             _kwargs.update(dict(valid_options))
             valid_kwargs.append(_kwargs)
     return valid_kwargs
+
+
+class SometimesIncompleteReaderIO(io.BytesIO):
+    def __init__(self, *args, **kwargs):
+        self.__read_counter = 0
+        super(SometimesIncompleteReaderIO, self).__init__(*args, **kwargs)
+
+    def read(self, size=-1):
+        """Every other read request, return fewer than the requested number of bytes if more than one byte requested."""
+        self.__read_counter += 1
+        if size > 1 and self.__read_counter % 2 == 0:
+            size //= 2
+        return super(SometimesIncompleteReaderIO, self).read(size)
+
+
+class NothingButRead(object):
+    def __init__(self, data):
+        self._data = io.BytesIO(data)
+
+    def read(self, size=-1):
+        return self._data.read(size)
