@@ -202,16 +202,16 @@ class _EncryptionStream(io.IOBase):
         # Open streams are currently always readable.
         return not self.closed
 
-    def read(self, b=None):
+    def read(self, b=-1):
         """Returns either the requested number of bytes or the entire stream.
 
         :param int b: Number of bytes to read
         :returns: Processed (encrypted or decrypted) bytes from source stream
         :rtype: bytes
         """
-        # Any negative value for b is interpreted as a full read
-        if b is not None and b < 0:
-            b = None
+        # NoneType value for b is interpretted as a full read for legacy compatibility
+        if b is None:
+            b = -1
 
         _LOGGER.debug("Stream read called, requesting %s bytes", b)
         output = io.BytesIO()
