@@ -598,3 +598,74 @@ def test_stream_decryptor_readable():
         assert handler.readable()
         handler.read()
     assert not handler.readable()
+
+
+def exact_length_plaintext(length):
+    plaintext = b""
+    while len(plaintext) < length:
+        plaintext += VALUES["plaintext_128"]
+    return plaintext[:length]
+
+
+class SometimesIncompleteReaderIO(io.BytesIO):
+    def __init__(self, *args, **kwargs):
+        self.__read_counter = 0
+        super(SometimesIncompleteReaderIO, self).__init__(*args, **kwargs)
+
+    def read(self, size=-1):
+        """Every other read request, return fewer than the requested number of bytes if more than one byte requested."""
+        self.__read_counter += 1
+        if size > 1 and self.__read_counter % 2 == 0:
+            size //= 2
+        return super(SometimesIncompleteReaderIO, self).read(size)
+
+
+@pytest.mark.parametrize(
+    "frame_length",
+    (
+        0,  # 0: unframed
+        128,  # 128: framed with exact final frame size match
+        256,  # 256: framed with inexact final frame size match
+    ),
+)
+def test_incomplete_read_stream_cycle(frame_length):
+    chunk_size = 21  # Will never be an exact match for the frame size
+    key_provider = fake_kms_key_provider()
+
+    plaintext = exact_length_plaintext(384)
+    ciphertext = b""
+    cycle_count = 0
+    with aws_encryption_sdk.stream(
+        mode="encrypt",
+        source=SometimesIncompleteReaderIO(plaintext),
+        key_provider=key_provider,
+        frame_length=frame_length,
+    ) as encryptor:
+        while True:
+            cycle_count += 1
+            chunk = encryptor.read(chunk_size)
+            if not chunk:
+                break
+            ciphertext += chunk
+            if cycle_count > len(VALUES["plaintext_128"]):
+                raise aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError(
+                    "Unexpected error encrypting message: infinite loop detected."
+                )
+
+    decrypted = b""
+    cycle_count = 0
+    with aws_encryption_sdk.stream(
+        mode="decrypt", source=SometimesIncompleteReaderIO(ciphertext), key_provider=key_provider
+    ) as decryptor:
+        while True:
+            cycle_count += 1
+            chunk = decryptor.read(chunk_size)
+            if not chunk:
+                break
+            decrypted += chunk
+            if cycle_count > len(VALUES["plaintext_128"]):
+                raise aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError(
+                    "Unexpected error encrypting message: infinite loop detected."
+                )
+
+    assert ciphertext != decrypted == plaintext

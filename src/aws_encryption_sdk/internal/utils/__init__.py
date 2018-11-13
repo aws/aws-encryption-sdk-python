@@ -23,6 +23,8 @@ from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import EncryptedDataKey
 
+from .streams import InsistentReaderBytesIO
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -132,12 +134,14 @@ def prep_stream_data(data):
 
     :param data: Input data
     :returns: Prepared stream
-    :rtype: io.BytesIO
+    :rtype: InsistentReaderBytesIO
     """
     if isinstance(data, (six.string_types, six.binary_type)):
-        return io.BytesIO(to_bytes(data))
+        stream = io.BytesIO(to_bytes(data))
+    else:
+        stream = data
 
-    return data
+    return InsistentReaderBytesIO(stream)
 
 
 def source_data_key_length_check(source_data_key, algorithm):

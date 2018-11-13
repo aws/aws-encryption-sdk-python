@@ -8,10 +8,12 @@ Changelog
 Minor
 -----
 
-* Add support to remove clients from :ref:`KMSMasterKeyProvider` client cache if they fail to connect to endpoint.
+* Add support to remove clients from :class:`KMSMasterKeyProvider` client cache if they fail to connect to endpoint.
   `#86 <https://github.com/aws/aws-encryption-sdk-python/pull/86>`_
 * Add support for SHA384 and SHA512 for use with RSA OAEP wrapping algorithms.
   `#56 <https://github.com/aws/aws-encryption-sdk-python/issues/56>`_
+* Fix ``streaming_client`` classes to properly interpret short reads in source streams.
+  `#24 <https://github.com/aws/aws-encryption-sdk-python/issues/24>`_
 
 1.3.7 -- 2018-09-20
 ===================
