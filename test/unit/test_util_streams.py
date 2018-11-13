@@ -64,7 +64,7 @@ def test_teestream_full():
         (NothingButRead, to_bytes),
     ),
 )
-@pytest.mark.parametrize("bytes_to_read", (1, 4, 7, 99, 500))
+@pytest.mark.parametrize("bytes_to_read", range(1, 102))
 @pytest.mark.parametrize("source_length", (1, 11, 100))
 def test_insistent_stream(source_length, bytes_to_read, stream_type, converter):
     source = data(length=source_length, stream_type=stream_type, converter=converter)
