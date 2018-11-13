@@ -20,6 +20,7 @@ from mock import MagicMock, PropertyMock, call, patch, sentinel
 
 import aws_encryption_sdk.exceptions
 from aws_encryption_sdk.internal.defaults import LINE_LENGTH
+from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import _ClientConfig, _EncryptionStream
 
@@ -107,17 +108,19 @@ class TestEncryptionStream(object):
             line_length=io.DEFAULT_BUFFER_SIZE,
             source_length=mock_int_sentinel,
         )
-        assert mock_stream.config == MockClientConfig(
-            source=self.mock_source_stream,
-            key_provider=self.mock_key_provider,
-            mock_read_bytes=sentinel.read_bytes,
-            line_length=io.DEFAULT_BUFFER_SIZE,
-            source_length=mock_int_sentinel,
-        )
+
+        assert mock_stream.config.source == self.mock_source_stream
+        assert isinstance(mock_stream.config.source, InsistentReaderBytesIO)
+        assert mock_stream.config.key_provider is self.mock_key_provider
+        assert mock_stream.config.mock_read_bytes is sentinel.read_bytes
+        assert mock_stream.config.line_length == io.DEFAULT_BUFFER_SIZE
+        assert mock_stream.config.source_length is mock_int_sentinel
+
         assert mock_stream.bytes_read == 0
         assert mock_stream.output_buffer == b""
         assert not mock_stream._message_prepped
-        assert mock_stream.source_stream is self.mock_source_stream
+        assert mock_stream.source_stream == self.mock_source_stream
+        assert isinstance(mock_stream.source_stream, InsistentReaderBytesIO)
         assert mock_stream._stream_length is mock_int_sentinel
         assert mock_stream.line_length == io.DEFAULT_BUFFER_SIZE
 

@@ -261,7 +261,7 @@ class TestStreamDecryptor(unittest.TestCase):
         test_decryptor._prep_non_framed()
 
         self.mock_deserialize_non_framed_values.assert_called_once_with(
-            stream=self.mock_input_stream, header=self.mock_header, verifier=sentinel.verifier
+            stream=test_decryptor.source_stream, header=self.mock_header, verifier=sentinel.verifier
         )
         assert test_decryptor.body_length == len(VALUES["data_128"])
         self.mock_get_aad_content_string.assert_called_once_with(

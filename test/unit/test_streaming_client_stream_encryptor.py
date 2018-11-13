@@ -58,8 +58,6 @@ class TestStreamEncryptor(unittest.TestCase):
 
         self.mock_master_key = MagicMock(__class__=MasterKey)
 
-        self.mock_input_stream = MagicMock(__class__=io.IOBase)
-
         self.mock_frame_length = MagicMock(__class__=int)
 
         self.mock_algorithm = MagicMock(__class__=Algorithm)
@@ -178,7 +176,7 @@ class TestStreamEncryptor(unittest.TestCase):
 
     def test_init(self):
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
+            source=io.BytesIO(self.plaintext),
             key_provider=self.mock_key_provider,
             frame_length=self.mock_frame_length,
             algorithm=self.mock_algorithm,
@@ -190,7 +188,7 @@ class TestStreamEncryptor(unittest.TestCase):
     def test_init_non_framed_message_too_large(self):
         with six.assertRaisesRegex(self, SerializationError, "Source too large for non-framed message"):
             StreamEncryptor(
-                source=self.mock_input_stream,
+                source=io.BytesIO(self.plaintext),
                 key_provider=self.mock_key_provider,
                 frame_length=0,
                 algorithm=self.mock_algorithm,
@@ -200,7 +198,7 @@ class TestStreamEncryptor(unittest.TestCase):
     def test_prep_message_no_master_keys(self):
         self.mock_key_provider.master_keys_for_encryption.return_value = sentinel.primary_master_key, set()
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
+            source=io.BytesIO(self.plaintext),
             key_provider=self.mock_key_provider,
             frame_length=self.mock_frame_length,
             source_length=5,
@@ -215,7 +213,7 @@ class TestStreamEncryptor(unittest.TestCase):
             self.mock_master_keys_set,
         )
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
+            source=io.BytesIO(self.plaintext),
             key_provider=self.mock_key_provider,
             frame_length=self.mock_frame_length,
             source_length=5,
@@ -227,7 +225,7 @@ class TestStreamEncryptor(unittest.TestCase):
     def test_prep_message_algorithm_change(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_256_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
+            source=io.BytesIO(self.plaintext),
             materials_manager=self.mock_materials_manager,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             source_length=128,
@@ -255,7 +253,7 @@ class TestStreamEncryptor(unittest.TestCase):
     ):
         mock_rostream.return_value = sentinel.plaintext_rostream
         test_encryptor = StreamEncryptor(
-            source=self.mock_input_stream,
+            source=io.BytesIO(self.plaintext),
             materials_manager=self.mock_materials_manager,
             frame_length=self.mock_frame_length,
             source_length=5,
@@ -359,7 +357,7 @@ class TestStreamEncryptor(unittest.TestCase):
     @patch("aws_encryption_sdk.streaming_client.non_framed_body_iv")
     def test_prep_non_framed(self, mock_non_framed_iv):
         self.mock_serialize_non_framed_open.return_value = b"1234567890"
-        test_encryptor = StreamEncryptor(source=self.mock_input_stream, key_provider=self.mock_key_provider)
+        test_encryptor = StreamEncryptor(source=io.BytesIO(self.plaintext), key_provider=self.mock_key_provider)
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
@@ -411,7 +409,7 @@ class TestStreamEncryptor(unittest.TestCase):
             test_encryptor._read_bytes_to_non_framed_body(5)
 
     def test_read_bytes_to_non_framed_body_close(self):
-        test_encryptor = StreamEncryptor(source=self.mock_input_stream, key_provider=self.mock_key_provider)
+        test_encryptor = StreamEncryptor(source=io.BytesIO(self.plaintext), key_provider=self.mock_key_provider)
         test_encryptor.signer = MagicMock()
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor.encryptor = MagicMock()
@@ -420,7 +418,9 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.encryptor.tag = sentinel.tag
         self.mock_serialize_non_framed_close.return_value = b"789"
         self.mock_serialize_footer.return_value = b"0-="
+
         test = test_encryptor._read_bytes_to_non_framed_body(len(self.plaintext) + 1)
+
         test_encryptor.signer.update.assert_has_calls(calls=(call(b"123"), call(b"456")), any_order=False)
         assert test_encryptor.source_stream.closed
         test_encryptor.encryptor.finalize.assert_called_once_with()
