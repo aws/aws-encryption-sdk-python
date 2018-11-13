@@ -17,7 +17,7 @@ import pytest
 
 from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
-from aws_encryption_sdk.internal.utils.streams import ROStream, TeeStream
+from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO, ROStream, TeeStream
 
 from .unit_test_utils import NothingButRead, SometimesIncompleteReaderIO
 
@@ -67,7 +67,7 @@ def test_teestream_full():
 @pytest.mark.parametrize("bytes_to_read", range(1, 102))
 @pytest.mark.parametrize("source_length", (1, 11, 100))
 def test_insistent_stream(source_length, bytes_to_read, stream_type, converter):
-    source = data(length=source_length, stream_type=stream_type, converter=converter)
+    source = InsistentReaderBytesIO(data(length=source_length, stream_type=stream_type, converter=converter))
 
     test = source.read(bytes_to_read)
 
