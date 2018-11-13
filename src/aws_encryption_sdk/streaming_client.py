@@ -223,7 +223,7 @@ class _EncryptionStream(io.IOBase):
         if self.closed:
             raise ValueError("I/O operation on closed file")
 
-        if b:
+        if b >= 0:
             self._read_bytes(b)
             output.write(self.output_buffer[:b])
             self.output_buffer = self.output_buffer[b:]
@@ -539,13 +539,19 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         _LOGGER.debug("collecting %s bytes", b)
         _b = b
-        b = int(math.ceil(b / float(self.config.frame_length)) * self.config.frame_length)
-        _LOGGER.debug("%s bytes requested; reading %s bytes after normalizing to frame length", _b, b)
+
+        if b > 0:
+            _frames_to_read = math.ceil(b / float(self.config.frame_length))
+            b = int(_frames_to_read * self.config.frame_length)
+        _LOGGER.debug("%d bytes requested; reading %d bytes after normalizing to frame length", _b, b)
+
         plaintext = self.source_stream.read(b)
-        _LOGGER.debug("%s bytes read from source", len(plaintext))
+        plaintext_length = len(plaintext)
+        _LOGGER.debug("%d bytes read from source", plaintext_length)
+
         finalize = False
 
-        if len(plaintext) < b:
+        if b < 0 or plaintext_length < b:
             _LOGGER.debug("Final plaintext read from source")
             finalize = True
 
@@ -594,8 +600,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :param int b: Number of bytes to read
         :raises NotSupportedError: if content type is not supported
         """
-        _LOGGER.debug("%s bytes requested from stream with content type: %s", b, self.content_type)
-        if b <= len(self.output_buffer) or self.source_stream.closed:
+        _LOGGER.debug("%d bytes requested from stream with content type: %s", b, self.content_type)
+        if 0 <= b <= len(self.output_buffer) or self.source_stream.closed:
             _LOGGER.debug("No need to read from source stream or source stream closed")
             return
 
@@ -858,7 +864,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             _LOGGER.debug("Source stream closed")
             return
 
-        if b <= len(self.output_buffer):
+        buffer_length = len(self.output_buffer)
+        if 0 <= b <= buffer_length:
             _LOGGER.debug(
                 "%s bytes requested less than or equal to current output buffer size %s", b, len(self.output_buffer)
             )
