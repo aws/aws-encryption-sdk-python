@@ -745,3 +745,42 @@ def test_plaintext_logs_stream(caplog, capsys, plaintext_length, frame_size):
 
     _look_in_logs(caplog, plaintext)
     _error_check(capsys)
+
+
+class NothingButRead(object):
+    def __init__(self, data):
+        self._data = io.BytesIO(data)
+
+    def read(self, size=-1):
+        return self._data.read(size)
+
+
+@pytest.mark.parametrize("frame_length", (0, 1024))
+def test_cycle_nothing_but_read(frame_length):
+    raw_plaintext = exact_length_plaintext(100)
+    plaintext = NothingButRead(raw_plaintext)
+    key_provider = fake_kms_key_provider()
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    ciphertext = NothingButRead(raw_ciphertext)
+    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    assert raw_plaintext == decrypted
+
+
+@pytest.mark.parametrize("frame_length", (0, 1024))
+def test_encrypt_nothing_but_read(frame_length):
+    raw_plaintext = exact_length_plaintext(100)
+    plaintext = NothingButRead(raw_plaintext)
+    key_provider = fake_kms_key_provider()
+    ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    assert raw_plaintext == decrypted
+
+
+@pytest.mark.parametrize("frame_length", (0, 1024))
+def test_decrypt_nothing_but_read(frame_length):
+    plaintext = exact_length_plaintext(100)
+    key_provider = fake_kms_key_provider()
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    ciphertext = NothingButRead(raw_ciphertext)
+    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    assert plaintext == decrypted
