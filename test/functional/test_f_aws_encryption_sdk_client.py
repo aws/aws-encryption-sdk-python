@@ -628,8 +628,7 @@ class SometimesIncompleteReaderIO(io.BytesIO):
         256,  # 256: framed with inexact final frame size match
     ),
 )
-def test_incomplete_read_stream_cycle(caplog, frame_length):
-    caplog.set_level(logging.DEBUG)
+def test_incomplete_read_stream_cycle(frame_length):
     chunk_size = 21  # Will never be an exact match for the frame size
     key_provider = fake_kms_key_provider()
 
