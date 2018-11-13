@@ -55,13 +55,13 @@ def build_valid_kwargs_list(base, optional_kwargs):
 
 class SometimesIncompleteReaderIO(io.BytesIO):
     def __init__(self, *args, **kwargs):
-        self.__read_counter = 0
+        self._read_counter = 0
         super(SometimesIncompleteReaderIO, self).__init__(*args, **kwargs)
 
     def read(self, size=-1):
         """Every other read request, return fewer than the requested number of bytes if more than one byte requested."""
-        self.__read_counter += 1
-        if size > 1 and self.__read_counter % 2 == 0:
+        self._read_counter += 1
+        if size > 1 and self._read_counter % 2 == 0:
             size //= 2
         return super(SometimesIncompleteReaderIO, self).read(size)
 
@@ -72,3 +72,10 @@ class NothingButRead(object):
 
     def read(self, size=-1):
         return self._data.read(size)
+
+
+class ExactlyTwoReads(SometimesIncompleteReaderIO):
+    def read(self, size=-1):
+        if self._read_counter >= 2:
+            self.close()
+        return super(ExactlyTwoReads, self).read(size)

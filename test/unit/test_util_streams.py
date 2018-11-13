@@ -19,7 +19,7 @@ from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO, ROStream, TeeStream
 
-from .unit_test_utils import NothingButRead, SometimesIncompleteReaderIO
+from .unit_test_utils import ExactlyTwoReads, NothingButRead, SometimesIncompleteReaderIO
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -74,3 +74,16 @@ def test_insistent_stream(source_length, bytes_to_read, stream_type, converter):
     assert (source_length >= bytes_to_read and len(test) == bytes_to_read) or (
         source_length < bytes_to_read and len(test) == source_length
     )
+
+
+def test_insistent_stream_close_partway_through():
+    raw = data(length=100)
+    source = ExactlyTwoReads(raw.getvalue())
+
+    wrapped = InsistentReaderBytesIO(source)
+
+    test = b""
+    test += wrapped.read(10)  # actually reads 10 bytes
+    test += wrapped.read(10)  # reads 5 bytes, stream is closed before third read can complete, truncating the result
+
+    assert test == raw.getvalue()[:15]

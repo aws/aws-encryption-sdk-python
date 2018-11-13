@@ -81,7 +81,12 @@ class InsistentReaderBytesIO(ObjectProxy):
         remaining_bytes = b
         data = io.BytesIO()
         while True:
-            chunk = to_bytes(self.__wrapped__.read(remaining_bytes))
+            try:
+                chunk = to_bytes(self.__wrapped__.read(remaining_bytes))
+            except ValueError:
+                if self.__wrapped__.closed:
+                    break
+                raise
 
             if not chunk:
                 break
