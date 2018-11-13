@@ -866,9 +866,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
         buffer_length = len(self.output_buffer)
         if 0 <= b <= buffer_length:
-            _LOGGER.debug(
-                "%s bytes requested less than or equal to current output buffer size %s", b, len(self.output_buffer)
-            )
+            _LOGGER.debug("%d bytes requested less than or equal to current output buffer size %d", b, buffer_length)
             return
 
         if self._header.content_type == ContentType.FRAMED_DATA:
