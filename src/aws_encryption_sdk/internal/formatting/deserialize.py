@@ -282,7 +282,7 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
 
 
 def deserialize_non_framed_values(stream, header, verifier=None):
-    """Deserializes the IV and Tag from a non-framed stream.
+    """Deserializes the IV and body length from a non-framed stream.
 
     :param stream: Source data stream
     :type stream: io.BytesIO
@@ -290,18 +290,30 @@ def deserialize_non_framed_values(stream, header, verifier=None):
     :type header: aws_encryption_sdk.structures.MessageHeader
     :param verifier: Signature verifier object (optional)
     :type verifier: aws_encryption_sdk.internal.crypto.Verifier
-    :returns: IV, Tag, and Data Length values for body
-    :rtype: tuple of bytes, bytes, and int
+    :returns: IV and Data Length values for body
+    :rtype: tuple of bytes and int
     """
     _LOGGER.debug("Starting non-framed body iv/tag deserialization")
     (data_iv, data_length) = unpack_values(">{}sQ".format(header.algorithm.iv_len), stream, verifier)
-    body_start = stream.tell()
-    stream.seek(data_length, 1)
+    return data_iv, data_length
+
+
+def deserialize_tag(stream, header, verifier=None):
+    """Deserialize the Tag value from a non-framed stream.
+
+    :param stream: Source data stream
+    :type stream: io.BytesIO
+    :param header: Deserialized header
+    :type header: aws_encryption_sdk.structures.MessageHeader
+    :param verifier: Signature verifier object (optional)
+    :type verifier: aws_encryption_sdk.internal.crypto.Verifier
+    :returns: Tag value for body
+    :rtype: bytes
+    """
     (data_tag,) = unpack_values(
-        format_string=">{auth_len}s".format(auth_len=header.algorithm.auth_len), stream=stream, verifier=None
+        format_string=">{auth_len}s".format(auth_len=header.algorithm.auth_len), stream=stream, verifier=verifier
     )
-    stream.seek(body_start, 0)
-    return data_iv, data_tag, data_length
+    return data_tag
 
 
 def update_verifier_with_tag(stream, header, verifier):

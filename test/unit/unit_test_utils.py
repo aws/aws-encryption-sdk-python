@@ -14,6 +14,7 @@
 import copy
 import io
 import itertools
+from aws_encryption_sdk.internal.utils.streams import FauxCloseStream, LinearTellStream, InsistentReaderBytesIO
 
 
 def all_valid_kwargs(valid_kwargs):
@@ -79,3 +80,15 @@ class ExactlyTwoReads(SometimesIncompleteReaderIO):
         if self._read_counter >= 2:
             self.close()
         return super(ExactlyTwoReads, self).read(size)
+
+
+class FailingTeller(object):
+    def tell(self):
+        raise IOError("Tell not allowed!")
+
+
+def assert_prepped_stream_identity(prepped_stream, wrapped_type):
+    # Check the wrapped stream
+    assert isinstance(prepped_stream, wrapped_type)
+    # Check the wrapping streams
+    assert isinstance(prepped_stream, InsistentReaderBytesIO)

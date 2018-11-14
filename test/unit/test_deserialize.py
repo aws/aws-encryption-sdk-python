@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.deserialize"""
 import io
+import struct
 import unittest
 
 import pytest
@@ -27,6 +28,34 @@ from aws_encryption_sdk.internal.structures import EncryptedData
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+def test_deserialize_non_framed_values():
+    iv = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11'
+    length = 42
+    packed = struct.pack(">12sQ", iv, length)
+    mock_header = MagicMock(algorithm=MagicMock(iv_len=12))
+
+    parsed_iv, parsed_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
+        stream=io.BytesIO(packed),
+        header=mock_header
+    )
+
+    assert parsed_iv == iv
+    assert parsed_length == length
+
+
+def test_deserialize_tag():
+    tag = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15'
+    packed = struct.pack(">16s", tag)
+    mock_header = MagicMock(algorithm=MagicMock(auth_len=16))
+
+    parsed_tag = aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag(
+        stream=io.BytesIO(packed),
+        header=mock_header
+    )
+
+    assert parsed_tag == tag
 
 
 class TestDeserialize(unittest.TestCase):

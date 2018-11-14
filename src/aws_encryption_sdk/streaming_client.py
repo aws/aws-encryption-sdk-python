@@ -696,6 +696,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     def __init__(self, **kwargs):  # pylint: disable=unused-argument,super-init-not-called
         """Prepares necessary initial values."""
         self.last_sequence_number = 0
+        self.__unframed_bytes_read = 0
 
     def _prep_message(self):
         """Performs initial message setup."""
@@ -713,6 +714,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
         """
         header, raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(self.source_stream)
+        self.__unframed_bytes_read += len(raw_header)
 
         if (
             self.config.max_body_length is not None
@@ -751,9 +753,19 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         )
         return header, header_auth
 
+    @property
+    def body_start(self):
+        _LOGGER.warning("StreamDecryptor.body_start is deprecated and will be removed in 1.4.0")
+        return self._body_start
+
+    @property
+    def body_end(self):
+        _LOGGER.warning("StreamDecryptor.body_end is deprecated and will be removed in 1.4.0")
+        return self._body_end
+
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
-        iv, tag, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
+        self._unframed_body_iv, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
             stream=self.source_stream, header=self._header, verifier=self.verifier
         )
 
@@ -763,6 +775,37 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     found=self.body_length, custom=self.config.max_body_length
                 )
             )
+
+        self.__unframed_bytes_read += self._header.algorithm.iv_len
+        self.__unframed_bytes_read += 8  # encrypted content length field
+        self._body_start = self.__unframed_bytes_read
+        self._body_end = self._body_start + self.body_length
+
+    def _read_bytes_from_non_framed_body(self, b):
+        """Reads the requested number of bytes from a streaming non-framed message body.
+
+        :param int b: Number of bytes to read
+        :returns: Decrypted bytes from source stream
+        :rtype: bytes
+        """
+        _LOGGER.debug("starting non-framed body read")
+        # Always read the entire message for non-framed message bodies.
+        bytes_to_read = self.body_length
+
+        _LOGGER.debug("%d bytes requested; reading %d bytes", b, bytes_to_read)
+        ciphertext = self.source_stream.read(bytes_to_read)
+
+        if len(self.output_buffer) + len(ciphertext) < self.body_length:
+            raise SerializationError("Total message body contents less than specified in body description")
+
+        if self.verifier is not None:
+            self.verifier.update(ciphertext)
+
+        tag = aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag(
+            stream=self.source_stream,
+            header=self._header,
+            verifier=self.verifier,
+        )
 
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self._header.content_type, is_final_frame=True
@@ -777,36 +820,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             algorithm=self._header.algorithm,
             key=self._derived_data_key,
             associated_data=associated_data,
-            iv=iv,
+            iv=self._unframed_body_iv,
             tag=tag,
         )
-        self.body_start = self.source_stream.tell()
-        self.body_end = self.body_start + self.body_length
-
-    def _read_bytes_from_non_framed_body(self, b):
-        """Reads the requested number of bytes from a streaming non-framed message body.
-
-        :param int b: Number of bytes to read
-        :returns: Decrypted bytes from source stream
-        :rtype: bytes
-        """
-        _LOGGER.debug("starting non-framed body read")
-        # Always read the entire message for non-framed message bodies.
-        bytes_to_read = self.body_end - self.source_stream.tell()
-        _LOGGER.debug("%d bytes requested; reading %d bytes", b, bytes_to_read)
-        ciphertext = self.source_stream.read(bytes_to_read)
-
-        if len(self.output_buffer) + len(ciphertext) < self.body_length:
-            raise SerializationError("Total message body contents less than specified in body description")
-
-        if self.verifier is not None:
-            self.verifier.update(ciphertext)
 
         plaintext = self.decryptor.update(ciphertext)
         plaintext += self.decryptor.finalize()
-        aws_encryption_sdk.internal.formatting.deserialize.update_verifier_with_tag(
-            stream=self.source_stream, header=self._header, verifier=self.verifier
-        )
+
         self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(
             stream=self.source_stream, verifier=self.verifier
         )
