@@ -11,7 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Functional test suite for aws_encryption_sdk.kms_thick_client"""
+from __future__ import division
+
 import io
+import logging
 
 import attr
 import botocore.client
@@ -28,6 +31,7 @@ from aws_encryption_sdk.caches import build_decryption_materials_cache_key, buil
 from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
 from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from aws_encryption_sdk.internal.defaults import LINE_LENGTH
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
@@ -498,12 +502,14 @@ def test_encryption_cycle_with_caching():
 def test_encrypt_source_length_enforcement():
     key_provider = fake_kms_key_provider()
     cmm = aws_encryption_sdk.DefaultCryptoMaterialsManager(key_provider)
+    plaintext = io.BytesIO(VALUES["plaintext_128"])
     with pytest.raises(CustomMaximumValueExceeded) as excinfo:
         aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"], materials_manager=cmm, source_length=int(len(VALUES["plaintext_128"]) / 2)
+            source=plaintext, materials_manager=cmm, source_length=int(len(VALUES["plaintext_128"]) / 2)
         )
 
     excinfo.match(r"Bytes encrypted has exceeded stated source length estimate:*")
+    assert repr(plaintext) not in excinfo.exconly()
 
 
 def test_encrypt_source_length_enforcement_legacy_support():
@@ -669,3 +675,55 @@ def test_incomplete_read_stream_cycle(frame_length):
                 )
 
     assert ciphertext != decrypted == plaintext
+
+
+def _prep_plaintext_and_logs(log_catcher, plaintext_length):
+    log_catcher.set_level(logging.DEBUG)
+    key_provider = fake_kms_key_provider()
+    plaintext = exact_length_plaintext(plaintext_length)
+    return plaintext, key_provider
+
+
+def _look_in_logs(log_catcher, plaintext):
+    logs = log_catcher.text
+    # look for every possible 32-byte chunk
+    start = 0
+    end = 32
+    plaintext_length = len(plaintext)
+    while end <= plaintext_length:
+        chunk_repr = repr(plaintext[start:end])
+        repr_body = chunk_repr[2:-1]
+        assert repr_body not in logs
+        start += 1
+        end += 1
+
+
+@pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
+@pytest.mark.parametrize(
+    "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
+)
+def test_plaintext_logs_oneshot(caplog, plaintext_length, frame_size):
+    plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
+
+    _ciphertext, _header = aws_encryption_sdk.encrypt(
+        source=plaintext, key_provider=key_provider, frame_length=frame_size
+    )
+
+    _look_in_logs(caplog, plaintext)
+
+
+@pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
+@pytest.mark.parametrize(
+    "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
+)
+def test_plaintext_logs_stream(caplog, plaintext_length, frame_size):
+    plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
+
+    ciphertext = b""
+    with aws_encryption_sdk.stream(
+        mode="encrypt", source=plaintext, key_provider=key_provider, frame_length=frame_size
+    ) as encryptor:
+        for line in encryptor:
+            ciphertext += line
+
+    _look_in_logs(caplog, plaintext)
