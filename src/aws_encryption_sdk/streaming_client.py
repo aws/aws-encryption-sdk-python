@@ -755,11 +755,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     @property
     def body_start(self):
+        """Log deprecation warning when body_start is accessed."""
         _LOGGER.warning("StreamDecryptor.body_start is deprecated and will be removed in 1.4.0")
         return self._body_start
 
     @property
     def body_end(self):
+        """Log deprecation warning when body_end is accessed."""
         _LOGGER.warning("StreamDecryptor.body_end is deprecated and will be removed in 1.4.0")
         return self._body_end
 
