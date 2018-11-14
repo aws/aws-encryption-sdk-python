@@ -382,7 +382,10 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.encryptor = MagicMock()
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor.encryptor.update.return_value = sentinel.ciphertext
+        test_encryptor._StreamEncryptor__unframed_plaintext_cache = pt_stream
+
         test = test_encryptor._read_bytes_to_non_framed_body(5)
+
         test_encryptor.encryptor.update.assert_called_once_with(self.plaintext[:5])
         test_encryptor.signer.update.assert_called_once_with(sentinel.ciphertext)
         assert not test_encryptor.source_stream.closed
@@ -392,6 +395,8 @@ class TestStreamEncryptor(unittest.TestCase):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(source=pt_stream, key_provider=self.mock_key_provider)
         test_encryptor.bytes_read = aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
+        test_encryptor._StreamEncryptor__unframed_plaintext_cache = pt_stream
+
         with six.assertRaisesRegex(self, SerializationError, "Source too large for non-framed message"):
             test_encryptor._read_bytes_to_non_framed_body(5)
 

@@ -771,7 +771,7 @@ class NoClose(ObjectProxy):
 @pytest.mark.parametrize(
     "wrapping_class",
     (
-        pytest.param(NoTell, marks=pytest.mark.xfail),
+        NoTell,
         pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
         pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
     ),
@@ -792,7 +792,7 @@ def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
 @pytest.mark.parametrize(
     "wrapping_class",
     (
-        pytest.param(NoTell, marks=pytest.mark.xfail),
+        NoTell,
         pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
         pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
     ),
