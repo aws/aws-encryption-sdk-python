@@ -31,14 +31,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 def test_deserialize_non_framed_values():
-    iv = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11'
+    iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11"
     length = 42
     packed = struct.pack(">12sQ", iv, length)
     mock_header = MagicMock(algorithm=MagicMock(iv_len=12))
 
     parsed_iv, parsed_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
-        stream=io.BytesIO(packed),
-        header=mock_header
+        stream=io.BytesIO(packed), header=mock_header
     )
 
     assert parsed_iv == iv
@@ -46,13 +45,12 @@ def test_deserialize_non_framed_values():
 
 
 def test_deserialize_tag():
-    tag = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15'
+    tag = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15"
     packed = struct.pack(">16s", tag)
     mock_header = MagicMock(algorithm=MagicMock(auth_len=16))
 
     parsed_tag = aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag(
-        stream=io.BytesIO(packed),
-        header=mock_header
+        stream=io.BytesIO(packed), header=mock_header
     )
 
     assert parsed_tag == tag

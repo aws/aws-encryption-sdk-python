@@ -41,7 +41,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_header.encrypted_data_keys = sentinel.encrypted_data_keys
         self.mock_header.encryption_context = sentinel.encryption_context
 
-        self.mock_raw_header = b'some bytes'
+        self.mock_raw_header = b"some bytes"
 
         self.mock_input_stream = MagicMock()
         self.mock_input_stream.__class__ = io.IOBase
@@ -74,8 +74,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_deserialize_non_framed_values.return_value = (sentinel.iv, len(VALUES["data_128"]))
         # Set up deserialize_tag_value patch
         self.mock_deserialize_tag_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag"
+            "aws_encryption_sdk.streaming_client" ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag"
         )
         self.mock_deserialize_tag = self.mock_deserialize_tag_patcher.start()
         self.mock_deserialize_tag.return_value = sentinel.tag
@@ -221,9 +220,7 @@ class TestStreamDecryptor(unittest.TestCase):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    def test_read_header_no_verifier(
-        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
-    ):
+    def test_read_header_no_verifier(self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier):
         self.mock_materials_manager.decrypt_materials.return_value = MagicMock(
             data_key=VALUES["data_key_obj"], verification_key=None
         )
@@ -286,9 +283,7 @@ class TestStreamDecryptor(unittest.TestCase):
         test = test_decryptor._read_bytes_from_non_framed_body(5)
 
         self.mock_deserialize_tag.assert_called_once_with(
-            stream=test_decryptor.source_stream,
-            header=test_decryptor._header,
-            verifier=test_decryptor.verifier
+            stream=test_decryptor.source_stream, header=test_decryptor._header, verifier=test_decryptor.verifier
         )
         self.mock_get_aad_content_string.assert_called_once_with(
             content_type=self.mock_header.content_type, is_final_frame=True

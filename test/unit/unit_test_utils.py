@@ -14,6 +14,7 @@
 import copy
 import io
 import itertools
+
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 
 

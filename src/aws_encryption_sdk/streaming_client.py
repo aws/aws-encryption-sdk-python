@@ -804,9 +804,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self.verifier.update(ciphertext)
 
         tag = aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag(
-            stream=self.source_stream,
-            header=self._header,
-            verifier=self.verifier,
+            stream=self.source_stream, header=self._header, verifier=self.verifier
         )
 
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(

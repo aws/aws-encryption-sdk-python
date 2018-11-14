@@ -761,7 +761,9 @@ def test_cycle_nothing_but_read(frame_length):
     raw_plaintext = exact_length_plaintext(100)
     plaintext = NothingButRead(raw_plaintext)
     key_provider = fake_kms_key_provider()
-    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+        source=plaintext, key_provider=key_provider, frame_length=frame_length
+    )
     ciphertext = NothingButRead(raw_ciphertext)
     decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
     assert raw_plaintext == decrypted
@@ -773,7 +775,9 @@ def test_encrypt_nothing_but_read(frame_length):
     raw_plaintext = exact_length_plaintext(100)
     plaintext = NothingButRead(raw_plaintext)
     key_provider = fake_kms_key_provider()
-    ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+        source=plaintext, key_provider=key_provider, frame_length=frame_length
+    )
     decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
     assert raw_plaintext == decrypted
 
@@ -783,7 +787,9 @@ def test_encrypt_nothing_but_read(frame_length):
 def test_decrypt_nothing_but_read(frame_length):
     plaintext = exact_length_plaintext(100)
     key_provider = fake_kms_key_provider()
-    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=frame_length)
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+        source=plaintext, key_provider=key_provider, frame_length=frame_length
+    )
     ciphertext = NothingButRead(raw_ciphertext)
     decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
     assert plaintext == decrypted
@@ -801,8 +807,7 @@ def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
     assert decrypted == plaintext
     assert hasattr(decryptor, attribute)
     watch_string = "StreamDecryptor.{name} is deprecated and will be removed in {version}".format(
-        name=attribute,
-        version=no_later_than
+        name=attribute, version=no_later_than
     )
     assert watch_string in caplog.text
     assert aws_encryption_sdk.__version__ < no_later_than
