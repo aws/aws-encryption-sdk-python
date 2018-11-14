@@ -14,7 +14,7 @@
 import copy
 import io
 import itertools
-from aws_encryption_sdk.internal.utils.streams import FauxCloseStream, LinearTellStream, InsistentReaderBytesIO
+from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 
 
 def all_valid_kwargs(valid_kwargs):
