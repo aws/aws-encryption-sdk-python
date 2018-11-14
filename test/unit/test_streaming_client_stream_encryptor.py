@@ -107,14 +107,10 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_data_encryption_key = VALUES["data_key_obj"]
         self.mock_prepare_data_keys.return_value = (self.mock_data_encryption_key, self.mock_encrypted_data_keys)
         # Set up serialize_header patch
-        self.mock_serialize_header_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_header"
-        )
+        self.mock_serialize_header_patcher = patch("aws_encryption_sdk.streaming_client.serialize_header")
         self.mock_serialize_header = self.mock_serialize_header_patcher.start()
         # Set up serialize_header_auth patch
-        self.mock_serialize_header_auth_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth"
-        )
+        self.mock_serialize_header_auth_patcher = patch("aws_encryption_sdk.streaming_client.serialize_header_auth")
         self.mock_serialize_header_auth = self.mock_serialize_header_auth_patcher.start()
         # Set up get_aad_content_string patch
         self.mock_get_aad_content_string_patcher = patch(
@@ -123,10 +119,7 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_get_aad_content_string = self.mock_get_aad_content_string_patcher.start()
         self.mock_get_aad_content_string.return_value = sentinel.aad_content_string
         # Set up assemble_content_aad patch
-        self.mock_assemble_content_aad_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad"
-        )
+        self.mock_assemble_content_aad_patcher = patch("aws_encryption_sdk.streaming_client.assemble_content_aad")
         self.mock_assemble_content_aad = self.mock_assemble_content_aad_patcher.start()
         self.mock_assemble_content_aad.return_value = sentinel.associated_data
         # Set up encryptor patch
@@ -137,25 +130,19 @@ class TestStreamEncryptor(unittest.TestCase):
         self.mock_encryptor.return_value = self.mock_encryptor_instance
         # Set up serialize_non_framed_open patch
         self.mock_serialize_non_framed_open_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open"
+            "aws_encryption_sdk.streaming_client.serialize_non_framed_open"
         )
         self.mock_serialize_non_framed_open = self.mock_serialize_non_framed_open_patcher.start()
         # Set up serialize_non_framed_close patch
         self.mock_serialize_non_framed_close_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close"
+            "aws_encryption_sdk.streaming_client.serialize_non_framed_close"
         )
         self.mock_serialize_non_framed_close = self.mock_serialize_non_framed_close_patcher.start()
         # Set up serialize_footer patch
-        self.mock_serialize_footer_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_footer"
-        )
+        self.mock_serialize_footer_patcher = patch("aws_encryption_sdk.streaming_client.serialize_footer")
         self.mock_serialize_footer = self.mock_serialize_footer_patcher.start()
         # Set up serialize_frame patch
-        self.mock_serialize_frame_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.serialize.serialize_frame"
-        )
+        self.mock_serialize_frame_patcher = patch("aws_encryption_sdk.streaming_client.serialize_frame")
         self.mock_serialize_frame = self.mock_serialize_frame_patcher.start()
 
     def tearDown(self):

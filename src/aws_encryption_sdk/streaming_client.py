@@ -21,9 +21,6 @@ import math
 import attr
 import six
 
-import aws_encryption_sdk.internal.formatting.deserialize
-import aws_encryption_sdk.internal.formatting.encryption_context
-import aws_encryption_sdk.internal.formatting.serialize
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
@@ -38,6 +35,24 @@ from aws_encryption_sdk.internal.crypto.data_keys import derive_data_encryption_
 from aws_encryption_sdk.internal.crypto.encryption import Decryptor, Encryptor, decrypt
 from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
 from aws_encryption_sdk.internal.defaults import FRAME_LENGTH, LINE_LENGTH, MAX_NON_FRAMED_SIZE, TYPE, VERSION
+from aws_encryption_sdk.internal.formatting.deserialize import (
+    deserialize_footer,
+    deserialize_frame,
+    deserialize_header,
+    deserialize_header_auth,
+    deserialize_non_framed_values,
+    deserialize_tag,
+    validate_header,
+)
+from aws_encryption_sdk.internal.formatting.encryption_context import assemble_content_aad
+from aws_encryption_sdk.internal.formatting.serialize import (
+    serialize_footer,
+    serialize_frame,
+    serialize_header,
+    serialize_header_auth,
+    serialize_non_framed_close,
+    serialize_non_framed_open,
+)
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -461,10 +476,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     def _write_header(self):
         """Builds the message header and writes it to the output stream."""
-        self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_header(
-            header=self._header, signer=self.signer
-        )
-        self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+        self.output_buffer += serialize_header(header=self._header, signer=self.signer)
+        self.output_buffer += serialize_header_auth(
             algorithm=self._encryption_materials.algorithm,
             header=self.output_buffer,
             data_encryption_key=self._derived_data_key,
@@ -476,7 +489,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self.content_type, is_final_frame=True
         )
-        associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
+        associated_data = assemble_content_aad(
             message_id=self._header.message_id,
             aad_content_string=aad_content_string,
             seq_num=1,
@@ -488,7 +501,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             associated_data=associated_data,
             iv=non_framed_body_iv(self._encryption_materials.algorithm),
         )
-        self.output_buffer += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
+        self.output_buffer += serialize_non_framed_open(
             algorithm=self._encryption_materials.algorithm,
             iv=self.encryptor.iv,
             plaintext_length=self.stream_length,
@@ -521,12 +534,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             if self.signer is not None:
                 self.signer.update(closing)
 
-            closing += aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
-                tag=self.encryptor.tag, signer=self.signer
-            )
+            closing += serialize_non_framed_close(tag=self.encryptor.tag, signer=self.signer)
 
             if self.signer is not None:
-                closing += aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.signer)
+                closing += serialize_footer(self.signer)
             return ciphertext + closing
 
         return ciphertext
@@ -575,7 +586,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 self.sequence_number,
             )
             self._bytes_encrypted += bytes_in_frame
-            ciphertext, plaintext = aws_encryption_sdk.internal.formatting.serialize.serialize_frame(
+            ciphertext, plaintext = serialize_frame(
                 algorithm=self._encryption_materials.algorithm,
                 plaintext=plaintext,
                 message_id=self._header.message_id,
@@ -592,7 +603,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if finalize:
             _LOGGER.debug("Writing footer")
             if self.signer is not None:
-                output += aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.signer)
+                output += serialize_footer(self.signer)
             self.source_stream.close()
         return output
 
@@ -713,7 +724,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
         :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
         """
-        header, raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(self.source_stream)
+        header, raw_header = deserialize_header(self.source_stream)
         self.__unframed_bytes_read += len(raw_header)
 
         if (
@@ -742,15 +753,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self.verifier is not None:
             self.verifier.update(raw_header)
 
-        header_auth = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
+        header_auth = deserialize_header_auth(
             stream=self.source_stream, algorithm=header.algorithm, verifier=self.verifier
         )
         self._derived_data_key = derive_data_encryption_key(
             source_key=decryption_materials.data_key.data_key, algorithm=header.algorithm, message_id=header.message_id
         )
-        aws_encryption_sdk.internal.formatting.deserialize.validate_header(
-            header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key
-        )
+        validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
         return header, header_auth
 
     @property
@@ -767,7 +776,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
-        self._unframed_body_iv, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(  # noqa # pylint: disable=line-too-long
+        self._unframed_body_iv, self.body_length = deserialize_non_framed_values(
             stream=self.source_stream, header=self._header, verifier=self.verifier
         )
 
@@ -803,14 +812,12 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self.verifier is not None:
             self.verifier.update(ciphertext)
 
-        tag = aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag(
-            stream=self.source_stream, header=self._header, verifier=self.verifier
-        )
+        tag = deserialize_tag(stream=self.source_stream, header=self._header, verifier=self.verifier)
 
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self._header.content_type, is_final_frame=True
         )
-        associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
+        associated_data = assemble_content_aad(
             message_id=self._header.message_id,
             aad_content_string=aad_content_string,
             seq_num=1,
@@ -827,9 +834,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         plaintext = self.decryptor.update(ciphertext)
         plaintext += self.decryptor.finalize()
 
-        self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(
-            stream=self.source_stream, verifier=self.verifier
-        )
+        self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
         self.source_stream.close()
         return plaintext
 
@@ -845,7 +850,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         _LOGGER.debug("collecting %d bytes", b)
         while len(plaintext) < b and not final_frame:
             _LOGGER.debug("Reading frame")
-            frame_data, final_frame = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
+            frame_data, final_frame = deserialize_frame(
                 stream=self.source_stream, header=self._header, verifier=self.verifier
             )
             _LOGGER.debug("Read complete for frame %d", frame_data.sequence_number)
@@ -855,7 +860,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
                 content_type=self._header.content_type, is_final_frame=frame_data.final_frame
             )
-            associated_data = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
+            associated_data = assemble_content_aad(
                 message_id=self._header.message_id,
                 aad_content_string=aad_content_string,
                 seq_num=frame_data.sequence_number,
@@ -871,9 +876,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             _LOGGER.debug("bytes collected: %d", plaintext_length)
         if final_frame:
             _LOGGER.debug("Reading footer")
-            self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(
-                stream=self.source_stream, verifier=self.verifier
-            )
+            self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
             self.source_stream.close()
         return plaintext
 
