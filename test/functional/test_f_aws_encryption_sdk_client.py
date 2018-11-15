@@ -685,6 +685,7 @@ def _prep_plaintext_and_logs(log_catcher, plaintext_length):
 
 
 def _look_in_logs(log_catcher, plaintext):
+    # Verify that no plaintext chunks are in the logs
     logs = log_catcher.text
     # look for every possible 32-byte chunk
     start = 0
@@ -698,11 +699,18 @@ def _look_in_logs(log_catcher, plaintext):
         end += 1
 
 
+def _error_check(capsys_instance):
+    # Verify that no error were caught and ignored.
+    # The intent is to catch logging errors, but others will be caught as well.
+    stderr = capsys_instance.readouterr().err
+    assert 'Call stack:' not in stderr
+
+
 @pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
 @pytest.mark.parametrize(
     "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
 )
-def test_plaintext_logs_oneshot(caplog, plaintext_length, frame_size):
+def test_plaintext_logs_oneshot(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
     _ciphertext, _header = aws_encryption_sdk.encrypt(
@@ -710,13 +718,14 @@ def test_plaintext_logs_oneshot(caplog, plaintext_length, frame_size):
     )
 
     _look_in_logs(caplog, plaintext)
+    _error_check(capsys)
 
 
 @pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
 @pytest.mark.parametrize(
     "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
 )
-def test_plaintext_logs_stream(caplog, plaintext_length, frame_size):
+def test_plaintext_logs_stream(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
     ciphertext = b""
@@ -727,3 +736,4 @@ def test_plaintext_logs_stream(caplog, plaintext_length, frame_size):
             ciphertext += line
 
     _look_in_logs(caplog, plaintext)
+    _error_check(capsys)

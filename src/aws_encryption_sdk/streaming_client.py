@@ -214,7 +214,7 @@ class _EncryptionStream(io.IOBase):
         if b is None or b < 0:
             b = -1
 
-        _LOGGER.debug("Stream read called, requesting %s bytes", b)
+        _LOGGER.debug("Stream read called, requesting %d bytes", b)
         output = io.BytesIO()
 
         if not self._message_prepped:
@@ -234,7 +234,7 @@ class _EncryptionStream(io.IOBase):
                 self.output_buffer = b""
 
         self.bytes_read += output.tell()
-        _LOGGER.debug("Returning %s bytes of %s bytes requested", output.tell(), b)
+        _LOGGER.debug("Returning %d bytes of %d bytes requested", output.tell(), b)
         return output.getvalue()
 
     def tell(self):
@@ -538,7 +538,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :returns: Bytes read from source stream, encrypted, and serialized
         :rtype: bytes
         """
-        _LOGGER.debug("collecting %s bytes", b)
+        _LOGGER.debug("collecting %d bytes", b)
         _b = b
 
         if b > 0:
@@ -565,10 +565,11 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # If finalizing on this pass, wait until final frame is written
             or (finalize and not final_frame_written)
         ):
-            is_final_frame = finalize and len(plaintext) < self.config.frame_length
-            bytes_in_frame = min(len(plaintext), self.config.frame_length)
+            current_plaintext_length = len(plaintext)
+            is_final_frame = finalize and current_plaintext_length < self.config.frame_length
+            bytes_in_frame = min(current_plaintext_length, self.config.frame_length)
             _LOGGER.debug(
-                "Writing %s bytes into%s frame %s",
+                "Writing %d bytes into%s frame %d",
                 bytes_in_frame,
                 " final" if is_final_frame else "",
                 self.sequence_number,
@@ -719,7 +720,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             and header.frame_length > self.config.max_body_length
         ):
             raise CustomMaximumValueExceeded(
-                "Frame Size in header found larger than custom value: {found} > {custom}".format(
+                "Frame Size in header found larger than custom value: {found:d} > {custom:d}".format(
                     found=header.frame_length, custom=self.config.max_body_length
                 )
             )
@@ -758,7 +759,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
         if self.config.max_body_length is not None and self.body_length > self.config.max_body_length:
             raise CustomMaximumValueExceeded(
-                "Non-framed message content length found larger than custom value: {found} > {custom}".format(
+                "Non-framed message content length found larger than custom value: {found:d} > {custom:d}".format(
                     found=self.body_length, custom=self.config.max_body_length
                 )
             )
@@ -792,7 +793,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         _LOGGER.debug("starting non-framed body read")
         # Always read the entire message for non-framed message bodies.
         bytes_to_read = self.body_end - self.source_stream.tell()
-        _LOGGER.debug("%s bytes requested; reading %s bytes", b, bytes_to_read)
+        _LOGGER.debug("%d bytes requested; reading %d bytes", b, bytes_to_read)
         ciphertext = self.source_stream.read(bytes_to_read)
 
         if len(self.output_buffer) + len(ciphertext) < self.body_length:
@@ -821,13 +822,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         plaintext = b""
         final_frame = False
-        _LOGGER.debug("collecting %s bytes", b)
+        _LOGGER.debug("collecting %d bytes", b)
         while len(plaintext) < b and not final_frame:
             _LOGGER.debug("Reading frame")
             frame_data, final_frame = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
                 stream=self.source_stream, header=self._header, verifier=self.verifier
             )
-            _LOGGER.debug("Read complete for frame %s", frame_data.sequence_number)
+            _LOGGER.debug("Read complete for frame %d", frame_data.sequence_number)
             if frame_data.sequence_number != self.last_sequence_number + 1:
                 raise SerializationError("Malformed message: frames out of order")
             self.last_sequence_number += 1
@@ -846,7 +847,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 encrypted_data=frame_data,
                 associated_data=associated_data,
             )
-            _LOGGER.debug("bytes collected: %s", len(plaintext))
+            plaintext_length = len(plaintext)
+            _LOGGER.debug("bytes collected: %d", plaintext_length)
         if final_frame:
             _LOGGER.debug("Reading footer")
             self.footer = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(

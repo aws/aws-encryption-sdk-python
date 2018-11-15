@@ -344,7 +344,7 @@ def deserialize_frame(stream, header, verifier=None):
         (sequence_number,) = unpack_values(">I", stream, verifier)
         final_frame = True
     else:
-        _LOGGER.debug("Deserializing frame sequence number %s", int(sequence_number))
+        _LOGGER.debug("Deserializing frame sequence number %d", int(sequence_number))
     frame_data["final_frame"] = final_frame
     frame_data["sequence_number"] = sequence_number
     (frame_iv,) = unpack_values(">{iv_len}s".format(iv_len=header.algorithm.iv_len), stream, verifier)

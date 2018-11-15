@@ -150,7 +150,7 @@ def deserialize_encryption_context(serialized_encryption_context):
     encryption_context = {}
 
     dict_size, deserialized_size = read_short(source=serialized_encryption_context, offset=deserialized_size)
-    _LOGGER.debug("Found %s keys", dict_size)
+    _LOGGER.debug("Found %d keys", dict_size)
     for _ in range(dict_size):
         key_size, deserialized_size = read_short(source=serialized_encryption_context, offset=deserialized_size)
         key, deserialized_size = read_string(
