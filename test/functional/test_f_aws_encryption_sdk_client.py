@@ -324,7 +324,9 @@ def test_encrypt_ciphertext_message(frame_length, algorithm, encryption_context)
         (WrappingAlgorithm.RSA_OAEP_SHA1_MGF1, EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE),
     ),
 )
-def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decryption_key_type):
+def test_encryption_cycle_raw_mkp(caplog, wrapping_algorithm, encryption_key_type, decryption_key_type):
+    caplog.set_level(logging.DEBUG)
+
     encrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type)
     decrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, decryption_key_type)
     ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -334,7 +336,10 @@ def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decry
         frame_length=0,
     )
     plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=decrypting_key_provider)
+
     assert plaintext == VALUES["plaintext_128"]
+    for member in encrypting_key_provider._members:
+        assert repr(member.config.wrapping_key._wrapping_key)[2:-1] not in caplog.text
 
 
 @pytest.mark.skipif(
@@ -687,6 +692,9 @@ def _prep_plaintext_and_logs(log_catcher, plaintext_length):
 def _look_in_logs(log_catcher, plaintext):
     # Verify that no plaintext chunks are in the logs
     logs = log_catcher.text
+    # look for all fake KMS data keys
+    for keysize, args in VALUES["data_keys"].items():
+        assert repr(args["plaintext"])[2:-1] not in logs
     # look for every possible 32-byte chunk
     start = 0
     end = 32
