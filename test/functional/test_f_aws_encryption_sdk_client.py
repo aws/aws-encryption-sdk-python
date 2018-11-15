@@ -711,7 +711,7 @@ def _error_check(capsys_instance):
     # Verify that no error were caught and ignored.
     # The intent is to catch logging errors, but others will be caught as well.
     stderr = capsys_instance.readouterr().err
-    assert 'Call stack:' not in stderr
+    assert "Call stack:" not in stderr
 
 
 @pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
