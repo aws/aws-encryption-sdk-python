@@ -502,18 +502,19 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :returns: Encrypted bytes from source stream
         :rtype: bytes
         """
-        _LOGGER.debug("Reading %s bytes", b)
+        _LOGGER.debug("Reading %d bytes", b)
         plaintext = self.source_stream.read(b)
+        plaintext_length = len(plaintext)
         if self.tell() + len(plaintext) > MAX_NON_FRAMED_SIZE:
             raise SerializationError("Source too large for non-framed message")
 
         ciphertext = self.encryptor.update(plaintext)
-        self._bytes_encrypted += len(plaintext)
+        self._bytes_encrypted += plaintext_length
         if self.signer is not None:
             self.signer.update(ciphertext)
 
         if len(plaintext) < b:
-            _LOGGER.debug("Closing encryptor after receiving only %s bytes of %s bytes requested", plaintext, b)
+            _LOGGER.debug("Closing encryptor after receiving only %d bytes of %d bytes requested", plaintext_length, b)
             self.source_stream.close()
             closing = self.encryptor.finalize()
 
@@ -620,8 +621,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # must not exceed that value.
             if self._bytes_encrypted > self.config.source_length:
                 raise CustomMaximumValueExceeded(
-                    "Bytes encrypted has exceeded stated source length estimate:\n{actual} > {estimated}".format(
-                        actual=self._bytes_encrypted, estimated=self.config.source
+                    "Bytes encrypted has exceeded stated source length estimate:\n{actual:d} > {estimated:d}".format(
+                        actual=self._bytes_encrypted, estimated=self.config.source_length
                     )
                 )
 
