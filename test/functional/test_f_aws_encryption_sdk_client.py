@@ -324,7 +324,9 @@ def test_encrypt_ciphertext_message(frame_length, algorithm, encryption_context)
         (WrappingAlgorithm.RSA_OAEP_SHA1_MGF1, EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE),
     ),
 )
-def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decryption_key_type):
+def test_encryption_cycle_raw_mkp(caplog, wrapping_algorithm, encryption_key_type, decryption_key_type):
+    caplog.set_level(logging.DEBUG)
+
     encrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type)
     decrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, decryption_key_type)
     ciphertext, _ = aws_encryption_sdk.encrypt(
@@ -334,7 +336,10 @@ def test_encryption_cycle_raw_mkp(wrapping_algorithm, encryption_key_type, decry
         frame_length=0,
     )
     plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=decrypting_key_provider)
+
     assert plaintext == VALUES["plaintext_128"]
+    for member in encrypting_key_provider._members:
+        assert repr(member.config.wrapping_key._wrapping_key)[2:-1] not in caplog.text
 
 
 @pytest.mark.skipif(
@@ -685,7 +690,11 @@ def _prep_plaintext_and_logs(log_catcher, plaintext_length):
 
 
 def _look_in_logs(log_catcher, plaintext):
+    # Verify that no plaintext chunks are in the logs
     logs = log_catcher.text
+    # look for all fake KMS data keys
+    for args in VALUES["data_keys"].values():
+        assert repr(args["plaintext"])[2:-1] not in logs
     # look for every possible 32-byte chunk
     start = 0
     end = 32
@@ -698,11 +707,18 @@ def _look_in_logs(log_catcher, plaintext):
         end += 1
 
 
+def _error_check(capsys_instance):
+    # Verify that no error were caught and ignored.
+    # The intent is to catch logging errors, but others will be caught as well.
+    stderr = capsys_instance.readouterr().err
+    assert "Call stack:" not in stderr
+
+
 @pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
 @pytest.mark.parametrize(
     "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
 )
-def test_plaintext_logs_oneshot(caplog, plaintext_length, frame_size):
+def test_plaintext_logs_oneshot(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
     _ciphertext, _header = aws_encryption_sdk.encrypt(
@@ -710,13 +726,14 @@ def test_plaintext_logs_oneshot(caplog, plaintext_length, frame_size):
     )
 
     _look_in_logs(caplog, plaintext)
+    _error_check(capsys)
 
 
 @pytest.mark.parametrize("frame_size", (0, LINE_LENGTH // 2, LINE_LENGTH, LINE_LENGTH * 2))
 @pytest.mark.parametrize(
     "plaintext_length", (1, LINE_LENGTH // 2, LINE_LENGTH, int(LINE_LENGTH * 1.5), LINE_LENGTH * 2)
 )
-def test_plaintext_logs_stream(caplog, plaintext_length, frame_size):
+def test_plaintext_logs_stream(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
     ciphertext = b""
@@ -727,3 +744,4 @@ def test_plaintext_logs_stream(caplog, plaintext_length, frame_size):
             ciphertext += line
 
     _look_in_logs(caplog, plaintext)
+    _error_check(capsys)
