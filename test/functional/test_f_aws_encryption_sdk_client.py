@@ -693,7 +693,7 @@ def _look_in_logs(log_catcher, plaintext):
     # Verify that no plaintext chunks are in the logs
     logs = log_catcher.text
     # look for all fake KMS data keys
-    for keysize, args in VALUES["data_keys"].items():
+    for args in VALUES["data_keys"].values():
         assert repr(args["plaintext"])[2:-1] not in logs
     # look for every possible 32-byte chunk
     start = 0
