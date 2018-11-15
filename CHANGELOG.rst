@@ -2,8 +2,14 @@
 Changelog
 *********
 
-1.3.8 -- 2018-xx-xx
+1.3.8 -- 2018-11-15
 ===================
+
+Bugfixes
+--------
+
+* Remove debug logging that may contain input data when encrypting non-default unframed messages.
+  `#105 <https://github.com/aws/aws-encryption-sdk-python/pull/105>`_
 
 Minor
 -----
