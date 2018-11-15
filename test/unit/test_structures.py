@@ -84,3 +84,23 @@ def test_master_key_info_convert(kwargs, attribute, expected_value):
     test = MasterKeyInfo(**kwargs)
 
     assert getattr(test, attribute) == expected_value
+
+
+@pytest.mark.parametrize("cls, params", (
+        (DataKey, ("key_provider", "data_key", "encrypted_data_key")),
+        (RawDataKey, ("key_provider", "data_key")),
+        (EncryptedDataKey, ("key_provider", "encrypted_data_key"))
+))
+def test_data_key_repr_str(cls, params):
+    data_key = b"plaintext data key ioasuwenvfiuawehnviuawh\x02\x99sd"
+    encrypted_data_key = b"encrypted data key josaidejoawuief\x02\x99sd"
+    base_params = dict(
+        key_provider=MasterKeyInfo(provider_id="asdf", key_info=b"fdsa"),
+        data_key=data_key,
+        encrypted_data_key=encrypted_data_key
+    )
+    test = cls(**{key: base_params[key] for key in params})
+    data_key_check = repr(data_key)[2:-1]
+
+    assert data_key_check not in str(test)
+    assert data_key_check not in repr(test)

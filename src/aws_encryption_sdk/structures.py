@@ -75,7 +75,7 @@ class RawDataKey(object):
     """
 
     key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
-    data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
+    data_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(bytes))
 
 
 @attr.s(hash=True)
@@ -89,7 +89,7 @@ class DataKey(object):
     """
 
     key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
-    data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
+    data_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(bytes))
     encrypted_data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
 
 
