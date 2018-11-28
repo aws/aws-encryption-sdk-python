@@ -42,7 +42,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (1,)
+SUPPORTED_VERSIONS = (3,)
 KEY_TYPES = ("symmetric", "private", "public")
 KEY_ENCODINGS = ("base64", "pem")
 KEY_ALGORITHMS = ("aes", "rsa")
@@ -123,18 +123,14 @@ class ManualKeySpec(KeySpec):
     :param str type_name: Key type
     :param int bits: Key length in bits
     :param str encoding: Encoding used to encode key material
-    :param material: Raw material encoded, then split into lines separated by ``line_separator``
-    :type material: list of str
-    :param str line_separator: Character with which to separate members of ``material``
-        before decoding (optional: default is empty string)
+    :param str material: Raw material encoded
     """
 
     algorithm = attr.ib(validator=membership_validator(KEY_ALGORITHMS))
     type_name = attr.ib(validator=membership_validator(KEY_TYPES))
     bits = attr.ib(validator=attr.validators.instance_of(int))
     encoding = attr.ib(validator=membership_validator(KEY_ENCODINGS))
-    material = attr.ib(validator=iterable_validator(list, six.string_types))
-    line_separator = attr.ib(default="", validator=attr.validators.instance_of(six.string_types))
+    material = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
     def __init__(
         self,
@@ -145,7 +141,6 @@ class ManualKeySpec(KeySpec):
         bits,  # type: int
         encoding,  # type: str
         material,  # type: Iterable[str]
-        line_separator="",  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
         # Workaround pending resolution of attrs/mypy interaction.
@@ -156,7 +151,6 @@ class ManualKeySpec(KeySpec):
         self.bits = bits
         self.encoding = encoding
         self.material = material
-        self.line_separator = line_separator
         super(ManualKeySpec, self).__init__(encrypt, decrypt)
 
     @property
@@ -167,7 +161,7 @@ class ManualKeySpec(KeySpec):
         :return: Binary key material
         :rtype: bytes
         """
-        raw_material = self.line_separator.join(self.material).encode(ENCODING)
+        raw_material = self.material.encode(ENCODING)
         if self.encoding == "base64":
             return base64.b64decode(raw_material)
 
@@ -188,7 +182,6 @@ class ManualKeySpec(KeySpec):
             "type": self.type_name,
             "bits": self.bits,
             "encoding": self.encoding,
-            "line-separator": self.line_separator,
             "material": self.material,
         }
 
@@ -211,8 +204,7 @@ def key_from_manifest_spec(key_spec):
     algorithm = key_spec["algorithm"]  # type: str
     bits = key_spec["bits"]  # type: int
     encoding = key_spec["encoding"]  # type: str
-    line_separator = key_spec.get("line-separator", "")  # type: str
-    material = key_spec["material"]  # type: Iterable[str]
+    material = key_spec["material"]  # type: str
     return ManualKeySpec(
         encrypt=encrypt,
         decrypt=decrypt,
@@ -220,7 +212,6 @@ def key_from_manifest_spec(key_spec):
         algorithm=algorithm,
         bits=bits,
         encoding=encoding,
-        line_separator=line_separator,
         material=material,
     )
 
@@ -242,7 +233,7 @@ class KeysManifest(object):
     @classmethod
     def from_manifest_spec(cls, raw_manifest):
         # type: (KEYS_MANIFEST) -> KeysManifest
-        """"""
+        """Load from a JSON keys manifest."""
         manifest_version = raw_manifest["manifest"]  # type: MANIFEST_VERSION
         validate_manifest_type(
             type_name=cls.type_name, manifest_version=manifest_version, supported_versions=SUPPORTED_VERSIONS
