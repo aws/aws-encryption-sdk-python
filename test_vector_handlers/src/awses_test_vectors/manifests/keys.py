@@ -22,11 +22,7 @@ import six
 
 from awses_test_vectors.internal.aws_kms import arn_from_key_id
 from awses_test_vectors.internal.defaults import ENCODING
-from awses_test_vectors.internal.util import (
-    dictionary_validator,
-    membership_validator,
-    validate_manifest_type,
-)
+from awses_test_vectors.internal.util import dictionary_validator, membership_validator, validate_manifest_type
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import cast, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -184,7 +180,7 @@ class ManualKeySpec(KeySpec):
             "bits": self.bits,
             "encoding": self.encoding,
             "material": self.material,
-            "key-id": self.key_id
+            "key-id": self.key_id,
         }
 
 

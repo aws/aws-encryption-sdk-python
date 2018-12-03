@@ -52,10 +52,12 @@ _RAW_WRAPPING_KEY_ALGORITHMS = {
     "rsa/oaep-mgf1/sha256": WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
 }
 try:
-    _RAW_WRAPPING_KEY_ALGORITHMS.update({
-        'rsa/oaep-mgf1/sha384': WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
-        'rsa/oaep-mgf1/sha512': WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
-    })
+    _RAW_WRAPPING_KEY_ALGORITHMS.update(
+        {
+            "rsa/oaep-mgf1/sha384": WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+            "rsa/oaep-mgf1/sha512": WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
+        }
+    )
     _NOT_YET_IMPLEMENTED = {}
 except AttributeError:
     _NOT_YET_IMPLEMENTED = {"rsa/oaep-mgf1/sha384", "rsa/oaep-mgf1/sha512"}

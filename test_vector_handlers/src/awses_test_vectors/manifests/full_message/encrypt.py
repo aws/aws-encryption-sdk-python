@@ -238,6 +238,4 @@ class MessageEncryptionManifest(object):
             keys_uri="file://keys.json", keys=self.keys, test_scenarios=test_scenarios
         )
 
-        root_writer(
-            "manifest.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING)
-        )
+        root_writer("manifest.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING))
