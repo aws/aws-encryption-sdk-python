@@ -24,7 +24,6 @@ from awses_test_vectors.internal.aws_kms import arn_from_key_id
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
     dictionary_validator,
-    iterable_validator,
     membership_validator,
     validate_manifest_type,
 )
@@ -60,14 +59,16 @@ class KeySpec(object):
 
     encrypt = attr.ib(validator=attr.validators.instance_of(bool))
     decrypt = attr.ib(validator=attr.validators.instance_of(bool))
+    key_id = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
-    def __init__(self, encrypt, decrypt):  # noqa=D107
-        # type: (bool, bool) -> None
+    def __init__(self, encrypt, decrypt, key_id):  # noqa=D107
+        # type: (bool, bool, str) -> None
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
         self.encrypt = encrypt
         self.decrypt = decrypt
+        self.key_id = key_id
         attr.validate(self)
 
 
@@ -84,7 +85,6 @@ class AwsKmsKeySpec(KeySpec):
     # pylint: disable=too-few-public-methods
 
     type_name = attr.ib(validator=membership_validator(("aws-kms",)))
-    key_id = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
     def __init__(self, encrypt, decrypt, type_name, key_id):  # noqa=D107
         # type: (bool, bool, str, str) -> None
@@ -92,8 +92,7 @@ class AwsKmsKeySpec(KeySpec):
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
         self.type_name = type_name
-        self.key_id = key_id
-        super(AwsKmsKeySpec, self).__init__(encrypt, decrypt)
+        super(AwsKmsKeySpec, self).__init__(encrypt, decrypt, key_id)
 
     @property
     def manifest_spec(self):
@@ -117,6 +116,7 @@ class ManualKeySpec(KeySpec):
 
     Allowed values described in AWS Crypto Tools Test Vector Framework feature #0002 Keys Manifest.
 
+    :param str key_id: Master key ID
     :param bool encrypt: Key can be used to encrypt
     :param bool decrypt: Key can be used to decrypt
     :param str algorithm: Algorithm to use with key
@@ -134,6 +134,7 @@ class ManualKeySpec(KeySpec):
 
     def __init__(
         self,
+        key_id,  # type: str
         encrypt,  # type: bool
         decrypt,  # type: bool
         algorithm,  # type: str
@@ -151,7 +152,7 @@ class ManualKeySpec(KeySpec):
         self.bits = bits
         self.encoding = encoding
         self.material = material
-        super(ManualKeySpec, self).__init__(encrypt, decrypt)
+        super(ManualKeySpec, self).__init__(encrypt, decrypt, key_id)
 
     @property
     def raw_material(self):
@@ -183,6 +184,7 @@ class ManualKeySpec(KeySpec):
             "bits": self.bits,
             "encoding": self.encoding,
             "material": self.material,
+            "key-id": self.key_id
         }
 
 
@@ -194,6 +196,7 @@ def key_from_manifest_spec(key_spec):
     :return: Loaded key
     :rtype: KeySpec
     """
+    key_id = key_spec["key-id"]  # type: str
     decrypt = key_spec["decrypt"]  # type: bool
     encrypt = key_spec["encrypt"]  # type: bool
     type_name = key_spec["type"]  # type: str
@@ -206,6 +209,7 @@ def key_from_manifest_spec(key_spec):
     encoding = key_spec["encoding"]  # type: str
     material = key_spec["material"]  # type: str
     return ManualKeySpec(
+        key_id=key_id,
         encrypt=encrypt,
         decrypt=decrypt,
         type_name=type_name,
