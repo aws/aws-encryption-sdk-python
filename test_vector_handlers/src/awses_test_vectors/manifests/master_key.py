@@ -50,11 +50,17 @@ _RAW_WRAPPING_KEY_ALGORITHMS = {
     "rsa/pkcs1": WrappingAlgorithm.RSA_PKCS1,
     "rsa/oaep-mgf1/sha1": WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
     "rsa/oaep-mgf1/sha256": WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-    # \/ not yet implemented \/
-    # 'rsa/oaep-mgf1/sha384': WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
-    # 'rsa/oaep-mgf1/sha512': WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
 }
-_NOT_YET_IMPLEMENTED = {"rsa/oaep-mgf1/sha384", "rsa/oaep-mgf1/sha512"}
+try:
+    _RAW_WRAPPING_KEY_ALGORITHMS.update(
+        {
+            "rsa/oaep-mgf1/sha384": WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+            "rsa/oaep-mgf1/sha512": WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
+        }
+    )
+    _NOT_YET_IMPLEMENTED = {}
+except AttributeError:
+    _NOT_YET_IMPLEMENTED = {"rsa/oaep-mgf1/sha384", "rsa/oaep-mgf1/sha512"}
 _RAW_ENCRYPTION_KEY_TYPE = {
     "symmetric": EncryptionKeyType.SYMMETRIC,
     "private": EncryptionKeyType.PRIVATE,
@@ -68,18 +74,16 @@ class MasterKeySpec(object):
 
     Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 
-    :param str type_name:
-    :param str key_name:
-    :param str key_id:
-    :param str provider_id:
-    :param str encryption_algorithm:
-    :param str padding_algorithm:
-    :param str padding_hash:
+    :param str type_name: Master key type name
+    :param str key_name: Name of key in keys spec
+    :param str provider_id: Master key provider ID
+    :param str encryption_algorithm: Wrapping key encryption algorithm (required for raw master keys)
+    :param str padding_algorithm: Wrapping key padding algorithm (required for raw master keys)
+    :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
 
     type_name = attr.ib(validator=membership_validator(KNOWN_TYPES))
     key_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
-    key_id = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.string_types)))
     provider_id = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.string_types)))
     encryption_algorithm = attr.ib(validator=attr.validators.optional(membership_validator(KNOWN_ALGORITHMS)))
     padding_algorithm = attr.ib(validator=attr.validators.optional(membership_validator(KNOWN_PADDING)))
@@ -113,7 +117,6 @@ class MasterKeySpec(object):
         return cls(
             type_name=spec["type"],
             key_name=spec["key"],
-            key_id=spec.get("key-id"),
             provider_id=spec.get("provider-id"),
             encryption_algorithm=spec.get("encryption-algorithm"),
             padding_algorithm=spec.get("padding-algorithm"),
@@ -166,19 +169,6 @@ class MasterKeySpec(object):
         key_type = _RAW_ENCRYPTION_KEY_TYPE[key_spec.type_name]
         return WrappingKey(wrapping_algorithm=algorithm, wrapping_key=material, wrapping_key_type=key_type)
 
-    def _raw_key_id(self):
-        # type: () -> str
-        """Determine the key ID value if this is a raw master key.
-
-        :returns: Correct key ID
-        :rtype: str
-        :raises TypeError: if this is not a raw master key specification
-        """
-        if not self.type_name == "raw":
-            raise TypeError("This is not a raw master key")
-
-        return self.key_id if self.key_id is not None else self.key_name
-
     def _raw_master_key_from_spec(self, key_spec):
         # type: (KeySpec) -> RawMasterKey
         """Build a raw master key using this specification.
@@ -192,8 +182,7 @@ class MasterKeySpec(object):
             raise TypeError("This is not a raw master key")
 
         wrapping_key = self._wrapping_key(key_spec)
-        key_id = self._raw_key_id()
-        return RawMasterKey(provider_id=self.provider_id, key_id=key_id, wrapping_key=wrapping_key)
+        return RawMasterKey(provider_id=self.provider_id, key_id=key_spec.key_id, wrapping_key=wrapping_key)
 
     def _kms_master_key_from_spec(self, key_spec):
         # type: (KeySpec) -> KMSMasterKey
@@ -206,9 +195,6 @@ class MasterKeySpec(object):
         """
         if not self.type_name == "aws-kms":
             raise TypeError("This is not an AWS KMS master key")
-
-        if self.key_id is not None and self.key_id != key_spec.key_id:
-            raise ValueError("AWS KMS key IDs must match between master key spec and key spec")
 
         return KMS_MASTER_KEY_PROVIDER.master_key(key_id=key_spec.key_id)
 
@@ -237,7 +223,6 @@ class MasterKeySpec(object):
         if self.type_name != "aws-kms":
             spec.update(
                 {
-                    "key-id": self.key_id,
                     "provider-id": self.provider_id,
                     "encryption-algorithm": self.encryption_algorithm,
                     "padding-algorithm": self.padding_algorithm,

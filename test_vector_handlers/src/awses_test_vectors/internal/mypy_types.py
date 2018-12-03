@@ -33,7 +33,7 @@ try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     MANIFEST_VERSION = Dict[str, Union[str, int]]
 
     AWS_KMS_KEY_SPEC = Dict[str, Union[bool, str]]
-    MANUAL_KEY_SPEC = Dict[str, Union[bool, str, int, Iterable[str]]]
+    MANUAL_KEY_SPEC = Dict[str, Union[bool, str, int]]
     KEY_SPEC = Union[AWS_KMS_KEY_SPEC, MANUAL_KEY_SPEC]
     KEYS_MANIFEST = Dict[str, Union[MANIFEST_VERSION, Iterable[KEY_SPEC]]]
 

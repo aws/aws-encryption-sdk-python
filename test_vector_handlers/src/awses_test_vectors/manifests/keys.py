@@ -22,12 +22,7 @@ import six
 
 from awses_test_vectors.internal.aws_kms import arn_from_key_id
 from awses_test_vectors.internal.defaults import ENCODING
-from awses_test_vectors.internal.util import (
-    dictionary_validator,
-    iterable_validator,
-    membership_validator,
-    validate_manifest_type,
-)
+from awses_test_vectors.internal.util import dictionary_validator, membership_validator, validate_manifest_type
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import cast, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -42,7 +37,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (1,)
+SUPPORTED_VERSIONS = (3,)
 KEY_TYPES = ("symmetric", "private", "public")
 KEY_ENCODINGS = ("base64", "pem")
 KEY_ALGORITHMS = ("aes", "rsa")
@@ -60,14 +55,16 @@ class KeySpec(object):
 
     encrypt = attr.ib(validator=attr.validators.instance_of(bool))
     decrypt = attr.ib(validator=attr.validators.instance_of(bool))
+    key_id = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
-    def __init__(self, encrypt, decrypt):  # noqa=D107
-        # type: (bool, bool) -> None
+    def __init__(self, encrypt, decrypt, key_id):  # noqa=D107
+        # type: (bool, bool, str) -> None
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
         self.encrypt = encrypt
         self.decrypt = decrypt
+        self.key_id = key_id
         attr.validate(self)
 
 
@@ -84,7 +81,6 @@ class AwsKmsKeySpec(KeySpec):
     # pylint: disable=too-few-public-methods
 
     type_name = attr.ib(validator=membership_validator(("aws-kms",)))
-    key_id = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
     def __init__(self, encrypt, decrypt, type_name, key_id):  # noqa=D107
         # type: (bool, bool, str, str) -> None
@@ -92,8 +88,7 @@ class AwsKmsKeySpec(KeySpec):
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
         self.type_name = type_name
-        self.key_id = key_id
-        super(AwsKmsKeySpec, self).__init__(encrypt, decrypt)
+        super(AwsKmsKeySpec, self).__init__(encrypt, decrypt, key_id)
 
     @property
     def manifest_spec(self):
@@ -117,27 +112,25 @@ class ManualKeySpec(KeySpec):
 
     Allowed values described in AWS Crypto Tools Test Vector Framework feature #0002 Keys Manifest.
 
+    :param str key_id: Master key ID
     :param bool encrypt: Key can be used to encrypt
     :param bool decrypt: Key can be used to decrypt
     :param str algorithm: Algorithm to use with key
     :param str type_name: Key type
     :param int bits: Key length in bits
     :param str encoding: Encoding used to encode key material
-    :param material: Raw material encoded, then split into lines separated by ``line_separator``
-    :type material: list of str
-    :param str line_separator: Character with which to separate members of ``material``
-        before decoding (optional: default is empty string)
+    :param str material: Raw material encoded
     """
 
     algorithm = attr.ib(validator=membership_validator(KEY_ALGORITHMS))
     type_name = attr.ib(validator=membership_validator(KEY_TYPES))
     bits = attr.ib(validator=attr.validators.instance_of(int))
     encoding = attr.ib(validator=membership_validator(KEY_ENCODINGS))
-    material = attr.ib(validator=iterable_validator(list, six.string_types))
-    line_separator = attr.ib(default="", validator=attr.validators.instance_of(six.string_types))
+    material = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
     def __init__(
         self,
+        key_id,  # type: str
         encrypt,  # type: bool
         decrypt,  # type: bool
         algorithm,  # type: str
@@ -145,7 +138,6 @@ class ManualKeySpec(KeySpec):
         bits,  # type: int
         encoding,  # type: str
         material,  # type: Iterable[str]
-        line_separator="",  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
         # Workaround pending resolution of attrs/mypy interaction.
@@ -156,8 +148,7 @@ class ManualKeySpec(KeySpec):
         self.bits = bits
         self.encoding = encoding
         self.material = material
-        self.line_separator = line_separator
-        super(ManualKeySpec, self).__init__(encrypt, decrypt)
+        super(ManualKeySpec, self).__init__(encrypt, decrypt, key_id)
 
     @property
     def raw_material(self):
@@ -167,7 +158,7 @@ class ManualKeySpec(KeySpec):
         :return: Binary key material
         :rtype: bytes
         """
-        raw_material = self.line_separator.join(self.material).encode(ENCODING)
+        raw_material = self.material.encode(ENCODING)
         if self.encoding == "base64":
             return base64.b64decode(raw_material)
 
@@ -188,8 +179,8 @@ class ManualKeySpec(KeySpec):
             "type": self.type_name,
             "bits": self.bits,
             "encoding": self.encoding,
-            "line-separator": self.line_separator,
             "material": self.material,
+            "key-id": self.key_id,
         }
 
 
@@ -201,6 +192,7 @@ def key_from_manifest_spec(key_spec):
     :return: Loaded key
     :rtype: KeySpec
     """
+    key_id = key_spec["key-id"]  # type: str
     decrypt = key_spec["decrypt"]  # type: bool
     encrypt = key_spec["encrypt"]  # type: bool
     type_name = key_spec["type"]  # type: str
@@ -211,16 +203,15 @@ def key_from_manifest_spec(key_spec):
     algorithm = key_spec["algorithm"]  # type: str
     bits = key_spec["bits"]  # type: int
     encoding = key_spec["encoding"]  # type: str
-    line_separator = key_spec.get("line-separator", "")  # type: str
-    material = key_spec["material"]  # type: Iterable[str]
+    material = key_spec["material"]  # type: str
     return ManualKeySpec(
+        key_id=key_id,
         encrypt=encrypt,
         decrypt=decrypt,
         type_name=type_name,
         algorithm=algorithm,
         bits=bits,
         encoding=encoding,
-        line_separator=line_separator,
         material=material,
     )
 
@@ -242,7 +233,7 @@ class KeysManifest(object):
     @classmethod
     def from_manifest_spec(cls, raw_manifest):
         # type: (KEYS_MANIFEST) -> KeysManifest
-        """"""
+        """Load from a JSON keys manifest."""
         manifest_version = raw_manifest["manifest"]  # type: MANIFEST_VERSION
         validate_manifest_type(
             type_name=cls.type_name, manifest_version=manifest_version, supported_versions=SUPPORTED_VERSIONS
