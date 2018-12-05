@@ -904,8 +904,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :param int b: Number of bytes to read
         :raises NotSupportedError: if content type is not supported
         """
-        if self.source_stream.closed:
-            _LOGGER.debug("Source stream closed")
+        if hasattr(self, "footer"):
+            _LOGGER.debug("Source stream processing complete")
             return
 
         buffer_length = len(self.output_buffer)
