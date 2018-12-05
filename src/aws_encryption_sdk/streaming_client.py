@@ -243,10 +243,11 @@ class _EncryptionStream(io.IOBase):
             output.write(self.output_buffer[:b])
             self.output_buffer = self.output_buffer[b:]
         else:
-            while not self.source_stream.closed:
-                self._read_bytes(LINE_LENGTH)
-                output.write(self.output_buffer)
-                self.output_buffer = b""
+            while True:
+                line = self.readline()
+                if not line:
+                    break
+                output.write(line)
 
         self.bytes_read += output.tell()
         _LOGGER.debug("Returning %d bytes of %d bytes requested", output.tell(), b)
