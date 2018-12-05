@@ -404,6 +404,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             raise SerializationError("Source too large for non-framed message")
 
         self.__unframed_plaintext_cache = io.BytesIO()
+        self.__message_complete = False
 
     def ciphertext_length(self):
         """Returns the length of the resulting ciphertext message in bytes.
@@ -556,6 +557,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
             if self.signer is not None:
                 closing += serialize_footer(self.signer)
+            self.__message_complete = True
             return ciphertext + closing
 
         return ciphertext
@@ -622,6 +624,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             _LOGGER.debug("Writing footer")
             if self.signer is not None:
                 output += serialize_footer(self.signer)
+            self.__message_complete = True
             self.source_stream.close()
         return output
 
@@ -632,7 +635,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :raises NotSupportedError: if content type is not supported
         """
         _LOGGER.debug("%d bytes requested from stream with content type: %s", b, self.content_type)
-        if 0 <= b <= len(self.output_buffer) or self.source_stream.closed:
+        if 0 <= b <= len(self.output_buffer) or self.__message_complete:
             _LOGGER.debug("No need to read from source stream or source stream closed")
             return
 

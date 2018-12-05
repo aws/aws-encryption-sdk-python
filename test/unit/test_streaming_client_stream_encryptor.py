@@ -451,10 +451,10 @@ class TestStreamEncryptor(unittest.TestCase):
 
     @patch("aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_framed_body")
     @patch("aws_encryption_sdk.streaming_client.StreamEncryptor._read_bytes_to_non_framed_body")
-    def test_read_bytes_closed(self, mock_read_non_framed, mock_read_framed):
+    def test_read_bytes_completed(self, mock_read_non_framed, mock_read_framed):
         pt_stream = io.BytesIO(self.plaintext)
         test_encryptor = StreamEncryptor(source=pt_stream, key_provider=self.mock_key_provider)
-        test_encryptor.source_stream.close()
+        test_encryptor._StreamEncryptor__message_complete = True
         test_encryptor._read_bytes(5)
         assert not mock_read_non_framed.called
         assert not mock_read_framed.called
