@@ -767,7 +767,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
-        self._unframed_body_iv, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(
+        self._unframed_body_iv, self.body_length = aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values(  # noqa # pylint: disable=line-too-long
             stream=self.source_stream, header=self._header, verifier=self.verifier
         )
 
