@@ -388,7 +388,6 @@ class TestStreamEncryptor(unittest.TestCase):
 
         test_encryptor.encryptor.update.assert_called_once_with(self.plaintext[:5])
         test_encryptor.signer.update.assert_called_once_with(sentinel.ciphertext)
-        assert not test_encryptor.source_stream.closed
         assert test is sentinel.ciphertext
 
     def test_read_bytes_to_non_framed_body_too_large(self):
@@ -414,7 +413,6 @@ class TestStreamEncryptor(unittest.TestCase):
         test = test_encryptor._read_bytes_to_non_framed_body(len(self.plaintext) + 1)
 
         test_encryptor.signer.update.assert_has_calls(calls=(call(b"123"), call(b"456")), any_order=False)
-        assert test_encryptor.source_stream.closed
         test_encryptor.encryptor.finalize.assert_called_once_with()
         self.mock_serialize_non_framed_close.assert_called_once_with(
             tag=test_encryptor.encryptor.tag, signer=test_encryptor.signer
@@ -514,7 +512,6 @@ class TestStreamEncryptor(unittest.TestCase):
             signer=sentinel.signer,
         )
         assert not self.mock_serialize_footer.called
-        assert not test_encryptor.source_stream.closed
         assert test == b"1234"
 
     def test_read_bytes_to_framed_body_single_frame_with_final(self):
@@ -633,7 +630,6 @@ class TestStreamEncryptor(unittest.TestCase):
             any_order=False,
         )
         self.mock_serialize_footer.assert_called_once_with(sentinel.signer)
-        assert test_encryptor.source_stream.closed
         assert test == b"1234567890-=FINAL/*-"
 
     def test_read_bytes_to_framed_body_close(self):
@@ -651,7 +647,6 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
 
         self.mock_serialize_footer.assert_called_once_with(sentinel.signer)
-        assert test_encryptor.source_stream.closed
 
     def test_read_bytes_to_framed_body_close_no_signer(self):
         self.mock_serialize_frame.return_value = (b"1234", b"")
@@ -670,7 +665,6 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor._read_bytes_to_framed_body(len(self.plaintext) + 1)
 
         assert not self.mock_serialize_footer.called
-        assert test_encryptor.source_stream.closed
 
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.close")
     def test_close(self, mock_close):

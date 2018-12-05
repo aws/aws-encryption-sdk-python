@@ -770,15 +770,7 @@ class NoClose(ObjectProxy):
         raise NotImplementedError("NoClose does not close().")
 
 
-@pytest.mark.parametrize(
-    "wrapping_class",
-    (
-        NoTell,
-        NoClosed,
-        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
-        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
-    ),
-)
+@pytest.mark.parametrize("wrapping_class", (NoTell, NoClosed, NoClose, NothingButRead))
 @pytest.mark.parametrize("frame_length", (0, 1024))
 def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
@@ -792,15 +784,7 @@ def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
     assert raw_plaintext == decrypted
 
 
-@pytest.mark.parametrize(
-    "wrapping_class",
-    (
-        NoTell,
-        NoClosed,
-        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
-        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
-    ),
-)
+@pytest.mark.parametrize("wrapping_class", (NoTell, NoClosed, NoClose, NothingButRead))
 @pytest.mark.parametrize("frame_length", (0, 1024))
 def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
@@ -813,15 +797,7 @@ def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
     assert raw_plaintext == decrypted
 
 
-@pytest.mark.parametrize(
-    "wrapping_class",
-    (
-        NoTell,
-        NoClosed,
-        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
-        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
-    ),
-)
+@pytest.mark.parametrize("wrapping_class", (NoTell, NoClosed, NoClose, NothingButRead))
 @pytest.mark.parametrize("frame_length", (0, 1024))
 def test_decrypt_minimal_source_stream_api(frame_length, wrapping_class):
     plaintext = exact_length_plaintext(100)
