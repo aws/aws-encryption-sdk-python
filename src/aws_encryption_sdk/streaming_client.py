@@ -295,10 +295,13 @@ class _EncryptionStream(io.IOBase):
         if self.closed:
             _LOGGER.debug("stream is closed")
             raise StopIteration()
-        if self.source_stream.closed and not self.output_buffer:
+
+        line = self.readline()
+        if not line:
             _LOGGER.debug("nothing more to read")
             raise StopIteration()
-        return self.readline()
+
+        return line
 
     #: Provides hook for Python3 iterator functionality.
     __next__ = next
