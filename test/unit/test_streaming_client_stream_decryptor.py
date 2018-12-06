@@ -37,9 +37,11 @@ class TestStreamDecryptor(unittest.TestCase):
             data_key=VALUES["data_key_obj"], verification_key=sentinel.verification_key
         )
         self.mock_header = MagicMock()
-        self.mock_header.algorithm = MagicMock(__class__=Algorithm)
+        self.mock_header.algorithm = MagicMock(__class__=Algorithm, iv_len=12)
         self.mock_header.encrypted_data_keys = sentinel.encrypted_data_keys
         self.mock_header.encryption_context = sentinel.encryption_context
+
+        self.mock_raw_header = b"some bytes"
 
         self.mock_input_stream = MagicMock()
         self.mock_input_stream.__class__ = io.IOBase
@@ -50,7 +52,7 @@ class TestStreamDecryptor(unittest.TestCase):
             "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.deserialize_header"
         )
         self.mock_deserialize_header = self.mock_deserialize_header_patcher.start()
-        self.mock_deserialize_header.return_value = self.mock_header, sentinel.raw_header
+        self.mock_deserialize_header.return_value = self.mock_header, self.mock_raw_header
         # Set up deserialize_header_auth patch
         self.mock_deserialize_header_auth_patcher = patch(
             "aws_encryption_sdk.streaming_client"
@@ -69,7 +71,13 @@ class TestStreamDecryptor(unittest.TestCase):
             ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values"
         )
         self.mock_deserialize_non_framed_values = self.mock_deserialize_non_framed_values_patcher.start()
-        self.mock_deserialize_non_framed_values.return_value = (sentinel.iv, sentinel.tag, len(VALUES["data_128"]))
+        self.mock_deserialize_non_framed_values.return_value = (sentinel.iv, len(VALUES["data_128"]))
+        # Set up deserialize_tag_value patch
+        self.mock_deserialize_tag_patcher = patch(
+            "aws_encryption_sdk.streaming_client" ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag"
+        )
+        self.mock_deserialize_tag = self.mock_deserialize_tag_patcher.start()
+        self.mock_deserialize_tag.return_value = sentinel.tag
         # Set up get_aad_content_string patch
         self.mock_get_aad_content_string_patcher = patch(
             "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.utils.get_aad_content_string"
@@ -113,6 +121,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_deserialize_header_auth_patcher.stop()
         self.mock_validate_header_patcher.stop()
         self.mock_deserialize_non_framed_values_patcher.stop()
+        self.mock_deserialize_tag_patcher.stop()
         self.mock_get_aad_content_string_patcher.stop()
         self.mock_assemble_content_aad_patcher.stop()
         self.mock_decryptor_patcher.stop()
@@ -151,11 +160,9 @@ class TestStreamDecryptor(unittest.TestCase):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    @patch("aws_encryption_sdk.streaming_client.StreamDecryptor.__init__")
-    def test_read_header(self, mock_init, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier):
+    def test_read_header(self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier):
         mock_verifier_instance = MagicMock()
         mock_verifier.from_key_bytes.return_value = mock_verifier_instance
-        mock_init.return_value = None
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(materials_manager=self.mock_materials_manager, source=ct_stream)
         test_decryptor.source_stream = ct_stream
@@ -175,7 +182,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_materials_manager.decrypt_materials.assert_called_once_with(
             request=mock_decrypt_materials_request.return_value
         )
-        mock_verifier_instance.update.assert_called_once_with(sentinel.raw_header)
+        mock_verifier_instance.update.assert_called_once_with(self.mock_raw_header)
         self.mock_deserialize_header_auth.assert_called_once_with(
             stream=ct_stream, algorithm=self.mock_header.algorithm, verifier=mock_verifier_instance
         )
@@ -188,18 +195,16 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_validate_header.assert_called_once_with(
             header=self.mock_header,
             header_auth=sentinel.header_auth,
-            raw_header=sentinel.raw_header,
+            raw_header=self.mock_raw_header,
             data_key=mock_derive_datakey.return_value,
         )
         assert test_header is self.mock_header
         assert test_header_auth is sentinel.header_auth
 
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    @patch("aws_encryption_sdk.streaming_client.StreamDecryptor.__init__")
-    def test_read_header_frame_too_large(self, mock_init, mock_derive_datakey):
+    def test_read_header_frame_too_large(self, mock_derive_datakey):
         self.mock_header.content_type = ContentType.FRAMED_DATA
         self.mock_header.frame_length = 1024
-        mock_init.return_value = None
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream, max_body_length=10)
         test_decryptor.key_provider = self.mock_key_provider
@@ -215,14 +220,10 @@ class TestStreamDecryptor(unittest.TestCase):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    @patch("aws_encryption_sdk.streaming_client.StreamDecryptor.__init__")
-    def test_read_header_no_verifier(
-        self, mock_init, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
-    ):
+    def test_read_header_no_verifier(self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier):
         self.mock_materials_manager.decrypt_materials.return_value = MagicMock(
             data_key=VALUES["data_key_obj"], verification_key=None
         )
-        mock_init.return_value = None
         test_decryptor = StreamDecryptor(materials_manager=self.mock_materials_manager, source=self.mock_input_stream)
         test_decryptor.key_provider = self.mock_key_provider
         test_decryptor.source_stream = self.mock_input_stream
@@ -264,6 +265,26 @@ class TestStreamDecryptor(unittest.TestCase):
             stream=test_decryptor.source_stream, header=self.mock_header, verifier=sentinel.verifier
         )
         assert test_decryptor.body_length == len(VALUES["data_128"])
+        assert test_decryptor.body_start == self.mock_header.algorithm.iv_len + 8
+        assert test_decryptor.body_end == self.mock_header.algorithm.iv_len + 8 + len(VALUES["data_128"])
+
+    def test_read_bytes_from_non_framed(self):
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor.body_length = len(VALUES["data_128"])
+        test_decryptor.decryptor = self.mock_decryptor_instance
+        test_decryptor._header = self.mock_header
+        test_decryptor.verifier = MagicMock()
+        test_decryptor._derived_data_key = sentinel.derived_data_key
+        test_decryptor._unframed_body_iv = sentinel.unframed_body_iv
+        self.mock_decryptor_instance.update.return_value = b"1234"
+        self.mock_decryptor_instance.finalize.return_value = b"5678"
+
+        test = test_decryptor._read_bytes_from_non_framed_body(5)
+
+        self.mock_deserialize_tag.assert_called_once_with(
+            stream=test_decryptor.source_stream, header=test_decryptor._header, verifier=test_decryptor.verifier
+        )
         self.mock_get_aad_content_string.assert_called_once_with(
             content_type=self.mock_header.content_type, is_final_frame=True
         )
@@ -277,24 +298,10 @@ class TestStreamDecryptor(unittest.TestCase):
             algorithm=self.mock_header.algorithm,
             key=sentinel.derived_data_key,
             associated_data=sentinel.associated_data,
-            iv=sentinel.iv,
+            iv=sentinel.unframed_body_iv,
             tag=sentinel.tag,
         )
         assert test_decryptor.decryptor is self.mock_decryptor_instance
-        assert test_decryptor.body_start == 0
-        assert test_decryptor.body_end == len(VALUES["data_128"])
-
-    def test_read_bytes_from_non_framed(self):
-        ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
-        test_decryptor.body_start = 0
-        test_decryptor.body_length = test_decryptor.body_end = len(VALUES["data_128"])
-        test_decryptor.decryptor = self.mock_decryptor_instance
-        test_decryptor._header = self.mock_header
-        test_decryptor.verifier = MagicMock()
-        self.mock_decryptor_instance.update.return_value = b"1234"
-        self.mock_decryptor_instance.finalize.return_value = b"5678"
-        test = test_decryptor._read_bytes_from_non_framed_body(5)
         test_decryptor.verifier.update.assert_called_once_with(VALUES["data_128"])
         self.mock_decryptor_instance.update.assert_called_once_with(VALUES["data_128"])
         assert test_decryptor.source_stream.closed
@@ -303,8 +310,7 @@ class TestStreamDecryptor(unittest.TestCase):
     def test_read_bytes_from_non_framed_message_body_too_small(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
-        test_decryptor.body_start = 0
-        test_decryptor.body_length = test_decryptor.body_end = len(VALUES["data_128"] * 2)
+        test_decryptor.body_length = len(VALUES["data_128"] * 2)
         test_decryptor._header = self.mock_header
         with six.assertRaisesRegex(
             self, SerializationError, "Total message body contents less than specified in body description"
@@ -314,10 +320,11 @@ class TestStreamDecryptor(unittest.TestCase):
     def test_read_bytes_from_non_framed_no_verifier(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
-        test_decryptor.body_start = 0
-        test_decryptor.body_length = test_decryptor.body_end = len(VALUES["data_128"])
+        test_decryptor.body_length = len(VALUES["data_128"])
         test_decryptor.decryptor = self.mock_decryptor_instance
         test_decryptor._header = self.mock_header
+        test_decryptor._derived_data_key = sentinel.derived_data_key
+        test_decryptor._unframed_body_iv = sentinel.unframed_body_iv
         test_decryptor.verifier = None
         self.mock_decryptor_instance.update.return_value = b"1234"
         test_decryptor._read_bytes_from_non_framed_body(5)
@@ -325,19 +332,19 @@ class TestStreamDecryptor(unittest.TestCase):
     def test_read_bytes_from_non_framed_finalize(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
-        test_decryptor.body_start = 0
-        test_decryptor.body_length = test_decryptor.body_end = len(VALUES["data_128"])
+        test_decryptor.body_length = len(VALUES["data_128"])
         test_decryptor.decryptor = self.mock_decryptor_instance
         test_decryptor.verifier = MagicMock()
         test_decryptor._header = self.mock_header
+        test_decryptor._derived_data_key = sentinel.derived_data_key
+        test_decryptor._unframed_body_iv = sentinel.unframed_body_iv
         self.mock_decryptor_instance.update.return_value = b"1234"
         self.mock_decryptor_instance.finalize.return_value = b"5678"
+
         test = test_decryptor._read_bytes_from_non_framed_body(len(VALUES["data_128"]) + 1)
+
         test_decryptor.verifier.update.assert_called_once_with(VALUES["data_128"])
         self.mock_decryptor_instance.update.assert_called_once_with(VALUES["data_128"])
-        self.mock_update_verifier_with_tag.assert_called_once_with(
-            stream=test_decryptor.source_stream, header=test_decryptor._header, verifier=test_decryptor.verifier
-        )
         self.mock_deserialize_footer.assert_called_once_with(
             stream=test_decryptor.source_stream, verifier=test_decryptor.verifier
         )

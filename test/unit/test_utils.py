@@ -23,10 +23,10 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
+from .unit_test_utils import assert_prepped_stream_identity
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -34,17 +34,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 def test_prep_stream_data_passthrough():
     test = aws_encryption_sdk.internal.utils.prep_stream_data(io.BytesIO(b"some data"))
 
-    assert isinstance(test, InsistentReaderBytesIO)
+    assert_prepped_stream_identity(test, io.BytesIO)
 
 
 @pytest.mark.parametrize("source", (u"some unicode data ловие", b"\x00\x01\x02"))
 def test_prep_stream_data_wrap(source):
     test = aws_encryption_sdk.internal.utils.prep_stream_data(source)
 
-    # Check the wrapped stream
-    assert isinstance(test, io.BytesIO)
-    # Check the wrapping stream
-    assert isinstance(test, InsistentReaderBytesIO)
+    assert_prepped_stream_identity(test, io.BytesIO)
 
 
 class TestUtils(unittest.TestCase):
