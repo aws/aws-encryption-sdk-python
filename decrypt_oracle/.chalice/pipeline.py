@@ -34,6 +34,7 @@ _LOGGER = logging.getLogger("Decrypt Oracle Build Pipeline Deployer")
 
 class AllowEverywhere(AWS.Statement):
     """Shortcut for creating IAM Statements that Allow to Resource "*"."""
+
     def __init__(self, *args, **kwargs):
         my_kwargs = dict(Effect=AWS.Allow, Resource=["*"])
         my_kwargs.update(kwargs)
@@ -314,17 +315,9 @@ def _deploy_or_update_template(template: Template, github_token: str) -> None:
     cloudformation = boto3.client("cloudformation")
 
     if _stack_exists(cloudformation):
-        return _update_existing_stack(
-            cloudformation=cloudformation,
-            template=template,
-            github_token=github_token,
-        )
+        return _update_existing_stack(cloudformation=cloudformation, template=template, github_token=github_token)
 
-    return _deploy_new_stack(
-        cloudformation=cloudformation,
-        template=template,
-        github_token=github_token,
-    )
+    return _deploy_new_stack(cloudformation=cloudformation, template=template, github_token=github_token)
 
 
 def _setup_logging() -> None:
