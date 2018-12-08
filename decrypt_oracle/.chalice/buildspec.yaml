@@ -2,7 +2,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - pip install --user tox
+      - pip install tox
   build:
     commands:
       - cd decrypt_oracle
