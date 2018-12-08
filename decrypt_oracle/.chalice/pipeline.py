@@ -204,7 +204,7 @@ def _pipeline(
             RoleArn=GetAtt(cfn_role, "Arn"),
             Capabilities="CAPABILITY_IAM",
             StackName=_stack_name,
-            TemplatePath="{}::transformed.yaml".format(_compiled_cfn_template),
+            TemplatePath="{}::decrypt_oracle/transformed.yaml".format(_compiled_cfn_template),
         ),
     )
     deploy_changeset = codepipeline.Actions(
