@@ -33,6 +33,7 @@ _LOGGER = logging.getLogger("Decrypt Oracle Build Pipeline Deployer")
 
 
 class AllowEverywhere(AWS.Statement):
+    """Shortcut for creating IAM Statements that Allow to Resource "*"."""
     def __init__(self, *args, **kwargs):
         my_kwargs = dict(Effect=AWS.Allow, Resource=["*"])
         my_kwargs.update(kwargs)
@@ -40,7 +41,7 @@ class AllowEverywhere(AWS.Statement):
 
 
 def _service_assume_role(service: str) -> AWS.Policy:
-    """"""
+    """Build and return the IAM AssumeRolePolicy for use in service roles."""
     return AWS.Policy(
         Statement=[
             AWS.Statement(
@@ -53,7 +54,7 @@ def _service_assume_role(service: str) -> AWS.Policy:
 
 
 def _codebuild_role() -> iam.Role:
-    """"""
+    """Build and return the IAM Role resource to be used by CodeBuild to run the build project."""
     policy = iam.Policy(
         "CodeBuildPolicy",
         PolicyName="CodeBuildPolicy",
@@ -68,7 +69,7 @@ def _codebuild_role() -> iam.Role:
 
 
 def _codebuild_builder(role: iam.Role, application_bucket: s3.Bucket) -> codebuild.Project:
-    """"""
+    """Build and return the CodeBuild Project resource to be used to build the decrypt oracle."""
     artifacts = codebuild.Artifacts(Type="CODEPIPELINE")
     environment = codebuild.Environment(
         ComputeType="BUILD_GENERAL1_SMALL",
@@ -88,7 +89,7 @@ def _codebuild_builder(role: iam.Role, application_bucket: s3.Bucket) -> codebui
 
 
 def _pipeline_role(buckets: Iterable[s3.Bucket]) -> iam.Role:
-    """"""
+    """Build and return the IAM Role resource to be used by CodePipeline to run the pipeline."""
     bucket_statements = [
         AWS.Statement(
             Effect=AWS.Allow,
@@ -133,7 +134,7 @@ def _pipeline_role(buckets: Iterable[s3.Bucket]) -> iam.Role:
 
 
 def _cloudformation_role() -> iam.Role:
-    """"""
+    """Build and return the IAM Role resource to be used by the pipeline to interact with CloudFormation."""
     policy = iam.Policy(
         "CloudFormationPolicy",
         PolicyName="CloudFormationPolicy",
@@ -153,7 +154,7 @@ def _pipeline(
     github_branch: str,
     github_access_token: troposphere.AWSProperty,
 ) -> codepipeline.Pipeline:
-    """"""
+    """Build and return the CodePipeline pipeline resource."""
     _source_output = "SourceOutput"
     get_source = codepipeline.Stages(
         Name="Source",
@@ -230,7 +231,7 @@ def _pipeline(
 
 
 def _build_template(github_owner: str, github_branch: str) -> Template:
-    """"""
+    """Build and return the pipeline template."""
     template = Template(Description="CI/CD pipeline for Decrypt Oracle powered by the AWS Encryption SDK for Python")
     github_access_token = template.add_parameter(
         troposphere.Parameter(
