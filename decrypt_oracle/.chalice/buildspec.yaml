@@ -1,0 +1,13 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - pip install --user tox
+  build:
+    commands:
+      - cd decrypt_oracle
+      - tox -e chalice-deploy
+artifacts:
+  type: zip
+  files:
+    - decrypt_oracle/transformed.yaml
