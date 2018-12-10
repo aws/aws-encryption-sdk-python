@@ -316,25 +316,6 @@ def deserialize_tag(stream, header, verifier=None):
     return data_tag
 
 
-def update_verifier_with_tag(stream, header, verifier):
-    """Updates verifier with data for authentication tag.
-
-    .. note::
-        This is meant to be used in conjunction with deserialize_non_framed_values
-        to update the verifier over information which has already been retrieved.
-
-    :param stream: Source data stream
-    :type stream: io.BytesIO
-    :param header: Deserialized header
-    :type header: aws_encryption_sdk.structures.MessageHeader
-    :param verifier: Signature verifier object
-    :type verifier: aws_encryption_sdk.internal.crypto.Verifier
-    :returns: Data authentication tag value
-    :rtype: bytes
-    """
-    return unpack_values(">{auth_len}s".format(auth_len=header.algorithm.auth_len), stream, verifier)
-
-
 def deserialize_frame(stream, header, verifier=None):
     """Deserializes a frame from a body.
 

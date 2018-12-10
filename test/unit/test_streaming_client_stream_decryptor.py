@@ -48,34 +48,24 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_input_stream.tell.side_effect = (0, 500)
 
         # Set up deserialize_header patch
-        self.mock_deserialize_header_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.deserialize_header"
-        )
+        self.mock_deserialize_header_patcher = patch("aws_encryption_sdk.streaming_client.deserialize_header")
         self.mock_deserialize_header = self.mock_deserialize_header_patcher.start()
         self.mock_deserialize_header.return_value = self.mock_header, self.mock_raw_header
         # Set up deserialize_header_auth patch
-        self.mock_deserialize_header_auth_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth"
-        )
+        self.mock_deserialize_header_auth_patcher = patch("aws_encryption_sdk.streaming_client.deserialize_header_auth")
         self.mock_deserialize_header_auth = self.mock_deserialize_header_auth_patcher.start()
         self.mock_deserialize_header_auth.return_value = sentinel.header_auth
         # Set up validate_header patch
-        self.mock_validate_header_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.validate_header"
-        )
+        self.mock_validate_header_patcher = patch("aws_encryption_sdk.streaming_client.validate_header")
         self.mock_validate_header = self.mock_validate_header_patcher.start()
         # Set up deserialize_non_framed_values patch
         self.mock_deserialize_non_framed_values_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_non_framed_values"
+            "aws_encryption_sdk.streaming_client.deserialize_non_framed_values"
         )
         self.mock_deserialize_non_framed_values = self.mock_deserialize_non_framed_values_patcher.start()
         self.mock_deserialize_non_framed_values.return_value = (sentinel.iv, len(VALUES["data_128"]))
         # Set up deserialize_tag_value patch
-        self.mock_deserialize_tag_patcher = patch(
-            "aws_encryption_sdk.streaming_client" ".aws_encryption_sdk.internal.formatting.deserialize.deserialize_tag"
-        )
+        self.mock_deserialize_tag_patcher = patch("aws_encryption_sdk.streaming_client.deserialize_tag")
         self.mock_deserialize_tag = self.mock_deserialize_tag_patcher.start()
         self.mock_deserialize_tag.return_value = sentinel.tag
         # Set up get_aad_content_string patch
@@ -85,10 +75,7 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_get_aad_content_string = self.mock_get_aad_content_string_patcher.start()
         self.mock_get_aad_content_string.return_value = sentinel.aad_content_string
         # Set up assemble_content_aad patch
-        self.mock_assemble_content_aad_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad"
-        )
+        self.mock_assemble_content_aad_patcher = patch("aws_encryption_sdk.streaming_client.assemble_content_aad")
         self.mock_assemble_content_aad = self.mock_assemble_content_aad_patcher.start()
         self.mock_assemble_content_aad.return_value = sentinel.associated_data
         # Set up Decryptor patch
@@ -96,21 +83,11 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_decryptor = self.mock_decryptor_patcher.start()
         self.mock_decryptor_instance = MagicMock()
         self.mock_decryptor.return_value = self.mock_decryptor_instance
-        # Set up update_verifier_with_tag patch
-        self.mock_update_verifier_with_tag_patcher = patch(
-            "aws_encryption_sdk.streaming_client"
-            ".aws_encryption_sdk.internal.formatting.deserialize.update_verifier_with_tag"
-        )
-        self.mock_update_verifier_with_tag = self.mock_update_verifier_with_tag_patcher.start()
         # Set up deserialize_footer patch
-        self.mock_deserialize_footer_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer"
-        )
+        self.mock_deserialize_footer_patcher = patch("aws_encryption_sdk.streaming_client.deserialize_footer")
         self.mock_deserialize_footer = self.mock_deserialize_footer_patcher.start()
         # Set up deserialize_frame patch
-        self.mock_deserialize_frame_patcher = patch(
-            "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame"
-        )
+        self.mock_deserialize_frame_patcher = patch("aws_encryption_sdk.streaming_client.deserialize_frame")
         self.mock_deserialize_frame = self.mock_deserialize_frame_patcher.start()
         # Set up decrypt patch
         self.mock_decrypt_patcher = patch("aws_encryption_sdk.streaming_client.decrypt")
@@ -125,7 +102,6 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_get_aad_content_string_patcher.stop()
         self.mock_assemble_content_aad_patcher.stop()
         self.mock_decryptor_patcher.stop()
-        self.mock_update_verifier_with_tag_patcher.stop()
         self.mock_deserialize_footer_patcher.stop()
         self.mock_deserialize_frame_patcher.stop()
         self.mock_decrypt_patcher.stop()
