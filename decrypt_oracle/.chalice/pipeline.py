@@ -80,10 +80,10 @@ def _codebuild_builder(role: iam.Role, application_bucket: s3.Bucket) -> codebui
     )
     source = codebuild.Source(Type="CODEPIPELINE", BuildSpec=BUILDSPEC)
     return codebuild.Project(
-        "AppPackageBuild",
+        "{}Build".format(APPLICATION_NAME),
         Artifacts=artifacts,
         Environment=environment,
-        Name="{}Build".format(APPLICATION_NAME),
+        Name=APPLICATION_NAME,
         ServiceRole=Ref(role),
         Source=source,
     )
