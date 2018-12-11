@@ -24,6 +24,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from mock import MagicMock
+from wrapt import ObjectProxy
 
 import aws_encryption_sdk
 from aws_encryption_sdk import KMSMasterKeyProvider
@@ -749,31 +750,57 @@ def test_plaintext_logs_stream(caplog, capsys, plaintext_length, frame_size):
 
 class NothingButRead(object):
     def __init__(self, data):
-        self._data = io.BytesIO(data)
+        self._data = data
 
     def read(self, size=-1):
         return self._data.read(size)
 
 
-@pytest.mark.xfail
+class NoTell(ObjectProxy):
+    def tell(self):
+        raise NotImplementedError("NoTell does not tell().")
+
+
+class NoClose(ObjectProxy):
+    closed = NotImplemented
+
+    def close(self):
+        raise NotImplementedError("NoClose does not close().")
+
+
+@pytest.mark.parametrize(
+    "wrapping_class",
+    (
+        NoTell,
+        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
+        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
+    ),
+)
 @pytest.mark.parametrize("frame_length", (0, 1024))
-def test_cycle_nothing_but_read(frame_length):
+def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
-    plaintext = NothingButRead(raw_plaintext)
+    plaintext = wrapping_class(io.BytesIO(raw_plaintext))
     key_provider = fake_kms_key_provider()
     raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
     )
-    ciphertext = NothingButRead(raw_ciphertext)
+    ciphertext = wrapping_class(io.BytesIO(raw_ciphertext))
     decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
     assert raw_plaintext == decrypted
 
 
-@pytest.mark.xfail
+@pytest.mark.parametrize(
+    "wrapping_class",
+    (
+        NoTell,
+        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
+        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
+    ),
+)
 @pytest.mark.parametrize("frame_length", (0, 1024))
-def test_encrypt_nothing_but_read(frame_length):
+def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
-    plaintext = NothingButRead(raw_plaintext)
+    plaintext = wrapping_class(io.BytesIO(raw_plaintext))
     key_provider = fake_kms_key_provider()
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
@@ -782,15 +809,22 @@ def test_encrypt_nothing_but_read(frame_length):
     assert raw_plaintext == decrypted
 
 
-@pytest.mark.xfail
+@pytest.mark.parametrize(
+    "wrapping_class",
+    (
+        NoTell,
+        pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
+        pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
+    ),
+)
 @pytest.mark.parametrize("frame_length", (0, 1024))
-def test_decrypt_nothing_but_read(frame_length):
+def test_decrypt_minimal_source_stream_api(frame_length, wrapping_class):
     plaintext = exact_length_plaintext(100)
     key_provider = fake_kms_key_provider()
     raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
     )
-    ciphertext = NothingButRead(raw_ciphertext)
+    ciphertext = wrapping_class(io.BytesIO(raw_ciphertext))
     decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
     assert plaintext == decrypted
 

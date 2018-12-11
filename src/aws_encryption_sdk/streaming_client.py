@@ -399,6 +399,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         ):
             raise SerializationError("Source too large for non-framed message")
 
+        self.__unframed_plaintext_cache = io.BytesIO()
+
     def ciphertext_length(self):
         """Returns the length of the resulting ciphertext message in bytes.
 
@@ -486,6 +488,17 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
+        try:
+            plaintext_length = self.stream_length
+            self.__unframed_plaintext_cache = self.source_stream
+        except NotSupportedError:
+            # We need to know the plaintext length before we can start processing the data.
+            # If we cannot seek on the source then we need to read the entire source into memory.
+            self.__unframed_plaintext_cache = io.BytesIO()
+            self.__unframed_plaintext_cache.write(self.source_stream.read())
+            plaintext_length = self.__unframed_plaintext_cache.tell()
+            self.__unframed_plaintext_cache.seek(0)
+
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self.content_type, is_final_frame=True
         )
@@ -493,7 +506,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             message_id=self._header.message_id,
             aad_content_string=aad_content_string,
             seq_num=1,
-            length=self.stream_length,
+            length=plaintext_length,
         )
         self.encryptor = Encryptor(
             algorithm=self._encryption_materials.algorithm,
@@ -504,7 +517,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         self.output_buffer += serialize_non_framed_open(
             algorithm=self._encryption_materials.algorithm,
             iv=self.encryptor.iv,
-            plaintext_length=self.stream_length,
+            plaintext_length=plaintext_length,
             signer=self.signer,
         )
 
@@ -516,7 +529,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :rtype: bytes
         """
         _LOGGER.debug("Reading %d bytes", b)
-        plaintext = self.source_stream.read(b)
+        plaintext = self.__unframed_plaintext_cache.read(b)
         plaintext_length = len(plaintext)
         if self.tell() + len(plaintext) > MAX_NON_FRAMED_SIZE:
             raise SerializationError("Source too large for non-framed message")
@@ -529,6 +542,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if len(plaintext) < b:
             _LOGGER.debug("Closing encryptor after receiving only %d bytes of %d bytes requested", plaintext_length, b)
             self.source_stream.close()
+            self.__unframed_plaintext_cache.close()
             closing = self.encryptor.finalize()
 
             if self.signer is not None:
