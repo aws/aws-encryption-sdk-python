@@ -502,10 +502,10 @@ class TestStreamDecryptor(unittest.TestCase):
 
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_non_framed_body")
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
-    def test_read_bytes_closed(self, mock_read_frame, mock_read_block):
+    def test_read_bytes_completed(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
-        test_decryptor.source_stream.close()
+        test_decryptor.footer = None
         test_decryptor._read_bytes(5)
         assert not mock_read_frame.called
         assert not mock_read_block.called

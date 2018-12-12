@@ -243,10 +243,11 @@ class _EncryptionStream(io.IOBase):
             output.write(self.output_buffer[:b])
             self.output_buffer = self.output_buffer[b:]
         else:
-            while not self.source_stream.closed:
-                self._read_bytes(LINE_LENGTH)
-                output.write(self.output_buffer)
-                self.output_buffer = b""
+            while True:
+                line = self.readline()
+                if not line:
+                    break
+                output.write(line)
 
         self.bytes_read += output.tell()
         _LOGGER.debug("Returning %d bytes of %d bytes requested", output.tell(), b)
@@ -294,10 +295,13 @@ class _EncryptionStream(io.IOBase):
         if self.closed:
             _LOGGER.debug("stream is closed")
             raise StopIteration()
-        if self.source_stream.closed and not self.output_buffer:
+
+        line = self.readline()
+        if not line:
             _LOGGER.debug("nothing more to read")
             raise StopIteration()
-        return self.readline()
+
+        return line
 
     #: Provides hook for Python3 iterator functionality.
     __next__ = next
@@ -400,6 +404,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             raise SerializationError("Source too large for non-framed message")
 
         self.__unframed_plaintext_cache = io.BytesIO()
+        self.__message_complete = False
 
     def ciphertext_length(self):
         """Returns the length of the resulting ciphertext message in bytes.
@@ -552,6 +557,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
             if self.signer is not None:
                 closing += serialize_footer(self.signer)
+            self.__message_complete = True
             return ciphertext + closing
 
         return ciphertext
@@ -618,6 +624,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             _LOGGER.debug("Writing footer")
             if self.signer is not None:
                 output += serialize_footer(self.signer)
+            self.__message_complete = True
             self.source_stream.close()
         return output
 
@@ -628,7 +635,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :raises NotSupportedError: if content type is not supported
         """
         _LOGGER.debug("%d bytes requested from stream with content type: %s", b, self.content_type)
-        if 0 <= b <= len(self.output_buffer) or self.source_stream.closed:
+        if 0 <= b <= len(self.output_buffer) or self.__message_complete:
             _LOGGER.debug("No need to read from source stream or source stream closed")
             return
 
@@ -900,8 +907,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :param int b: Number of bytes to read
         :raises NotSupportedError: if content type is not supported
         """
-        if self.source_stream.closed:
-            _LOGGER.debug("Source stream closed")
+        if hasattr(self, "footer"):
+            _LOGGER.debug("Source stream processing complete")
             return
 
         buffer_length = len(self.output_buffer)

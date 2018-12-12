@@ -761,9 +761,11 @@ class NoTell(ObjectProxy):
         raise NotImplementedError("NoTell does not tell().")
 
 
-class NoClose(ObjectProxy):
+class NoClosed(ObjectProxy):
     closed = NotImplemented
 
+
+class NoClose(ObjectProxy):
     def close(self):
         raise NotImplementedError("NoClose does not close().")
 
@@ -772,6 +774,7 @@ class NoClose(ObjectProxy):
     "wrapping_class",
     (
         NoTell,
+        NoClosed,
         pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
         pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
     ),
@@ -793,6 +796,7 @@ def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
     "wrapping_class",
     (
         NoTell,
+        NoClosed,
         pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
         pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
     ),
@@ -813,6 +817,7 @@ def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
     "wrapping_class",
     (
         NoTell,
+        NoClosed,
         pytest.param(NoClose, marks=pytest.mark.xfail(strict=True)),
         pytest.param(NothingButRead, marks=pytest.mark.xfail(strict=True)),
     ),
