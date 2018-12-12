@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context"""
-import unittest
-
 import pytest
 import six
 
@@ -26,7 +24,7 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestEncryptionContext(unittest.TestCase):
+class TestEncryptionContext(object):
     def test_assemble_content_aad(self):
         """Validate that the assemble_content_aad function
             behaves as expected.
@@ -40,10 +38,11 @@ class TestEncryptionContext(unittest.TestCase):
         assert test == VALUES["non_framed_aac"]
 
     def test_assemble_content_aad_unknown_type(self):
-        with six.assertRaisesRegex(self, SerializationError, "Unknown aad_content_string"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
                 message_id=VALUES["message_id"], aad_content_string=None, seq_num=1, length=VALUES["content_len"]
             )
+        excinfo.match("Unknown aad_content_string")
 
     def test_serialize_encryption_context_no_encryption_context(self):
         """Validate that the serialize_encryption_context
@@ -59,20 +58,22 @@ class TestEncryptionContext(unittest.TestCase):
             with an encryption context with too many
             elements.
         """
-        with six.assertRaisesRegex(self, SerializationError, "The encryption context contains too many elements."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 VALUES["encryption_context_too_many_elements"]
             )
+        excinfo.match("The encryption context contains too many elements.")
 
     def test_serialize_encryption_context_too_large(self):
         """Validate that the serialize_encryption_context
             function behaves as expected when presented
             with an encryption context which is too large.
         """
-        with six.assertRaisesRegex(self, SerializationError, "The serialized context is too large"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 VALUES["encryption_context_too_large"]
             )
+        excinfo.match("The serialized context is too large")
 
     def test_serialize_encryption_context_unencodable(self):
         """Validate that the serialize_encryption_context
@@ -81,10 +82,11 @@ class TestEncryptionContext(unittest.TestCase):
             unencodable elements.
         """
         for encryption_context in [{"a": b"\xc4"}, {b"\xc4": "a"}, {b"\xc4": b"\xc4"}]:
-            with six.assertRaisesRegex(self, SerializationError, "Cannot encode dictionary key or value using *"):
+            with pytest.raises(SerializationError) as excinfo:
                 aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                     encryption_context
                 )
+            excinfo.match("Cannot encode dictionary key or value using *")
 
     def test_serialize_encryption_context_valid(self):
         """Validate that the serialize_encryption_context
@@ -100,8 +102,9 @@ class TestEncryptionContext(unittest.TestCase):
         """Validate that the read_short function behaves
             as expected when it encounters a struct error.
         """
-        with six.assertRaisesRegex(self, SerializationError, "Bad format of serialized context."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.read_short(b"d", 0)
+        excinfo.match("Bad format of serialized context.")
 
     def test_read_short_valid(self):
         """Validate that the read_short function behaves
@@ -116,8 +119,9 @@ class TestEncryptionContext(unittest.TestCase):
             as expected when it encounters an encoding
             error.
         """
-        with six.assertRaisesRegex(self, SerializationError, "Bad format of serialized context."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.read_string(b"\xc4", 0, 1)
+        excinfo.match("Bad format of serialized context.")
 
     def test_read_string_valid(self):
         """Validate that the read_string function behaves
@@ -136,10 +140,11 @@ class TestEncryptionContext(unittest.TestCase):
         data = ""
         for i in range(aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE + 1):
             data += str(i)
-        with six.assertRaisesRegex(self, SerializationError, "Serialized context is too long."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
                 serialized_encryption_context=data
             )
+        excinfo.match("Serialized context is too long.")
 
     def test_deserialize_encryption_context_duplicate_key(self):
         """Validate that the deserialize_encryption_context
@@ -147,10 +152,11 @@ class TestEncryptionContext(unittest.TestCase):
             a serialized encryption context which contains
             duplicate keys.
         """
-        with six.assertRaisesRegex(self, SerializationError, "Duplicate key in serialized context."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
                 serialized_encryption_context=VALUES["serialized_encryption_context_duplicate_key"]
             )
+        excinfo.match("Duplicate key in serialized context.")
 
     def test_deserialize_encryption_context_extra_data(self):
         """Validate that the deserialize_encryption_context
@@ -160,10 +166,11 @@ class TestEncryptionContext(unittest.TestCase):
             of pairs (formatting error).
         """
         data = VALUES["serialized_encryption_context"] + b"jhofguijhsuskldfh"
-        with six.assertRaisesRegex(self, SerializationError, "Formatting error: Extra data in serialized context."):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
                 serialized_encryption_context=data
             )
+        excinfo.match("Formatting error: Extra data in serialized context.")
 
     def test_deserialize_encryption_context_valid(self):
         """Validate that the deserialize_encryption_context
