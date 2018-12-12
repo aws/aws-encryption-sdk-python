@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.base.MasterKey"""
-import unittest
-
 import attr
 import pytest
 import six
@@ -63,8 +61,9 @@ def test_master_key_provider_id_config_enforcement():
     excinfo.match(r'MasterKey config classes must have a "provider_id" attribute defined.')
 
 
-class TestMasterKey(unittest.TestCase):
-    def setUp(self):
+class TestMasterKey(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixture(self):
         self.mock_data_key_len_check_patcher = patch("aws_encryption_sdk.internal.utils.source_data_key_length_check")
         self.mock_data_key_len_check = self.mock_data_key_len_check_patcher.start()
 
@@ -85,8 +84,9 @@ class TestMasterKey(unittest.TestCase):
             def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestMasterKey *"):
+        with pytest.raises(TypeError) as excinfo:
             TestMasterKey()
+        excinfo.match("Can't instantiate abstract class TestMasterKey *")
 
     def test_generate_data_key_enforcement(self):
         class TestMasterKey(MasterKey):
@@ -98,8 +98,9 @@ class TestMasterKey(unittest.TestCase):
             def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestMasterKey *"):
+        with pytest.raises(TypeError) as excinfo:
             TestMasterKey()
+        excinfo.match("Can't instantiate abstract class TestMasterKey *")
 
     def test_encrypt_data_key_enforcement(self):
         class TestMasterKey(MasterKey):
@@ -111,8 +112,9 @@ class TestMasterKey(unittest.TestCase):
             def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestMasterKey *"):
+        with pytest.raises(TypeError) as excinfo:
             TestMasterKey()
+        excinfo.match("Can't instantiate abstract class TestMasterKey *")
 
     def test_decrypt_data_key_enforcement(self):
         class TestMasterKey(MasterKey):
@@ -124,8 +126,9 @@ class TestMasterKey(unittest.TestCase):
             def _encrypt_data_key(self, data_key, algorithm, encryption_context):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestMasterKey *"):
+        with pytest.raises(TypeError) as excinfo:
             TestMasterKey()
+        excinfo.match("Can't instantiate abstract class TestMasterKey *")
 
     def test_new(self):
         mock_master_key = MockMasterKey(
@@ -142,10 +145,9 @@ class TestMasterKey(unittest.TestCase):
         mock_config = MagicMock()
         mock_config.__class__ = MockMasterKeyConfig
         mock_config.provider_id = sentinel.mismatched_provider_id
-        with six.assertRaisesRegex(
-            self, ConfigMismatchError, "Config provider_id does not match MasterKey provider_id: *"
-        ):
+        with pytest.raises(ConfigMismatchError) as excinfo:
             MockMasterKey(config=mock_config)
+        excinfo.match("Config provider_id does not match MasterKey provider_id: *")
 
     def test_owns_data_key_owned(self):
         mock_master_key = MockMasterKey(
@@ -220,8 +222,9 @@ class TestMasterKey(unittest.TestCase):
             mock_encrypted_data_key=sentinel.encrypted_data_key,
             mock_decrypted_data_key=sentinel.decrypted_data_key,
         )
-        with six.assertRaisesRegex(self, InvalidKeyIdError, "MasterKeys can only provide themselves. *"):
+        with pytest.raises(InvalidKeyIdError) as excinfo:
             mock_master_key._new_master_key(sentinel.another_key_id)
+        excinfo.match("MasterKeys can only provide themselves. *")
 
     def test_key_check_valid(self):
         mock_master_key = MockMasterKey(
@@ -243,8 +246,9 @@ class TestMasterKey(unittest.TestCase):
         )
         mock_data_key = MagicMock()
         mock_data_key.key_provider = sentinel.another_key_provider
-        with six.assertRaisesRegex(self, IncorrectMasterKeyError, "Provided data key provider *"):
+        with pytest.raises(IncorrectMasterKeyError) as excinfo:
             mock_master_key._key_check(mock_data_key)
+        excinfo.match("Provided data key provider *")
 
     def test_generate_data_key(self):
         mock_master_key = MockMasterKey(
