@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite to verify calculated values in aws_encryption_sdk.internal.defaults"""
-import unittest
-
 import pytest
 
 import aws_encryption_sdk.internal.defaults
@@ -20,7 +18,7 @@ import aws_encryption_sdk.internal.defaults
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestDefaults(unittest.TestCase):
+class TestDefaults(object):
     def test_max_frame_count(self):
         max_frame_count = pow(2, 32) - 1
         assert aws_encryption_sdk.internal.defaults.MAX_FRAME_COUNT == max_frame_count
