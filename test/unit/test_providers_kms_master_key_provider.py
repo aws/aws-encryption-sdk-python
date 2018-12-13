@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite from aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider"""
+import unittest
+
 import botocore.client
 import pytest
 import six
@@ -30,9 +32,8 @@ def test_init_with_regionless_key_ids_and_region_names():
     assert provider.master_key("alias/key_1").config.client.meta.region_name == region_names[0]
 
 
-class TestKMSMasterKeyProvider(object):
-    @pytest.fixture(autouse=True)
-    def apply_fixtures(self):
+class TestKMSMasterKeyProvider(unittest.TestCase):
+    def setUp(self):
         self.mock_botocore_session_patcher = patch("aws_encryption_sdk.key_providers.kms.botocore.session.Session")
         self.mock_botocore_session = self.mock_botocore_session_patcher.start()
         self.mock_boto3_session_patcher = patch("aws_encryption_sdk.key_providers.kms.boto3.session.Session")
@@ -129,9 +130,10 @@ class TestKMSMasterKeyProvider(object):
 
     def test_client_no_region_name_without_default(self):
         test = KMSMasterKeyProvider()
-        with pytest.raises(UnknownRegionError) as excinfo:
+        with six.assertRaisesRegex(
+            self, UnknownRegionError, "No default region found and no region determinable from key id: *"
+        ):
             test._client("")
-        excinfo.match("No default region found and no region determinable from key id: *")
 
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider._client")
     def test_new_master_key(self, mock_client):
