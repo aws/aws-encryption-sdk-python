@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKeyProvider"""
-import unittest
-
 import attr
 import pytest
 import six
@@ -42,7 +40,7 @@ class MockRawMasterKeyProvider(RawMasterKeyProvider):
         return self.config.mock_wrapping_key
 
 
-class TestRawMasterKeyProvider(unittest.TestCase):
+class TestRawMasterKeyProvider(object):
     def test_parent(self):
         assert issubclass(RawMasterKeyProvider, MasterKeyProvider)
 
@@ -50,8 +48,9 @@ class TestRawMasterKeyProvider(unittest.TestCase):
         class TestProvider(RawMasterKeyProvider):
             pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestProvider *"):
+        with pytest.raises(TypeError) as excinfo:
             TestProvider()
+        excinfo.match("Can't instantiate abstract class TestProvider *")
 
     @patch(
         "aws_encryption_sdk.key_providers.raw.RawMasterKeyConfig", return_value=sentinel.raw_master_key_config_instance
