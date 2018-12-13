@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamEncryptor"""
 import io
-import unittest
 
 import pytest
 import six
@@ -36,8 +35,9 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestStreamEncryptor(unittest.TestCase):
-    def setUp(self):
+class TestStreamEncryptor(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
         # Create mock key provider
         self.mock_key_provider = MagicMock()
         self.mock_key_provider.__class__ = MasterKeyProvider
@@ -173,7 +173,7 @@ class TestStreamEncryptor(unittest.TestCase):
         assert test_encryptor.content_type is sentinel.content_type
 
     def test_init_non_framed_message_too_large(self):
-        with six.assertRaisesRegex(self, SerializationError, "Source too large for non-framed message"):
+        with pytest.raises(SerializationError) as excinfo:
             StreamEncryptor(
                 source=io.BytesIO(self.plaintext),
                 key_provider=self.mock_key_provider,
@@ -181,6 +181,7 @@ class TestStreamEncryptor(unittest.TestCase):
                 algorithm=self.mock_algorithm,
                 source_length=aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE + 1,
             )
+        excinfo.match("Source too large for non-framed message")
 
     def test_prep_message_no_master_keys(self):
         self.mock_key_provider.master_keys_for_encryption.return_value = sentinel.primary_master_key, set()
@@ -190,9 +191,9 @@ class TestStreamEncryptor(unittest.TestCase):
             frame_length=self.mock_frame_length,
             source_length=5,
         )
-
-        with six.assertRaisesRegex(self, MasterKeyProviderError, "No Master Keys available from Master Key Provider"):
+        with pytest.raises(MasterKeyProviderError) as excinfo:
             test_encryptor._prep_message()
+        excinfo.match("No Master Keys available from Master Key Provider")
 
     def test_prep_message_primary_master_key_not_in_master_keys(self):
         self.mock_key_provider.master_keys_for_encryption.return_value = (
@@ -206,8 +207,9 @@ class TestStreamEncryptor(unittest.TestCase):
             source_length=5,
         )
 
-        with six.assertRaisesRegex(self, MasterKeyProviderError, "Primary Master Key not in provided Master Keys"):
+        with pytest.raises(MasterKeyProviderError) as excinfo:
             test_encryptor._prep_message()
+        excinfo.match("Primary Master Key not in provided Master Keys")
 
     def test_prep_message_algorithm_change(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_256_GCM_IV12_TAG16
@@ -217,13 +219,11 @@ class TestStreamEncryptor(unittest.TestCase):
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             source_length=128,
         )
-
-        with six.assertRaisesRegex(
-            self,
-            ActionNotAllowedError,
-            "Cryptographic materials manager provided algorithm suite differs from algorithm suite in request.*",
-        ):
+        with pytest.raises(ActionNotAllowedError) as excinfo:
             test_encryptor._prep_message()
+        excinfo.match(
+            "Cryptographic materials manager provided algorithm suite differs from algorithm suite in request.*"
+        )
 
     @patch("aws_encryption_sdk.streaming_client.EncryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
@@ -397,8 +397,9 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor.bytes_read = aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
         test_encryptor._StreamEncryptor__unframed_plaintext_cache = pt_stream
 
-        with six.assertRaisesRegex(self, SerializationError, "Source too large for non-framed message"):
+        with pytest.raises(SerializationError) as excinfo:
             test_encryptor._read_bytes_to_non_framed_body(5)
+        excinfo.match("Source too large for non-framed message")
 
     def test_read_bytes_to_non_framed_body_close(self):
         test_encryptor = StreamEncryptor(source=io.BytesIO(self.plaintext), key_provider=self.mock_key_provider)
@@ -487,8 +488,9 @@ class TestStreamEncryptor(unittest.TestCase):
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
         test_encryptor.content_type = None
-        with six.assertRaisesRegex(self, NotSupportedError, "Unsupported content type"):
+        with pytest.raises(NotSupportedError) as excinfo:
             test_encryptor._read_bytes(5)
+        execinfo.match("Unsupported content type")
         assert not mock_read_non_framed.called
         assert not mock_read_framed.called
 
