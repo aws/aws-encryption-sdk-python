@@ -188,7 +188,9 @@ class TestStreamDecryptor(object):
         test_decryptor._stream_length = len(VALUES["data_128"])
         with pytest.raises(CustomMaximumValueExceeded) as excinfo:
             test_decryptor._read_header()
-        excinfo.match("Frame Size in header found larger than custom value: {found} > {custom}".format(found=1024, custom=10))
+        excinfo.match(
+            "Frame Size in header found larger than custom value: {found} > {custom}".format(found=1024, custom=10)
+        )
 
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
@@ -219,8 +221,11 @@ class TestStreamDecryptor(object):
 
         with pytest.raises(CustomMaximumValueExceeded) as excinfo:
             test_decryptor._prep_non_framed()
-        excinfo.match("Non-framed message content length found larger than custom value: {found} > {custom}".format(
-                found=len(VALUES["data_128"]), custom=len(VALUES["data_128"]) // 2))
+        excinfo.match(
+            "Non-framed message content length found larger than custom value: {found} > {custom}".format(
+                found=len(VALUES["data_128"]), custom=len(VALUES["data_128"]) // 2
+            )
+        )
 
     def test_prep_non_framed(self):
         test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
