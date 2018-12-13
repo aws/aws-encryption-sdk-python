@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
+import unittest
+
 import pytest
 from mock import MagicMock, patch, sentinel
 
@@ -49,9 +51,8 @@ def test_serialize_frame_invalid_sequence_number(sequence_number, error_message)
     excinfo.match(error_message)
 
 
-class TestSerialize(object):
-    @pytest.fixture(autouse=True)
-    def apply_fixtures(self):
+class TestSerialize(unittest.TestCase):
+    def setUp(self):
         self.mock_algorithm = MagicMock()
         self.mock_algorithm.encryption_algorithm.block_size = VALUES["block_size"]
         self.mock_algorithm.algorithm_id = VALUES["algorithm_id"]

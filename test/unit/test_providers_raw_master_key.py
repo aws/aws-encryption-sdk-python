@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKey"""
+import unittest
+
 import pytest
 from mock import MagicMock, patch, sentinel
 
@@ -25,9 +27,8 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestRawMasterKey(object):
-    @pytest.fixture(autouse=True)
-    def apply_fixtures(self):
+class TestRawMasterKey(unittest.TestCase):
+    def setUp(self):
         self.mock_algorithm = MagicMock()
         self.mock_algorithm.__class__ = Algorithm
         self.mock_algorithm.data_key_len = sentinel.data_key_len
