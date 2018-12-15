@@ -13,7 +13,6 @@
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.internal.str_ops"""
 import codecs
-import unittest
 
 import pytest
 
@@ -22,7 +21,7 @@ import aws_encryption_sdk.internal.str_ops
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestStrOps(unittest.TestCase):
+class TestStrOps(object):
     def test_to_str_str2str(self):
         test = aws_encryption_sdk.internal.str_ops.to_str("asdf")
         assert test == "asdf"
