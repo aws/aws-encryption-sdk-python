@@ -13,7 +13,6 @@
 """Integration test suite for `aws_encryption_sdk`."""
 import io
 import logging
-import unittest
 
 import pytest
 from botocore.exceptions import BotoCoreError
@@ -69,8 +68,9 @@ def test_remove_bad_client():
     assert not test._regional_clients
 
 
-class TestKMSThickClientIntegration(unittest.TestCase):
-    def setUp(self):
+class TestKMSThickClientIntegration(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
         self.kms_master_key_provider = setup_kms_master_key_provider()
 
     def test_encryption_cycle_default_algorithm_framed_stream(self):
