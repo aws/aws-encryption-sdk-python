@@ -280,7 +280,6 @@ class TestStreamDecryptor(unittest.TestCase):
         assert test_decryptor.decryptor is self.mock_decryptor_instance
         test_decryptor.verifier.update.assert_called_once_with(VALUES["data_128"])
         self.mock_decryptor_instance.update.assert_called_once_with(VALUES["data_128"])
-        assert test_decryptor.source_stream.closed
         assert test == b"12345678"
 
     def test_read_bytes_from_non_framed_message_body_too_small(self):
@@ -324,7 +323,6 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_deserialize_footer.assert_called_once_with(
             stream=test_decryptor.source_stream, verifier=test_decryptor.verifier
         )
-        assert test_decryptor.source_stream.closed
         assert test == b"12345678"
 
     def test_read_bytes_from_framed_body_multi_frame_finalize(self):
@@ -459,7 +457,6 @@ class TestStreamDecryptor(unittest.TestCase):
         self.mock_deserialize_footer.assert_called_once_with(
             stream=test_decryptor.source_stream, verifier=test_decryptor.verifier
         )
-        assert test_decryptor.source_stream.closed
         assert test == b"1234567890-="
 
     def test_read_bytes_from_framed_body_single_frame(self):
@@ -484,7 +481,6 @@ class TestStreamDecryptor(unittest.TestCase):
             stream=test_decryptor.source_stream, header=test_decryptor._header, verifier=test_decryptor.verifier
         )
         assert not self.mock_deserialize_footer.called
-        assert not test_decryptor.source_stream.closed
         assert test == b"1234"
 
     def test_read_bytes_from_framed_body_bad_sequence_number(self):

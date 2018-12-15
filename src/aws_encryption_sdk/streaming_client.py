@@ -546,8 +546,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
         if len(plaintext) < b:
             _LOGGER.debug("Closing encryptor after receiving only %d bytes of %d bytes requested", plaintext_length, b)
-            self.source_stream.close()
-            self.__unframed_plaintext_cache.close()
+
             closing = self.encryptor.finalize()
 
             if self.signer is not None:
@@ -625,7 +624,6 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             if self.signer is not None:
                 output += serialize_footer(self.signer)
             self.__message_complete = True
-            self.source_stream.close()
         return output
 
     def _read_bytes(self, b):
@@ -856,7 +854,6 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         plaintext += self.decryptor.finalize()
 
         self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
-        self.source_stream.close()
         return plaintext
 
     def _read_bytes_from_framed_body(self, b):
@@ -898,7 +895,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if final_frame:
             _LOGGER.debug("Reading footer")
             self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
-            self.source_stream.close()
+
         return plaintext
 
     def _read_bytes(self, b):
