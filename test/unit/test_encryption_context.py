@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context"""
 import pytest
-import six
 
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
