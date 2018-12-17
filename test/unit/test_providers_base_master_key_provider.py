@@ -13,7 +13,6 @@
 """Test suite for aws_encryption_sdk.key_providers.base.MasterKeyProvider"""
 import attr
 import pytest
-import six
 from mock import MagicMock, PropertyMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import (
