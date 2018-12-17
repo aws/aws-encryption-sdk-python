@@ -11,11 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.key_providers.base.MasterKeyProvider"""
-import unittest
-
 import attr
 import pytest
-import six
 from mock import MagicMock, PropertyMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import (
@@ -63,21 +60,23 @@ def test_repr():
     )
 
 
-class TestBaseMasterKeyProvider(unittest.TestCase):
+class TestBaseMasterKeyProvider(object):
     def test_provider_id_enforcement(self):
         class TestProvider(MasterKeyProvider):
             def _new_master_key(self, key_id):
                 pass
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestProvider *"):
+        with pytest.raises(TypeError) as excinfo:
             TestProvider()
+        excinfo.match("Can't instantiate abstract class TestProvider *")
 
     def test_new_master_key_enforcement(self):
         class TestProvider(MasterKeyProvider):
             provider_id = None
 
-        with six.assertRaisesRegex(self, TypeError, "Can't instantiate abstract class TestProvider *"):
+        with pytest.raises(TypeError) as excinfo:
             TestProvider()
+        excinfo.match("Can't instantiate abstract class TestProvider *")
 
     def test_master_keys_for_encryption(self):
         mock_master_key_a = MagicMock()
@@ -124,12 +123,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id, mock_new_master_key=sentinel.new_master_key
         )
-        with six.assertRaisesRegex(self, MasterKeyProviderError, "No Master Keys available from Master Key Provider"):
+        with pytest.raises(MasterKeyProviderError) as excinfo:
             mock_master_key_provider.master_keys_for_encryption(
                 encryption_context=sentinel.encryption_context,
                 plaintext_rostream=sentinel.plaintext_rostream,
                 plaintext_length=sentinel.plaintext_length,
             )
+        excinfo.match("No Master Keys available from Master Key Provider")
 
     def test_add_master_keys_from_list(self):
         mock_master_key_provider = MockMasterKeyProvider(
@@ -305,12 +305,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             provider_id=sentinel.provider_id, mock_new_master_key=mock_master_key
         )
         mock_master_key_provider._members = [mock_member]
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_matching_provider_invalid_key_id(self):
         mock_encrypted_data_key = MagicMock()
@@ -323,12 +324,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         with patch.object(
             mock_master_key_provider, "master_key_for_decrypt", new_callable=PropertyMock, side_effect=InvalidKeyIdError
         ) as mock_master_key:
-            with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+            with pytest.raises(DecryptKeyError) as excinfo:
                 mock_master_key_provider.decrypt_data_key(
                     encrypted_data_key=mock_encrypted_data_key,
                     algorithm=sentinel.algorithm,
                     encryption_context=sentinel.encryption_context,
                 )
+            excinfo.match("Unable to decrypt data key")
             mock_master_key.assert_called_once_with(sentinel.key_info)
 
     def test_decrypt_data_key_unsuccessful_no_matching_members_no_vend(self):
@@ -340,12 +342,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         mock_master_key_provider = MockMasterKeyProviderNoVendOnDecrypt(provider_id=sentinel.provider_id)
         mock_master_key_provider._members = [mock_member]
         mock_master_key_provider.master_key_for_decrypt = MagicMock()
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
         assert not mock_master_key_provider.master_key_for_decrypt.called
 
     def test_decrypt_data_key_unsuccessful_invalid_key_info(self):
@@ -359,12 +362,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             provider_id=sentinel.provider_id_2, mock_new_master_key=sentinel.new_master_key
         )
         mock_master_key_provider._members = [mock_member]
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_incorrect_master_key(self):
         mock_member = MagicMock()
@@ -379,12 +383,13 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             provider_id=sentinel.provider_id_2, mock_new_master_key=sentinel.new_master_key
         )
         mock_master_key_provider._members = [mock_member]
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_master_key_decryt_error(self):
         mock_member = MagicMock()
@@ -401,24 +406,26 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
             provider_id=sentinel.provider_id, mock_new_master_key=mock_master_key
         )
         mock_master_key_provider._members = [mock_member]
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=mock_encrypted_data_key,
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_no_members(self):
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id, mock_new_master_key=sentinel.new_master_key
         )
         mock_master_key_provider._members = []
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key(
                 encrypted_data_key=MagicMock(),
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_from_list_first_try(self):
         mock_decrypt_data_key = MagicMock()
@@ -463,9 +470,10 @@ class TestBaseMasterKeyProvider(unittest.TestCase):
         )
         mock_master_key_provider.decrypt_data_key = MagicMock()
         mock_master_key_provider.decrypt_data_key.side_effect = (DecryptKeyError, DecryptKeyError)
-        with six.assertRaisesRegex(self, DecryptKeyError, "Unable to decrypt any data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key_from_list(
                 encrypted_data_keys=[sentinel.encrypted_data_key_a, sentinel.encrypted_data_key_b],
                 algorithm=sentinel.algorithm,
                 encryption_context=sentinel.encryption_context,
             )
+        excinfo.match("Unable to decrypt any data key")
