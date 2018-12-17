@@ -11,10 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for high-level functions in aws_encryption_sdk module"""
-import unittest
-
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk
@@ -23,8 +20,9 @@ import aws_encryption_sdk.internal.defaults
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestAwsEncryptionSdk(unittest.TestCase):
-    def setUp(self):
+class TestAwsEncryptionSdk(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
         # Set up StreamEncryptor patch
         self.mock_stream_encryptor_patcher = patch("aws_encryption_sdk.StreamEncryptor")
         self.mock_stream_encryptor = self.mock_stream_encryptor_patcher.start()
@@ -41,8 +39,8 @@ class TestAwsEncryptionSdk(unittest.TestCase):
         self.mock_stream_decryptor_instance.header = sentinel.header
         self.mock_stream_decryptor.return_value = self.mock_stream_decryptor_instance
         self.mock_stream_decryptor_instance.__enter__.return_value = self.mock_stream_decryptor_instance
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_stream_encryptor_patcher.stop()
         self.mock_stream_decryptor_patcher.stop()
 
@@ -77,5 +75,6 @@ class TestAwsEncryptionSdk(unittest.TestCase):
         assert test is self.mock_stream_decryptor_instance
 
     def test_stream_unknown(self):
-        with six.assertRaisesRegex(self, ValueError, "Unsupported mode: *"):
+        with pytest.raises(ValueError) as excinfo:
             aws_encryption_sdk.stream(mode="ERROR", a=sentinel.a, b=sentinel.b, c=sentinel.b)
+        excinfo.match("Unsupported mode: *")
