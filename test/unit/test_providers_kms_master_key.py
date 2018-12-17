@@ -11,11 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.key_providers.kms.KMSMasterKey"""
-import unittest
-
 import botocore.client
 import pytest
-import six
 from botocore.exceptions import ClientError
 from mock import MagicMock, patch, sentinel
 
@@ -30,8 +27,9 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-class TestKMSMasterKey(unittest.TestCase):
-    def setUp(self):
+class TestKMSMasterKey(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixture(self):
         self.mock_client = MagicMock()
         self.mock_client.__class__ = botocore.client.BaseClient
         self.mock_client.generate_data_key.return_value = {
@@ -59,12 +57,12 @@ class TestKMSMasterKey(unittest.TestCase):
             key_id=VALUES["arn"], client=self.mock_client, grant_tokens=self.mock_grant_tokens
         )
         self.mock_kms_mkc_3 = KMSMasterKeyConfig(key_id="ex_key_info", client=self.mock_client)
+        yield
+        # Run tearDown
+        self.mock_data_key_len_check_patcher.stop()
 
     def test_parent(self):
         assert issubclass(KMSMasterKey, MasterKey)
-
-    def tearDown(self):
-        self.mock_data_key_len_check_patcher.stop()
 
     def test_config_bare(self):
         test = KMSMasterKeyConfig(key_id=VALUES["arn"], client=self.mock_client)
@@ -111,14 +109,16 @@ class TestKMSMasterKey(unittest.TestCase):
     def test_generate_data_key_unsuccessful_clienterror(self):
         self.mock_client.generate_data_key.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, GenerateKeyError, "Master Key .* unable to generate data key"):
+        with pytest.raises(GenerateKeyError) as excinfo:
             test._generate_data_key(self.mock_algorithm)
+        excinfo.match("Master Key .* unable to generate data key")
 
     def test_generate_data_key_unsuccessful_keyerror(self):
         self.mock_client.generate_data_key.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, GenerateKeyError, "Master Key .* unable to generate data key"):
+        with pytest.raises(GenerateKeyError) as excinfo:
             test._generate_data_key(self.mock_algorithm)
+        excinfo.match("Master Key .* unable to generate data key")
 
     def test_encrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
@@ -146,14 +146,16 @@ class TestKMSMasterKey(unittest.TestCase):
     def test_encrypt_data_key_unsuccessful_clienterror(self):
         self.mock_client.encrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, EncryptKeyError, "Master Key .* unable to encrypt data key"):
+        with pytest.raises(EncryptKeyError) as excinfo:
             test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+        excinfo.match("Master Key .* unable to encrypt data key")
 
     def test_encrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.encrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, EncryptKeyError, "Master Key .* unable to encrypt data key"):
+        with pytest.raises(EncryptKeyError) as excinfo:
             test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+        excinfo.match("Master Key .* unable to encrypt data key")
 
     def test_decrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
@@ -186,11 +188,13 @@ class TestKMSMasterKey(unittest.TestCase):
     def test_decrypt_data_key_unsuccessful_clienterror(self):
         self.mock_client.decrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, DecryptKeyError, "Master Key .* unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        excinfo.match("Master Key .* unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.decrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        with six.assertRaisesRegex(self, DecryptKeyError, "Master Key .* unable to decrypt data key"):
+        with pytest.raises(DecryptKeyError) as excinfo:
             test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        excinfo.match("Master Key .* unable to decrypt data key")
