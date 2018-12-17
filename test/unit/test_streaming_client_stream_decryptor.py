@@ -14,7 +14,6 @@
 import io
 
 import pytest
-import six
 from mock import MagicMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded, NotSupportedError, SerializationError
@@ -92,8 +91,8 @@ class TestStreamDecryptor(object):
         # Set up decrypt patch
         self.mock_decrypt_patcher = patch("aws_encryption_sdk.streaming_client.decrypt")
         self.mock_decrypt = self.mock_decrypt_patcher.start()
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_deserialize_header_patcher.stop()
         self.mock_deserialize_header_auth_patcher.stop()
         self.mock_validate_header_patcher.stop()
