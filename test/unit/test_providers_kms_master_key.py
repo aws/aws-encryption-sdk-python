@@ -58,12 +58,13 @@ class TestKMSMasterKey(object):
             key_id=VALUES["arn"], client=self.mock_client, grant_tokens=self.mock_grant_tokens
         )
         self.mock_kms_mkc_3 = KMSMasterKeyConfig(key_id="ex_key_info", client=self.mock_client)
+        yield
+        # Run tearDown
+        self.mock_data_key_len_check_patcher.stop()
+
 
     def test_parent(self):
         assert issubclass(KMSMasterKey, MasterKey)
-
-    def tearDown(self):
-        self.mock_data_key_len_check_patcher.stop()
 
     def test_config_bare(self):
         test = KMSMasterKeyConfig(key_id=VALUES["arn"], client=self.mock_client)
