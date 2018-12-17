@@ -138,6 +138,7 @@ class TestUtils(object):
         )
         self.mock_aws_encryption_sdk_instance.decrypt.return_value = VALUES["data_key"]
         self.mock_aws_encryption_sdk_instance.encrypt.return_value = VALUES["encrypted_data_key"]
+        yield
         # Run tearDown
         self.mock_urandom_patcher.stop()
 
