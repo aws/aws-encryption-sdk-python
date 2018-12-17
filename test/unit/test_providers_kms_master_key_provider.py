@@ -13,7 +13,6 @@
 """Unit test suite from aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider"""
 import botocore.client
 import pytest
-import six
 from mock import ANY, MagicMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
