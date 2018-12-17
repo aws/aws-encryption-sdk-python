@@ -15,7 +15,6 @@
 import io
 
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.identifiers
@@ -139,8 +138,7 @@ class TestUtils(object):
         )
         self.mock_aws_encryption_sdk_instance.decrypt.return_value = VALUES["data_key"]
         self.mock_aws_encryption_sdk_instance.encrypt.return_value = VALUES["encrypted_data_key"]
-
-    def tearDown(self):
+        # Run tearDown
         self.mock_urandom_patcher.stop()
 
     def test_validate_frame_length_negative_frame_length(self):
