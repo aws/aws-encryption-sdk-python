@@ -13,10 +13,8 @@
 """Unit test suite for aws_encryption_sdk.deserialize"""
 import io
 import struct
-import unittest
 
 import pytest
-import six
 from cryptography.exceptions import InvalidTag
 from mock import MagicMock, patch, sentinel
 
@@ -56,8 +54,9 @@ def test_deserialize_tag():
     assert parsed_tag == tag
 
 
-class TestDeserialize(unittest.TestCase):
-    def setUp(self):
+class TestDeserialize(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
         self.mock_wrapping_algorithm = MagicMock()
         self.mock_wrapping_algorithm.algorithm.iv_len = VALUES["iv_len"]
 
@@ -80,8 +79,8 @@ class TestDeserialize(unittest.TestCase):
         # Set up mock verifier
         self.mock_verifier = MagicMock()
         self.mock_verifier.update.return_value = None
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_decrypt_patcher.stop()
         self.mock_deserialize_ec_patcher.stop()
 
@@ -109,29 +108,32 @@ class TestDeserialize(unittest.TestCase):
             as expected for a valid header.
         """
         self.mock_decrypt.side_effect = InvalidTag()
-        with six.assertRaisesRegex(self, SerializationError, "Header authorization failed"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.validate_header(
                 header=VALUES["deserialized_header_block"],
                 header_auth=VALUES["deserialized_header_auth_block"],
                 raw_header=VALUES["header"],
                 data_key=VALUES["data_key_obj"],
             )
+        excinfo.match("Header authorization failed")
 
     def test_deserialize_header_unknown_object_type(self):
         """Validate that the deserialize_header function behaves
             as expected for an unknown object type.
         """
-        with six.assertRaisesRegex(self, NotSupportedError, "Unsupported type *"):
+        with pytest.raises(NotSupportedError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_invalid_object_type"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unsupported type *")
 
     def test_deserialize_header_unknown_version(self):
         """Validate that the deserialize_header function behaves
             as expected for an unknown message version.
         """
-        with six.assertRaisesRegex(self, NotSupportedError, "Unsupported version *"):
+        with pytest.raises(NotSupportedError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_invalid_version"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unsupported version *")
 
     @patch("aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id")
     def test_deserialize_header_unsupported_data_encryption_algorithm(self, mock_algorithm_get):
@@ -141,9 +143,10 @@ class TestDeserialize(unittest.TestCase):
         mock_unsupported_algorithm = MagicMock()
         mock_unsupported_algorithm.allowed = False
         mock_algorithm_get.return_value = mock_unsupported_algorithm
-        with six.assertRaisesRegex(self, NotSupportedError, "Unsupported algorithm *"):
+        with pytest.raises(NotSupportedError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_disallowed_algorithm"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unsupported algorithm *")
 
     @patch("aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id")
     def test_deserialize_header_unknown_data_encryption_algorithm(self, mock_algorithm_get):
@@ -151,55 +154,59 @@ class TestDeserialize(unittest.TestCase):
             as expected for an unknown algorithm.
         """
         mock_algorithm_get.side_effect = KeyError()
-        with six.assertRaisesRegex(self, UnknownIdentityError, "Unknown algorithm *"):
+        with pytest.raises(UnknownIdentityError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_invalid_algorithm"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unknown algorithm *")
 
     def test_deserialize_header_unknown_content_type(self):
         """Validate that the deserialize_header function behaves
             as expected for an unknown content type.
         """
-        with six.assertRaisesRegex(self, UnknownIdentityError, "Unknown content type *"):
+        with pytest.raises(UnknownIdentityError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_unknown_content_type"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unknown content type *")
 
     def test_deserialize_header_invalid_reserved_space(self):
         """Validate that the deserialize_header function behaves
             as expected for an invalid value in the reserved
             space (formerly content AAD).
         """
-        with six.assertRaisesRegex(
-            self, SerializationError, "Content AAD length field is currently unused, its value must be always 0"
-        ):
+        with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_reserved_space"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Content AAD length field is currently unused, its value must be always 0")
 
     def test_deserialize_header_bad_iv_len(self):
         """Validate that the deserialize_header function behaves
             as expected for bad IV length (incompatible with
             specified algorithm).
         """
-        with six.assertRaisesRegex(self, SerializationError, "Specified IV length *"):
+        with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_iv_len"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Specified IV length *")
 
     def test_deserialize_header_framed_bad_frame_length(self):
         """Validate that the deserialize_header function behaves
             as expected for bad frame length values (greater than
             the default maximum).
         """
-        with six.assertRaisesRegex(self, SerializationError, "Specified frame length larger than allowed maximum: *"):
+        with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_frame_len"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Specified frame length larger than allowed maximum: *")
 
     def test_deserialize_header_non_framed_bad_frame_length(self):
         """Validate that the deserialize_header function behaves
             as expected for bad frame length values for non-framed
             messages (non-zero).
         """
-        with six.assertRaisesRegex(self, SerializationError, "Non-zero frame length found for non-framed message"):
+        with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_non_framed_header_bad_frame_len"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Non-zero frame length found for non-framed message")
 
     def test_deserialize_header_valid(self):
         """Validate that the deserialize_header function behaves
@@ -247,10 +254,11 @@ class TestDeserialize(unittest.TestCase):
             behaves as expected for a valid final body frame.
         """
         stream = io.BytesIO(VALUES["serialized_final_frame_bad_length"])
-        with six.assertRaisesRegex(self, SerializationError, "Invalid final frame length: *"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
                 stream=stream, header=VALUES["deserialized_header_frame"]
             )
+        excinfo.match("Invalid final frame length: *")
 
     def test_deserialize_footer_no_verifier(self):
         """Vaidate that the deserialize_footer function behaves
@@ -275,8 +283,9 @@ class TestDeserialize(unittest.TestCase):
             with no footer.
         """
         stream = io.BytesIO(b"")
-        with six.assertRaisesRegex(self, SerializationError, "No signature found in message"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream, self.mock_verifier)
+        excinfo.match("No signature found in message")
 
     @patch("aws_encryption_sdk.internal.formatting.deserialize.struct")
     def test_unpack_values(self, mock_struct):
@@ -328,15 +337,16 @@ class TestDeserialize(unittest.TestCase):
         )
 
     def test_deserialize_wrapped_key_symmetric_wrapping_key_mismatch(self):
-        with six.assertRaisesRegex(self, SerializationError, "Master Key mismatch for wrapped data key"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=b"asifuhasjaskldjfhlsakdfj",
                 wrapped_encrypted_key=VALUES["wrapped_keys"]["structures"]["wrapped_encrypted_data_key_asymmetric"],
             )
+        excinfo.match("Master Key mismatch for wrapped data key")
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_info(self):
-        with six.assertRaisesRegex(self, SerializationError, "Malformed key info: key info missing data"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES["wrapped_keys"]["raw"]["key_info"],
@@ -344,9 +354,10 @@ class TestDeserialize(unittest.TestCase):
                     "wrapped_encrypted_data_key_symmetric_incomplete_info"
                 ],
             )
+        excinfo.match("Malformed key info: key info missing data")
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_iv_len_mismatch(self):
-        with six.assertRaisesRegex(self, SerializationError, "Wrapping AlgorithmSuite mismatch for wrapped data key"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES["wrapped_keys"]["raw"]["key_info"],
@@ -354,9 +365,10 @@ class TestDeserialize(unittest.TestCase):
                     "wrapped_encrypted_data_key_symmetric_bad_iv_len"
                 ],
             )
+        excinfo.match("Wrapping AlgorithmSuite mismatch for wrapped data key")
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_iv(self):
-        with six.assertRaisesRegex(self, SerializationError, "Malformed key info: incomplete iv"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES["wrapped_keys"]["raw"]["key_info"],
@@ -364,9 +376,10 @@ class TestDeserialize(unittest.TestCase):
                     "wrapped_encrypted_data_key_symmetric_incomplete_iv"
                 ],
             )
+        excinfo.match("Malformed key info: incomplete iv")
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_tag(self):
-        with six.assertRaisesRegex(self, SerializationError, "Malformed key info: incomplete ciphertext or tag"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES["wrapped_keys"]["raw"]["key_info"],
@@ -374,9 +387,10 @@ class TestDeserialize(unittest.TestCase):
                     "wrapped_encrypted_data_key_symmetric_incomplete_tag"
                 ],
             )
+        excinfo.match("Malformed key info: incomplete ciphertext or tag")
 
     def test_deserialize_wrapped_key_symmetric_wrapping_algorithm_incomplete_tag2(self):
-        with six.assertRaisesRegex(self, SerializationError, "Malformed key info: incomplete ciphertext or tag"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.mock_wrapping_algorithm,
                 wrapping_key_id=VALUES["wrapped_keys"]["raw"]["key_info"],
@@ -384,3 +398,4 @@ class TestDeserialize(unittest.TestCase):
                     "wrapped_encrypted_data_key_symmetric_incomplete_tag2"
                 ],
             )
+        excinfo.match("Malformed key info: incomplete ciphertext or tag")
