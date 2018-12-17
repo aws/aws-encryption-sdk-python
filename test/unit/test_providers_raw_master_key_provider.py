@@ -13,7 +13,6 @@
 """Test suite for aws_encryption_sdk.key_providers.raw.RawMasterKeyProvider"""
 import attr
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
