@@ -42,8 +42,8 @@ class TestKMSMasterKeyProvider(object):
         self.mock_boto3_client_instance = MagicMock()
         self.mock_boto3_client_instance.__class__ = botocore.client.BaseClient
         self.mock_boto3_session_instance.client.return_value = self.mock_boto3_client_instance
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_botocore_session_patcher.stop()
         self.mock_boto3_session_patcher.stop()
 
