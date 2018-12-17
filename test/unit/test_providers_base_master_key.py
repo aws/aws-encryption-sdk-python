@@ -13,7 +13,6 @@
 """Test suite for aws_encryption_sdk.key_providers.base.MasterKey"""
 import attr
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.exceptions import ConfigMismatchError, IncorrectMasterKeyError, InvalidKeyIdError
@@ -66,8 +65,8 @@ class TestMasterKey(object):
     def apply_fixture(self):
         self.mock_data_key_len_check_patcher = patch("aws_encryption_sdk.internal.utils.source_data_key_length_check")
         self.mock_data_key_len_check = self.mock_data_key_len_check_patcher.start()
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_data_key_len_check_patcher.stop()
 
     def test_parent(self):
