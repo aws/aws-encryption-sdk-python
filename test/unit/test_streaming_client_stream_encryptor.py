@@ -144,8 +144,8 @@ class TestStreamEncryptor(object):
         # Set up serialize_frame patch
         self.mock_serialize_frame_patcher = patch("aws_encryption_sdk.streaming_client.serialize_frame")
         self.mock_serialize_frame = self.mock_serialize_frame_patcher.start()
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_content_type_patcher.stop()
         self.mock_validate_frame_length_patcher.stop()
         self.mock_message_id_patcher.stop()
@@ -490,7 +490,7 @@ class TestStreamEncryptor(object):
         test_encryptor.content_type = None
         with pytest.raises(NotSupportedError) as excinfo:
             test_encryptor._read_bytes(5)
-        execinfo.match("Unsupported content type")
+        excinfo.match("Unsupported content type")
         assert not mock_read_non_framed.called
         assert not mock_read_framed.called
 
