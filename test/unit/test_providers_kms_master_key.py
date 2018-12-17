@@ -13,7 +13,6 @@
 """Unit test suite for aws_encryption_sdk.key_providers.kms.KMSMasterKey"""
 import botocore.client
 import pytest
-
 from botocore.exceptions import ClientError
 from mock import MagicMock, patch, sentinel
 
@@ -61,7 +60,6 @@ class TestKMSMasterKey(object):
         yield
         # Run tearDown
         self.mock_data_key_len_check_patcher.stop()
-
 
     def test_parent(self):
         assert issubclass(KMSMasterKey, MasterKey)
