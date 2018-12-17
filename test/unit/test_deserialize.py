@@ -79,7 +79,7 @@ class TestDeserialize(object):
         # Set up mock verifier
         self.mock_verifier = MagicMock()
         self.mock_verifier.update.return_value = None
-        yield 
+        yield
         # Run tearDown
         self.mock_decrypt_patcher.stop()
         self.mock_deserialize_ec_patcher.stop()
