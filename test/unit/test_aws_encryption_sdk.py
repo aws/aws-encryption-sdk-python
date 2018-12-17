@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for high-level functions in aws_encryption_sdk module"""
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk
