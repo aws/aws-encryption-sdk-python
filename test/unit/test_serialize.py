@@ -83,8 +83,8 @@ class TestSerialize(object):
         self.mock_signer = MagicMock()
         self.mock_signer.update.return_value = None
         self.mock_signer.finalize.return_value = VALUES["signature"]
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_serialize_acc_patcher.stop()
         self.mock_encrypt_patcher.stop()
         self.mock_valid_frame_length_patcher.stop()
