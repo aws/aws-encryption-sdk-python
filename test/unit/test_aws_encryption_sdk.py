@@ -39,8 +39,8 @@ class TestAwsEncryptionSdk(object):
         self.mock_stream_decryptor_instance.header = sentinel.header
         self.mock_stream_decryptor.return_value = self.mock_stream_decryptor_instance
         self.mock_stream_decryptor_instance.__enter__.return_value = self.mock_stream_decryptor_instance
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_stream_encryptor_patcher.stop()
         self.mock_stream_decryptor_patcher.stop()
 
