@@ -15,7 +15,6 @@ import io
 import struct
 
 import pytest
-import six
 from cryptography.exceptions import InvalidTag
 from mock import MagicMock, patch, sentinel
 
@@ -80,8 +79,8 @@ class TestDeserialize(object):
         # Set up mock verifier
         self.mock_verifier = MagicMock()
         self.mock_verifier.update.return_value = None
-
-    def tearDown(self):
+        yield 
+        # Run tearDown
         self.mock_decrypt_patcher.stop()
         self.mock_deserialize_ec_patcher.stop()
 
