@@ -2,6 +2,21 @@
 Changelog
 *********
 
+1.x.x -- 201x-xx-xx
+===================
+
+Minor
+-----
+
+* Remove dependence on all ``source_stream`` APIs except for ``read()``.
+  `#103 <https://github.com/aws/aws-encryption-sdk-python/issues/103>`_
+
+Maintenance
+-----------
+
+* Move all remaining ``unittest`` tests to ``pytest``.
+  `#99 <https://github.com/aws/aws-encryption-sdk-python/issues/99>`_
+
 1.3.8 -- 2018-11-15
 ===================
 
