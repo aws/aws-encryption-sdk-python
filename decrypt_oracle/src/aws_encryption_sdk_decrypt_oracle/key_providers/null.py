@@ -67,7 +67,7 @@ class NullMasterKey(MasterKey):
         return b"\x00" * algorithm.data_key_len
 
     def _generate_data_key(self, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]) -> DataKey:
-        """NullMasterKey does not support generate_data_key
+        """:class:`NullMasterKey` does not support generate_data_key
 
         :param algorithm: Algorithm on which to base data key
         :type algorithm: aws_encryption_sdk.identifiers.Algorithm
@@ -81,7 +81,7 @@ class NullMasterKey(MasterKey):
     def _encrypt_data_key(
         self, data_key: DataKey, algorithm: AlgorithmSuite, encryption_context: Dict[Text, Text]
     ) -> NoReturn:
-        """NullMasterKey does not support encrypt_data_key
+        """:class:`NullMasterKey` does not support encrypt_data_key
 
         :param data_key: Unencrypted data key
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
