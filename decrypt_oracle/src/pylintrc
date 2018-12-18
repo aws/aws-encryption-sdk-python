@@ -4,8 +4,7 @@
 #
 # C0330 : bad-continuation (we let black handle this)
 # C0412 : ungrouped-imports (we let isort handle this)
-# R0205 : useless-object-inheritance (we need to support Python 2, so no, not useless)
-disable = C0330, C0412, R0205
+disable = C0330, C0412
 
 [FORMAT]
 max-line-length = 120
