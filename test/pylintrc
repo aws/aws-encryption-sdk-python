@@ -1,27 +1,25 @@
 [MESSAGES CONTROL]
-# Disabling messages that we either don't care about
-# for tests or are necessary to break for tests.
-#
-# C0103 : invalid-name (we prefer long, descriptive, names for tests)
-# C0111 : missing-docstring (we don't write docstrings for tests)
-# C0330 : bad-continuation (we let black handle this)
-# C0412 : ungrouped-imports (we let isort handle this)
-# E0110 : abstract-class-instantiated (we do this on purpose to test that they are enforced)
-# E1101 : no-member (raised on patched objects with mock checks)
-# R0201 : no-self-use (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
-# R0205 : useless-object-inheritance (we need to support Python 2, so no, not useless)
-# R0801 : duplicate-code (unit tests for similar things tend to be similar)
-# R0902 : too-many-instance-attributes (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
-# R0903 : too-few-public-methods (common when setting up mock classes)
-# R0904 : too-many-public-methods (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
-# R0914 : too-many-locals (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
-# R0915 : too-many-statements (common pattern when using unittest: can be enabled once all tests are refactored to pytest)
-# W0201 : attribute-defined-outside-init (broken by some unittest monkeypatching: can be enabled once all tests are refactored to pytest)
-# W0212 : protected-access (raised when calling _ methods)
-# W0223 : abstract-method (we do this on purpose to test that they are enforced)
-# W0621 : redefined-outer-name (raised when using pytest-mock)
-# W0613 : unused-argument (raised when patches are needed but not called)
-disable = C0103, C0111, C0330, C0412, E0110, E1101, R0201, R0205, R0801, R0902, R0903, R0904, R0914, R0915, W0201, W0212, W0223, W0621, W0613
+# Disabling messages that we either don't care about for tests or are necessary to break for tests.
+disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
+    bad-continuation,  # we let black handle this
+    ungrouped-imports,  # we let isort handle this
+    abstract-class-instantiated,  # we do this on purpose to test that they are enforced
+    no-member,  # raised on patched objects with mock checks
+    no-self-use,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    useless-object-inheritance,  # we need to support Python 2, so no, not useless
+    duplicate-code,  # unit tests for similar things tend to be similar
+    too-many-instance-attributes,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    too-few-public-methods,  # common when setting up mock classes
+    too-many-public-methods,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    too-many-locals,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    too-many-statements,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    attribute-defined-outside-init,  # broken by some unittest monkeypatching: can be enabled once all tests are refactored to pytest
+    protected-access,  # raised when calling _ methods
+    abstract-method,  # we do this on purpose to test that they are enforced
+    redefined-outer-name,  # raised when using pytest-mock
+    unused-argument,  # raised when patches are needed but not called
 
 [VARIABLES]
 additional-builtins = raw_input
