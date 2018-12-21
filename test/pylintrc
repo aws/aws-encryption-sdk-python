@@ -7,18 +7,17 @@ disable =
     ungrouped-imports,  # we let isort handle this
     abstract-class-instantiated,  # we do this on purpose to test that they are enforced
     no-member,  # raised on patched objects with mock checks
-    no-self-use,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    no-self-use,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
     useless-object-inheritance,  # we need to support Python 2, so no, not useless
     duplicate-code,  # unit tests for similar things tend to be similar
-    too-many-instance-attributes,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
+    too-many-instance-attributes,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
     too-few-public-methods,  # common when setting up mock classes
-    too-many-public-methods,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
-    too-many-locals,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
-    too-many-statements,  # common pattern when using unittest: can be enabled once all tests are refactored to pytest
-    attribute-defined-outside-init,  # broken by some unittest monkeypatching: can be enabled once all tests are refactored to pytest
+    too-many-public-methods,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
+    too-many-statements,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
+    attribute-defined-outside-init,  # broken by some pytest classes monkeypatching: can be enabled once all tests are refactored to pytest functions
     protected-access,  # raised when calling _ methods
     abstract-method,  # we do this on purpose to test that they are enforced
-    redefined-outer-name,  # raised when using pytest-mock
+    redefined-outer-name,  # raised when using decorators
     unused-argument,  # raised when patches are needed but not called
 
 [VARIABLES]
