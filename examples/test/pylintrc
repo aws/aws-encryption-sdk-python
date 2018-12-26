@@ -1,16 +1,14 @@
 [MESSAGES CONTROL]
-# Disabling messages that we either don't care about
-# for tests or are necessary to break for tests.
-#
-# C0103 : invalid-name (we prefer long, descriptive, names for tests)
-# C0111 : missing-docstring (we don't write docstrings for tests)
-# C0413 : wrong-import-position (similar to E0401, pylint does not appear to identify
-#           unknown modules as non-standard-library. flake8 tests for this as well
-#           and does treat them properly)
-# E0401 : import-error (because the examples are not actually in a module, sys.path
-#           is patched to find tests and test utils. pylint does not recognize this)
-# R0801 : duplicate-code (tests for similar things tend to be similar)
-disable = C0103, C0111, C0413, E0401, R0801
+# Disabling messages that we either don't care about for tests or are necessary to break for tests.
+disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
+    wrong-import-position,  # similar to E0401, pylint does not appear to identify
+                            # unknown modules as non-standard-library. flake8 tests for this as well
+                            # and does treat them properly
+    import-error,  # because the examples are not actually in a module, sys.path
+                   # is patched to find tests and test utils. pylint does not recognize this
+    duplicate-code,  # tests for similar things tend to be similar
 
 [VARIABLES]
 additional-builtins = raw_input
