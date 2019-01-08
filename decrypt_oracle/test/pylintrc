@@ -1,11 +1,10 @@
 [MESSAGES CONTROL]
 # Disabling messages that we either don't care about for tests or are necessary to break for tests.
-#
-# C0103 : invalid-name (we prefer long, descriptive, names for tests)
-# C0111 : missing-docstring (we don't write docstrings for tests)
-# C0330 : bad-continuation (we let black handle this)
-# C0412 : ungrouped-imports (we let isort handle this)
-disable = C0103, C0111, C0330, C0412
+disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
+    bad-continuation,  # we let black handle this
+    ungrouped-imports,  # we let isort handle this
 
 [FORMAT]
 max-line-length = 120
