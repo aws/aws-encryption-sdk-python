@@ -1,0 +1,13 @@
+[MESSAGES CONTROL]
+# Disabling messages that we either don't care about for tests or are necessary to break for tests.
+disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
+    bad-continuation,  # we let black handle this
+    ungrouped-imports,  # we let isort handle this
+
+[FORMAT]
+max-line-length = 120
+
+[REPORTS]
+msg-template = {path}:{line}: [{msg_id}({symbol}), {obj}] {msg}

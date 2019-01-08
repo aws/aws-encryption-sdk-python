@@ -1,6 +1,4 @@
-"""
-Generate the CloudFormation template for the deployment pipeline.
-"""
+"""Generate the CloudFormation template for the deployment pipeline."""
 import argparse
 import getpass
 import logging
@@ -36,6 +34,7 @@ class AllowEverywhere(AWS.Statement):
     """Shortcut for creating IAM Statements that Allow to Resource "*"."""
 
     def __init__(self, *args, **kwargs):
+        """Set up override values."""
         my_kwargs = dict(Effect=AWS.Allow, Resource=["*"])
         my_kwargs.update(kwargs)
         super(AllowEverywhere, self).__init__(*args, **my_kwargs)
@@ -155,6 +154,7 @@ def _pipeline(
     github_branch: str,
     github_access_token: troposphere.AWSProperty,
 ) -> codepipeline.Pipeline:
+    # pylint: disable=too-many-locals,too-many-arguments
     """Build and return the CodePipeline pipeline resource."""
     _source_output = "SourceOutput"
     get_source = codepipeline.Stages(

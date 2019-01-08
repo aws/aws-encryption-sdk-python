@@ -34,7 +34,7 @@ class CountingMasterKeyConfig(MasterKeyConfig):
 
 
 class CountingMasterKey(MasterKey):
-    """Master key that generates deterministic data keys and decrypts a pre-defined
+    r"""Master key that generates deterministic data keys and decrypts a pre-defined
     encrypted data key value to that deterministic data keys.
 
     Generated/decrypted data keys are of the form: ``\01\02\03\04...`` counting

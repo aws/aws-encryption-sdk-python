@@ -285,23 +285,26 @@ matrix:
     #  env:
     #    DECRYPT_ORACLE=1
     #    TOXENV=doc8
-    # Pending linting cleanup
-    #- python: 3.6
-    #  env:
-    #    DECRYPT_ORACLE=1
-    #    TOXENV=flake8
-    #- python: 3.6
-    #  env:
-    #    DECRYPT_ORACLE=1
-    #    TOXENV=pylint
-    #- python: 3.6
-    #  env:
-    #    DECRYPT_ORACLE=1
-    #    TOXENV=flake8-tests
-    #- python: 3.6
-    #  env:
-    #    DECRYPT_ORACLE=1
-    #    TOXENV=pylint-tests
+    - python: 3.6
+      env:
+        DECRYPT_ORACLE=1
+        TOXENV=flake8
+      stage: Decrypt Oracle Formatting Checks
+    - python: 3.6
+      env:
+        DECRYPT_ORACLE=1
+        TOXENV=pylint
+      stage: Decrypt Oracle Formatting Checks
+    - python: 3.6
+      env:
+        DECRYPT_ORACLE=1
+        TOXENV=flake8-tests
+      stage: Decrypt Oracle Formatting Checks
+    - python: 3.6
+      env:
+        DECRYPT_ORACLE=1
+        TOXENV=pylint-tests
+      stage: Decrypt Oracle Formatting Checks
 install: pip install tox
 script:
   - |
