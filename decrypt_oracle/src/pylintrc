@@ -1,10 +1,9 @@
 [MESSAGES CONTROL]
-# Disabling messages that we either don't care about
-# for tests or are necessary to break for tests.
-#
-# C0330 : bad-continuation (we let black handle this)
-# C0412 : ungrouped-imports (we let isort handle this)
-disable = C0330, C0412
+# Disabling messages that we either don't care about for tests or are necessary to break for tests.
+disable =
+    bad-continuation,  # we let black handle this
+    ungrouped-imports,  # we let isort handle this
+    useless-object-inheritance,  # we need to support Python 2, so no, not useless
 
 [FORMAT]
 max-line-length = 120

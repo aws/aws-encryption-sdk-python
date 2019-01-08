@@ -152,7 +152,7 @@ high-level ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
-    my_plaintext = 'This is some super secret data!  Yup, sure is!'
+    my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
     my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
         source=my_plaintext,
@@ -177,7 +177,7 @@ You can provide an `encryption context`_: a form of additional authenticating in
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
-    my_plaintext = 'This is some super secret data!  Yup, sure is!'
+    my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
     my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
         source=my_plaintext,

@@ -1,17 +1,16 @@
 [MESSAGE CONTROL]
 # Disabling messages that either we don't care about we intentionally break.
-#
-# C0330 : bad-continuation (we let black handle this)
-# C0412 : ungrouped-imports (we let isort handle this)
-# E1101 : no-member (breaks with attrs)
-# R0201 : no-self-use (interesting to keep in mind for later refactoring, but not blocking)
-# R0205 : useless-object-inheritance (we need to support Python 2, so no, not useless)
-# R0903 : too-few-public-methods (does not allow value stores)
-# R1705 : no-else-return (we omit this on purpose for brevity where it would add no value)
-# W0201 : attribute-defined-outside-init (breaks with attrs_post_init)
-# W0223 : abstract-method (throws false positives on io.BaseIO grandchildren)
-# W0621 : redefined-outer-name (we do this on purpose in multiple places)
-disable = C0330, C0412, E1101, R0201, R0205, R0903, R1705, W0201, W0223, W0621
+disable =
+    bad-continuation,  # we let isort handle this
+    ungrouped-imports,  # we let isort handle this
+    no-member,  # breaks with attrs
+    no-self-use,  # interesting to keep in mind for later refactoring, but not blocking
+    useless-object-inheritance,  # we need to support Python 2, so no, not useless
+    too-few-public-methods,  # does not allow value stores
+    no-else-return,  # we omit this on purpose for brevity where it would add no value
+    attribute-defined-outside-init,  # breaks with attrs_post_init
+    abstract-method,  # throws false positives on io.BaseIO grandchildren
+    redefined-outer-name,  # we do this on purpose in multiple places
 
 [BASIC]
 # Allow function names up to 50 characters

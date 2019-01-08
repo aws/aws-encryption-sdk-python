@@ -13,10 +13,8 @@
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.internal.utils"""
 import io
-import unittest
 
 import pytest
-import six
 from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.identifiers
@@ -44,8 +42,9 @@ def test_prep_stream_data_wrap(source):
     assert_prepped_stream_identity(test, io.BytesIO)
 
 
-class TestUtils(unittest.TestCase):
-    def setUp(self):
+class TestUtils(object):
+    @pytest.fixture(autouse=True)
+    def apply_fixtures(self):
         # Set up mock key provider and keys
         self.mock_key_provider_1 = MasterKeyInfo(provider_id="adijoasijfoi", key_info=b"asoiwef8q34")
         self.mock_raw_data_key_1_bytes = b"asioufhaw9eruhtg"
@@ -139,8 +138,8 @@ class TestUtils(unittest.TestCase):
         )
         self.mock_aws_encryption_sdk_instance.decrypt.return_value = VALUES["data_key"]
         self.mock_aws_encryption_sdk_instance.encrypt.return_value = VALUES["encrypted_data_key"]
-
-    def tearDown(self):
+        yield
+        # Run tearDown
         self.mock_urandom_patcher.stop()
 
     def test_validate_frame_length_negative_frame_length(self):
@@ -148,40 +147,35 @@ class TestUtils(unittest.TestCase):
             behaves as expected when supplied with a
             negative frame length.
         """
-        with six.assertRaisesRegex(
-            self,
-            SerializationError,
-            "Frame size must be a non-negative multiple of the block size of the crypto algorithm: *",
-        ):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(frame_length=-1, algorithm=self.mock_algorithm)
+        excinfo.match("Frame size must be a non-negative multiple of the block size of the crypto algorithm: *")
 
     def test_validate_frame_length_invalid_frame_length(self):
         """Validate that the validate_frame_length function
             behaves as expected when supplied with an
             invalid frame length.
         """
-        with six.assertRaisesRegex(
-            self,
-            SerializationError,
-            "Frame size must be a non-negative multiple of the block size of the crypto algorithm: *",
-        ):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(frame_length=1, algorithm=self.mock_algorithm)
+        excinfo.match("Frame size must be a non-negative multiple of the block size of the crypto algorithm: *")
 
     def test_validate_frame_length_too_large(self):
         """Validate that the validate_frame_length function
             behaves as expected when supplied with a
             frame length which is too large.
         """
-        with six.assertRaisesRegex(self, SerializationError, "Frame size too large: *"):
+        with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(
                 frame_length=MAX_FRAME_SIZE + 1, algorithm=self.mock_algorithm
             )
+        excinfo.match("Frame size too large: *")
 
     def test_message_id(self):
         """Validate that the message_id function behaves as expected."""
         test = aws_encryption_sdk.internal.utils.message_id()
         self.mock_urandom.assert_called_once_with(MESSAGE_ID_LENGTH)
-        self.assertEqual(test, sentinel.random)
+        assert test == sentinel.random
 
     def test_get_aad_content_string_no_framing(self):
         """Validate that the get_aad_content_string function behaves
@@ -214,8 +208,9 @@ class TestUtils(unittest.TestCase):
         """Validate that the get_aad_content_string function behaves as
             expected when called with an unknown content type.
         """
-        with six.assertRaisesRegex(self, UnknownIdentityError, "Unhandled content type"):
+        with pytest.raises(UnknownIdentityError) as excinfo:
             aws_encryption_sdk.internal.utils.get_aad_content_string(-1, False)
+        excinfo.match("Unhandled content type")
 
     def test_prepare_data_keys(self):
         mock_encryption_dk = DataKey(
@@ -265,9 +260,8 @@ class TestUtils(unittest.TestCase):
         mock_algorithm.kdf_input_len = 5
         mock_data_key = MagicMock()
         mock_data_key.data_key = "1234"
-        with six.assertRaisesRegex(
-            self, InvalidDataKeyError, "Invalid Source Data Key length 4 for algorithm required: 5"
-        ):
+        with pytest.raises(InvalidDataKeyError) as excinfo:
             aws_encryption_sdk.internal.utils.source_data_key_length_check(
                 source_data_key=mock_data_key, algorithm=mock_algorithm
             )
+        excinfo.match("Invalid Source Data Key length 4 for algorithm required: 5")
