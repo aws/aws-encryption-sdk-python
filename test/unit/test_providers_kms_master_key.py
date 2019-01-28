@@ -80,7 +80,7 @@ class TestKMSMasterKey(object):
 
     def test_generate_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        generated_key = test._generate_data_key(self.mock_algorithm)
+        generated_key = test._generate_data_key(self.mock_algorithm, {})
         self.mock_client.generate_data_key.assert_called_once_with(
             KeyId="ex_key_info", NumberOfBytes=sentinel.kdf_input_len
         )
@@ -101,7 +101,7 @@ class TestKMSMasterKey(object):
 
     def test_generate_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
-        test._generate_data_key(self.mock_algorithm)
+        test._generate_data_key(self.mock_algorithm, {})
         self.mock_client.generate_data_key.assert_called_once_with(
             KeyId=VALUES["arn_str"], NumberOfBytes=sentinel.kdf_input_len, GrantTokens=self.mock_grant_tokens
         )
@@ -110,19 +110,19 @@ class TestKMSMasterKey(object):
         self.mock_client.generate_data_key.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(GenerateKeyError) as excinfo:
-            test._generate_data_key(self.mock_algorithm)
+            test._generate_data_key(self.mock_algorithm, {})
         excinfo.match("Master Key .* unable to generate data key")
 
     def test_generate_data_key_unsuccessful_keyerror(self):
         self.mock_client.generate_data_key.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(GenerateKeyError) as excinfo:
-            test._generate_data_key(self.mock_algorithm)
+            test._generate_data_key(self.mock_algorithm, {})
         excinfo.match("Master Key .* unable to generate data key")
 
     def test_encrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
-        encrypted_key = test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+        encrypted_key = test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, {})
         self.mock_client.encrypt.assert_called_once_with(KeyId="ex_key_info", Plaintext=VALUES["data_key"])
         assert encrypted_key == EncryptedDataKey(
             key_provider=MasterKeyInfo(provider_id=test.provider_id, key_info=VALUES["arn"]),
@@ -138,7 +138,7 @@ class TestKMSMasterKey(object):
 
     def test_encrypt_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
-        test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+        test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, {})
         self.mock_client.encrypt.assert_called_once_with(
             KeyId=VALUES["arn_str"], Plaintext=VALUES["data_key"], GrantTokens=self.mock_grant_tokens
         )
@@ -147,20 +147,20 @@ class TestKMSMasterKey(object):
         self.mock_client.encrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(EncryptKeyError) as excinfo:
-            test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+            test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, {})
         excinfo.match("Master Key .* unable to encrypt data key")
 
     def test_encrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.encrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(EncryptKeyError) as excinfo:
-            test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
+            test._encrypt_data_key(self.mock_data_key, self.mock_algorithm, {})
         excinfo.match("Master Key .* unable to encrypt data key")
 
     def test_decrypt_data_key(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_1)
         decrypted_key = test._decrypt_data_key(
-            encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm
+            encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm, {}
         )
         self.mock_client.decrypt.assert_called_once_with(CiphertextBlob=VALUES["encrypted_data_key"])
         assert decrypted_key == DataKey(
@@ -180,7 +180,7 @@ class TestKMSMasterKey(object):
 
     def test_decrypt_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
-        test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm, {})
         self.mock_client.decrypt.assert_called_once_with(
             CiphertextBlob=VALUES["encrypted_data_key"], GrantTokens=self.mock_grant_tokens
         )
@@ -189,12 +189,12 @@ class TestKMSMasterKey(object):
         self.mock_client.decrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(DecryptKeyError) as excinfo:
-            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm, {})
         excinfo.match("Master Key .* unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.decrypt.side_effect = KeyError
         test = KMSMasterKey(config=self.mock_kms_mkc_3)
         with pytest.raises(DecryptKeyError) as excinfo:
-            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm, {})
         excinfo.match("Master Key .* unable to decrypt data key")
