@@ -214,7 +214,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
             return new_result
 
         # Add results into cache
-        cache_entry = self.cache.put_encryption_materials(
+        self.cache.put_encryption_materials(
             cache_key=cache_key,
             encryption_materials=new_result,
             plaintext_length=request.plaintext_length,

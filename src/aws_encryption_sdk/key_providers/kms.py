@@ -43,8 +43,6 @@ def _region_from_key_id(key_id, default_region=None):
     """
     try:
         region_name = key_id.split(":", 4)[3]
-        if default_region is None:
-            default_region = region_name
     except IndexError:
         if default_region is None:
             raise UnknownRegionError(
