@@ -21,6 +21,12 @@ from cryptography.hazmat.primitives.kdf import hkdf
 
 from aws_encryption_sdk.exceptions import InvalidAlgorithmError
 
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Optional  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
 __version__ = "1.3.8"
 USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
