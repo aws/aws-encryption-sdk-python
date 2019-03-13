@@ -15,7 +15,6 @@ import logging
 
 import attr
 
-from . import DecryptionMaterials, EncryptionMaterials
 from ..exceptions import MasterKeyProviderError, SerializationError
 from ..internal.crypto.authentication import Signer, Verifier
 from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
@@ -23,6 +22,7 @@ from ..internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from ..internal.str_ops import to_str
 from ..internal.utils import prepare_data_keys
 from ..key_providers.base import MasterKeyProvider
+from . import DecryptionMaterials, EncryptionMaterials
 from .base import CryptoMaterialsManager
 
 _LOGGER = logging.getLogger(__name__)

@@ -19,8 +19,8 @@ from threading import RLock
 import attr
 import six
 
-from . import CryptoMaterialsCacheEntry
 from ..exceptions import CacheKeyError, NotSupportedError
+from . import CryptoMaterialsCacheEntry
 from .base import CryptoMaterialsCache
 
 _OPPORTUNISTIC_EVICTION_ROUNDS = 10

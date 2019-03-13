@@ -17,7 +17,6 @@ import uuid
 import attr
 import six
 
-from . import EncryptionMaterialsRequest
 from ..caches import (
     CryptoMaterialsCacheEntryHints,
     build_decryption_materials_cache_key,
@@ -28,6 +27,7 @@ from ..exceptions import CacheKeyError
 from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
+from . import EncryptionMaterialsRequest
 from .base import CryptoMaterialsManager
 from .default import DefaultCryptoMaterialsManager
 

@@ -11,8 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Null cache: a cache which does not cache."""
-from . import CryptoMaterialsCacheEntry
 from ..exceptions import CacheKeyError
+from . import CryptoMaterialsCacheEntry
 from .base import CryptoMaterialsCache
 
 
