@@ -47,7 +47,7 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
 
     # When the call to encrypt data specifies a caching CMM,
     # the encryption operation uses the data key cache specified
-	# in the caching CMM
+    # in the caching CMM
     encrypted_message, _header = aws_encryption_sdk.encrypt(
         source=my_data, materials_manager=caching_cmm, encryption_context=encryption_context
     )
