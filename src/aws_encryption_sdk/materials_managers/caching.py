@@ -179,7 +179,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         :param request: Encryption materials request
         :type request: aws_encryption_sdk.materials_managers.EncryptionMaterialsRequest
         :returns: encryption materials
-        :rtype: aws_ecryption_sdk.materials_managers.EncryptionMaterials
+        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
         if not self._should_cache_encryption_request(request):
             return self.backing_materials_manager.get_encryption_materials(request)
