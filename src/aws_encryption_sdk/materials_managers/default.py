@@ -64,7 +64,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :param request: encryption materials request
         :type request: aws_encryption_sdk.materials_managers.EncryptionMaterialsRequest
         :returns: encryption materials
-        :rtype: aws_ecryption_sdk.materials_managers.EncryptionMaterials
+        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :raises MasterKeyProviderError: if no master keys are available from the underlying master key provider
         :raises MasterKeyProviderError: if the primary master key provided by the underlying master key provider
             is not included in the full set of master keys provided by that provider

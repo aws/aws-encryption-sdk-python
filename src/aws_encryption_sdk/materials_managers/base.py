@@ -33,7 +33,7 @@ class CryptoMaterialsManager(object):
         :param request: encryption materials request
         :type request: aws_encryption_sdk.materials_managers.EncryptionMaterialsRequest
         :returns: encryption materials
-        :rtype: aws_ecryption_sdk.materials_managers.EncryptionMaterials
+        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
 
     @abc.abstractmethod
