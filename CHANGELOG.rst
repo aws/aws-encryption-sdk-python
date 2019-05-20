@@ -17,6 +17,14 @@ Maintenance
 * Move all remaining ``unittest`` tests to ``pytest``.
   `#99 <https://github.com/aws/aws-encryption-sdk-python/issues/99>`_
 
+
+Bugfixes
+--------
+
+* Fix ``MasterKeyprovider.decrypt_data_key_from_list`` error handling.
+  `#150 <https://github.com/aws/aws-encryption-sdk-python/issues/150>`_
+
+
 1.3.8 -- 2018-11-15
 ===================
 
