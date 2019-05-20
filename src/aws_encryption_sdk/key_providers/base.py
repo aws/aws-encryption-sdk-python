@@ -278,7 +278,9 @@ class MasterKeyProvider(object):
         for encrypted_data_key in encrypted_data_keys:
             try:
                 data_key = self.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
-            except DecryptKeyError:
+            # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
+            # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
+            except (DecryptKeyError, IncorrectMasterKeyError):
                 continue
             else:
                 break
