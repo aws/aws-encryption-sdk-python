@@ -238,8 +238,8 @@ class TestStreamDecryptor(object):
             stream=test_decryptor.source_stream, header=self.mock_header, verifier=sentinel.verifier
         )
         assert test_decryptor.body_length == len(VALUES["data_128"])
-        assert test_decryptor.body_start == self.mock_header.algorithm.iv_len + 8
-        assert test_decryptor.body_end == self.mock_header.algorithm.iv_len + 8 + len(VALUES["data_128"])
+        assert test_decryptor._body_start == self.mock_header.algorithm.iv_len + 8
+        assert test_decryptor._body_end == self.mock_header.algorithm.iv_len + 8 + len(VALUES["data_128"])
 
     def test_read_bytes_from_non_framed(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
