@@ -810,6 +810,17 @@ def test_decrypt_minimal_source_stream_api(frame_length, wrapping_class):
     assert plaintext == decrypted
 
 
+def _assert_deprecated_but_not_yet_removed(logcap, instance, attribute_name, error_message, no_later_than):
+    assert hasattr(instance, attribute_name)
+    assert error_message in logcap.text
+    assert aws_encryption_sdk.__version__ < no_later_than
+
+
+def _assert_decrypted_and_removed(instance, attribute_name, removed_in):
+    assert not hasattr(instance, attribute_name)
+    assert aws_encryption_sdk.__version__ >= removed_in
+
+
 @pytest.mark.parametrize("attribute, no_later_than", (("body_start", "1.4.0"), ("body_end", "1.4.0")))
 def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
     caplog.set_level(logging.WARNING)
@@ -820,9 +831,19 @@ def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
         decrypted = decryptor.read()
 
     assert decrypted == plaintext
-    assert hasattr(decryptor, attribute)
-    watch_string = "StreamDecryptor.{name} is deprecated and will be removed in {version}".format(
-        name=attribute, version=no_later_than
-    )
-    assert watch_string in caplog.text
-    assert aws_encryption_sdk.__version__ < no_later_than
+    if aws_encryption_sdk.__version__ < no_later_than:
+        _assert_deprecated_but_not_yet_removed(
+            logcap=caplog,
+            instance=decryptor,
+            attribute_name=attribute,
+            error_message="StreamDecryptor.{name} is deprecated and will be removed in {version}".format(
+                name=attribute, version=no_later_than
+            ),
+            no_later_than=no_later_than
+        )
+    else:
+        _assert_decrypted_and_removed(
+            instance=decryptor,
+            attribute_name=attribute,
+            removed_in=no_later_than
+        )

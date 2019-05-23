@@ -781,18 +781,6 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
         return header, header_auth
 
-    @property
-    def body_start(self):
-        """Log deprecation warning when body_start is accessed."""
-        _LOGGER.warning("StreamDecryptor.body_start is deprecated and will be removed in 1.4.0")
-        return self._body_start
-
-    @property
-    def body_end(self):
-        """Log deprecation warning when body_end is accessed."""
-        _LOGGER.warning("StreamDecryptor.body_end is deprecated and will be removed in 1.4.0")
-        return self._body_end
-
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
         self._unframed_body_iv, self.body_length = deserialize_non_framed_values(

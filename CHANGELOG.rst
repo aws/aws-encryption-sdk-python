@@ -2,7 +2,7 @@
 Changelog
 *********
 
-1.x.x -- 201x-xx-xx
+1.4.0 -- 2019-05-23
 ===================
 
 Minor
@@ -10,6 +10,19 @@ Minor
 
 * Remove dependence on all ``source_stream`` APIs except for ``read()``.
   `#103 <https://github.com/aws/aws-encryption-sdk-python/issues/103>`_
+
+Potentially Backwards Incompatible
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Encryption streams no longer close the ``source_stream`` when they themselves close.
+  If you are using context managers for all of your stream handling,
+  this change will not affect you.
+  However, if you have been relying on the ``StreamDecryptor``
+  or ``StreamEncryptor`` to close your ``source_stream`` for you,
+  you will now need to close those streams yourself.
+* ``StreamDecryptor.body_start`` and ``StreamDecryptor.body_end``,
+  deprecated in a prior release,
+  have now been removed.
 
 Maintenance
 -----------
