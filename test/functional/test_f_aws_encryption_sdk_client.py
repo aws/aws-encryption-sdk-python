@@ -839,11 +839,7 @@ def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
             error_message="StreamDecryptor.{name} is deprecated and will be removed in {version}".format(
                 name=attribute, version=no_later_than
             ),
-            no_later_than=no_later_than
+            no_later_than=no_later_than,
         )
     else:
-        _assert_decrypted_and_removed(
-            instance=decryptor,
-            attribute_name=attribute,
-            removed_in=no_later_than
-        )
+        _assert_decrypted_and_removed(instance=decryptor, attribute_name=attribute, removed_in=no_later_than)
