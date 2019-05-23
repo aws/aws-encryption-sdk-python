@@ -36,9 +36,7 @@ _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _ENCRYPTED_DATA_KEYS = [
     {
-        "wrapping_key": (
-            b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
-        ),
+        "wrapping_key": (b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"),
         "key_id": b"5325b043-5843-4629-869c-64794af77ada",
         "key_info": (
             b"5325b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80\x00\x00\x00\x0c\xe0h\xe2NT\x1c\xb8\x8f!\t\xc2\x94"
