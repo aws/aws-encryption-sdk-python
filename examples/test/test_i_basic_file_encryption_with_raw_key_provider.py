@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -12,14 +12,11 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for the Bytes Streams examples in the AWS-hosted documentation."""
 import os
-import sys
-
-sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "src"])])  # noqa
 import tempfile
 
 import pytest
 
-from basic_file_encryption_with_raw_key_provider import cycle_file
+from ..src.basic_file_encryption_with_raw_key_provider import cycle_file
 
 
 pytestmark = [pytest.mark.examples]

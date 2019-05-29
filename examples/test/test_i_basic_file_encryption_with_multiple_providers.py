@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -12,21 +12,13 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for the Bytes Streams Multiple Providers examples in the AWS-hosted documentation."""
 import os
-import sys
-
-sys.path.extend(
-    [  # noqa
-        os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"]),
-        os.sep.join([os.path.dirname(__file__), "..", "src"]),
-    ]
-)
 import tempfile
 
 import botocore.session
 import pytest
 
-from basic_file_encryption_with_multiple_providers import cycle_file
-from integration_test_utils import get_cmk_arn
+from ..src.basic_file_encryption_with_multiple_providers import cycle_file
+from .examples_test_utils import get_cmk_arn
 
 
 pytestmark = [pytest.mark.examples]
