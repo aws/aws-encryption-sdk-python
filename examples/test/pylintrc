@@ -6,8 +6,6 @@ disable =
     wrong-import-position,  # similar to E0401, pylint does not appear to identify
                             # unknown modules as non-standard-library. flake8 tests for this as well
                             # and does treat them properly
-    import-error,  # because the examples are not actually in a module, sys.path
-                   # is patched to find tests and test utils. pylint does not recognize this
     duplicate-code,  # tests for similar things tend to be similar
 
 [VARIABLES]
