@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for the encryption and decryption using one KMS CMK example."""
-import os
 
 import botocore.session
 import pytest
