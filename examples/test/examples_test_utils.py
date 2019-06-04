@@ -17,4 +17,8 @@ import sys
 os.environ["AWS_ENCRYPTION_SDK_EXAMPLES_TESTING"] = "yes"
 sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"])])
 
+static_plaintext = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent non feugiat leo. Aenean iaculis tellus ut velit consectetur, quis convallis orci eleifend. Sed eu dictum sapien. Nulla facilisi. Suspendisse potenti. Proin vehicula vehicula maximus. Donec varius et elit vel rutrum. Nulla lacinia neque turpis, quis consequat orci pharetra et. Etiam consequat ullamcorper mauris. Vivamus molestie mollis mauris a gravida. Curabitur sed bibendum nisl.'
+static_plaintext = str.encode(static_plaintext)
+
 from integration_test_utils import get_cmk_arn  # noqa pylint: disable=unused-import,import-error
+

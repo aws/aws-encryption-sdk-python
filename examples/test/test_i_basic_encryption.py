@@ -18,12 +18,13 @@ import pytest
 
 from ..src.basic_encryption import cycle_string
 from .examples_test_utils import get_cmk_arn
+from .examples_test_utils import static_plaintext
 
 
 pytestmark = [pytest.mark.examples]
 
 
 def test_cycle_string():
-    plaintext = os.urandom(1024)
+    plaintext = static_plaintext
     cmk_arn = get_cmk_arn()
     cycle_string(key_arn=cmk_arn, source_plaintext=plaintext, botocore_session=botocore.session.Session())

@@ -19,6 +19,7 @@ import pytest
 
 from ..src.basic_file_encryption_with_multiple_providers import cycle_file
 from .examples_test_utils import get_cmk_arn
+from .examples_test_utils import static_plaintext
 
 
 pytestmark = [pytest.mark.examples]
@@ -28,7 +29,7 @@ def test_cycle_file():
     cmk_arn = get_cmk_arn()
     handle, filename = tempfile.mkstemp()
     with open(filename, "wb") as f:
-        f.write(os.urandom(1024))
+        f.write(static_plaintext)
     try:
         new_files = cycle_file(
             key_arn=cmk_arn, source_plaintext_filename=filename, botocore_session=botocore.session.Session()

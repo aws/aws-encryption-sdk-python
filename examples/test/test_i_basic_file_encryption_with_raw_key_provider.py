@@ -17,6 +17,7 @@ import tempfile
 import pytest
 
 from ..src.basic_file_encryption_with_raw_key_provider import cycle_file
+from .examples_test_utils import static_plaintext
 
 
 pytestmark = [pytest.mark.examples]
@@ -25,7 +26,7 @@ pytestmark = [pytest.mark.examples]
 def test_cycle_file():
     handle, filename = tempfile.mkstemp()
     with open(filename, "wb") as f:
-        f.write(os.urandom(1024))
+        f.write(static_plaintext)
     try:
         new_files = cycle_file(source_plaintext_filename=filename)
         for f in new_files:
