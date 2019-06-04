@@ -130,4 +130,4 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
         pair in static_decryptor.header.encryption_context.items()
         for pair in encryptor.header.encryption_context.items()
     )
-    return ciphertext_filename, cycled_kms_plaintext_filename, cycled_static_plaintext_filename
+    return (ciphertext_filename, cycled_kms_plaintext_filename, cycled_static_plaintext_filename)
