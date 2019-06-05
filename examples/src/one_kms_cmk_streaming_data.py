@@ -19,12 +19,11 @@ import aws_encryption_sdk
 def encrypt_decrypt_stream(key_arn, source_plaintext_filename, botocore_session=None):
     """Encrypts and then decrypts streaming data under one KMS customer master key (CMK).
 
-            :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
-            :param str source_plaintext_filename: Filename of file to encrypt
-            :param botocore_session: existing botocore session instance
-            :type botocore_session: botocore.session.Session
-            """
-
+    :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
+    :param str source_plaintext_filename: Filename of file to encrypt
+    :param botocore_session: existing botocore session instance
+    :type botocore_session: botocore.session.Session
+    """
     kwargs = dict()
 
     kwargs["key_ids"] = [key_arn]
