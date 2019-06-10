@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.examples]
 
 def test_one_kms_cmk_streaming_data():
     cmk_arn = get_cmk_arn()
-    _handle, filename = tempfile.mkstemp()
+    handle, filename = tempfile.mkstemp()
     with open(filename, "wb") as f:
         f.write(static_plaintext)
     try:
@@ -36,5 +36,5 @@ def test_one_kms_cmk_streaming_data():
         for f in new_files:
             os.remove(f)
     finally:
-        os.close(_handle)
+        os.close(handle)
         os.remove(filename)
