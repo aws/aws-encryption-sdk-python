@@ -18,8 +18,7 @@ import botocore.session
 import pytest
 
 from ..src.one_kms_cmk_streaming_data import encrypt_decrypt_stream
-from .examples_test_utils import get_cmk_arn
-from .examples_test_utils import static_plaintext
+from .examples_test_utils import get_cmk_arn, static_plaintext
 
 
 pytestmark = [pytest.mark.examples]
@@ -27,7 +26,7 @@ pytestmark = [pytest.mark.examples]
 
 def test_one_kms_cmk_streaming_data():
     cmk_arn = get_cmk_arn()
-    handle, filename = tempfile.mkstemp()
+    _handle, filename = tempfile.mkstemp()
     with open(filename, "wb") as f:
         f.write(static_plaintext)
     try:
@@ -37,5 +36,5 @@ def test_one_kms_cmk_streaming_data():
         for f in new_files:
             os.remove(f)
     finally:
-        os.close(handle)
+        os.close(_handle)
         os.remove(filename)
