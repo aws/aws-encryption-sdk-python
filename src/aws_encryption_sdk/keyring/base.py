@@ -16,6 +16,7 @@
 class Keyring(object):
     """Parent interface for Keyring classes.
     """
+
     def on_encrypt(self, encryption_materials):
         """Generates a data key and encrypts it using all wrapping keys the Keyring is associated with.
 
