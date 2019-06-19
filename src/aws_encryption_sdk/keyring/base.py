@@ -17,7 +17,7 @@ class Keyring(object):
     """Parent interface for Keyring classes."""
 
     def on_encrypt(self, encryption_materials):
-        """Generates a data key and encrypts it using all wrapping keys the Keyring is associated with.
+        """Generate a data key and encrypt it using all wrapping keys the Keyring is associated with.
 
         :param encryption_materials: Contains signing key, encryption context and algorithm suite
                                     required to encrypt data key
@@ -30,8 +30,7 @@ class Keyring(object):
         raise NotImplementedError("Keyring does not implement on_encrypt function")
 
     def on_decrypt(self, decryption_materials):
-        """Tries to decrypt one of the keys in the list of encrypted data keys using wrapping keys
-            the Keyring is associated with.
+        """Attempt to decrypt the encrypted data keys.
 
         :param decryption_materials: Contains verification key, list of encrypted data keys.
         :type : aws_encryption_sdk.materials_managers.DecryptionMaterials
