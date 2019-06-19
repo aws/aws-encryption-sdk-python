@@ -17,7 +17,7 @@ class Keyring(object):
     """Parent interface for Keyring classes."""
 
     def on_encrypt(self, encryption_materials):
-        """Generate a data key and encrypt it using all wrapping keys the Keyring is associated with.
+        """Generate a data key if not present and encrypt it using any available wrapping key.
 
         :param encryption_materials: Contains signing key, encryption context and algorithm suite
                                     required to encrypt data key
