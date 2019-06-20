@@ -21,11 +21,11 @@ class Keyring(object):
 
         :param encryption_materials: Contains signing key, encryption context and algorithm suite
                                     required to encrypt data key
-        :type : aws_encryption_sdk.materials_managers.EncryptionMaterials
-        :returns encryption_materials: Contains signing key, unencrypted data key, encrypted data keys,
+        :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :returns: Contains signing key, unencrypted data key, encrypted data keys,
                                     encryption context and algorithm suite required to encrypt data key
-        :rtype : aws_encryption_sdk.materials_managers.EncryptionMaterials
-        :raises AttributeError: if encryption materials not available
+        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_encrypt function")
 
@@ -33,9 +33,9 @@ class Keyring(object):
         """Attempt to decrypt the encrypted data keys.
 
         :param decryption_materials: Contains verification key, list of encrypted data keys.
-        :type : aws_encryption_sdk.materials_managers.DecryptionMaterials
-        :returns decryption_materials: Contains verification key, list of encrypted data keys and decrypted data key.
-        :rtype : aws_encryption_sdk.materials_managers.DecryptionMaterials
-        :raises AttributeError: if decryption materials not available
+        :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
+        :returns: Contains verification key, list of encrypted data keys and decrypted data key.
+        :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
+        :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_decrypt function")
