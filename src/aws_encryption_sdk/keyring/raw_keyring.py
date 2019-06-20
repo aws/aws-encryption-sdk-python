@@ -18,27 +18,38 @@ import attr
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.structures import DataKey, RawDataKey
+from aws_encryption_sdk.structures import DataKey, RawDataKey, MasterKeyInfo
 
 
+@attr.s
 class RawAESKeyring(Keyring):
     """Public class for Raw AES Keyring."""
+
+    provider_id = attr.ib(validator=attr.validators.instance_of(str))
+    key_id = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
+    wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
+    wrapping_algorithm = attr.ib(validator=attr.validators.instance_of(WrappingAlgorithm))
+
+    key_provider = MasterKeyInfo(
+        provider_id=provider_id,
+        key_info=key_id
+    )
 
     def on_encrypt(self, encryption_materials):
         # Generate data key
         plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
 
         # Encrypt data key
-        wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
-        encrypted_wrapped_key = wrapping_key.encrypt(
-            plaintext_data_key=plaintext_data_key, encryption_context=encryption_materials.encryption_context
+        encrypted_wrapped_key = self.wrapping_key.encrypt(
+            plaintext_data_key=plaintext_data_key,
+            encryption_context=encryption_materials.encryption_context
         )
+
         encrypted_data_key = aws_encryption_sdk.internal.formatting.serialize.serialize_wrapped_key(
-            # WHAAAAT
             key_provider=self.key_provider,
-            wrapping_algorithm=wrapping_key.wrapping_algorithm,
-            # WHAAAAT
+            wrapping_algorithm=self.wrapping_algorithm,
             wrapping_key_id=self.key_id,
             encrypted_wrapped_key=encrypted_wrapped_key,
         )
@@ -47,7 +58,6 @@ class RawAESKeyring(Keyring):
 
         # Update encryption materials
         encryption_materials.data_encryption_key = RawDataKey(
-            # WHAAAAT
             key_provider=self.key_provider,
             data_key=plaintext_data_key,
         )
@@ -71,3 +81,5 @@ class RawRSAKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials):
         return decryption_materials
+
+
