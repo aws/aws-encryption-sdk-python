@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Resources required for Raw Keyrings."""
 import os
+
 import attr
 
 import aws_encryption_sdk.internal.formatting.deserialize
@@ -31,8 +32,7 @@ class RawAESKeyring(Keyring):
         # Encrypt data key
         wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
         encrypted_wrapped_key = wrapping_key.encrypt(
-            plaintext_data_key=plaintext_data_key,
-            encryption_context=encryption_materials.encryption_context
+            plaintext_data_key=plaintext_data_key, encryption_context=encryption_materials.encryption_context
         )
         encrypted_data_key = aws_encryption_sdk.internal.formatting.serialize.serialize_wrapped_key(
             # WHAAAAT
@@ -49,7 +49,7 @@ class RawAESKeyring(Keyring):
         encryption_materials.data_encryption_key = RawDataKey(
             # WHAAAAT
             key_provider=self.key_provider,
-            data_key=plaintext_data_key
+            data_key=plaintext_data_key,
         )
         encryption_materials.encrypted_data_keys.add(encrypted_data_key)
 
@@ -57,7 +57,6 @@ class RawAESKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials):
         # Decrypt data key
-
 
         # Update keyring trace
 
