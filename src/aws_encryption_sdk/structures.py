@@ -108,15 +108,15 @@ class EncryptedDataKey(object):
 
 
 @attr.s
-class KeyRingTrace(object):
+class KeyringTrace(object):
     """Record of all actions that a KeyRing performed with a wrapping key.
 
     :param MasterKeyInfo wrapping_key: Wrapping key used
     :param flags: Actions performed
-    :type flags: set of :class:`KeyRingTraceFlag`
+    :type flags: set of :class:`KeyringTraceFlag`
     """
 
     wrapping_key = attr.ib(validator=instance_of(MasterKeyInfo))
     flags = attr.ib(
-        validator=deep_iterable(member_validator=instance_of(aws_encryption_sdk.identifiers.KeyRingTraceFlag))
+        validator=deep_iterable(member_validator=instance_of(aws_encryption_sdk.identifiers.KeyringTraceFlag))
     )

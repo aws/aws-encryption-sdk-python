@@ -15,7 +15,7 @@ import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from aws_encryption_sdk.identifiers import KeyRingTraceFlag
+from aws_encryption_sdk.identifiers import KeyringTraceFlag
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.materials_managers import (
@@ -25,7 +25,7 @@ from aws_encryption_sdk.materials_managers import (
     EncryptionMaterials,
     EncryptionMaterialsRequest,
 )
-from aws_encryption_sdk.structures import DataKey, KeyRingTrace, MasterKeyInfo
+from aws_encryption_sdk.structures import DataKey, KeyringTrace, MasterKeyInfo
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -42,9 +42,9 @@ _VALID_KWARGS = {
         data_encryption_key=_DATA_KEY,
         encrypted_data_keys=[],
         keyring_trace=[
-            KeyRingTrace(
+            KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id="Provider", key_info=b"Info"),
-                flags={KeyRingTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
             )
         ],
     ),
