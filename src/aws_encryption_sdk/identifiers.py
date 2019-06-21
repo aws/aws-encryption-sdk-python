@@ -330,7 +330,7 @@ class ContentAADString(Enum):
     NON_FRAMED_STRING_ID = b"AWSKMSEncryptionClient Single Block"
 
 
-class KeyRingTraceFlag(Enum):
+class KeyringTraceFlag(Enum):
     """KeyRing Trace actions."""
 
     WRAPPING_KEY_GENERATED_DATA_KEY = 1

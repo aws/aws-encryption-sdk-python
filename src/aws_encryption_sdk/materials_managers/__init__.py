@@ -18,9 +18,9 @@ import attr
 import six
 from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
-from ..identifiers import Algorithm, KeyRingTraceFlag
+from ..identifiers import Algorithm, KeyringTraceFlag
 from ..internal.utils.streams import ROStream
-from ..structures import DataKey, EncryptedDataKey, KeyRingTrace
+from ..structures import DataKey, EncryptedDataKey, KeyringTrace
 
 
 @attr.s(hash=False)
@@ -64,7 +64,7 @@ class CryptographicMaterials(object):
     :param encrypted_data_keys: List of encrypted data keys
     :type encrypted_data_keys: list of :class:`EncryptedDataKey`
     :param keyring_trace: Any KeyRing trace entries
-    :type keyring_trace: list of :class:`KeyRingTrace`
+    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     algorithm = attr.ib(validator=optional(instance_of(Algorithm)))
@@ -78,7 +78,7 @@ class CryptographicMaterials(object):
         default=attr.Factory(list), validator=optional(deep_iterable(member_validator=instance_of(EncryptedDataKey)))
     )
     keyring_trace = attr.ib(
-        default=attr.Factory(list), validator=optional(deep_iterable(member_validator=instance_of(KeyRingTrace)))
+        default=attr.Factory(list), validator=optional(deep_iterable(member_validator=instance_of(KeyringTrace)))
     )
 
 
@@ -103,7 +103,7 @@ class EncryptionMaterials(CryptographicMaterials):
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
     :param bytes signing_key: Encoded signing key (optional)
     :param keyring_trace: Any KeyRing trace entries (optional)
-    :type keyring_trace: list of :class:`KeyRingTrace`
+    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     signing_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
@@ -177,7 +177,7 @@ class DecryptionMaterials(CryptographicMaterials):
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys` (optional)
     :param bytes verification_key: Raw signature verification key (optional)
     :param keyring_trace: Any KeyRing trace entries (optional)
-    :type keyring_trace: list of :class:`KeyRingTrace`
+    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     verification_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
