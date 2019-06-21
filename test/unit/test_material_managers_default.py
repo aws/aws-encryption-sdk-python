@@ -22,7 +22,7 @@ from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
-from aws_encryption_sdk.structures import DataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -34,7 +34,7 @@ def patch_for_dcmm_encrypt(mocker):
     DefaultCryptoMaterialsManager._generate_signing_key_and_update_encryption_context.return_value = mock_signing_key
     mocker.patch.object(aws_encryption_sdk.materials_managers.default, "prepare_data_keys")
     mock_data_encryption_key = MagicMock(__class__=DataKey)
-    mock_encrypted_data_keys = set([mock_data_encryption_key])
+    mock_encrypted_data_keys = set([MagicMock(__class__=EncryptedDataKey)])
     result_pair = mock_data_encryption_key, mock_encrypted_data_keys
     aws_encryption_sdk.materials_managers.default.prepare_data_keys.return_value = result_pair
     yield result_pair, mock_signing_key
@@ -128,7 +128,7 @@ def test_get_encryption_materials(patch_for_dcmm_encrypt):
     assert isinstance(test, EncryptionMaterials)
     assert test.algorithm is cmm.algorithm
     assert test.data_encryption_key is patch_for_dcmm_encrypt[0][0]
-    assert test.encrypted_data_keys is patch_for_dcmm_encrypt[0][1]
+    assert test.encrypted_data_keys == patch_for_dcmm_encrypt[0][1]
     assert test.encryption_context == encryption_context
     assert test.signing_key == patch_for_dcmm_encrypt[1]
 

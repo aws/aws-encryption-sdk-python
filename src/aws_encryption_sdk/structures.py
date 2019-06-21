@@ -13,6 +13,7 @@
 """Public data structures for aws_encryption_sdk."""
 import attr
 import six
+from attr.validators import deep_iterable, instance_of
 
 import aws_encryption_sdk.identifiers
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
@@ -104,3 +105,18 @@ class EncryptedDataKey(object):
 
     key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
     encrypted_data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
+
+
+@attr.s
+class KeyRingTrace(object):
+    """Record of all actions that a KeyRing performed with a wrapping key.
+
+    :param MasterKeyInfo wrapping_key: Wrapping key used
+    :param flags: Actions performed
+    :type flags: set of :class:`KeyRingTraceFlag`
+    """
+
+    wrapping_key = attr.ib(validator=instance_of(MasterKeyInfo))
+    flags = attr.ib(
+        validator=deep_iterable(member_validator=instance_of(aws_encryption_sdk.identifiers.KeyRingTraceFlag))
+    )
