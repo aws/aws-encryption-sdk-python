@@ -63,6 +63,7 @@ class RawAESKeyring(Keyring):
             plaintext_data_key=plaintext_data_key, encryption_context=encryption_materials.encryption_context
         )
 
+        # EncryptedData to EncryptedDataKey
         encrypted_data_key = aws_encryption_sdk.internal.formatting.serialize.serialize_wrapped_key(
             key_provider=self.key_provider,
             wrapping_algorithm=self.wrapping_algorithm,
@@ -96,22 +97,28 @@ class RawAESKeyring(Keyring):
             and len(decryption_materials.encrypted_data_key.key_provider.key_info) == expected_key_info_len
             and decryption_materials.encrypted_data_key.key_provider.key_info.startswith(self.key_info_prefix)
         ):
+
+            # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.wrapping_algorithm,
                 wrapping_key_id=self.key_name,
                 wrapped_encrypted_key=decryption_materials.encrypted_data_key,
             )
+
+            # EncryptedData to raw key string
             plaintext_data_key = self.wrapping_key.decrypt(
                 encrypted_wrapped_data_key=encrypted_wrapped_key,
                 encryption_context=decryption_materials.encryption_context,
             )
+
+            # Update keyring trace
+
+            # Update decryption materials
             decryption_materials.data_key = DataKey(
                 key_provider=decryption_materials.encrypted_data_key.key_provider,
                 data_key=plaintext_data_key,
                 encrypted_data_key=decryption_materials.encrypted_data_key.encrypted_data_key,
             )
-
-        # Update keyring trace
 
         return decryption_materials
 
@@ -145,6 +152,7 @@ class RawRSAKeyring(Keyring):
             plaintext_data_key=plaintext_data_key, encryption_context=encryption_materials.encryption_context
         )
 
+        # EncryptedData to EncryptedDataKey
         encrypted_data_key = aws_encryption_sdk.internal.formatting.serialize.serialize_wrapped_key(
             key_provider=self.key_provider,
             wrapping_algorithm=self.wrapping_algorithm,
@@ -173,20 +181,27 @@ class RawRSAKeyring(Keyring):
 
         # Decrypt data key
         if decryption_materials.encrypted_data_key.key_provider == self.key_provider:
+
+            # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
                 wrapping_algorithm=self.wrapping_algorithm,
                 wrapping_key_id=self.key_name,
                 wrapped_encrypted_key=decryption_materials.encrypted_data_key,
             )
+
+            # EncryptedData to raw key string
             plaintext_data_key = self.wrapping_key.decrypt(
                 encrypted_wrapped_data_key=encrypted_wrapped_key,
                 encryption_context=decryption_materials.encryption_context,
             )
+
+            # Update keyring trace
+
+            # Update decryption materials
             decryption_materials.data_key = DataKey(
                 key_provider=decryption_materials.encrypted_data_key.key_provider,
                 data_key=plaintext_data_key,
                 encrypted_data_key=decryption_materials.encrypted_data_key.encrypted_data_key,
             )
 
-        # Update keyring trace
         return decryption_materials
