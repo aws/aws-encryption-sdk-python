@@ -15,7 +15,7 @@
 
 class Keyring(object):
     """Parent interface for Keyring classes.
-    
+
         .. versionadded:: 1.5.0
     """
 
