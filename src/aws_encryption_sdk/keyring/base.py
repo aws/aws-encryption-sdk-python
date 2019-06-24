@@ -16,7 +16,7 @@
 class Keyring(object):
     """Parent interface for Keyring classes.
 
-        .. versionadded:: 1.5.0
+    .. versionadded:: 1.5.0
     """
 
     def on_encrypt(self, encryption_materials):
