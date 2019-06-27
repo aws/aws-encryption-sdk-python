@@ -247,7 +247,7 @@ class TestStreamEncryptor(object):
             encryption_context=VALUES["encryption_context"],
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
-        test_encryption_context = {aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY: sentinel.decoded_bytes}
+        test_encryption_context = {aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY: "DECODED_BYTES"}
         self.mock_encryption_materials.encryption_context = test_encryption_context
         self.mock_encryption_materials.encrypted_data_keys = self.mock_encrypted_data_keys
 
