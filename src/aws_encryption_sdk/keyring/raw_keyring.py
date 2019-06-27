@@ -13,18 +13,18 @@
 """Resources required for Raw Keyrings."""
 import os
 import struct
-import six
 
 import attr
+import six
 
 import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
+from aws_encryption_sdk.exceptions import EncryptKeyError
 from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
-from aws_encryption_sdk.exceptions import EncryptKeyError
 
 
 def on_encrypt_helper(encryption_materials, key_provider, wrapping_key, wrapping_algorithm, key_name):
@@ -39,9 +39,7 @@ def on_encrypt_helper(encryption_materials, key_provider, wrapping_key, wrapping
             return EncryptKeyError("Unable to generate data encryption key.")
 
         # plaintext_data_key to RawDataKey
-        data_encryption_key = RawDataKey(
-            key_provider=key_provider, data_key=plaintext_data_key
-        )
+        data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
 
         # Add generated data key to encryption_materials
         encryption_materials.add_data_encryption_key(data_encryption_key, encryption_materials.keyring_trace)
@@ -59,7 +57,7 @@ def on_encrypt_helper(encryption_materials, key_provider, wrapping_key, wrapping
         key_provider=key_provider,
         wrapping_algorithm=wrapping_algorithm,
         wrapping_key_id=key_name,
-        encrypted_wrapped_key=encrypted_wrapped_key
+        encrypted_wrapped_key=encrypted_wrapped_key,
     )
 
     # Add encrypted data key to encryption_materials
@@ -75,22 +73,19 @@ def on_decrypt_helper(decryption_materials, wrapping_key, wrapping_algorithm, ke
 
     # Wrapped EncryptedDataKey to deserialized EncryptedData
     encrypted_wrapped_key = aws_encryption_sdk.internal.formatting.deserialize.deserialize_wrapped_key(
-        wrapping_algorithm=wrapping_algorithm,
-        wrapping_key_id=key_name,
-        wrapped_encrypted_key=encrypted_data_key
+        wrapping_algorithm=wrapping_algorithm, wrapping_key_id=key_name, wrapped_encrypted_key=encrypted_data_key
     )
 
     # EncryptedData to raw key string
     plaintext_data_key = wrapping_key.decrypt(
-        encrypted_wrapped_data_key=encrypted_wrapped_key,
-        encryption_context=decryption_materials.encryption_context
+        encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
     )
 
     # Update decryption materials
     data_encryption_key = DataKey(
         key_provider=encrypted_data_key.key_provider,
         data_key=plaintext_data_key,
-        encrypted_data_key=encrypted_data_key.encrypted_data_key
+        encrypted_data_key=encrypted_data_key.encrypted_data_key,
     )
     decryption_materials.add_data_encryption_key(data_encryption_key, decryption_materials.keyring_trace)
 
@@ -123,7 +118,7 @@ class RawAESKeyring(Keyring):
             to_bytes(self.key_name),
             # Tag Length is stored in bits, not bytes
             self._wrapping_algorithm.algorithm.tag_len * 8,
-            self._wrapping_algorithm.algorithm.iv_len
+            self._wrapping_algorithm.algorithm.iv_len,
         )
 
     def on_encrypt(self, encryption_materials):
@@ -137,8 +132,9 @@ class RawAESKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
 
-        encryption_materials = on_encrypt_helper(encryption_materials, self._key_provider, self._wrapping_key,
-                                                 self._wrapping_algorithm, self.key_name)
+        encryption_materials = on_encrypt_helper(
+            encryption_materials, self._key_provider, self._wrapping_key, self._wrapping_algorithm, self.key_name
+        )
 
         return encryption_materials
 
@@ -160,8 +156,9 @@ class RawAESKeyring(Keyring):
             and len(encrypted_data_keys.key_provider.key_info) == expected_key_info_len
             and encrypted_data_keys.key_provider.key_info.startswith(self._key_info_prefix)
         ):
-            decryption_materials = on_decrypt_helper(decryption_materials, self._wrapping_key, self._wrapping_algorithm,
-                                                     self.key_name, encrypted_data_keys)
+            decryption_materials = on_decrypt_helper(
+                decryption_materials, self._wrapping_key, self._wrapping_algorithm, self.key_name, encrypted_data_keys
+            )
 
         return decryption_materials
 
@@ -197,8 +194,9 @@ class RawRSAKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
 
-        encryption_materials = on_encrypt_helper(encryption_materials, self._key_provider, self._wrapping_key,
-                                                 self._wrapping_algorithm, self.key_name)
+        encryption_materials = on_encrypt_helper(
+            encryption_materials, self._key_provider, self._wrapping_key, self._wrapping_algorithm, self.key_name
+        )
 
         return encryption_materials
 
@@ -216,7 +214,8 @@ class RawRSAKeyring(Keyring):
         # Decrypt data key
         if encrypted_data_keys.key_provider == self._key_provider:
 
-            decryption_materials = on_decrypt_helper(decryption_materials, self._wrapping_key, self._wrapping_algorithm,
-                                                     self.key_name, encrypted_data_keys)
+            decryption_materials = on_decrypt_helper(
+                decryption_materials, self._wrapping_key, self._wrapping_algorithm, self.key_name, encrypted_data_keys
+            )
 
         return decryption_materials
