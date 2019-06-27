@@ -27,7 +27,7 @@ from aws_encryption_sdk.caches import (
 )
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
-from aws_encryption_sdk.structures import DataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -47,19 +47,17 @@ VALUES = {
         },
         "encrypted_data_keys": [
             {
-                "key": DataKey(
+                "key": EncryptedDataKey(
                     key_provider=MasterKeyInfo(provider_id="this is a provider ID", key_info=b"this is some key info"),
-                    data_key=b"super secret key!",
                     encrypted_data_key=b"super secret key, now with encryption!",
                 ),
                 "hash": b"TYoFeYuxns/FBlaw4dsRDOv25OCEKuZG9iXt5iEdJ8LU7n5glgkDAVxWUEYC4JKKykJdHkaVpxcDvNqS6UswiQ==",
             },
             {
-                "key": DataKey(
+                "key": EncryptedDataKey(
                     key_provider=MasterKeyInfo(
                         provider_id="another provider ID!", key_info=b"this is some different key info"
                     ),
-                    data_key=b"better super secret key!",
                     encrypted_data_key=b"better super secret key, now with encryption!",
                 ),
                 "hash": b"wSrDlPM2ocIj9MAtD94ULSR0Qrt1muBovBDRL+DsSTNphJEM3CZ/h3OyvYL8BR2EIXx0m7GYwv8dGtyZL2D87w==",

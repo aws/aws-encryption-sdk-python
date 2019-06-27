@@ -146,10 +146,7 @@ class MessageHeader(object):
             key_validator=instance_of(six.string_types), value_validator=instance_of(six.string_types)
         ),
     )
-    # TODO: Restrict this to only EncryptedDataKeys
-    encrypted_data_keys = attr.ib(
-        hash=True, validator=deep_iterable(member_validator=instance_of((EncryptedDataKey, DataKey)))
-    )
+    encrypted_data_keys = attr.ib(hash=True, validator=deep_iterable(member_validator=instance_of(EncryptedDataKey)))
     content_type = attr.ib(hash=True, validator=instance_of(ContentType))
     content_aad_length = attr.ib(hash=True, validator=instance_of(six.integer_types))
     header_iv_length = attr.ib(hash=True, validator=instance_of(six.integer_types))

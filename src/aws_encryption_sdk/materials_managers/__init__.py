@@ -308,8 +308,7 @@ class DecryptionMaterialsRequest(object):
     """
 
     algorithm = attr.ib(validator=instance_of(Algorithm))
-    # TODO: Restrict this to only EncryptedDataKeys
-    encrypted_data_keys = attr.ib(validator=deep_iterable(member_validator=instance_of((EncryptedDataKey, DataKey))))
+    encrypted_data_keys = attr.ib(validator=deep_iterable(member_validator=instance_of(EncryptedDataKey)))
     encryption_context = attr.ib(
         validator=deep_mapping(
             key_validator=instance_of(six.string_types), value_validator=instance_of(six.string_types)
