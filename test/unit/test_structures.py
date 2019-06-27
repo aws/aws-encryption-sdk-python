@@ -133,4 +133,4 @@ def test_raw_and_encrypted_data_key_from_data_key_fail(data_key_class):
     with pytest.raises(TypeError) as excinfo:
         data_key_class.from_data_key(b"ahjseofij")
 
-    excinfo.match(r"data_key must be type DataKey not bytes")
+    excinfo.match(r"data_key must be type DataKey not *")
