@@ -67,7 +67,7 @@ class WrappingKey(object):
         :rtype: aws_encryption_sdk.internal.structures.EncryptedData
         """
         if self.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC:
-            if self.wrapping_key_type is EncryptionKeyType.PRIVATE:x
+            if self.wrapping_key_type is EncryptionKeyType.PRIVATE:
                 encrypted_key = self._wrapping_key.public_key().encrypt(
                     plaintext=plaintext_data_key, padding=self.wrapping_algorithm.padding
                 )

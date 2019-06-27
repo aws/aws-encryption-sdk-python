@@ -87,11 +87,12 @@ def on_decrypt_helper(decryption_materials, wrapping_key, wrapping_algorithm, ke
     )
 
     # Update decryption materials
-    decryption_materials.data_key = DataKey(
-        key_provider=decryption_materials.encrypted_data_key.key_provider,
+    data_encryption_key = DataKey(
+        key_provider=encrypted_data_key.key_provider,
         data_key=plaintext_data_key,
         encrypted_data_key=encrypted_data_key.encrypted_data_key
     )
+    decryption_materials.add_data_encryption_key(data_encryption_key, decryption_materials.keyring_trace)
 
     return decryption_materials
 
@@ -155,9 +156,9 @@ class RawAESKeyring(Keyring):
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
         if (
-            decryption_materials.encrypted_data_key.key_provider.provider_id == self._key_provider.provider_id
-            and len(decryption_materials.encrypted_data_key.key_provider.key_info) == expected_key_info_len
-            and decryption_materials.encrypted_data_key.key_provider.key_info.startswith(self._key_info_prefix)
+            encrypted_data_keys.key_provider.provider_id == self._key_provider.provider_id
+            and len(encrypted_data_keys.key_provider.key_info) == expected_key_info_len
+            and encrypted_data_keys.key_provider.key_info.startswith(self._key_info_prefix)
         ):
             decryption_materials = on_decrypt_helper(decryption_materials, self._wrapping_key, self._wrapping_algorithm,
                                                      self.key_name, encrypted_data_keys)
@@ -213,7 +214,7 @@ class RawRSAKeyring(Keyring):
         """
 
         # Decrypt data key
-        if decryption_materials.encrypted_data_key.key_provider == self.key_provider:
+        if encrypted_data_keys.key_provider == self._key_provider:
 
             decryption_materials = on_decrypt_helper(decryption_materials, self._wrapping_key, self._wrapping_algorithm,
                                                      self.key_name, encrypted_data_keys)

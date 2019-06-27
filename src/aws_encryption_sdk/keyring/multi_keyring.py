@@ -63,11 +63,13 @@ class MultiKeyring(Keyring):
 
         return encryption_materials
 
-    def on_decrypt(self, decryption_materials):
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
         """Attempt to decrypt the encrypted data keys.
 
         :param decryption_materials: Contains verification key, list of encrypted data keys.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
+        :param encrypted_data_keys: List of encrypted data keys.
+        :type: List of `aws_encryption_sdk.structures.EncryptedDataKey`
         :returns: Contains verification key, list of encrypted data keys and decrypted data key.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
@@ -78,7 +80,7 @@ class MultiKeyring(Keyring):
 
         # Call on_decrypt on all keyrings till decryption is successful
         for keyring in self.children:
-            decryption_materials = keyring.on_decrypt(decryption_materials)
+            decryption_materials = keyring.on_decrypt(decryption_materials, encrypted_data_keys)
             if decryption_materials.data_key:
                 return decryption_materials
 
