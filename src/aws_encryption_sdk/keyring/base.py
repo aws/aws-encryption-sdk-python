@@ -20,6 +20,7 @@ class Keyring(object):
     """
 
     def on_encrypt(self, encryption_materials):
+    # type: (EncryptionMaterials) -> EncryptionMaterials
         """Generate a data key if not present and encrypt it using any available wrapping key.
 
         :param encryption_materials: Contains signing key, encryption context and algorithm suite
