@@ -301,15 +301,17 @@ def test_add_encrypted_data_key_success():
 
 
 @pytest.mark.parametrize(
-    "encrypted_data_key, keyring_trace, exception_type, exception_message",
+    "mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message",
     (
         (
+            {},
             _ENCRYPTED_DATA_KEY,
             KeyringTrace(wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags=set()),
             InvalidKeyringTraceError,
             "Keyring flags do not match action.",
         ),
         (
+            {},
             EncryptedDataKey(key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), encrypted_data_key=b"asdf"),
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id="not a match", key_info=b"really not a match"),
@@ -318,10 +320,19 @@ def test_add_encrypted_data_key_success():
             InvalidKeyringTraceError,
             "Keyring trace does not match data key encryptor.",
         ),
+        (
+            dict(data_encryption_key=_REMOVE),
+            _ENCRYPTED_DATA_KEY,
+            KeyringTrace(
+                wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+            ),
+            AttributeError,
+            "Data encryption key is not set.",
+        ),
     ),
 )
-def test_add_encrypted_data_key_fail(encrypted_data_key, keyring_trace, exception_type, exception_message):
-    kwargs = _copy_and_update_kwargs("EncryptionMaterials", {})
+def test_add_encrypted_data_key_fail(mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message):
+    kwargs = _copy_and_update_kwargs("EncryptionMaterials", mod_kwargs)
     materials = EncryptionMaterials(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
