@@ -11,6 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Base class interface for Keyrings."""
+from aws_encryption_sdk.material_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import EncryptedDataKey
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 
 class Keyring(object):
