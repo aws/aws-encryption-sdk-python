@@ -38,7 +38,7 @@ class Keyring(object):
         :param decryption_materials: May contain verification key, algorithm, encryption context and keyring trace.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :param encrypted_data_keys: List of encrypted data keys.
-        :type: Iterable of `aws_encryption_sdk.structures.EncryptedDataKey`
+        :type: Iterable of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
         :returns: Decryption materials containing verification key, algorithm, data_encryption_key,
                     encryption context and keyring trace.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
