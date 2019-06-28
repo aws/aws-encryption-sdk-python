@@ -263,9 +263,13 @@ class EncryptionMaterials(CryptographicMaterials):
         :param EncryptedDataKey encrypted_data_key: Encrypted data key to add
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
           while getting this encrypted data key
+        :raises AttributeError: if data encryption key is not set
         :raises InvalidKeyringTraceError: if keyring trace does not match generate action
         :raises InvalidKeyringTraceError: if keyring trace does not match data key encryptor
         """
+        if self.data_encryption_key is None:
+            raise AttributeError("Data encryption key is not set.")
+
         if KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY not in keyring_trace.flags:
             raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
