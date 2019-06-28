@@ -42,6 +42,7 @@ class Keyring(object):
         raise NotImplementedError("Keyring does not implement on_encrypt function")
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
+    # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
 
         :param decryption_materials: May contain verification key, algorithm, encryption context and keyring trace.
