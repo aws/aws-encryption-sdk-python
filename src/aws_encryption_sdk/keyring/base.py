@@ -11,6 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Base class interface for Keyrings."""
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import EncryptedDataKey
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 
 class Keyring(object):
@@ -20,28 +28,28 @@ class Keyring(object):
     """
 
     def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
         """Generate a data key if not present and encrypt it using any available wrapping key.
 
-        :param encryption_materials: Contains signing key, encryption context and algorithm suite
-                                    required to encrypt data key
+        :param encryption_materials: Encryption materials for the keyring to modify.
         :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
-        :returns: Encryption materials containing signing key, unencrypted data key, encrypted data keys,
-                                    encryption context and algorithm suite required to encrypt data key
+        :returns: Optionally modified encryption materials.
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_encrypt function")
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
 
-        :param decryption_materials: May contain verification key, algorithm, encryption context and keyring trace.
+        :param decryption_materials: Decryption materials for the keyring to modify.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :param encrypted_data_keys: List of encrypted data keys.
-        :type: Iterable of `aws_encryption_sdk.structures.EncryptedDataKey`
-        :returns: Decryption materials containing verification key, algorithm, data_encryption_key,
-                    encryption context and keyring trace.
+        :type: Iterable of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
+        :returns: Optionally modified decryption materials.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_decrypt function")
+
