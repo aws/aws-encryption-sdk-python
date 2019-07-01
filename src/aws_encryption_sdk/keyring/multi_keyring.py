@@ -34,14 +34,11 @@ class MultiKeyring(Keyring):
         """Generate a data key using generator keyring
         and encrypt it using any available wrapping key in any child keyring.
 
-        :param encryption_materials: Contains signing key, encryption context and algorithm suite
-                                    required to encrypt data key
+        :param encryption_materials: Encryption materials for keyring to modify.
         :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
-        :returns: Contains signing key, unencrypted data key, encrypted data keys,
-                                    encryption context and algorithm suite required to encrypt data key
+        :returns: Optionally modified encryption materials.
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
-
         # Check if generator keyring is provided
         if not self.generator:
             return EncryptKeyError("Generator keyring not provided.")
@@ -66,14 +63,13 @@ class MultiKeyring(Keyring):
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         """Attempt to decrypt the encrypted data keys.
 
-        :param decryption_materials: Contains verification key, list of encrypted data keys.
+        :param decryption_materials: Decryption materials for keyring to modify.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :param encrypted_data_keys: List of encrypted data keys.
         :type: List of `aws_encryption_sdk.structures.EncryptedDataKey`
-        :returns: Contains verification key, list of encrypted data keys and decrypted data key.
+        :returns: Optionally modified decryption materials.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
-
         # Check if plaintext data key exists
         if decryption_materials.data_key:
             return decryption_materials
