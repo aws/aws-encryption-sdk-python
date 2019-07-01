@@ -30,7 +30,6 @@ from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
 
 def on_encrypt_helper(encryption_materials, key_provider, wrapping_key, wrapping_algorithm, key_name):
     """Helper function for the on_encrypt function of keyring.
-
     :param encryption_materials: Encryption materials for the keyring to modify.
     :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
     :param key_provider: Information abput the key in the keyring.
@@ -84,7 +83,6 @@ def on_encrypt_helper(encryption_materials, key_provider, wrapping_key, wrapping
 
 def on_decrypt_helper(decryption_materials, wrapping_key, wrapping_algorithm, key_name, encrypted_data_key):
     """Helper function for the on_decrypt function of keyring.
-
     :param decryption_materials: Decryption materials for the keyring to modify.
     :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
     :param wrapping_key: Encryption key with which to wrap plaintext data key.
@@ -126,7 +124,6 @@ def on_decrypt_helper(decryption_materials, wrapping_key, wrapping_algorithm, ke
 @attr.s
 class RawAESKeyring(Keyring):
     """Public class for Raw AES Keyring.
-
     :param str key_namespace: String defining the keyring.
     :param bytes key_name: Key ID
     :param wrapping_key: Encryption key with which to wrap plaintext data key.
@@ -154,7 +151,6 @@ class RawAESKeyring(Keyring):
 
     def on_encrypt(self, encryption_materials):
         """Generate a data key if not present and encrypt it using any available wrapping key.
-
         :param encryption_materials: Encryption materials for the keyring to modify.
         :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :returns: Optionally modified encryption materials.
@@ -169,7 +165,6 @@ class RawAESKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         """Attempt to decrypt the encrypted data keys.
-
         :param decryption_materials: Decryption materials for the keyring to modify.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :param encrypted_data_keys: List of encrypted data keys.
@@ -194,7 +189,6 @@ class RawAESKeyring(Keyring):
 
 class RawRSAKeyring(Keyring):
     """Public class for Raw RSA Keyring.
-
     :param str key_namespace: String defining the keyring ID
     :param bytes key_name: Key ID
     :param wrapping_key: Encryption key with which to wrap plaintext data key
@@ -214,7 +208,6 @@ class RawRSAKeyring(Keyring):
 
     def on_encrypt(self, encryption_materials):
         """Generate a data key if not present and encrypt it using any available wrapping key.
-
         :param encryption_materials: Encryption materials for the keyring to modify.
         :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :returns: Optionally modified encryption materials.
@@ -229,7 +222,6 @@ class RawRSAKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         """Attempt to decrypt the encrypted data keys.
-
         :param decryption_materials: Decryption materials for the keyring to modify.
         :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
         :param encrypted_data_keys: List of encrypted data keys.
