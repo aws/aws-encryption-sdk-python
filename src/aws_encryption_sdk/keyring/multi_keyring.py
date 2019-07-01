@@ -13,8 +13,8 @@
 """Resources required for Multi Keyrings."""
 import attr
 
-from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.exceptions import EncryptKeyError
+from aws_encryption_sdk.keyring.base import Keyring
 
 
 @attr.s

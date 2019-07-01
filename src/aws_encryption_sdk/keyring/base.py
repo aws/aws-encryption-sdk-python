@@ -52,4 +52,3 @@ class Keyring(object):
         :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_decrypt function")
-
