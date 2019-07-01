@@ -132,6 +132,7 @@ class RawAESKeyring(Keyring):
     :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key.
     :type wrapping_algorithm: WrappingAlgorithm
     """
+
     key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
     key_name = attr.ib(hash=True, validator=attr.validators.instance_of(six.binary_type))
     _wrapping_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(WrappingKey))
@@ -199,6 +200,7 @@ class RawRSAKeyring(Keyring):
     :param key_provider: Complete information about the key in the keyring
     :type key_provider: MasterKeyInfo
     """
+
     key_namespace = attr.ib(validator=attr.validators.instance_of(str))
     key_name = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
     _wrapping_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(WrappingKey))
