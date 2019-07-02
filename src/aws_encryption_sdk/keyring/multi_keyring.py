@@ -13,8 +13,14 @@
 """Resources required for Multi Keyrings."""
 import attr
 
-from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.exceptions import EncryptKeyError
+from aws_encryption_sdk.keyring.base import Keyring
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 
 @attr.s
@@ -31,6 +37,7 @@ class MultiKeyring(Keyring):
     children = attr.ib(validator=attr.validators.instance_of(list))
 
     def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
         """Generate a data key using generator keyring
         and encrypt it using any available wrapping key in any child keyring.
 
@@ -38,21 +45,22 @@ class MultiKeyring(Keyring):
         :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :returns: Optionally modified encryption materials.
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :raises EncryptKeyError: if unable to encrypt data key.
         """
         # Check if generator keyring is provided
         if not self.generator:
-            return EncryptKeyError("Generator keyring not provided.")
+            raise EncryptKeyError("Generator keyring not provided.")
 
         # Check if generator keyring is provided and data key is generated
         if self.generator and encryption_materials.data_encryption_key:
-            return EncryptKeyError("Data encryption key already exists.")
+            raise EncryptKeyError("Data encryption key already exists.")
 
         # Call on_encrypt on the generator keyring
         encryption_materials = self.generator.on_encrypt(encryption_materials)
 
         # Check if data key is generated
         if not encryption_materials.data_encryption_key:
-            return EncryptKeyError("Unable to generate data encryption key.")
+            raise EncryptKeyError("Unable to generate data encryption key.")
 
         # Call on_encrypt on all other keyrings
         for keyring in self.children:
@@ -61,6 +69,7 @@ class MultiKeyring(Keyring):
         return encryption_materials
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
 
         :param decryption_materials: Decryption materials for keyring to modify.
@@ -81,3 +90,4 @@ class MultiKeyring(Keyring):
                 return decryption_materials
 
         return decryption_materials
+
