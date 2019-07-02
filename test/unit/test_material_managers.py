@@ -11,12 +11,16 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers"""
+
 import pytest
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, InvalidKeyringTraceError, SignatureKeyError
 from aws_encryption_sdk.identifiers import AlgorithmSuite, KeyringTraceFlag
+from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.materials_managers import (
@@ -38,6 +42,9 @@ _DATA_KEY = DataKey(
 )
 _RAW_DATA_KEY = RawDataKey.from_data_key(_DATA_KEY)
 _ENCRYPTED_DATA_KEY = EncryptedDataKey.from_data_key(_DATA_KEY)
+_SIGNATURE_PRIVATE_KEY = ec.generate_private_key(ALGORITHM.signing_algorithm_info(), default_backend())
+_SIGNING_KEY = Signer(algorithm=ALGORITHM, key=_SIGNATURE_PRIVATE_KEY)
+_VERIFICATION_KEY = Verifier(algorithm=ALGORITHM, key=_SIGNATURE_PRIVATE_KEY.public_key())
 
 _VALID_KWARGS = {
     "CryptographicMaterials": dict(
@@ -63,11 +70,11 @@ _VALID_KWARGS = {
         data_encryption_key=_DATA_KEY,
         encrypted_data_keys=set([]),
         encryption_context={},
-        signing_key=b"",
+        signing_key=_SIGNING_KEY.key_bytes(),
     ),
     "DecryptionMaterialsRequest": dict(algorithm=ALGORITHM, encrypted_data_keys=set([]), encryption_context={}),
     "DecryptionMaterials": dict(
-        data_key=_DATA_KEY, verification_key=b"ex_verification_key", algorithm=ALGORITHM, encryption_context={}
+        data_key=_DATA_KEY, verification_key=_VERIFICATION_KEY.key_bytes(), algorithm=ALGORITHM, encryption_context={}
     ),
 }
 _REMOVE = object()
@@ -345,7 +352,7 @@ def test_add_signing_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", dict(signing_key=_REMOVE))
     materials = EncryptionMaterials(**kwargs)
 
-    materials.add_signing_key(signing_key=b"")
+    materials.add_signing_key(signing_key=_SIGNING_KEY.key_bytes())
 
 
 @pytest.mark.parametrize(
@@ -374,7 +381,7 @@ def test_add_verification_key_success():
     kwargs = _copy_and_update_kwargs("DecryptionMaterials", dict(verification_key=_REMOVE))
     materials = DecryptionMaterials(**kwargs)
 
-    materials.add_verification_key(verification_key=b"")
+    materials.add_verification_key(verification_key=_VERIFICATION_KEY.key_bytes())
 
 
 @pytest.mark.parametrize(

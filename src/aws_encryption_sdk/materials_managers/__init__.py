@@ -20,6 +20,7 @@ from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, InvalidKeyringTraceError, SignatureKeyError
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag
+from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
 from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, RawDataKey
 
@@ -295,6 +296,8 @@ class EncryptionMaterials(CryptographicMaterials):
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
 
+        Signer.from_key_bytes(algorithm=self.algorithm, key_bytes=signing_key)
+
         self._setattr("signing_key", signing_key)
 
 
@@ -407,5 +410,7 @@ class DecryptionMaterials(CryptographicMaterials):
 
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
+
+        Verifier.from_key_bytes(algorithm=self.algorithm, key_bytes=verification_key)
 
         self._setattr("verification_key", verification_key)
