@@ -277,6 +277,14 @@ def _add_data_encryption_key_test_cases():
             InvalidDataKeyError,
             r"Invalid data key length *",
         )
+    yield (
+        DecryptionMaterials,
+        dict(data_encryption_key=_REMOVE, data_key=_REMOVE, algorithm=_REMOVE),
+        RawDataKey(key_provider=_RAW_DATA_KEY.key_provider, data_key=b"1234"),
+        KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
+        AttributeError,
+        "Algorithm is not set"
+    )
 
 
 @pytest.mark.parametrize(

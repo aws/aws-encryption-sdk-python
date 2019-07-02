@@ -391,6 +391,9 @@ class DecryptionMaterials(CryptographicMaterials):
         :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
+        if self.algorithm is None:
+            raise AttributeError("Algorithm is not set")
+
         self._add_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
