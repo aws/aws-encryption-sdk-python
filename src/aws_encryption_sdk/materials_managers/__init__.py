@@ -25,7 +25,7 @@ from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable, Union  # noqa pylint: disable=unused-import
+    from typing import Any, FrozenSet, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -77,9 +77,7 @@ class CryptographicMaterials(object):
 
     :param Algorithm algorithm: Algorithm to use for encrypting message
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
-    :param DataKey data_encryption_key: Plaintext data key to use for encrypting message
-    :param encrypted_data_keys: List of encrypted data keys
-    :type encrypted_data_keys: list of :class:`EncryptedDataKey`
+    :param RawDataKey data_encryption_key: Plaintext data key to use for encrypting message
     :param keyring_trace: Any KeyRing trace entries
     :type keyring_trace: list of :class:`KeyringTrace`
     """
@@ -103,6 +101,7 @@ class CryptographicMaterials(object):
         self._initialized = True
 
     def __setattr__(self, key, value):
+        # type: (str, Any) -> None
         """Do not allow attributes to be changed once an instance is initialized."""
         if self._initialized:
             raise AttributeError("can't set attribute")
@@ -110,6 +109,7 @@ class CryptographicMaterials(object):
         self._setattr(key, value)
 
     def _setattr(self, key, value):
+        # type: (str, Any) -> None
         """Special __setattr__ to avoid having to perform multi-level super calls."""
         super(CryptographicMaterials, self).__setattr__(key, value)
 
@@ -150,6 +150,8 @@ class CryptographicMaterials(object):
         :param RawDataKey data_encryption_key: Data encryption key
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
           while getting this data encryption key
+        :param required_flags: Iterable of required flags
+        :type required_flags: iterable of :class:`KeyringTraceFlag`
         :raises AttributeError: if data encryption key is already set
         :raises InvalidKeyringTraceError: if keyring trace does not match required actions
         :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
@@ -166,6 +168,7 @@ class CryptographicMaterials(object):
 
     @property
     def keyring_trace(self):
+        # type: () -> Tuple[KeyringTrace]
         """Return a read-only version of the keyring trace.
 
         :rtype: tuple
@@ -229,6 +232,7 @@ class EncryptionMaterials(CryptographicMaterials):
 
     @property
     def encrypted_data_keys(self):
+        # type: () -> FrozenSet[EncryptedDataKey]
         """Return a read-only version of the encrypted data keys.
 
         :rtype: frozenset
@@ -296,6 +300,7 @@ class EncryptionMaterials(CryptographicMaterials):
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
 
+        # Verify that the signing key matches the algorithm
         Signer.from_key_bytes(algorithm=self.algorithm, key_bytes=signing_key)
 
         self._setattr("signing_key", signing_key)
@@ -374,6 +379,7 @@ class DecryptionMaterials(CryptographicMaterials):
 
     @property
     def data_key(self):
+        # type: () -> RawDataKey
         """Backwards-compatible shim for access to data key."""
         return self.data_encryption_key
 
@@ -414,6 +420,7 @@ class DecryptionMaterials(CryptographicMaterials):
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
 
+        # Verify that the verification key matches the algorithm
         Verifier.from_key_bytes(algorithm=self.algorithm, key_bytes=verification_key)
 
         self._setattr("verification_key", verification_key)
