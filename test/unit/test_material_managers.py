@@ -215,11 +215,30 @@ def test_immutable_keyring_trace(material_class):
         materials.keyring_trace.append(42)
 
 
+@pytest.mark.parametrize("material_class", (CryptographicMaterials, EncryptionMaterials, DecryptionMaterials))
+def test_empty_keyring_trace(material_class):
+    materials = material_class(**_copy_and_update_kwargs(material_class.__name__, dict(keyring_trace=_REMOVE)))
+
+    trace = materials.keyring_trace
+
+    assert isinstance(trace, tuple)
+    assert not trace
+
+
 def test_immutable_encrypted_data_keys():
     materials = EncryptionMaterials(**_VALID_KWARGS["EncryptionMaterials"])
 
     with pytest.raises(AttributeError):
         materials.encrypted_data_keys.add(42)
+
+
+def test_empty_encrypted_data_keys():
+    materials = EncryptionMaterials(**_copy_and_update_kwargs("EncryptionMaterials", dict(encrypted_data_keys=_REMOVE)))
+
+    edks = materials.encrypted_data_keys
+
+    assert isinstance(edks, frozenset)
+    assert not edks
 
 
 @pytest.mark.parametrize(
@@ -415,3 +434,46 @@ def test_add_verification_key_fail(mod_kwargs, verification_key, exception_type,
         materials.add_verification_key(verification_key=verification_key)
 
     excinfo.match(exception_message)
+
+
+def test_decryption_materials_is_complete():
+    materials = DecryptionMaterials(**_copy_and_update_kwargs("DecryptionMaterials", {}))
+
+    assert materials.is_complete
+
+
+@pytest.mark.parametrize(
+    "mod_kwargs",
+    (
+        dict(algorithm=_REMOVE),
+        dict(encryption_context=_REMOVE),
+        dict(data_encryption_key=_REMOVE, data_key=_REMOVE),
+        dict(verification_key=_REMOVE),
+    ),
+)
+def test_decryption_materials_is_not_complete(mod_kwargs):
+    kwargs = _copy_and_update_kwargs("DecryptionMaterials", mod_kwargs)
+    materials = DecryptionMaterials(**kwargs)
+
+    assert not materials.is_complete
+
+
+def test_encryption_materials_is_complete():
+    materials = EncryptionMaterials(**_copy_and_update_kwargs("EncryptionMaterials", {}))
+
+    assert materials.is_complete
+
+
+@pytest.mark.parametrize(
+    "mod_kwargs",
+    (
+        dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE),
+        dict(encrypted_data_keys=_REMOVE),
+        dict(signing_key=_REMOVE),
+    ),
+)
+def test_encryption_materials_is_not_complete(mod_kwargs):
+    kwargs = _copy_and_update_kwargs("EncryptionMaterials", mod_kwargs)
+    materials = EncryptionMaterials(**kwargs)
+
+    assert not materials.is_complete
