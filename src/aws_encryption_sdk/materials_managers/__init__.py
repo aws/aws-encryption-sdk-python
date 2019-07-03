@@ -220,6 +220,9 @@ class EncryptionMaterials(CryptographicMaterials):
         if encryption_context is None:
             raise TypeError("encryption_context must not be None")
 
+        if data_encryption_key is None and encrypted_data_keys is not None:
+            raise TypeError("encrypted_data_keys cannot be provided without data_encryption_key")
+
         super(EncryptionMaterials, self).__init__(
             algorithm=algorithm,
             encryption_context=encryption_context,
