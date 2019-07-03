@@ -104,6 +104,7 @@ def _copy_and_update_kwargs(class_name, mod_kwargs):
         (EncryptionMaterials, dict(algorithm=None)),
         (EncryptionMaterials, dict(encryption_context=None)),
         (EncryptionMaterials, dict(signing_key=u"not bytes or None")),
+        (EncryptionMaterials, dict(data_encryption_key=_REMOVE)),
         (DecryptionMaterialsRequest, dict(algorithm=None)),
         (DecryptionMaterialsRequest, dict(encrypted_data_keys=None)),
         (DecryptionMaterialsRequest, dict(encryption_context=None)),
@@ -229,7 +230,9 @@ def test_immutable_encrypted_data_keys():
     ),
 )
 def test_add_data_encryption_key_success(material_class, flag):
-    kwargs = _copy_and_update_kwargs(material_class.__name__, dict(data_encryption_key=_REMOVE, data_key=_REMOVE))
+    kwargs = _copy_and_update_kwargs(
+        material_class.__name__, dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE)
+    )
     materials = material_class(**kwargs)
 
     materials.add_data_encryption_key(
@@ -247,7 +250,7 @@ def _add_data_encryption_key_test_cases():
     ):
         yield (
             material_class,
-            dict(data_encryption_key=_RAW_DATA_KEY, data_key=_REMOVE),
+            dict(data_encryption_key=_RAW_DATA_KEY, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _RAW_DATA_KEY,
             KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
             AttributeError,
@@ -255,7 +258,7 @@ def _add_data_encryption_key_test_cases():
         )
         yield (
             material_class,
-            dict(data_encryption_key=_REMOVE, data_key=_REMOVE),
+            dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _RAW_DATA_KEY,
             KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags=set()),
             InvalidKeyringTraceError,
@@ -263,7 +266,7 @@ def _add_data_encryption_key_test_cases():
         )
         yield (
             material_class,
-            dict(data_encryption_key=_REMOVE, data_key=_REMOVE),
+            dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             RawDataKey(key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), data_key=b"asdf"),
             KeyringTrace(wrapping_key=MasterKeyInfo(provider_id="c", key_info=b"d"), flags={required_flags}),
             InvalidKeyringTraceError,
@@ -271,7 +274,7 @@ def _add_data_encryption_key_test_cases():
         )
         yield (
             material_class,
-            dict(data_encryption_key=_REMOVE, data_key=_REMOVE),
+            dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             RawDataKey(key_provider=_RAW_DATA_KEY.key_provider, data_key=b"1234"),
             KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
             InvalidDataKeyError,
@@ -279,11 +282,11 @@ def _add_data_encryption_key_test_cases():
         )
     yield (
         DecryptionMaterials,
-        dict(data_encryption_key=_REMOVE, data_key=_REMOVE, algorithm=_REMOVE),
+        dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE, algorithm=_REMOVE),
         RawDataKey(key_provider=_RAW_DATA_KEY.key_provider, data_key=b"1234"),
         KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
         AttributeError,
-        "Algorithm is not set"
+        "Algorithm is not set",
     )
 
 
@@ -336,7 +339,7 @@ def test_add_encrypted_data_key_success():
             "Keyring trace does not match data key encryptor.",
         ),
         (
-            dict(data_encryption_key=_REMOVE),
+            dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _ENCRYPTED_DATA_KEY,
             KeyringTrace(
                 wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
