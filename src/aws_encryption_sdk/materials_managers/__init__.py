@@ -223,6 +223,9 @@ class EncryptionMaterials(CryptographicMaterials):
         if data_encryption_key is None and encrypted_data_keys is not None:
             raise TypeError("encrypted_data_keys cannot be provided without data_encryption_key")
 
+        if encrypted_data_keys is None:
+            encrypted_data_keys = []
+
         super(EncryptionMaterials, self).__init__(
             algorithm=algorithm,
             encryption_context=encryption_context,
@@ -241,6 +244,24 @@ class EncryptionMaterials(CryptographicMaterials):
         :rtype: frozenset
         """
         return frozenset(self._encrypted_data_keys)
+
+    @property
+    def is_complete(self):
+        # type: () -> bool
+        """Determine whether these materials are sufficiently complete for use as decryption materials.
+
+        :rtype: bool
+        """
+        if self.data_encryption_key is None:
+            return False
+
+        if not self.encrypted_data_keys:
+            return False
+
+        if self.algorithm.signing_algorithm_info is not None and self.signing_key is None:
+            return False
+
+        return True
 
     def add_data_encryption_key(self, data_encryption_key, keyring_trace):
         # type: (Union[DataKey, RawDataKey], KeyringTrace) -> None
@@ -379,6 +400,24 @@ class DecryptionMaterials(CryptographicMaterials):
 
         self._setattr("verification_key", verification_key)
         attr.validate(self)
+
+    @property
+    def is_complete(self):
+        # type: () -> bool
+        """Determine whether these materials are sufficiently complete for use as decryption materials.
+
+        :rtype: bool
+        """
+        if None in (self.algorithm, self.encryption_context):
+            return False
+
+        if self.data_encryption_key is None:
+            return False
+
+        if self.algorithm.signing_algorithm_info is not None and self.verification_key is None:
+            return False
+
+        return True
 
     @property
     def data_key(self):
