@@ -254,6 +254,7 @@ class RawAESKeyring(Keyring):
         return decryption_materials
 
 
+@attr.s
 class RawRSAKeyring(Keyring):
     """Public class for Raw RSA Keyring.
 
