@@ -16,7 +16,7 @@ import pytest
 
 from aws_encryption_sdk.identifiers import WrappingAlgorithm, Algorithm, EncryptionKeyType
 from aws_encryption_sdk.structures import MasterKeyInfo, DataKey, EncryptedDataKey
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, WrappingKey
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.materials_managers.default import Signer
 
@@ -69,7 +69,7 @@ _ENCRYPTION_MATERIALS = [
 
 
 @pytest.mark.parametrize("encryption_materials",_ENCRYPTION_MATERIALS)
-def test_raw_aes_encryption_decryption(encryption_materials):
+def test_raw_rsa_encryption_decryption(encryption_materials):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
@@ -80,19 +80,19 @@ def test_raw_aes_encryption_decryption(encryption_materials):
     _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
 
     # Creating an instance of a raw AES keyring
-    fake_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace,
+    fake_raw_rsa_keyring = RawRSAKeyring(key_namespace=key_namespace,
                                          key_name=key_name,
                                          wrapping_key=_wrapping_key,
                                          wrapping_algorithm=_wrapping_algorithm)
 
     # Call on_encrypt function for the keyring
-    encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials)
+    encryption_materials = fake_raw_rsa_keyring.on_encrypt(encryption_materials=encryption_materials)
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(verification_key=b"ex_verification_key")
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_aes_keyring.on_decrypt(decryption_materials=decryption_materials,
+    decryption_materials = fake_raw_rsa_keyring.on_decrypt(decryption_materials=decryption_materials,
                                                            encrypted_data_keys=encryption_materials.encrypted_data_keys)
 
     # Check if the data keys match
