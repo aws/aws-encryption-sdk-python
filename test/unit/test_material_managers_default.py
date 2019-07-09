@@ -41,7 +41,7 @@ def patch_for_dcmm_encrypt(mocker):
     DefaultCryptoMaterialsManager._generate_signing_key_and_update_encryption_context.return_value = mock_signing_key
     mocker.patch.object(aws_encryption_sdk.materials_managers.default, "prepare_data_keys")
     mock_data_encryption_key = _DATA_KEY
-    mock_encrypted_data_keys = set([_ENCRYPTED_DATA_KEY])
+    mock_encrypted_data_keys = (_ENCRYPTED_DATA_KEY,)
     result_pair = mock_data_encryption_key, mock_encrypted_data_keys
     aws_encryption_sdk.materials_managers.default.prepare_data_keys.return_value = result_pair
     yield result_pair, mock_signing_key
@@ -165,7 +165,7 @@ def test_get_encryption_materials_primary_mk_not_in_mks(patch_for_dcmm_encrypt):
     cmm = build_cmm()
     cmm.master_key_provider.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
-        set([sentinel.mk_a, sentinel.mk_b]),
+        {sentinel.mk_a, sentinel.mk_b},
     )
 
     with pytest.raises(MasterKeyProviderError) as excinfo:
