@@ -90,4 +90,3 @@ class MultiKeyring(Keyring):
                 return decryption_materials
 
         return decryption_materials
-

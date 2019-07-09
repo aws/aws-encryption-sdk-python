@@ -14,11 +14,11 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import WrappingAlgorithm, Algorithm, EncryptionKeyType
-from aws_encryption_sdk.structures import MasterKeyInfo, DataKey, EncryptedDataKey
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.materials_managers.default import Signer
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -32,16 +32,13 @@ _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         encryption_context=_ENCRYPTION_CONTEXT,
-        signing_key=_SIGNING_KEY
+        signing_key=_SIGNING_KEY,
     ),
     EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=DataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=_PROVIDER_ID,
-                key_info=_KEY_ID
-            ),
-            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e('
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
@@ -49,41 +46,42 @@ _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=DataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=_PROVIDER_ID,
-                key_info=_KEY_ID
-            ),
-            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e('
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encrypted_data_keys=[
             EncryptedDataKey(
                 key_provider=_PROVIDER_ID,
                 encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
-                                   b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
+                b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
             )
         ],
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-    )
+    ),
 ]
 
 
-@pytest.mark.parametrize("encryption_materials",_ENCRYPTION_MATERIALS)
+@pytest.mark.parametrize("encryption_materials", _ENCRYPTION_MATERIALS)
 def test_raw_aes_encryption_decryption(encryption_materials):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_key = WrappingKey(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-                                wrapping_key=_WRAPPING_KEY,
-                                wrapping_key_type=EncryptionKeyType.SYMMETRIC)
+    _wrapping_key = WrappingKey(
+        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+        wrapping_key=_WRAPPING_KEY,
+        wrapping_key_type=EncryptionKeyType.SYMMETRIC,
+    )
     _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
 
     # Creating an instance of a raw AES keyring
-    fake_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace,
-                                         key_name=key_name,
-                                         wrapping_key=_wrapping_key,
-                                         wrapping_algorithm=_wrapping_algorithm)
+    fake_raw_aes_keyring = RawAESKeyring(
+        key_namespace=key_namespace,
+        key_name=key_name,
+        wrapping_key=_wrapping_key,
+        wrapping_algorithm=_wrapping_algorithm,
+    )
 
     # Call on_encrypt function for the keyring
     encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials)
@@ -92,8 +90,9 @@ def test_raw_aes_encryption_decryption(encryption_materials):
     decryption_materials = DecryptionMaterials(verification_key=b"ex_verification_key")
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_aes_keyring.on_decrypt(decryption_materials=decryption_materials,
-                                                           encrypted_data_keys=encryption_materials.encrypted_data_keys)
+    decryption_materials = fake_raw_aes_keyring.on_decrypt(
+        decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
+    )
 
     # Check if the data keys match
     assert encryption_materials.data_encryption_key == decryption_materials.data_key
