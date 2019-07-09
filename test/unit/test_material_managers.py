@@ -68,11 +68,11 @@ _VALID_KWARGS = {
     "EncryptionMaterials": dict(
         algorithm=ALGORITHM,
         data_encryption_key=_DATA_KEY,
-        encrypted_data_keys=set([]),
+        encrypted_data_keys=[],
         encryption_context={},
         signing_key=_SIGNING_KEY.key_bytes(),
     ),
-    "DecryptionMaterialsRequest": dict(algorithm=ALGORITHM, encrypted_data_keys=set([]), encryption_context={}),
+    "DecryptionMaterialsRequest": dict(algorithm=ALGORITHM, encrypted_data_keys=[], encryption_context={}),
     "DecryptionMaterials": dict(
         data_key=_DATA_KEY, verification_key=_VERIFICATION_KEY.key_bytes(), algorithm=ALGORITHM, encryption_context={}
     ),
@@ -143,7 +143,7 @@ def test_encryption_materials_request_attributes_defaults():
 
 def test_encryption_materials_defaults():
     test = EncryptionMaterials(
-        algorithm=ALGORITHM, data_encryption_key=_DATA_KEY, encrypted_data_keys=set([]), encryption_context={}
+        algorithm=ALGORITHM, data_encryption_key=_DATA_KEY, encrypted_data_keys=[], encryption_context={}
     )
     assert test.signing_key is None
 
@@ -229,7 +229,7 @@ def test_immutable_encrypted_data_keys():
     materials = EncryptionMaterials(**_VALID_KWARGS["EncryptionMaterials"])
 
     with pytest.raises(AttributeError):
-        materials.encrypted_data_keys.add(42)
+        materials.encrypted_data_keys.append(42)
 
 
 def test_empty_encrypted_data_keys():
@@ -237,7 +237,7 @@ def test_empty_encrypted_data_keys():
 
     edks = materials.encrypted_data_keys
 
-    assert isinstance(edks, frozenset)
+    assert isinstance(edks, tuple)
     assert not edks
 
 

@@ -243,7 +243,7 @@ class EncryptionMaterials(CryptographicMaterials):
 
         :rtype: frozenset
         """
-        return frozenset(self._encrypted_data_keys)
+        return tuple(self._encrypted_data_keys)
 
     @property
     def is_complete(self):
@@ -305,7 +305,7 @@ class EncryptionMaterials(CryptographicMaterials):
         if keyring_trace.wrapping_key != encrypted_data_key.key_provider:
             raise InvalidKeyringTraceError("Keyring trace does not match data key encryptor.")
 
-        self._encrypted_data_keys.add(encrypted_data_key)
+        self._encrypted_data_keys.append(encrypted_data_key)
         self._keyring_trace.append(keyring_trace)
 
     def add_signing_key(self, signing_key):
