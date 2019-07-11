@@ -47,8 +47,8 @@ class MultiKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         :raises EncryptKeyError: if unable to encrypt data key.
         """
-        # Check if generator keyring is provided
-        if not self.generator:
+        # Check if generator keyring is not provided and data key is not generated
+        if not self.generator and not encryption_materials.data_encryption_key:
             raise EncryptKeyError("Generator keyring not provided.")
 
         # Check if generator keyring is provided and data key is generated
