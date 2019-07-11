@@ -53,6 +53,13 @@ class InvalidDataKeyError(AWSEncryptionSDKClientError):
     """Exception class for Invalid Data Keys."""
 
 
+class InvalidKeyringTraceError(AWSEncryptionSDKClientError):
+    """Exception class for invalid Keyring Traces.
+
+    .. versionadded:: 1.5.0
+    """
+
+
 class InvalidProviderIdError(AWSEncryptionSDKClientError):
     """Exception class for Invalid Provider IDs."""
 
@@ -71,6 +78,13 @@ class EncryptKeyError(AWSEncryptionSDKClientError):
 
 class DecryptKeyError(AWSEncryptionSDKClientError):
     """Exception class for errors encountered when MasterKeys try to decrypt data keys."""
+
+
+class SignatureKeyError(AWSEncryptionSDKClientError):
+    """Exception class for errors encountered with signing or verification keys.
+
+    .. versionadded:: 1.5.0
+    """
 
 
 class ActionNotAllowedError(AWSEncryptionSDKClientError):
