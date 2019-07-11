@@ -16,9 +16,9 @@ import pytest
 
 from aws_encryption_sdk.identifiers import WrappingAlgorithm, Algorithm, EncryptionKeyType
 from aws_encryption_sdk.structures import MasterKeyInfo, DataKey, EncryptedDataKey
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring, WrappingKey
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.materials_managers.default import Signer
+from aws_encryption_sdk.internal.defaults import ENCODED_SIGNER_KEY
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -26,7 +26,7 @@ _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
-_SIGNING_KEY = Signer.encoded_public_key()
+_SIGNING_KEY = ENCODED_SIGNER_KEY
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -74,10 +74,10 @@ def test_raw_rsa_encryption_decryption(encryption_materials):
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_key = WrappingKey(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    _wrapping_key = WrappingKey(wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
                                 wrapping_key=_WRAPPING_KEY,
-                                wrapping_key_type=EncryptionKeyType.SYMMETRIC)
-    _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+                                wrapping_key_type=EncryptionKeyType.PRIVATE)
+    _wrapping_algorithm = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
 
     # Creating an instance of a raw AES keyring
     fake_raw_rsa_keyring = RawRSAKeyring(key_namespace=key_namespace,
