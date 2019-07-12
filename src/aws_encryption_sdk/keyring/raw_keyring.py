@@ -19,14 +19,13 @@ import attr
 import six
 
 from aws_encryption_sdk.exceptions import EncryptKeyError
-from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -74,11 +73,12 @@ def on_encrypt_helper(
     :return: Optionally modified encryption materials.
     :rtype encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
     """
-    # Create a keyring trace
-    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
 
     # Check if data key already exists
     if not encryption_materials.data_encryption_key:
+
+        # Create a keyring trace
+        keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
 
         # Generate data key
         plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
@@ -86,6 +86,9 @@ def on_encrypt_helper(
         # Check if data key is generated
         if not plaintext_data_key:
             return EncryptKeyError("Unable to generate data encryption key.")
+
+        # Update Keyring Trace
+        keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY)
 
         # plaintext_data_key to RawDataKey
         data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
@@ -95,6 +98,7 @@ def on_encrypt_helper(
 
     else:
         plaintext_data_key = encryption_materials.data_encryption_key
+        keyring_trace = encryption_materials.keyring_trace
 
     # Encrypt data key
     encrypted_wrapped_key = wrapping_key.encrypt(
@@ -109,8 +113,13 @@ def on_encrypt_helper(
         encrypted_wrapped_key=encrypted_wrapped_key,
     )
 
+    # Update Keyring Trace
+    if encrypted_data_key:
+        keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY)
+
     # Add encrypted data key to encryption_materials
-    encryption_materials.add_encrypted_data_key(encrypted_data_key, keyring_trace)
+    encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key,
+                                                keyring_trace=keyring_trace)
 
     return encryption_materials
 
@@ -140,12 +149,13 @@ def on_decrypt_helper(
     :return: Optionally modified decryption materials.
     :rtype decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
     """
-    # Create a keyring trace
-    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
 
     # Check if plaintext data key exists
     if decryption_materials.data_key:
         return decryption_materials
+
+    # Create a keyring trace
+    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
 
     # Wrapped EncryptedDataKey to deserialized EncryptedData
     encrypted_wrapped_key = deserialize_wrapped_key(
@@ -157,6 +167,7 @@ def on_decrypt_helper(
         plaintext_data_key = wrapping_key.decrypt(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
+        keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY)
     except Exception as error:
         logging.ERROR(error.__class__.__name__, ":", str(error))
         return decryption_materials
