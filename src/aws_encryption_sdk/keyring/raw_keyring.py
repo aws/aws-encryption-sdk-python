@@ -22,10 +22,11 @@ from aws_encryption_sdk.exceptions import EncryptKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
+from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -85,7 +86,7 @@ def on_encrypt_helper(
 
         # Check if data key is generated
         if not plaintext_data_key:
-            return EncryptKeyError("Unable to generate data encryption key.")
+            raise EncryptKeyError("Unable to generate data encryption key.")
 
         # Update Keyring Trace
         keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY)
@@ -120,6 +121,9 @@ def on_encrypt_helper(
     # Add encrypted data key to encryption_materials
     encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key,
                                                 keyring_trace=keyring_trace)
+
+    # Add encrypted data key to encryption_materials
+    encryption_materials.add_encrypted_data_key(encrypted_data_key, keyring_trace)
 
     return encryption_materials
 
@@ -168,6 +172,7 @@ def on_decrypt_helper(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
         keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY)
+
     except Exception as error:
         logging.ERROR(error.__class__.__name__, ":", str(error))
         return decryption_materials
