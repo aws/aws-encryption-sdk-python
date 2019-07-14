@@ -41,8 +41,10 @@ class MultiKeyring(Keyring):
     generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
     def __attrs_post_init__(self):
-        neither_generator_nor_children_set = self.generator is None and self.children is None
-        if neither_generator_nor_children_set:
+        # type: () -> None
+        """Prepares initial values not handled by attrs."""
+        neither_generator_nor_children_defined = self.generator is None and self.children is None
+        if neither_generator_nor_children_defined:
             raise TypeError("At least one of generator or children should be provided")
 
     def on_encrypt(self, encryption_materials):

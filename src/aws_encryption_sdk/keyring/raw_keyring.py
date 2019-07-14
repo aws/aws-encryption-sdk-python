@@ -85,7 +85,7 @@ def on_encrypt_helper(
 
         # Check if data key is generated
         if not plaintext_data_key:
-            return EncryptKeyError("Unable to generate data encryption key.")
+            raise EncryptKeyError("Unable to generate data encryption key.")
 
         # plaintext_data_key to RawDataKey
         data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
