@@ -12,10 +12,12 @@
 # language governing permissions and limitations under the License.
 """Resources required for Multi Keyrings."""
 import attr
-from attr.validators import deep_iterable, deep_mapping, instance_of, optional
+from attr.validators import deep_iterable, instance_of, optional
 
 from aws_encryption_sdk.exceptions import EncryptKeyError
 from aws_encryption_sdk.keyring.base import Keyring
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import EncryptedDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
