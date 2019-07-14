@@ -78,9 +78,6 @@ def on_encrypt_helper(
     # Check if data key already exists
     if not encryption_materials.data_encryption_key:
 
-        # Create a keyring trace
-        keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
-
         # Generate data key
         plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
 
@@ -88,8 +85,9 @@ def on_encrypt_helper(
         if not plaintext_data_key:
             raise EncryptKeyError("Unable to generate data encryption key.")
 
-        # Update Keyring Trace
-        keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY)
+        # Create a keyring trace
+        keyring_trace = KeyringTrace(wrapping_key=key_provider,
+                                     flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})
 
         # plaintext_data_key to RawDataKey
         data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
@@ -158,9 +156,6 @@ def on_decrypt_helper(
     if decryption_materials.data_key:
         return decryption_materials
 
-    # Create a keyring trace
-    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags=set())
-
     # Wrapped EncryptedDataKey to deserialized EncryptedData
     encrypted_wrapped_key = deserialize_wrapped_key(
         wrapping_algorithm=wrapping_algorithm, wrapping_key_id=key_name, wrapped_encrypted_key=encrypted_data_key
@@ -171,7 +166,9 @@ def on_decrypt_helper(
         plaintext_data_key = wrapping_key.decrypt(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
-        keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY)
+        # Create a keyring trace
+        keyring_trace = KeyringTrace(wrapping_key=encrypted_wrapped_key.key_provider,
+                                     flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY})
 
     except Exception as error:
         logging.ERROR(error.__class__.__name__, ":", str(error))

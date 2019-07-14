@@ -14,10 +14,10 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import RawDataKey, EncryptedDataKey, MasterKeyInfo
+from aws_encryption_sdk.structures import RawDataKey, EncryptedDataKey, MasterKeyInfo, KeyringTrace
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -33,31 +33,36 @@ _ENCRYPTION_MATERIALS = [
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     ),
-    EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
-        ),
-        encryption_context=_ENCRYPTION_CONTEXT,
-        signing_key=_SIGNING_KEY,
-    ),
-    EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
-        ),
-        encrypted_data_keys=[
-            EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
-                b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
-            )
-        ],
-        encryption_context=_ENCRYPTION_CONTEXT,
-        signing_key=_SIGNING_KEY,
-    ),
+    # EncryptionMaterials(
+    #     algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    #     data_encryption_key=RawDataKey(
+    #         key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+    #         data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    #     ),
+    #     encryption_context=_ENCRYPTION_CONTEXT,
+    #     signing_key=_SIGNING_KEY,
+    #     keyring_trace=KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+    #                                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})
+    # ),
+    # EncryptionMaterials(
+    #     algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    #     data_encryption_key=RawDataKey(
+    #         key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+    #         data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    #     ),
+    #     encrypted_data_keys=[
+    #         EncryptedDataKey(
+    #             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+    #             encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
+    #             b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
+    #         )
+    #     ],
+    #     encryption_context=_ENCRYPTION_CONTEXT,
+    #     signing_key=_SIGNING_KEY,
+    #     keyring_trace=KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+    #                                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
+    #                                       KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY})
+    # ),
 ]
 
 

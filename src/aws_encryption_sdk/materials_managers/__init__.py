@@ -191,7 +191,7 @@ class EncryptionMaterials(CryptographicMaterials):
         Most parameters are now optional.
 
     :param Algorithm algorithm: Algorithm to use for encrypting message
-    :param DataKey data_encryption_key: Plaintext data key to use for encrypting message (optional)
+    :param RawDataKey data_encryption_key: Plaintext data key to use for encrypting message (optional)
     :param encrypted_data_keys: List of encrypted data keys (optional)
     :type encrypted_data_keys: list of :class:`EncryptedDataKey`
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
