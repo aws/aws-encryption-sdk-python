@@ -114,6 +114,7 @@ def on_encrypt_helper(
 
     # Update Keyring Trace
     if encrypted_data_key:
+        keyring_trace.wrapping_key = encrypted_data_key.key_provider
         keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY)
 
     # Add encrypted data key to encryption_materials
@@ -166,13 +167,15 @@ def on_decrypt_helper(
         plaintext_data_key = wrapping_key.decrypt(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
-        # Create a keyring trace
-        keyring_trace = KeyringTrace(wrapping_key=encrypted_wrapped_key.key_provider,
-                                     flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY})
 
     except Exception as error:
         logging.ERROR(error.__class__.__name__, ":", str(error))
         return decryption_materials
+
+    if plaintext_data_key:
+        # Create a keyring trace
+        keyring_trace = KeyringTrace(wrapping_key=key_provider,
+                                     flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY})
 
     # Update decryption materials
     data_encryption_key = RawDataKey(
