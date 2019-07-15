@@ -14,10 +14,10 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import RawDataKey, EncryptedDataKey, MasterKeyInfo, KeyringTrace
+from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 

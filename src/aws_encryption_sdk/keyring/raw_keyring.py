@@ -19,12 +19,12 @@ import attr
 import six
 
 from aws_encryption_sdk.exceptions import EncryptKeyError
-from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
+from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
-from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
+from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -74,7 +74,6 @@ def on_encrypt_helper(
     :return: Optionally modified encryption materials.
     :rtype encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
     """
-
     # Check if data key already exists
     if not encryption_materials.data_encryption_key:
 
@@ -86,8 +85,9 @@ def on_encrypt_helper(
             raise EncryptKeyError("Unable to generate data encryption key.")
 
         # Create a keyring trace
-        keyring_trace = KeyringTrace(wrapping_key=key_provider,
-                                     flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})
+        keyring_trace = KeyringTrace(
+            wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
+        )
 
         # plaintext_data_key to RawDataKey
         data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
@@ -118,8 +118,7 @@ def on_encrypt_helper(
         keyring_trace.flags.add(KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY)
 
     # Add encrypted data key to encryption_materials
-    encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key,
-                                                keyring_trace=keyring_trace)
+    encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
 
     # Add encrypted data key to encryption_materials
     encryption_materials.add_encrypted_data_key(encrypted_data_key, keyring_trace)
@@ -152,7 +151,6 @@ def on_decrypt_helper(
     :return: Optionally modified decryption materials.
     :rtype decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
     """
-
     # Check if plaintext data key exists
     if decryption_materials.data_encryption_key:
         return decryption_materials
@@ -169,18 +167,20 @@ def on_decrypt_helper(
         )
 
     except Exception as error:
-        logging.ERROR(error.__class__.__name__, ":", str(error))
+        logger = logging.getLogger()
+        logger.error(error.__class__.__name__, ":", str(error))
         return decryption_materials
 
     if plaintext_data_key:
         # Create a keyring trace
-        keyring_trace = KeyringTrace(wrapping_key=key_provider,
-                                     flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY})
+        keyring_trace = KeyringTrace(
+            wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
+        )
 
         # Update decryption materials
         data_encryption_key = RawDataKey(
             key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name),
-            data_key=plaintext_data_key
+            data_key=plaintext_data_key,
         )
         decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
