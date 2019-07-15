@@ -154,7 +154,7 @@ def on_decrypt_helper(
     """
 
     # Check if plaintext data key exists
-    if decryption_materials.data_key:
+    if decryption_materials.data_encryption_key:
         return decryption_materials
 
     # Wrapped EncryptedDataKey to deserialized EncryptedData
@@ -177,11 +177,12 @@ def on_decrypt_helper(
         keyring_trace = KeyringTrace(wrapping_key=key_provider,
                                      flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY})
 
-    # Update decryption materials
-    data_encryption_key = RawDataKey(
-        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name), data_key=plaintext_data_key
-    )
-    decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
+        # Update decryption materials
+        data_encryption_key = RawDataKey(
+            key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name),
+            data_key=plaintext_data_key
+        )
+        decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
     return decryption_materials
 
