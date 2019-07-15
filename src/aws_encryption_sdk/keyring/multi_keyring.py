@@ -36,8 +36,9 @@ class MultiKeyring(Keyring):
     :raises EncryptKeyError: if encryption of data key fails for any reason
     """
 
-    children = attr.ib(validator=optional(deep_iterable(member_validator=instance_of(Keyring),
-                                                        iterable_validator=instance_of(list))))
+    children = attr.ib(
+        validator=optional(deep_iterable(member_validator=instance_of(Keyring), iterable_validator=instance_of(list)))
+    )
     generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
     def __attrs_post_init__(self):
@@ -60,8 +61,10 @@ class MultiKeyring(Keyring):
         """
         # Check if generator keyring is not provided and data key is not generated
         if self.generator is None and not encryption_materials.data_encryption_key:
-            raise EncryptKeyError("Generator keyring not provided "
-                                  "and encryption materials do not already contain a plaintext data key.")
+            raise EncryptKeyError(
+                "Generator keyring not provided "
+                "and encryption materials do not already contain a plaintext data key."
+            )
 
         # Call on_encrypt on the generator keyring if it is provided
         if self.generator is not None:
