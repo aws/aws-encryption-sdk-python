@@ -152,7 +152,7 @@ def on_decrypt_helper(
     :rtype decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
     """
     # Check if plaintext data key exists
-    if decryption_materials.data_key:
+    if decryption_materials.data_encryption_key:
         return decryption_materials
 
     # Wrapped EncryptedDataKey to deserialized EncryptedData
@@ -167,7 +167,8 @@ def on_decrypt_helper(
         )
 
     except Exception as error:
-        logging.ERROR(error.__class__.__name__, ":", str(error))
+        logger = logging.getLogger()
+        logger.error(error.__class__.__name__, ":", str(error))
         return decryption_materials
 
     if plaintext_data_key:
@@ -176,11 +177,12 @@ def on_decrypt_helper(
             wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
         )
 
-    # Update decryption materials
-    data_encryption_key = RawDataKey(
-        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name), data_key=plaintext_data_key
-    )
-    decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
+        # Update decryption materials
+        data_encryption_key = RawDataKey(
+            key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name),
+            data_key=plaintext_data_key,
+        )
+        decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
     return decryption_materials
 
