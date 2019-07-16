@@ -38,8 +38,7 @@ class MultiKeyring(Keyring):
 
     children = attr.ib(
         default=None,
-        validator=optional(deep_iterable(member_validator=instance_of(Keyring),
-                                         iterable_validator=instance_of(list)))
+        validator=optional(deep_iterable(member_validator=instance_of(Keyring), iterable_validator=instance_of(list))),
     )
     generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
