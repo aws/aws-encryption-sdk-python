@@ -370,7 +370,7 @@ class DecryptionMaterials(CryptographicMaterials):
         All parameters are now optional.
 
     :param Algorithm algorithm: Algorithm to use for encrypting message (optional)
-    :param DataKey data_encryption_key: Plaintext data key to use for encrypting message (optional)
+    :param RawDataKey data_encryption_key: Plaintext data key to use for encrypting message (optional)
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys` (optional)
     :param bytes verification_key: Raw signature verification key (optional)
     :param keyring_trace: Any KeyRing trace entries (optional)
