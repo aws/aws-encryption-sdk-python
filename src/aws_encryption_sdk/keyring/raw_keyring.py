@@ -86,8 +86,7 @@ def on_encrypt_helper(
 
         # Create a keyring trace
         keyring_trace = KeyringTrace(
-            wrapping_key=key_provider,
-            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
+            wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
         )
 
         # plaintext_data_key to RawDataKey
@@ -114,8 +113,9 @@ def on_encrypt_helper(
 
     # Update Keyring Trace
     if encrypted_data_key:
-        keyring_trace = KeyringTrace(wrapping_key=encrypted_data_key.key_provider,
-                                     flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY})
+        keyring_trace = KeyringTrace(
+            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+        )
 
         # Add encrypted data key to encryption_materials
         encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)

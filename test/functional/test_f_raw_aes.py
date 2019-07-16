@@ -14,7 +14,7 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm, KeyringTraceFlag
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, WrappingKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
@@ -41,9 +41,12 @@ _ENCRYPTION_MATERIALS = [
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-        keyring_trace=[KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID,
-                                                               key_info=_KEY_ID),
-                                    flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})]
+        keyring_trace=[
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+            )
+        ],
     ),
     EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
@@ -61,15 +64,18 @@ _ENCRYPTION_MATERIALS = [
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
         keyring_trace=[
-            KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID,
-                                                    key_info=_KEY_ID),
-                         flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
-                                KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}),
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                flags={
+                    KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
+                    KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
+                },
+            ),
             #         KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID,
             #                                                 key_info=_KEY_ID),
             #                      flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
             #                      )
-        ]
+        ],
     ),
 ]
 
@@ -99,8 +105,9 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
     encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
     # Generate decryption materials
-    decryption_materials = DecryptionMaterials(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-                                               verification_key=b"ex_verification_key")
+    decryption_materials = DecryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key"
+    )
 
     # Call on_decrypt function for the keyring
     decryption_materials = fake_raw_aes_keyring.on_decrypt(
