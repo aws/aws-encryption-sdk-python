@@ -37,7 +37,9 @@ class MultiKeyring(Keyring):
     """
 
     children = attr.ib(
-        validator=optional(deep_iterable(member_validator=instance_of(Keyring), iterable_validator=instance_of(list)))
+        default=None,
+        validator=optional(deep_iterable(member_validator=instance_of(Keyring),
+                                         iterable_validator=instance_of(list)))
     )
     generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
@@ -75,8 +77,9 @@ class MultiKeyring(Keyring):
             raise EncryptKeyError("Unable to generate data encryption key.")
 
         # Call on_encrypt on all other keyrings
-        for keyring in self.children:
-            encryption_materials = keyring.on_encrypt(encryption_materials)
+        if self.children is not None:
+            for keyring in self.children:
+                encryption_materials = keyring.on_encrypt(encryption_materials)
 
         return encryption_materials
 
