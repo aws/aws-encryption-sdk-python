@@ -117,4 +117,3 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
     if decryption_materials.data_encryption_key:
         # Check if the data keys match
         assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
-    return
