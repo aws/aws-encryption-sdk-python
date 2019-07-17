@@ -163,7 +163,7 @@ def on_decrypt_helper(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
 
-    except BaseException as error:
+    except Exception as error:  # pylint: disable=broad-except
         logger = logging.getLogger()
         logger.error(error.__class__.__name__, ":", str(error))
         return decryption_materials

@@ -199,21 +199,21 @@ _MULTI_KEYRINGS = [
 
 
 @pytest.mark.parametrize("multi_keyring", _MULTI_KEYRINGS)
-def test_multi_keyring_encryption_decryption(multi_keyring):
-    for i in range(len(_ENCRYPTION_MATERIALS)):
-        # Call on_encrypt function for the keyring
-        encryption_materials = multi_keyring.on_encrypt(_ENCRYPTION_MATERIALS[i])
+@pytest.mark.parametrize("encryption_materials", _ENCRYPTION_MATERIALS)
+def test_multi_keyring_encryption_decryption(multi_keyring, encryption_materials):
+    # Call on_encrypt function for the keyring
+    encryption_materials = multi_keyring.on_encrypt(encryption_materials)
 
-        # Generate decryption materials
-        decryption_materials = DecryptionMaterials(
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key"
-        )
+    # Generate decryption materials
+    decryption_materials = DecryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key"
+    )
 
-        # Call on_decrypt function for the keyring
-        decryption_materials = multi_keyring.on_decrypt(
-            decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
-        )
+    # Call on_decrypt function for the keyring
+    decryption_materials = multi_keyring.on_decrypt(
+        decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
+    )
 
-        if decryption_materials.data_encryption_key:
-            # Check if the data keys match
-            assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
+    if decryption_materials.data_encryption_key:
+        # Check if the data keys match
+        assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
