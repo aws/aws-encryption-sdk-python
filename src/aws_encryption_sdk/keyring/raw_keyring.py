@@ -158,12 +158,13 @@ def on_decrypt_helper(
     )
 
     # EncryptedData to raw key string
+    # noinspection PyBroadException
     try:
         plaintext_data_key = wrapping_key.decrypt(
             encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=decryption_materials.encryption_context
         )
 
-    except BaseException as error:
+    except Exception as error:
         logger = logging.getLogger()
         logger.error(error.__class__.__name__, ":", str(error))
         return decryption_materials
