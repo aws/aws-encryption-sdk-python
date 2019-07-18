@@ -14,10 +14,10 @@
 
 import pytest
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, WrappingKey
+from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -26,9 +26,8 @@ pytestmark = [pytest.mark.functional, pytest.mark.local]
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
-pem = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
-_WRAPPING_KEY = (
-    b"-----BEGIN RSA PRIVATE KEY-----\n"
+_WRAPPING_KEY = serialization.load_pem_private_key(
+    data=b"-----BEGIN RSA PRIVATE KEY-----\n"
     b"MIIEowIBAAKCAQEAo8uCyhiO4JUGZV+rtNq5DBA9Lm4xkw5kTA3v6EPybs8bVXL2\n"
     b"ZE6jkbo+xT4Jg/bKzUpnp1fE+T1ruGPtsPdoEmhY/P64LDNIs3sRq5U4QV9IETU1\n"
     b"vIcbNNkgGhRjV8J87YNY0tV0H7tuWuZRpqnS+gjV6V9lUMkbvjMCc5IBqQc3heut\n"
@@ -54,7 +53,9 @@ _WRAPPING_KEY = (
     b"ye+xgQKBgD58b+9z+PR5LAJm1tZHIwb4tnyczP28PzwknxFd2qylR4ZNgvAUqGtU\n"
     b"xvpUDpzMioz6zUH9YV43YNtt+5Xnzkqj+u9Mr27/H2v9XPwORGfwQ5XPwRJz/2oC\n"
     b"EnPmP1SZoY9lXKUpQXHXSpDZ2rE2Klt3RHMUMHt8Zpy36E8Vwx8o\n"
-    b"-----END RSA PRIVATE KEY-----\n"
+    b"-----END RSA PRIVATE KEY-----\n",
+    password=None,
+    backend=default_backend(),
 )
 _SIGNING_KEY = b"aws-crypto-public-key"
 
@@ -101,11 +102,7 @@ _ENCRYPTION_MATERIALS = [
                     KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
                     KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
                 },
-            ),
-            #         KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID,
-            #                                                 key_info=_KEY_ID),
-            #                      flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
-            #                      )
+            )
         ],
     ),
 ]
@@ -117,18 +114,13 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples):
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_key = WrappingKey(
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_key_type=EncryptionKeyType.PRIVATE,
-    )
     _wrapping_algorithm = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
 
     # Creating an instance of a raw AES keyring
     fake_raw_rsa_keyring = RawRSAKeyring(
         key_namespace=key_namespace,
         key_name=key_name,
-        wrapping_key=_wrapping_key,
+        wrapping_key=_WRAPPING_KEY,
         wrapping_algorithm=_wrapping_algorithm,
     )
 

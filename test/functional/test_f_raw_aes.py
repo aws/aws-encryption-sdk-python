@@ -70,11 +70,7 @@ _ENCRYPTION_MATERIALS = [
                     KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
                     KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
                 },
-            ),
-            #         KeyringTrace(wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID,
-            #                                                 key_info=_KEY_ID),
-            #                      flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
-            #                      )
+            )
         ],
     ),
 ]
@@ -86,18 +82,13 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_key = WrappingKey(
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_key_type=EncryptionKeyType.SYMMETRIC,
-    )
     _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
 
     # Creating an instance of a raw AES keyring
     fake_raw_aes_keyring = RawAESKeyring(
         key_namespace=key_namespace,
         key_name=key_name,
-        wrapping_key=_wrapping_key,
+        wrapping_key=_WRAPPING_KEY,
         wrapping_algorithm=_wrapping_algorithm,
     )
 
