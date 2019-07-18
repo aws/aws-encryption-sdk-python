@@ -15,7 +15,7 @@
 import pytest
 
 from aws_encryption_sdk.identifiers import Algorithm
-from aws_encryption_sdk.keyring.base import Keyring
+from aws_encryption_sdk.keyring.base import Keyring, EncryptedDataKey
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
