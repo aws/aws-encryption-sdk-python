@@ -277,11 +277,10 @@ class RawRSAKeyring(Keyring):
         :returns: Optionally modified encryption materials.
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
+        plaintext_data_key = on_encrypt_helper(
+            encryption_materials=encryption_materials, key_provider=self._key_provider
+        )
         if isinstance(self._wrapping_key, RSAPublicKey):
-
-            plaintext_data_key = on_encrypt_helper(
-                encryption_materials=encryption_materials, key_provider=self._key_provider
-            )
 
             # Encrypt data key
             encrypted_wrapped_key = EncryptedData(

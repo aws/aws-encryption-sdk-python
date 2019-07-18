@@ -102,9 +102,10 @@ class MultiKeyring(Keyring):
                 return decryption_materials
 
         # Call on_decrypt on all keyrings till decryption is successful
-        for keyring in self.children:
-            decryption_materials = keyring.on_decrypt(decryption_materials, encrypted_data_keys)
-            if decryption_materials.data_encryption_key:
-                return decryption_materials
+        if self.children is not None:
+            for keyring in self.children:
+                decryption_materials = keyring.on_decrypt(decryption_materials, encrypted_data_keys)
+                if decryption_materials.data_encryption_key:
+                    return decryption_materials
 
         return decryption_materials
