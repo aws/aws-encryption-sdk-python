@@ -214,7 +214,7 @@ class RawAESKeyring(Keyring):
                 )
                 # EncryptedData to raw key string
                 try:
-                    plaintext_data_key = wrapping_key.decrypt(
+                    plaintext_data_key = self._wrapping_key_structure.decrypt(
                         encrypted_wrapped_data_key=encrypted_wrapped_key,
                         encryption_context=decryption_materials.encryption_context,
                     )
