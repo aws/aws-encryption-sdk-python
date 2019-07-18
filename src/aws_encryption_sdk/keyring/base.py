@@ -13,6 +13,8 @@
 """Base class interface for Keyrings."""
 import abc
 
+import six
+
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey
 
@@ -23,7 +25,8 @@ except ImportError:  # pragma: no cover
     pass
 
 
-class Keyring(object, metaclass=abc.ABCMeta):
+@six.add_metaclass(abc.ABCMeta)
+class Keyring(object):
     """Parent interface for Keyring classes.
 
     .. versionadded:: 1.5.0
