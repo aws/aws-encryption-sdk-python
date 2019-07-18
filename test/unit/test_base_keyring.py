@@ -17,7 +17,6 @@ import six
 
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import MasterKeyInfo
 
@@ -62,8 +61,7 @@ def test_keyring_no_encrypt():
     class KeyringNoEncrypt(Keyring):
         def on_decrypt(self, _decryption_materials, _encrypted_data_keys):
             # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
-            decryption_materials = RawAESKeyring.on_decrypt(decryption_materials=_decryption_materials)
-            return decryption_materials
+            return _decryption_materials
 
     with pytest.raises(TypeError) as exc_info:
         KeyringNoEncrypt()
@@ -74,8 +72,7 @@ def test_keyring_no_decrypt():
     class KeyringNoDecrypt(Keyring):
         def on_encrypt(self, _encryption_materials):
             # type: (EncryptionMaterials) -> EncryptionMaterials
-            encryption_materials = RawAESKeyring.on_encrypt(encryption_materials=_encryption_materials)
-            return encryption_materials
+            return _encryption_materials
 
     with pytest.raises(TypeError) as exc_info:
         KeyringNoDecrypt()
