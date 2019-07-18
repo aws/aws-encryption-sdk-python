@@ -110,7 +110,6 @@ def on_decrypt_helper(
     :return encrypted_wrapped_key: Encrypted, wrapped, data key
     :rtype encrypted_wrapped_key: EncryptedData
     """
-
     # Wrapped EncryptedDataKey to deserialized EncryptedData
     encrypted_wrapped_key = deserialize_wrapped_key(
         wrapping_algorithm=wrapping_algorithm, wrapping_key_id=key_name, wrapped_encrypted_key=encrypted_data_key
@@ -215,7 +214,7 @@ class RawAESKeyring(Keyring):
                 )
                 # EncryptedData to raw key string
                 try:
-                    plaintext_data_key = wrapping_key.decrypt(
+                    plaintext_data_key = self._wrapping_key_structure.decrypt(
                         encrypted_wrapped_data_key=encrypted_wrapped_key,
                         encryption_context=decryption_materials.encryption_context,
                     )
@@ -228,12 +227,12 @@ class RawAESKeyring(Keyring):
                 if plaintext_data_key:
                     # Create a keyring trace
                     keyring_trace = KeyringTrace(
-                        wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
+                        wrapping_key=self._key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
                     )
 
                     # Update decryption materials
                     data_encryption_key = RawDataKey(
-                        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_name),
+                        key_provider=MasterKeyInfo(provider_id=self._key_provider.provider_id, key_info=self.key_name),
                         data_key=plaintext_data_key,
                     )
                     decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
