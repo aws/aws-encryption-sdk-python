@@ -20,7 +20,7 @@ import six
 from cryptography.hazmat.primitives.asymmetric.padding import OAEP
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
+from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
@@ -211,10 +211,14 @@ class RawAESKeyring(Keyring):
                     )
                     decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
-                if decryption_materials.data_key:
+                if decryption_materials.data_encryption_key:
                     return decryption_materials
 
         return decryption_materials
+
+    @property
+    def key_provider(self):
+        return self._key_provider
 
 
 @attr.s
@@ -329,5 +333,7 @@ class RawRSAKeyring(Keyring):
                             data_key=plaintext_data_key,
                         )
                         decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
+                    if decryption_materials.data_encryption_key:
+                        return decryption_materials
 
         return decryption_materials
