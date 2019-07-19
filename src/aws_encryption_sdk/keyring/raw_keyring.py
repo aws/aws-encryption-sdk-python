@@ -59,7 +59,7 @@ def generate_data_key(
     key_provider,  # type: MasterKeyInfo
 ):
     # type: (...) -> bytes
-    """Helper function for the on_encrypt function of keyring.
+    """Generates plaintext data key for the keyring.
 
     :param encryption_materials: Encryption materials for the keyring to modify.
     :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
