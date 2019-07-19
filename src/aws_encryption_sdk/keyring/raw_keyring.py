@@ -216,10 +216,6 @@ class RawAESKeyring(Keyring):
 
         return decryption_materials
 
-    @property
-    def key_provider(self):
-        return self._key_provider
-
 
 @attr.s
 class RawRSAKeyring(Keyring):
