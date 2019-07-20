@@ -108,7 +108,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         if self.max_bytes_encrypted > MAX_BYTES_PER_KEY:
             raise ValueError("max_bytes_encrypted cannot exceed {}".format(MAX_BYTES_PER_KEY))
 
-        if self.max_age <= 0:
+        if self.max_age <= 0.0:
             raise ValueError("max_age cannot be less than or equal to 0")
 
         if self.backing_materials_manager is None:
