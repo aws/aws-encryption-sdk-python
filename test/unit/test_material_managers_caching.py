@@ -118,6 +118,7 @@ def test_mkp_to_default_cmm(mocker):
             r"max_bytes_encrypted cannot exceed {}".format(MAX_BYTES_PER_KEY),
         ),
         (dict(max_age=0.0), r"max_age cannot be less than or equal to 0"),
+        (dict(max_age=-1.0), r"max_age cannot be less than or equal to 0"),
     ),
 )
 def test_invalid_values(invalid_kwargs, error_message):
