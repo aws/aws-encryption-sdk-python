@@ -72,7 +72,7 @@ def generate_data_key(
     plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
 
     # Check if data key is generated
-    if not plaintext_data_key:
+    if not plaintext_data_key or plaintext_data_key is None:
         raise GenerateKeyError("Unable to generate data encryption key.")
 
     # Create a keyring trace
@@ -133,6 +133,10 @@ class RawAESKeyring(Keyring):
             )
         else:
             plaintext_data_key = encryption_materials.data_encryption_key.data_key
+
+        # Check if data key exists
+        if not plaintext_data_key or plaintext_data_key is None:
+            raise GenerateKeyError("Unable to generate data encryption key.")
 
         # Encrypt data key
         encrypted_wrapped_key = self._wrapping_key_structure.encrypt(
@@ -195,7 +199,7 @@ class RawAESKeyring(Keyring):
                     )
 
                 except Exception as error:  # pylint: disable=broad-except
-                    logger = logging.getLogger()
+                    logger = logging.getLogger(__name__)
                     logger.error(error.__class__.__name__, ":", str(error))
                     return decryption_materials
 
@@ -240,43 +244,43 @@ class RawRSAKeyring(Keyring):
     _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
 
     @classmethod
-    def fromPEMEncoding(cls):
-        key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
-        key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
-        _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
-        _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
-        _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
-        if _password:
+    def fromPEMEncoding(cls, key_namespace, key_name, encoded_key, password, wrapping_algorithm):
+        # key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
+        # key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
+        # _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
+        if password:
             loaded_wrapping_key = serialization.load_pem_private_key(
-                data=_encoded_key, password=_password, backend=default_backend()
+                data=encoded_key, password=password, backend=default_backend()
             )
         else:
-            loaded_wrapping_key = serialization.load_pem_public_key(data=_encoded_key, backend=default_backend())
-        return RawRSAKeyring(
+            loaded_wrapping_key = serialization.load_pem_public_key(data=encoded_key, backend=default_backend())
+        return cls(
             key_namespace=key_namespace,
             key_name=key_name,
             wrapping_key=loaded_wrapping_key,
-            wrapping_algorithm=_wrapping_algorithm,
+            wrapping_algorithm=wrapping_algorithm,
         )
 
     @classmethod
-    def fromDEREncoding(cls):
-        key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
-        key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
-        _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
-        _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
-        _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
-        if _password:
+    def fromDEREncoding(cls, key_namespace, key_name, encoded_key, password, wrapping_algorithm):
+        # key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
+        # key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
+        # _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
+        if password:
             loaded_wrapping_key = serialization.load_der_private_key(
-                data=_encoded_key, password=_password, backend=default_backend()
+                data=encoded_key, password=password, backend=default_backend()
             )
         else:
-            loaded_wrapping_key = serialization.load_der_public_key(data=_encoded_key, backend=default_backend())
-        return RawRSAKeyring(
+            loaded_wrapping_key = serialization.load_der_public_key(data=encoded_key, backend=default_backend())
+        return cls(
             key_namespace=key_namespace,
             key_name=key_name,
             wrapping_key=loaded_wrapping_key,
-            wrapping_algorithm=_wrapping_algorithm,
+            wrapping_algorithm=wrapping_algorithm,
         )
 
     def __attrs_post_init__(self):

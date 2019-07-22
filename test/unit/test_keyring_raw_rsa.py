@@ -13,13 +13,14 @@
 """Unit tests for Raw AES keyring."""
 
 import pytest
-import six
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
 from mock import MagicMock, patch, sentinel
 
 from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, generate_data_key
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, generate_data_key
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -37,7 +38,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
-_WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
+_WRAPPING_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 _SIGNING_KEY = b"aws-crypto-public-key"
 _DATA_KEY = (
     b"\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25" b"\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
@@ -106,7 +107,7 @@ _DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(
 )
 
 
-class TestRawAESKeyring(object):
+class TestRawRSAKeyring(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
         self.mock_encrypted_data_key = EncryptedDataKey(
@@ -117,7 +118,7 @@ class TestRawAESKeyring(object):
         self.mock_encryption_materials.__class__ = EncryptionMaterials
 
     def test_parent(self):
-        assert issubclass(RawAESKeyring, Keyring)
+        assert issubclass(RawRSAKeyring, Keyring)
 
     # def test_initialization(self):
     #     test = RawAESKeyring(
@@ -131,14 +132,14 @@ class TestRawAESKeyring(object):
     @patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
     def test_data_encryption_key_provided(self, mock_generate_data_key):
         mock_generate_data_key.return_value = _DATA_KEY
-        test_raw_aes_keyring = RawAESKeyring(
+        test_raw_rsa_keyring = RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             wrapping_key=_WRAPPING_KEY,
         )
 
-        test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
+        test = test_raw_rsa_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
         # Check if keyring is generated
         assert not mock_generate_data_key.called
 
@@ -146,13 +147,13 @@ class TestRawAESKeyring(object):
         assert test.encrypted_data_keys is not None
 
     def test_data_encryption_key_generated(self):
-        test_raw_aes_keyring = RawAESKeyring(
+        test_raw_rsa_keyring = RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             wrapping_key=_WRAPPING_KEY,
         )
-        test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
+        test = test_raw_rsa_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
 
         # Check if key is generated
         if not test.data_encryption_key:
@@ -166,13 +167,13 @@ class TestRawAESKeyring(object):
     @patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
     def test_encrypted_data_key_provided(self, mock_generate_data_key):
         mock_generate_data_key.return_value = _DATA_KEY
-        test_raw_aes_keyring = RawAESKeyring(
+        test_raw_rsa_keyring = RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             wrapping_key=_WRAPPING_KEY,
         )
-        test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_ENCRYPTED_DATA_KEY)
+        test = test_raw_rsa_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_ENCRYPTED_DATA_KEY)
 
         # Check if generate_data_key is called
         assert not mock_generate_data_key.called
@@ -186,7 +187,7 @@ class TestRawAESKeyring(object):
     #     test_raw_aes_keyring = RawAESKeyring(
     #         key_namespace=_PROVIDER_ID,
     #         key_name=_KEY_ID,
-    #         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    #         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
     #         wrapping_key=_WRAPPING_KEY,
     #     )
     #     test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
@@ -195,25 +196,25 @@ class TestRawAESKeyring(object):
     @patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
     def test_data_key_not_generated(self, mock_generate_data_key):
         mock_generate_data_key.return_value = None
-        test_raw_aes_keyring = RawAESKeyring(
+        test_raw_rsa_keyring = RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             wrapping_key=_WRAPPING_KEY,
         )
-        test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
+        test = test_raw_rsa_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
         assert pytest.raises(GenerateKeyError)
 
     @patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")
     def test_decrypt_when_data_key_provided(self, mock_decrypt):
         mock_decrypt.return_value = _DATA_KEY
-        test_raw_aes_keyring = RawAESKeyring(
+        test_raw_rsa_keyring = RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             wrapping_key=_WRAPPING_KEY,
         )
-        test = test_raw_aes_keyring.on_decrypt(decryption_materials=_DECRYPTION_MATERIALS_WITH_DATA_KEY,
+        test = test_raw_rsa_keyring.on_decrypt(decryption_materials=_DECRYPTION_MATERIALS_WITH_DATA_KEY,
                                                encrypted_data_keys=[self.mock_encrypted_data_key])
         assert not mock_decrypt.called
 
@@ -223,7 +224,7 @@ class TestRawAESKeyring(object):
     #     test_raw_aes_keyring = RawAESKeyring(
     #         key_namespace=_PROVIDER_ID,
     #         key_name=_KEY_ID,
-    #         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    #         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
     #         wrapping_key=_WRAPPING_KEY,
     #     )
     #

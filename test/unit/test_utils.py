@@ -21,10 +21,18 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
+from aws_encryption_sdk.materials_managers import EncryptionMaterials, DecryptionMaterials, EncryptedDataKey
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable, Union  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -40,6 +48,24 @@ def test_prep_stream_data_wrap(source):
     test = aws_encryption_sdk.internal.utils.prep_stream_data(source)
 
     assert_prepped_stream_identity(test, io.BytesIO)
+
+
+class NullRawRSAKeyring(RawRSAKeyring):
+    def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        return encryption_materials
+
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        return decryption_materials
+
+
+class NullRawAESKeyring(RawAESKeyring):
+    def on_encrypt(self):
+        return
+
+    def on_decrypt(self):
+        return
 
 
 class TestUtils(object):
@@ -265,3 +291,4 @@ class TestUtils(object):
                 source_data_key=mock_data_key, algorithm=mock_algorithm
             )
         excinfo.match("Invalid Source Data Key length 4 for algorithm required: 5")
+

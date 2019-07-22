@@ -13,11 +13,9 @@
 """Functional tests for Raw AES keyring encryption decryption path."""
 
 import pytest
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -26,8 +24,8 @@ pytestmark = [pytest.mark.functional, pytest.mark.local]
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
-_WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -77,23 +75,28 @@ _ENCRYPTION_MATERIALS = [
     ),
 ]
 
-_RAW_RSA_KEYRINGS = [
-    RawRSAKeyring(
-        key_namespace=key_namespace,
-        key_name=key_name,
-        wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
-        wrapping_algorithm=_WRAPPING_ALGORITHM,
-    ),
-    RawRSAKeyring.fromPEMEncoding()
-]
-
 
 @pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
-@pytest.mark.parametrize("fake_raw_rsa_keyring", _RAW_RSA_KEYRINGS)
-def test_raw_rsa_encryption_decryption(encryption_materials_samples, fake_raw_rsa_keyring):
+def test_raw_aes_encryption_decryption(encryption_materials_samples):
+
+    # Initializing attributes
+    key_namespace = _PROVIDER_ID
+    key_name = _KEY_ID
+    _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+
+    # Creating an instance of a raw AES keyring
+    fake_raw_aes_keyring = RawAESKeyring(
+        key_namespace=key_namespace,
+        key_name=key_name,
+        wrapping_key=_WRAPPING_KEY,
+        wrapping_algorithm=_wrapping_algorithm,
+    )
 
     # Call on_encrypt function for the keyring
-    encryption_materials = fake_raw_rsa_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+    encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+
+    print("PLAINTEXT DATA KEY")
+    print(encryption_materials.data_encryption_key)
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
@@ -101,10 +104,10 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, fake_raw_rs
     )
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_rsa_keyring.on_decrypt(
+    decryption_materials = fake_raw_aes_keyring.on_decrypt(
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
-    if decryption_materials.data_encryption_key:
-        # Check if the data keys match
-        assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
+    # if decryption_materials.data_encryption_key:
+    #     # Check if the data keys match
+    assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
