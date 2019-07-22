@@ -28,6 +28,22 @@ _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _SIGNING_KEY = b"aws-crypto-public-key"
 _WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
+_PRIVATE_KEY = b"-----BEGIN RSA PRIVATE KEY-----"\
+               b"MIICXgIBAAKBgQCUjhI8YRPXV8Gfofbg/"\
+               b"PLjWw2AzowQTPErLU2z3+xGqElMdzdiC4Ta43DFWZg34Eg0X8kQPAeoe8h3cRSMo"\
+               b"77eSOHt2dPo7OfTfZqsH8766fivHIKVxBYPX8SZYIUhMtRnlg3uqch9BksfRop+h"\
+               b"f8h/H3lfervJoevS2CXYB9/iwIDAQABAoGBAIqeGzQOHbaGI51yQ2zjez1dPDdiB"\
+               b"F49fZideHEM1GuGIodgguRQ/VJGgncUSC5zcMy2SGaGrVqwznltohAtxy4rZp0eh"\
+               b"2O3aHYi9Wehd0SPLh+qwu7mJDuh0z15hmCOue070FnUtyuSwhXLwDrbot2+5HbmF"\
+               b"9clJLI5tv92gvIpAkEA+Bv5i8XJNPN1rao31aQFoi9bFIOEclk3b1RbLX6mpZBFS"\
+               b"U9CNUy0RQNC0+H3KZ5CTvsyFGpMfTdiFc/Qdesk3QJBAJlHjrvoadP+PU3zXYrWR"\
+               b"D5EryyTxaP1bOjrp9xLuQBeU8x7EVJdpoul9OmwcT3NrAqvxDE9okjha2tjCI6O2"\
+               b"4cCQQDMyOJPYL/zaaPO5LlTKB/SPv4RT4BplYPw6xKa2XeZHhxiJv5B2f7NG6T0G"\
+               b"AWWn16hrCoouZhKngTidfXc7motAkA/KiTgvKr3yHp86AAxWZDv1CAYD6FPqrDB3"\
+               b"3LiLnZDd5uy1ThTJ/Kc87vUnXhdDqeKE9qWrB53SCWbMElzbd17AkEA4DMp+6ngM"\
+               b"o6sS0dY1X6nTLqgvK3B0z5GCAdSEy3Y8jh995Lrl+hy88HzuwUkQwwPlZkFhUNCx"\
+               b"edrC6cTKE5xLA=="\
+               b"-----END RSA PRIVATE KEY-----"
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -84,30 +100,13 @@ _RAW_RSA_KEYRINGS = [
         wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    # RawRSAKeyring.fromPEMEncoding(
-    #     key_namespace=_PROVIDER_ID,
-    #     key_name=_KEY_ID,
-    #     encoded_key=(
-    #         b"-----BEGIN RSA PRIVATE KEY-----"
-    #         b"MIICXgIBAAKBgQCUjhI8YRPXV8Gfofbg/"
-    #         b"PLjWw2AzowQTPErLU2z3+xGqElMdzdiC4Ta43DFWZg34Eg0X8kQPAeoe8h3cRSMo"
-    #         b"77eSOHt2dPo7OfTfZqsH8766fivHIKVxBYPX8SZYIUhMtRnlg3uqch9BksfRop+h"
-    #         b"f8h/H3lfervJoevS2CXYB9/iwIDAQABAoGBAIqeGzQOHbaGI51yQ2zjez1dPDdiB"
-    #         b"F49fZideHEM1GuGIodgguRQ/VJGgncUSC5zcMy2SGaGrVqwznltohAtxy4rZp0eh"
-    #         b"2O3aHYi9Wehd0SPLh+qwu7mJDuh0z15hmCOue070FnUtyuSwhXLwDrbot2+5HbmF"
-    #         b"9clJLI5tv92gvIpAkEA+Bv5i8XJNPN1rao31aQFoi9bFIOEclk3b1RbLX6mpZBFS"
-    #         b"U9CNUy0RQNC0+H3KZ5CTvsyFGpMfTdiFc/Qdesk3QJBAJlHjrvoadP+PU3zXYrWR"
-    #         b"D5EryyTxaP1bOjrp9xLuQBeU8x7EVJdpoul9OmwcT3NrAqvxDE9okjha2tjCI6O2"
-    #         b"4cCQQDMyOJPYL/zaaPO5LlTKB/SPv4RT4BplYPw6xKa2XeZHhxiJv5B2f7NG6T0G"
-    #         b"AWWn16hrCoouZhKngTidfXc7motAkA/KiTgvKr3yHp86AAxWZDv1CAYD6FPqrDB3"
-    #         b"3LiLnZDd5uy1ThTJ/Kc87vUnXhdDqeKE9qWrB53SCWbMElzbd17AkEA4DMp+6ngM"
-    #         b"o6sS0dY1X6nTLqgvK3B0z5GCAdSEy3Y8jh995Lrl+hy88HzuwUkQwwPlZkFhUNCx"
-    #         b"edrC6cTKE5xLA=="
-    #         b"-----END RSA PRIVATE KEY-----"
-    #     ),
-    #     password=None,
-    #     wrapping_algorithm=_WRAPPING_ALGORITHM,
-    # ),
+    RawRSAKeyring.fromPEMEncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        encoded_key=_PRIVATE_KEY,
+        password=None,
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
+    ),
     # RawRSAKeyring.fromDEREncoding(
     #     key_namespace=_PROVIDER_ID,
     #     key_name=_KEY_ID,
@@ -161,6 +160,6 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, fake_raw_rs
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
-    if decryption_materials.data_encryption_key:
-        # Check if the data keys match
-        assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
+    # if decryption_materials.data_encryption_key:
+    #     # Check if the data keys match
+    assert encryption_materials.data_encryption_key == decryption_materials.data_encryption_key
