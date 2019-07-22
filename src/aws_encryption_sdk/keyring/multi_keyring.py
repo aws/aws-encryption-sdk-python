@@ -63,7 +63,7 @@ class MultiKeyring(Keyring):
         :raises EncryptKeyError: if unable to encrypt data key.
         """
         # Check if generator keyring is not provided and data key is not generated
-        if self.generator is None and not encryption_materials.data_encryption_key:
+        if self.generator is None and encryption_materials.data_encryption_key is None:
             raise EncryptKeyError(
                 "Generator keyring not provided "
                 "and encryption materials do not already contain a plaintext data key."
@@ -94,14 +94,10 @@ class MultiKeyring(Keyring):
         :returns: Optionally modified decryption materials.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
-        # Check if plaintext data key exists
-        if decryption_materials.data_encryption_key:
-            return decryption_materials
-
         # Call on_decrypt on all keyrings till decryption is successful
         for keyring in self._decryption_keyrings:
-            decryption_materials = keyring.on_decrypt(decryption_materials, encrypted_data_keys)
             if decryption_materials.data_encryption_key:
                 return decryption_materials
+            decryption_materials = keyring.on_decrypt(decryption_materials, encrypted_data_keys)
 
         return decryption_materials
