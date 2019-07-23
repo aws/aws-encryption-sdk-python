@@ -58,5 +58,3 @@ setup(
         "Topic :: Security :: Cryptography",
     ],
 )
-if not hasattr(ast, "MatMult"):
-    print("HERE")
