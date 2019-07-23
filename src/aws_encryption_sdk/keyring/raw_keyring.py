@@ -205,7 +205,7 @@ class RawAESKeyring(Keyring):
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
                 wrapping_algorithm=self._wrapping_algorithm,
-                wrapping_key_id=key.key_provider.key_info,
+                wrapping_key_id=self.key_name,
                 wrapped_encrypted_key=key,
             )
 
@@ -428,7 +428,7 @@ class RawRSAKeyring(Keyring):
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
                 wrapping_algorithm=self._wrapping_algorithm,
-                wrapping_key_id=key.key_provider.key_info,
+                wrapping_key_id=self.key_name,
                 wrapped_encrypted_key=key,
             )
             try:
