@@ -17,16 +17,153 @@ import io
 import pytest
 from mock import MagicMock, patch, sentinel
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey, KeyringTrace
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring
+from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
+from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+_ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
+_PROVIDER_ID = "Random Raw Keys"
+_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
+_SIGNING_KEY = b"aws-crypto-public-key"
+_DATA_KEY = (
+    b"\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25" b"\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
+)
+_WRAPPING_KEY_AES = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
+
+
+_ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+        )
+    ],
+)
+
+
+_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+)
+
+
+_ENCRYPTION_MATERIALS_WITH_ENCRYPTED_DATA_KEY = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encrypted_data_keys=[
+        EncryptedDataKey(
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
+            b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
+        )
+    ],
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+        )
+    ],
+)
+
+
+_DECRYPTION_MATERIALS_WITH_DATA_KEY = DecryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encryption_context=_ENCRYPTION_CONTEXT,
+    verification_key=b"ex_verification_key",
+    keyring_trace=[KeyringTrace(
+        wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
+    )]
+)
+
+
+_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(
+    verification_key=b"ex_verification_key",
+)
+
+_MULTI_KEYRING = MultiKeyring(
+        generator=RawAESKeyring(
+            key_namespace=_PROVIDER_ID,
+            key_name=_KEY_ID,
+            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_key=_WRAPPING_KEY_AES,
+        ),
+        children=[
+            RawRSAKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+            ),
+            RawRSAKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+            ),
+        ],
+    )
+
+_MULTI_KEYRING_WITH_NO_CHILDREN = MultiKeyring(
+        generator=RawRSAKeyring(
+            key_namespace=_PROVIDER_ID,
+            key_name=_KEY_ID,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+            wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+        )
+    )
+
+_MULTI_KEYRING_WITH_NO_GENERATOR = MultiKeyring(
+        children=[
+            RawRSAKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+            ),
+            RawAESKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
+                wrapping_key=_WRAPPING_KEY_AES,
+            ),
+        ]
+    )
+
+# _MULTI_KEYRING_WITH_NO_GENERATOR_NO_CHILDREN = MultiKeyring()
 
 
 def test_prep_stream_data_passthrough():
