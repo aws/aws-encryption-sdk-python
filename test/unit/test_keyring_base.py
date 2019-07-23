@@ -57,17 +57,20 @@ _encrypted_data_keys = [
 ]
 
 
-def test_keyring_no_encrypt():
-    class KeyringNoEncrypt(Keyring):
-        def on_decrypt(self, _decryption_materials, _encrypted_data_keys):
-            return
+class KeyringNoEncrypt(Keyring):
+    def on_decrypt(self, _decryption_materials, _encrypted_data_keys):
+        return _decryption_materials
 
+
+class KeyringNoDecrypt(Keyring):
+    def on_encrypt(self, _encryption_materials):
+        return _encryption_materials
+
+
+def test_keyring_no_encrypt():
     assert pytest.raises(NotImplementedError)
 
 
 def test_keyring_no_decrypt():
-    class KeyringNoDecrypt(Keyring):
-        def on_encrypt(self, _encryption_materials):
-            return
 
     assert pytest.raises(NotImplementedError)

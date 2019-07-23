@@ -29,7 +29,7 @@ from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable, Union  # noqa pylint: disable=unused-import
+    from typing import Iterable  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -58,14 +58,6 @@ class NullRawRSAKeyring(RawRSAKeyring):
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         return decryption_materials
-
-
-class NullRawAESKeyring(RawAESKeyring):
-    def on_encrypt(self):
-        return
-
-    def on_decrypt(self):
-        return
 
 
 class TestUtils(object):
