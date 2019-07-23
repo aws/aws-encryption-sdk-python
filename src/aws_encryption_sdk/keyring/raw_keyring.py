@@ -17,10 +17,11 @@ import os
 
 import attr
 import six
-from cryptography.hazmat.primitives.asymmetric.padding import OAEP
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
-from aws_encryption_sdk.exceptions import EncryptKeyError
+from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
@@ -31,7 +32,7 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterials, Encryptio
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
+    from typing import Iterable, Union  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -54,12 +55,12 @@ def get_key_info_prefix(key_namespace, key_name, wrapping_key):
     return key_info_prefix
 
 
-def on_encrypt_helper(
+def generate_data_key(
     encryption_materials,  # type: EncryptionMaterials
     key_provider,  # type: MasterKeyInfo
 ):
     # type: (...) -> bytes
-    """Helper function for the on_encrypt function of keyring.
+    """Generates plaintext data key for the keyring.
 
     :param encryption_materials: Encryption materials for the keyring to modify.
     :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
@@ -67,55 +68,23 @@ def on_encrypt_helper(
     :type key_provider: MasterKeyInfo
     :return bytes: Plaintext data key
     """
-    # Check if data key already exists
-    if not encryption_materials.data_encryption_key:
+    # Generate data key
+    plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
 
-        # Generate data key
-        plaintext_data_key = os.urandom(encryption_materials.algorithm.kdf_input_len)
+    # Check if data key is generated
+    if not plaintext_data_key or plaintext_data_key is None:
+        raise GenerateKeyError("Unable to generate data encryption key.")
 
-        # Check if data key is generated
-        if not plaintext_data_key:
-            raise EncryptKeyError("Unable to generate data encryption key.")
+    # Create a keyring trace
+    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})
 
-        # Create a keyring trace
-        keyring_trace = KeyringTrace(
-            wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
-        )
+    # plaintext_data_key to RawDataKey
+    data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
 
-        # plaintext_data_key to RawDataKey
-        data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
-
-        # Add generated data key to encryption_materials
-        encryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
-
-    else:
-        plaintext_data_key = encryption_materials.data_encryption_key.data_key
+    # Add generated data key to encryption_materials
+    encryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
     return plaintext_data_key
-
-
-def on_decrypt_helper(
-    wrapping_algorithm,  # type: WrappingAlgorithm
-    key_name,  # type: bytes
-    encrypted_data_key,  # type: EncryptedDataKey
-):
-    # type: (...) -> EncryptedData
-    """Helper function for the on_decrypt function of keyring.
-
-    :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key.
-    :type wrapping_algorithm: WrappingAlgorithm
-    :param bytes key_name: Key ID.
-    :param encrypted_data_key: Data key encrypted with a wrapping key.
-    :type encrypted_data_key: aws_encryption_sdk.structures.EncryptedDataKey
-    :return encrypted_wrapped_key: Encrypted, wrapped, data key
-    :rtype encrypted_wrapped_key: EncryptedData
-    """
-    # Wrapped EncryptedDataKey to deserialized EncryptedData
-    encrypted_wrapped_key = deserialize_wrapped_key(
-        wrapping_algorithm=wrapping_algorithm, wrapping_key_id=key_name, wrapped_encrypted_key=encrypted_data_key
-    )
-
-    return encrypted_wrapped_key
 
 
 @attr.s
@@ -158,9 +127,16 @@ class RawAESKeyring(Keyring):
         :returns: Optionally modified encryption materials
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
-        plaintext_data_key = on_encrypt_helper(
-            encryption_materials=encryption_materials, key_provider=self._key_provider
-        )
+        if not encryption_materials.data_encryption_key:
+            plaintext_data_key = generate_data_key(
+                encryption_materials=encryption_materials, key_provider=self._key_provider
+            )
+        else:
+            plaintext_data_key = encryption_materials.data_encryption_key.data_key
+
+        # Check if data key exists
+        if not plaintext_data_key or plaintext_data_key is None:
+            raise GenerateKeyError("Unable to generate data encryption key.")
 
         # Encrypt data key
         encrypted_wrapped_key = self._wrapping_key_structure.encrypt(
@@ -209,8 +185,11 @@ class RawAESKeyring(Keyring):
                 and len(key.key_provider.key_info) == expected_key_info_len
                 and key.key_provider.key_info.startswith(self._key_info_prefix)
             ):
-                encrypted_wrapped_key = on_decrypt_helper(
-                    wrapping_algorithm=self._wrapping_algorithm, key_name=self.key_name, encrypted_data_key=key
+                # Wrapped EncryptedDataKey to deserialized EncryptedData
+                encrypted_wrapped_key = deserialize_wrapped_key(
+                    wrapping_algorithm=self._wrapping_algorithm,
+                    wrapping_key_id=self.key_name,
+                    wrapped_encrypted_key=key,
                 )
                 # EncryptedData to raw key string
                 try:
@@ -220,7 +199,7 @@ class RawAESKeyring(Keyring):
                     )
 
                 except Exception as error:  # pylint: disable=broad-except
-                    logger = logging.getLogger()
+                    logger = logging.getLogger(__name__)
                     logger.error(error.__class__.__name__, ":", str(error))
                     return decryption_materials
 
@@ -237,7 +216,7 @@ class RawAESKeyring(Keyring):
                     )
                     decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
-                if decryption_materials.data_key:
+                if decryption_materials.data_encryption_key:
                     return decryption_materials
 
         return decryption_materials
@@ -259,8 +238,50 @@ class RawRSAKeyring(Keyring):
 
     key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
     key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+    # _wrapping_key = attr.ib(repr=False, validator=attr.validators.in_([rsa.RSAPrivateKey, rsa.RSAPublicKey]))
+    # ----- need to figure out how to do this correctly
     _wrapping_key = attr.ib(repr=False, validator=attr.validators.instance_of(object))
     _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
+
+    @classmethod
+    def fromPEMEncoding(cls, key_namespace, key_name, encoded_key, password, wrapping_algorithm):
+        # key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
+        # key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
+        # _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
+        if password:
+            loaded_wrapping_key = serialization.load_pem_private_key(
+                data=encoded_key, password=password, backend=default_backend()
+            )
+        else:
+            loaded_wrapping_key = serialization.load_pem_public_key(data=encoded_key, backend=default_backend())
+        return cls(
+            key_namespace=key_namespace,
+            key_name=key_name,
+            wrapping_key=loaded_wrapping_key,
+            wrapping_algorithm=wrapping_algorithm,
+        )
+
+    @classmethod
+    def fromDEREncoding(cls, key_namespace, key_name, encoded_key, password, wrapping_algorithm):
+        # key_namespace = attr.ib(validator=attr.validators.instance_of(six.string_types))
+        # key_name = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _encoded_key = attr.ib(validator=attr.validators.instance_of(six.binary_type))
+        # _password = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.binary_type)))
+        # _wrapping_algorithm = attr.ib(repr=False, validator=attr.validators.instance_of(WrappingAlgorithm))
+        if password:
+            loaded_wrapping_key = serialization.load_der_private_key(
+                data=encoded_key, password=password, backend=default_backend()
+            )
+        else:
+            loaded_wrapping_key = serialization.load_der_public_key(data=encoded_key, backend=default_backend())
+        return cls(
+            key_namespace=key_namespace,
+            key_name=key_name,
+            wrapping_key=loaded_wrapping_key,
+            wrapping_algorithm=wrapping_algorithm,
+        )
 
     def __attrs_post_init__(self):
         # type: () -> None
@@ -276,35 +297,50 @@ class RawRSAKeyring(Keyring):
         :returns: Optionally modified encryption materials.
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
-        plaintext_data_key = on_encrypt_helper(
-            encryption_materials=encryption_materials, key_provider=self._key_provider
-        )
-        if isinstance(self._wrapping_key, RSAPublicKey):
+        if not encryption_materials.data_encryption_key:
+            plaintext_data_key = generate_data_key(
+                encryption_materials=encryption_materials, key_provider=self._key_provider
+            )
+        else:
+            plaintext_data_key = encryption_materials.data_encryption_key.data_key
+        if isinstance(self._wrapping_key, rsa.RSAPublicKey):
 
             # Encrypt data key
             encrypted_wrapped_key = EncryptedData(
-                iv=None, ciphertext=self._wrapping_key.encrypt(plaintext=plaintext_data_key, padding=OAEP), tag=None
+                iv=None,
+                ciphertext=self._wrapping_key.encrypt(
+                    plaintext=plaintext_data_key, padding=self._wrapping_algorithm.padding
+                ),
+                tag=None,
+            )
+        else:
+            # Encrypt data key
+            encrypted_wrapped_key = EncryptedData(
+                iv=None,
+                ciphertext=self._wrapping_key.public_key().encrypt(
+                    plaintext=plaintext_data_key, padding=self._wrapping_algorithm.padding
+                ),
+                tag=None,
             )
 
-            # EncryptedData to EncryptedDataKey
-            encrypted_data_key = serialize_wrapped_key(
-                key_provider=self._key_provider,
-                wrapping_algorithm=self._wrapping_algorithm,
-                wrapping_key_id=self._key_name,
-                encrypted_wrapped_key=encrypted_wrapped_key,
+        # EncryptedData to EncryptedDataKey
+        encrypted_data_key = serialize_wrapped_key(
+            key_provider=self._key_provider,
+            wrapping_algorithm=self._wrapping_algorithm,
+            wrapping_key_id=self.key_name,
+            encrypted_wrapped_key=encrypted_wrapped_key,
+        )
+
+        # Update Keyring Trace
+        if encrypted_data_key:
+            keyring_trace = KeyringTrace(
+                wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
             )
 
-            # Update Keyring Trace
-            if encrypted_data_key:
-                keyring_trace = KeyringTrace(
-                    wrapping_key=encrypted_data_key.key_provider,
-                    flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
-                )
-
-                # Add encrypted data key to encryption_materials
-                encryption_materials.add_encrypted_data_key(
-                    encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace
-                )
+            # Add encrypted data key to encryption_materials
+            encryption_materials.add_encrypted_data_key(
+                encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace
+            )
 
         return encryption_materials
 
@@ -319,16 +355,19 @@ class RawRSAKeyring(Keyring):
         :returns: Optionally modified decryption materials.
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
-        if isinstance(self._wrapping_key, RSAPrivateKey):
+        if isinstance(self._wrapping_key, rsa.RSAPrivateKey):
             # Decrypt data key
             for key in encrypted_data_keys:
                 if key.key_provider == self._key_provider:
-                    encrypted_wrapped_key = on_decrypt_helper(
-                        wrapping_algorithm=self._wrapping_algorithm, key_name=self.key_name, encrypted_data_key=key
+                    # Wrapped EncryptedDataKey to deserialized EncryptedData
+                    encrypted_wrapped_key = deserialize_wrapped_key(
+                        wrapping_algorithm=self._wrapping_algorithm,
+                        wrapping_key_id=self.key_name,
+                        wrapped_encrypted_key=key,
                     )
                     try:
                         plaintext_data_key = self._wrapping_key.decrypt(
-                            ciphertext=encrypted_wrapped_key.ciphertext, padding=OAEP
+                            ciphertext=encrypted_wrapped_key.ciphertext, padding=self._wrapping_algorithm.padding
                         )
                     except Exception as error:  # pylint: disable=broad-except
                         logger = logging.getLogger()
@@ -349,5 +388,7 @@ class RawRSAKeyring(Keyring):
                             data_key=plaintext_data_key,
                         )
                         decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
+                    if decryption_materials.data_encryption_key:
+                        return decryption_materials
 
         return decryption_materials

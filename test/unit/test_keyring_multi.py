@@ -74,11 +74,12 @@ class TestMultiKeyring(object):
             test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
         assert exc_info.match("Unable to generate data encryption key")
 
-    # def test_number_of_encrypted_data_keys(self):
-    #     test_multi_keyring = _MULTI_KEYRING
-    #     test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
-    #     assert len(test.encrypted_data_keys) == (len(test_multi_keyring.children) + 1)
-    #     test_multi_keyring_no_generator = _MULTI_KEYRING_WITH_NO_GENERATOR
-    #     test_no_generator = test_multi_keyring_no_generator.on_encrypt(
-    #         encryption_materials=_MULTI_KEYRING_WITH_NO_GENERATOR)
-    #     assert len(test_no_generator.encrypted_data_keys) == len(test_multi_keyring_no_generator.children)
+    def test_number_of_encrypted_data_keys_without_generator(self):
+        test_multi_keyring = _MULTI_KEYRING_WITH_NO_GENERATOR
+        test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
+        assert len(test.encrypted_data_keys) == len(test_multi_keyring.children)
+
+    def test_number_of_encrypted_data_keys_with_generator(self):
+        test_multi_keyring = _MULTI_KEYRING
+        test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
+        assert len(test.encrypted_data_keys) == len(test_multi_keyring.children) + 1
