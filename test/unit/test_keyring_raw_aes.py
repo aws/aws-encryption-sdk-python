@@ -24,6 +24,7 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterials, Encryptio
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
+
 # from .test_utils import NullRawAESKeyring
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -95,15 +96,15 @@ _DECRYPTION_MATERIALS_WITH_DATA_KEY = DecryptionMaterials(
     ),
     encryption_context=_ENCRYPTION_CONTEXT,
     verification_key=b"ex_verification_key",
-    keyring_trace=[KeyringTrace(
-        wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-        flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
-    )]
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+        )
+    ],
 )
 
-_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(
-    verification_key=b"ex_verification_key",
-)
+_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(verification_key=b"ex_verification_key")
 
 
 class TestRawAESKeyring(object):
@@ -213,8 +214,9 @@ class TestRawAESKeyring(object):
             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             wrapping_key=_WRAPPING_KEY,
         )
-        test = test_raw_aes_keyring.on_decrypt(decryption_materials=_DECRYPTION_MATERIALS_WITH_DATA_KEY,
-                                               encrypted_data_keys=[self.mock_encrypted_data_key])
+        test = test_raw_aes_keyring.on_decrypt(
+            decryption_materials=_DECRYPTION_MATERIALS_WITH_DATA_KEY, encrypted_data_keys=[self.mock_encrypted_data_key]
+        )
         assert not mock_decrypt.called
 
     # @patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")

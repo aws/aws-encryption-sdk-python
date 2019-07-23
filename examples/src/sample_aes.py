@@ -27,10 +27,10 @@ _WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
 _ENCRYPTION_MATERIALS = EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        encryption_context=_ENCRYPTION_CONTEXT,
-        signing_key=_SIGNING_KEY,
-    )
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+)
 
 
 def sample_aes_encryption_decryption():

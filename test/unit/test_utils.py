@@ -21,9 +21,9 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.materials_managers import EncryptionMaterials, DecryptionMaterials, EncryptedDataKey
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptedDataKey, EncryptionMaterials
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
@@ -291,4 +291,3 @@ class TestUtils(object):
                 source_data_key=mock_data_key, algorithm=mock_algorithm
             )
         excinfo.match("Invalid Source Data Key length 4 for algorithm required: 5")
-

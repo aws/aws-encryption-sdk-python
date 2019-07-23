@@ -189,7 +189,8 @@ VALUES = {
     "signature_len": b"\x00h",
     "private_rsa_key_bytes": [
         (
-            b"-----BEGIN RSA PRIVATE KEY-----"b"MIICXgIBAAKBgQCUjhI8YRPXV8Gfofbg/"
+            b"-----BEGIN RSA PRIVATE KEY-----"
+            b"MIICXgIBAAKBgQCUjhI8YRPXV8Gfofbg/"
             b"PLjWw2AzowQTPErLU2z3+xGqElMdzdiC4Ta43DFWZg34Eg0X8kQPAeoe8h3cRSMo"
             b"77eSOHt2dPo7OfTfZqsH8766fivHIKVxBYPX8SZYIUhMtRnlg3uqch9BksfRop+h"
             b"f8h/H3lfervJoevS2CXYB9/iwIDAQABAoGBAIqeGzQOHbaGI51yQ2zjez1dPDdiB"
@@ -233,8 +234,8 @@ VALUES = {
             b"xvpUDpzMioz6zUH9YV43YNtt+5Xnzkqj+u9Mr27/H2v9XPwORGfwQ5XPwRJz/2oC\n"
             b"EnPmP1SZoY9lXKUpQXHXSpDZ2rE2Klt3RHMUMHt8Zpy36E8Vwx8o\n"
             b"-----END RSA PRIVATE KEY-----\n"
-        )
-    ]
+        ),
+    ],
 }
 VALUES["updated_encryption_context"] = copy.deepcopy(VALUES["encryption_context"])
 VALUES["updated_encryption_context"]["aws-crypto-public-key"] = VALUES["encoded_curve_point"]
