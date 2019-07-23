@@ -17,7 +17,6 @@ import os
 
 import attr
 import six
-
 from attr.validators import instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -205,8 +204,9 @@ class RawAESKeyring(Keyring):
 
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=key.key_provider.key_info,
-                wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm,
+                wrapping_key_id=key.key_provider.key_info,
+                wrapped_encrypted_key=key,
             )
 
             # EncryptedData to raw key string
@@ -378,7 +378,7 @@ class RawRSAKeyring(Keyring):
                 iv=None,
                 ciphertext=self._public_wrapping_key.encrypt(
                     plaintext=encryption_materials.data_encryption_key.data_key,
-                    padding=self._wrapping_algorithm.padding
+                    padding=self._wrapping_algorithm.padding,
                 ),
                 tag=None,
             )
@@ -427,8 +427,9 @@ class RawRSAKeyring(Keyring):
                 continue
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=key.key_provider.key_info,
-                wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm,
+                wrapping_key_id=key.key_provider.key_info,
+                wrapped_encrypted_key=key,
             )
             try:
                 plaintext_data_key = self._private_wrapping_key.decrypt(
