@@ -190,23 +190,23 @@ class RawAESKeyring(Keyring):
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
         print("expected_key_info_len=", expected_key_info_len)
-        count = 0
         for key in encrypted_data_keys:
-            count += 1
-            print("Key no = ", count)
+
             if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
+
             if (
                 key.key_provider.provider_id != self._key_provider.provider_id
                 or len(key.key_provider.key_info) != expected_key_info_len
                 or not key.key_provider.key_info.startswith(self._key_info_prefix)
             ):
-                print("If condition did not match")
+                print("If condition matched")
                 continue
 
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=self.key_name, wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=key.key_provider.key_info,
+                wrapped_encrypted_key=key
             )
 
             # EncryptedData to raw key string
@@ -219,7 +219,7 @@ class RawAESKeyring(Keyring):
             except Exception:  # pylint: disable=broad-except
                 error_message = "Raw AES Keyring unable to decrypt data key"
                 _LOGGER.exception(error_message)
-                continue
+                return decryption_materials
 
             # Create a keyring trace
             keyring_trace = KeyringTrace(
@@ -427,7 +427,8 @@ class RawRSAKeyring(Keyring):
                 continue
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=self.key_name, wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=key.key_provider.key_info,
+                wrapped_encrypted_key=key
             )
             try:
                 plaintext_data_key = self._private_wrapping_key.decrypt(
