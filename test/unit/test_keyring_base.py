@@ -60,20 +60,14 @@ _encrypted_data_keys = [
 def test_keyring_no_encrypt():
     class KeyringNoEncrypt(Keyring):
         def on_decrypt(self, _decryption_materials, _encrypted_data_keys):
-            # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
-            return _decryption_materials
+            return
 
-    with pytest.raises(TypeError) as exc_info:
-        KeyringNoEncrypt()
-    exc_info.match("Can't instantiate abstract class KeyringNoEncrypt with abstract methods on_encrypt")
+    assert pytest.raises(NotImplementedError)
 
 
 def test_keyring_no_decrypt():
     class KeyringNoDecrypt(Keyring):
         def on_encrypt(self, _encryption_materials):
-            # type: (EncryptionMaterials) -> EncryptionMaterials
-            return _encryption_materials
+            return
 
-    with pytest.raises(TypeError) as exc_info:
-        KeyringNoDecrypt()
-    exc_info.match("Can't instantiate abstract class KeyringNoDecrypt with abstract methods on_decrypt")
+    assert pytest.raises(NotImplementedError)
