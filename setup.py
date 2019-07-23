@@ -1,6 +1,7 @@
 """AWS Encryption SDK for Python."""
 import os
 import re
+import ast
 
 from setuptools import find_packages, setup
 
@@ -57,3 +58,5 @@ setup(
         "Topic :: Security :: Cryptography",
     ],
 )
+if not hasattr(ast, "MatMult"):
+    print("HERE")
