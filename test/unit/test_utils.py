@@ -271,4 +271,3 @@ class TestUtils(object):
                 source_data_key=mock_data_key, algorithm=mock_algorithm
             )
         excinfo.match("Invalid Source Data Key length 4 for algorithm required: 5")
-
