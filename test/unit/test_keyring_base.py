@@ -41,24 +41,13 @@ _decryption_materials = DecryptionMaterials(
 _encrypted_data_keys = []
 
 
-class KeyringNoEncrypt(Keyring):
-    def on_decrypt(self, _decryption_materials, _encrypted_data_keys):
-        return _decryption_materials
-
-
-class KeyringNoDecrypt(Keyring):
-    def on_encrypt(self, _encryption_materials):
-        return _encryption_materials
-
-
 def test_keyring_no_encrypt():
     with pytest.raises(NotImplementedError) as exc_info:
-        KeyringNoEncrypt().on_encrypt(encryption_materials=_encryption_materials)
+        Keyring().on_encrypt(encryption_materials=_encryption_materials)
     assert exc_info.match("Keyring does not implement on_encrypt function")
 
 
 def test_keyring_no_decrypt():
     with pytest.raises(NotImplementedError) as exc_info:
-        KeyringNoDecrypt().on_decrypt(decryption_materials=_decryption_materials,
-                                      encrypted_data_keys=_encrypted_data_keys)
+        Keyring().on_decrypt(decryption_materials=_decryption_materials, encrypted_data_keys=_encrypted_data_keys)
     assert exc_info.match("Keyring does not implement on_decrypt function")
