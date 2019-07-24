@@ -21,8 +21,8 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
-from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptedDataKey, EncryptionMaterials
+from aws_encryption_sdk.keyring.base import Keyring
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
@@ -35,6 +35,37 @@ except ImportError:  # pragma: no cover
     pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+_RAW_RSA_PRIVATE_KEY_PEM_ENCODED = (
+    b"-----BEGIN RSA PRIVATE KEY-----\n"
+    b"MIIEowIBAAKCAQEAo8uCyhiO4JUGZV+rtNq5DBA9Lm4xkw5kTA3v6EPybs8bVXL2\n"
+    b"ZE6jkbo+xT4Jg/bKzUpnp1fE+T1ruGPtsPdoEmhY/P64LDNIs3sRq5U4QV9IETU1\n"
+    b"vIcbNNkgGhRjV8J87YNY0tV0H7tuWuZRpqnS+gjV6V9lUMkbvjMCc5IBqQc3heut\n"
+    b"/+fH4JwpGlGxOVXI8QAapnSy1XpCr3+PT29kydVJnIMuAoFrurojRpOQbOuVvhtA\n"
+    b"gARhst1Ji4nfROGYkj6eZhvkz2Bkud4/+3lGvVU5LO1vD8oY7WoGtpin3h50VcWe\n"
+    b"aBT4kejx4s9/G9C4R24lTH09J9HO2UUsuCqZYQIDAQABAoIBAQCfC90bCk+qaWqF\n"
+    b"gymC+qOWwCn4bM28gswHQb1D5r6AtKBRD8mKywVvWs7azguFVV3Fi8sspkBA2FBC\n"
+    b"At5p6ULoJOTL/TauzLl6djVJTCMM701WUDm2r+ZOIctXJ5bzP4n5Q4I7b0NMEL7u\n"
+    b"ixib4elYGr5D1vrVQAKtZHCr8gmkqyx8Mz7wkJepzBP9EeVzETCHsmiQDd5WYlO1\n"
+    b"C2IQYgw6MJzgM4entJ0V/GPytkodblGY95ORVK7ZhyNtda+r5BZ6/jeMW+hA3VoK\n"
+    b"tHSWjHt06ueVCCieZIATmYzBNt+zEz5UA2l7ksg3eWfVORJQS7a6Ef4VvbJLM9Ca\n"
+    b"m1kdsjelAoGBANKgvRf39i3bSuvm5VoyJuqinSb/23IH3Zo7XOZ5G164vh49E9Cq\n"
+    b"dOXXVxox74ppj/kbGUoOk+AvaB48zzfzNvac0a7lRHExykPH2kVrI/NwH/1OcT/x\n"
+    b"2e2DnFYocXcb4gbdZQ+m6X3zkxOYcONRzPVW1uMrFTWHcJveMUm4PGx7AoGBAMcU\n"
+    b"IRvrT6ye5se0s27gHnPweV+3xjsNtXZcK82N7duXyHmNjxrwOAv0SOhUmTkRXArM\n"
+    b"6aN5D8vyZBSWma2TgUKwpQYFTI+4Sp7sdkkyojGAEixJ+c5TZJNxZFrUe0FwAoic\n"
+    b"c2kb7ntaiEj5G+qHvykJJro5hy6uLnjiMVbAiJDTAoGAKb67241EmHAXGEwp9sdr\n"
+    b"2SMjnIAnQSF39UKAthkYqJxa6elXDQtLoeYdGE7/V+J2K3wIdhoPiuY6b4vD0iX9\n"
+    b"JcGM+WntN7YTjX2FsC588JmvbWfnoDHR7HYiPR1E58N597xXdFOzgUgORVr4PMWQ\n"
+    b"pqtwaZO3X2WZlvrhr+e46hMCgYBfdIdrm6jYXFjL6RkgUNZJQUTxYGzsY+ZemlNm\n"
+    b"fGdQo7a8kePMRuKY2MkcnXPaqTg49YgRmjq4z8CtHokRcWjJUWnPOTs8rmEZUshk\n"
+    b"0KJ0mbQdCFt/Uv0mtXgpFTkEZ3DPkDTGcV4oR4CRfOCl0/EU/A5VvL/U4i/mRo7h\n"
+    b"ye+xgQKBgD58b+9z+PR5LAJm1tZHIwb4tnyczP28PzwknxFd2qylR4ZNgvAUqGtU\n"
+    b"xvpUDpzMioz6zUH9YV43YNtt+5Xnzkqj+u9Mr27/H2v9XPwORGfwQ5XPwRJz/2oC\n"
+    b"EnPmP1SZoY9lXKUpQXHXSpDZ2rE2Klt3RHMUMHt8Zpy36E8Vwx8o\n"
+    b"-----END RSA PRIVATE KEY-----\n"
+)
 
 
 def test_prep_stream_data_passthrough():
@@ -50,7 +81,7 @@ def test_prep_stream_data_wrap(source):
     assert_prepped_stream_identity(test, io.BytesIO)
 
 
-class NullRawRSAKeyring(RawRSAKeyring):
+class IdentityKeyring(Keyring):
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         return encryption_materials
@@ -58,14 +89,6 @@ class NullRawRSAKeyring(RawRSAKeyring):
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         return decryption_materials
-
-
-class NullRawAESKeyring(RawAESKeyring):
-    def on_encrypt(self):
-        return
-
-    def on_decrypt(self):
-        return
 
 
 class TestUtils(object):

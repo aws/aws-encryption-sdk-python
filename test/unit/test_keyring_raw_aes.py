@@ -104,7 +104,11 @@ _DECRYPTION_MATERIALS_WITH_DATA_KEY = DecryptionMaterials(
     ],
 )
 
-_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(verification_key=b"ex_verification_key")
+_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    verification_key=b"ex_verification_key",
+    encryption_context=_ENCRYPTION_CONTEXT
+)
 
 
 class TestRawAESKeyring(object):

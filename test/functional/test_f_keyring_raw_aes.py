@@ -100,7 +100,8 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key"
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key",
+        encryption_context=_ENCRYPTION_CONTEXT
     )
 
     # Call on_decrypt function for the keyring
