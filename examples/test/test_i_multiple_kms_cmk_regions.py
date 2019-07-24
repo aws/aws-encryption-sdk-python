@@ -27,4 +27,5 @@ def test_one_kms_cmk():
     plaintext = static_plaintext
     cmk_arn1 = get_cmk_arn()
     cmk_arn2 = get_cmk_arn()
-    encrypt_decrypt(key_arn1=cmk_arn1, key_arn2=cmk_arn2, region_name1="us-west-1", region_name2="us-east-1", source_plaintext=plaintext, botocore_session=botocore.session.Session())
+    encrypt_decrypt(key_arn1=cmk_arn1, key_arn2=cmk_arn2, region_name1="us-west-1",
+        region_name2="us-east-1", source_plaintext=plaintext, botocore_session=botocore.session.Session())
