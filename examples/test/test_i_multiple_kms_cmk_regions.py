@@ -15,7 +15,7 @@
 import botocore.session
 import pytest
 
-from ..src.one_kms_cmk import multiple_kms_cmk_regions
+from ..src.multiple_kms_cmk_regions import encrypt_decrypt
 from .examples_test_utils import get_cmk_arn
 from .examples_test_utils import static_plaintext
 
