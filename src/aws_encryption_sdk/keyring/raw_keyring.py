@@ -183,12 +183,10 @@ class RawAESKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
         if decryption_materials.data_encryption_key is not None:
-            print("Data key already present")
             return decryption_materials
 
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
-        print("expected_key_info_len=", expected_key_info_len)
         for key in encrypted_data_keys:
 
             if decryption_materials.data_encryption_key is not None:
@@ -199,7 +197,6 @@ class RawAESKeyring(Keyring):
                 or len(key.key_provider.key_info) != expected_key_info_len
                 or not key.key_provider.key_info.startswith(self._key_info_prefix)
             ):
-                print("If condition matched")
                 continue
 
             # Wrapped EncryptedDataKey to deserialized EncryptedData
@@ -226,15 +223,12 @@ class RawAESKeyring(Keyring):
                 wrapping_key=self._key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
             )
 
-            print("Keyring trace made")
-
             # Update decryption materials
             data_encryption_key = RawDataKey(
                 key_provider=MasterKeyInfo(provider_id=self._key_provider.provider_id, key_info=self.key_name),
                 data_key=plaintext_data_key,
             )
             decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
-            print("Done")
 
         return decryption_materials
 

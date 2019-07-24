@@ -41,7 +41,7 @@ def sample_aes_encryption_decryption():
     _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
 
     # Creating an instance of a raw AES keyring
-    fake_raw_aes_keyring = RawAESKeyring(
+    sample_raw_aes_keyring = RawAESKeyring(
         key_namespace=key_namespace,
         key_name=key_name,
         wrapping_key=_WRAPPING_KEY,
@@ -49,13 +49,13 @@ def sample_aes_encryption_decryption():
     )
 
     # Call on_encrypt function for the keyring
-    encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS)
+    encryption_materials = sample_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS)
 
     print("PLAINTEXT DATA KEY")
     print(encryption_materials.data_encryption_key.data_key)
 
     print("ENCRYPTED DATA KEY")
-    print(encryption_materials.encrypted_data_keys)
+    print(encryption_materials.encrypted_data_keys[0].encrypted_data_key)
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
@@ -64,7 +64,7 @@ def sample_aes_encryption_decryption():
     )
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_aes_keyring.on_decrypt(
+    decryption_materials = sample_raw_aes_keyring.on_decrypt(
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys,
     )
 
