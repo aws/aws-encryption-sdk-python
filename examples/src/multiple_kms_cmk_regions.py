@@ -46,12 +46,12 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
     ciphertext, encrypted_message_header = encrypt(kms_key_provider, source_plaintext)
 
     # Check if both key ARNs are in the message headers
-    assert len(encrypted_message_header.encryption_context.items()) == 2
+    assert len(encrypted_message_header.encrypted_data_keys) == 2
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     # Either of our keys can be used to decrypt the message
-    plaintext1, decrypted_message_header1 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(key_arn1), ciphertext)
-    plaintext2, decrypted_message_header2 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(key_arn2), ciphertext)
+    plaintext1, decrypted_message_header1 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn1])), ciphertext)
+    plaintext2, decrypted_message_header2 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn2])), ciphertext)
 
     # Check if the original message and the decrypted message are the same
     assert source_plaintext == plaintext1
@@ -60,5 +60,9 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
     # Check if the headers of the encrypted message and decrypted message match
     assert all(
         pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header.encryption_context.items()
+        for pair in decrypted_message_header1.encryption_context.items()
+    )
+    assert all(
+        pair in encrypted_message_header.encryption_context.items()
+        for pair in decrypted_message_header2.encryption_context.items()
     )
