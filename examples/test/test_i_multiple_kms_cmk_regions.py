@@ -15,7 +15,7 @@
 import botocore.session
 import pytest
 
-from ..src.multiple_kms_cmk_regions import encrypt_decrypt
+from ..src.multiple_kms_cmk_regions import multiple_kms_cmk_regions
 from .examples_test_utils import get_cmk_arn
 from .examples_test_utils import static_plaintext
 
@@ -23,9 +23,8 @@ from .examples_test_utils import static_plaintext
 pytestmark = [pytest.mark.examples]
 
 
-def test_one_kms_cmk():
+def test_multiple_kms_cmk_regions():
     plaintext = static_plaintext
-    cmk_arn1 = get_cmk_arn()
-    cmk_arn2 = get_cmk_arn()
-    encrypt_decrypt(key_arn1=cmk_arn1, key_arn2=cmk_arn2, region_name1="us-west-1",
-        region_name2="us-east-1", source_plaintext=plaintext, botocore_session=botocore.session.Session())
+    cmk_arn1 = "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+    cmk_arn2 = "arn:aws:kms:eu-central-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+    multiple_kms_cmk_regions(cmk_arn1, cmk_arn2, source_plaintext=plaintext, botocore_session=botocore.session.Session())
