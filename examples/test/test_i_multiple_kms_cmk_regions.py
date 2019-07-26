@@ -16,14 +16,18 @@ import botocore.session
 import pytest
 
 from ..src.multiple_kms_cmk_regions import multiple_kms_cmk_regions
-#from .examples_test_utils import get_cmk_arn
+
+# from .examples_test_utils import get_cmk_arn
 from .examples_test_utils import static_plaintext
 
 
 pytestmark = [pytest.mark.examples]
 
+
 def test_multiple_kms_cmk_regions():
     plaintext = static_plaintext
     cmk_arn1 = "arn:aws:kms:us-west-1:658956600833:alias/EncryptDecrypt"
     cmk_arn2 = "arn:aws:kms:us-west-2:658956600833:alias/EncryptDecrypt"
-    multiple_kms_cmk_regions(cmk_arn1, cmk_arn2, source_plaintext=plaintext, botocore_session=botocore.session.Session())
+    multiple_kms_cmk_regions(
+        cmk_arn1, cmk_arn2, source_plaintext=plaintext, botocore_session=botocore.session.Session()
+    )

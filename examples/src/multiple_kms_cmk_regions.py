@@ -21,6 +21,7 @@ def encrypt(kms_key_provider, source_plaintext):
 def decrypt(kms_key_provider, ciphertext):
     return aws_encryption_sdk.decrypt(source=ciphertext, key_provider=kms_key_provider)
 
+
 def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under multiple KMS customer master keys (CMKs) in multiple regions.
 
@@ -49,8 +50,12 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     # Either of our keys can be used to decrypt the message
-    plaintext1, decrypted_message_header1 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn1])), ciphertext)
-    plaintext2, decrypted_message_header2 = decrypt(aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn2])), ciphertext)
+    plaintext1, decrypted_message_header1 = decrypt(
+        aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn1])), ciphertext
+    )
+    plaintext2, decrypted_message_header2 = decrypt(
+        aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn2])), ciphertext
+    )
 
     # Check if the original message and the decrypted message are the same
     assert source_plaintext == plaintext1
