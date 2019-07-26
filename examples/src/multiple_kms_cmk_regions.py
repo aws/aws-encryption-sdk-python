@@ -15,10 +15,12 @@ import aws_encryption_sdk
 
 
 def encrypt(kms_key_provider, source_plaintext):
+    """Encrypts source_plaintext with the key(s) in kms_key_provider"""
     return aws_encryption_sdk.encrypt(source=source_plaintext, key_provider=kms_key_provider)
 
 
 def decrypt(kms_key_provider, ciphertext):
+    """Decrypts ciphertext with the key(s) in kms_key_provider"""
     return aws_encryption_sdk.decrypt(source=ciphertext, key_provider=kms_key_provider)
 
 
