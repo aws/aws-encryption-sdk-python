@@ -10,7 +10,10 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Example showing basic encryption and decryption of a value already in memory using multiple KMS CMKs in multiple regions."""
+"""
+Example showing basic encryption and decryption of a value already in memory
+using multiple KMS CMKs in multiple regions.
+"""
 import aws_encryption_sdk
 
 
