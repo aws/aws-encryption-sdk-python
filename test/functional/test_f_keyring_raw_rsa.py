@@ -15,6 +15,7 @@
 import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
@@ -28,37 +29,72 @@ _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _SIGNING_KEY = b"aws-crypto-public-key"
 _WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
+#
+# _PUBLIC_KEY = (
+#                   b"-----BEGIN PUBLIC KEY-----\n"
+#                   b"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCOCigedc4PMp2sopCpJSqRNQla\n"
+#                   b"KHuk2WBuNVfU3Z5oSwleZs63t/7PrKWWaVPsPfVxzAW2GK/h74KlIaN/T93W0o8Q\n"
+#                   b"hsm6cMnRobaGYLro0hmy1VyiNrLE7JAOXhExdYJuL9fhK7VnYYxEDWa7K8xbdnCp\n"
+#                   b"myFdLqOWTeSou6eF6wIDAQAB\n"
+#                   b"-----END PUBLIC KEY-----\n"
+# )
+_PUBLIC_EXPONENT = 65537
+_KEY_SIZE = 2048
+_BACKEND = default_backend()
 
-_PRIVATE_KEY = (
-    b"-----BEGIN RSA PRIVATE KEY-----\n"
-    b"MIIEowIBAAKCAQEAo8uCyhiO4JUGZV+rtNq5DBA9Lm4xkw5kTA3v6EPybs8bVXL2\n"
-    b"ZE6jkbo+xT4Jg/bKzUpnp1fE+T1ruGPtsPdoEmhY/P64LDNIs3sRq5U4QV9IETU1\n"
-    b"vIcbNNkgGhRjV8J87YNY0tV0H7tuWuZRpqnS+gjV6V9lUMkbvjMCc5IBqQc3heut\n"
-    b"/+fH4JwpGlGxOVXI8QAapnSy1XpCr3+PT29kydVJnIMuAoFrurojRpOQbOuVvhtA\n"
-    b"gARhst1Ji4nfROGYkj6eZhvkz2Bkud4/+3lGvVU5LO1vD8oY7WoGtpin3h50VcWe\n"
-    b"aBT4kejx4s9/G9C4R24lTH09J9HO2UUsuCqZYQIDAQABAoIBAQCfC90bCk+qaWqF\n"
-    b"gymC+qOWwCn4bM28gswHQb1D5r6AtKBRD8mKywVvWs7azguFVV3Fi8sspkBA2FBC\n"
-    b"At5p6ULoJOTL/TauzLl6djVJTCMM701WUDm2r+ZOIctXJ5bzP4n5Q4I7b0NMEL7u\n"
-    b"ixib4elYGr5D1vrVQAKtZHCr8gmkqyx8Mz7wkJepzBP9EeVzETCHsmiQDd5WYlO1\n"
-    b"C2IQYgw6MJzgM4entJ0V/GPytkodblGY95ORVK7ZhyNtda+r5BZ6/jeMW+hA3VoK\n"
-    b"tHSWjHt06ueVCCieZIATmYzBNt+zEz5UA2l7ksg3eWfVORJQS7a6Ef4VvbJLM9Ca\n"
-    b"m1kdsjelAoGBANKgvRf39i3bSuvm5VoyJuqinSb/23IH3Zo7XOZ5G164vh49E9Cq\n"
-    b"dOXXVxox74ppj/kbGUoOk+AvaB48zzfzNvac0a7lRHExykPH2kVrI/NwH/1OcT/x\n"
-    b"2e2DnFYocXcb4gbdZQ+m6X3zkxOYcONRzPVW1uMrFTWHcJveMUm4PGx7AoGBAMcU\n"
-    b"IRvrT6ye5se0s27gHnPweV+3xjsNtXZcK82N7duXyHmNjxrwOAv0SOhUmTkRXArM\n"
-    b"6aN5D8vyZBSWma2TgUKwpQYFTI+4Sp7sdkkyojGAEixJ+c5TZJNxZFrUe0FwAoic\n"
-    b"c2kb7ntaiEj5G+qHvykJJro5hy6uLnjiMVbAiJDTAoGAKb67241EmHAXGEwp9sdr\n"
-    b"2SMjnIAnQSF39UKAthkYqJxa6elXDQtLoeYdGE7/V+J2K3wIdhoPiuY6b4vD0iX9\n"
-    b"JcGM+WntN7YTjX2FsC588JmvbWfnoDHR7HYiPR1E58N597xXdFOzgUgORVr4PMWQ\n"
-    b"pqtwaZO3X2WZlvrhr+e46hMCgYBfdIdrm6jYXFjL6RkgUNZJQUTxYGzsY+ZemlNm\n"
-    b"fGdQo7a8kePMRuKY2MkcnXPaqTg49YgRmjq4z8CtHokRcWjJUWnPOTs8rmEZUshk\n"
-    b"0KJ0mbQdCFt/Uv0mtXgpFTkEZ3DPkDTGcV4oR4CRfOCl0/EU/A5VvL/U4i/mRo7h\n"
-    b"ye+xgQKBgD58b+9z+PR5LAJm1tZHIwb4tnyczP28PzwknxFd2qylR4ZNgvAUqGtU\n"
-    b"xvpUDpzMioz6zUH9YV43YNtt+5Xnzkqj+u9Mr27/H2v9XPwORGfwQ5XPwRJz/2oC\n"
-    b"EnPmP1SZoY9lXKUpQXHXSpDZ2rE2Klt3RHMUMHt8Zpy36E8Vwx8o\n"
-    b"-----END RSA PRIVATE KEY-----\n"
+_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                                             key_size=_KEY_SIZE,
+                                                                             backend=_BACKEND).private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.TraditionalOpenSSL,
+    encryption_algorithm=serialization.NoEncryption()
 )
 
+_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                                          key_size=_KEY_SIZE,
+                                                                          backend=_BACKEND).private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.BestAvailableEncryption(b'mypassword')
+)
+
+_RAW_RSA_PUBLIC_KEY_PEM_ENCODED = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                           key_size=_KEY_SIZE,
+                                                           backend=_BACKEND).public_key().public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+)
+
+_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                                             key_size=_KEY_SIZE,
+                                                                             backend=_BACKEND).private_bytes(
+    encoding=serialization.Encoding.DER,
+    format=serialization.PrivateFormat.TraditionalOpenSSL,
+    encryption_algorithm=serialization.NoEncryption()
+)
+
+_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                                          key_size=_KEY_SIZE,
+                                                                          backend=_BACKEND).private_bytes(
+    encoding=serialization.Encoding.DER,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.BestAvailableEncryption(b'mypassword')
+)
+
+_RAW_RSA_PUBLIC_KEY_DER_ENCODED = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                           key_size=_KEY_SIZE,
+                                                           backend=_BACKEND).public_key().public_bytes(
+    encoding=serialization.Encoding.DER,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+)
+
+# _WRAPPING_ALGORITHMS = [
+#     WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+#     WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
+#     WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+#     WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
+#     WrappingAlgorithm.RSA_PKCS1
+# ]
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -109,61 +145,99 @@ _ENCRYPTION_MATERIALS = [
 ]
 
 _RAW_RSA_KEYRINGS = [
+
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                      key_size=_KEY_SIZE,
+                                                      backend=_BACKEND),
+    ),
+    RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
+        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+    ),
+    RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+    ),
+    RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
+        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+    ),
+    RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_PKCS1,
+        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
+                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+    ),
+
+
+
+    RawRSAKeyring.fromPEMEncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD,
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
     RawRSAKeyring.fromPEMEncoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
-        private_encoded_key=_PRIVATE_KEY,
-        password=None,
+        private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD,
+        password=b'mypassword',
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    # RawRSAKeyring.fromDEREncoding(
-    #     key_namespace=_PROVIDER_ID,
-    #     key_name=_KEY_ID,
-    #     encoded_key=b"-----BEGIN RSA PRIVATE KEY-----\n"
-    #                 b"MIIEowIBAAKCAQEAo8uCyhiO4JUGZV+rtNq5DBA9Lm4xkw5kTA3v6EPybs8bVXL2\n"
-    #                 b"ZE6jkbo+xT4Jg/bKzUpnp1fE+T1ruGPtsPdoEmhY/P64LDNIs3sRq5U4QV9IETU1\n"
-    #                 b"vIcbNNkgGhRjV8J87YNY0tV0H7tuWuZRpqnS+gjV6V9lUMkbvjMCc5IBqQc3heut\n"
-    #                 b"/+fH4JwpGlGxOVXI8QAapnSy1XpCr3+PT29kydVJnIMuAoFrurojRpOQbOuVvhtA\n"
-    #                 b"gARhst1Ji4nfROGYkj6eZhvkz2Bkud4/+3lGvVU5LO1vD8oY7WoGtpin3h50VcWe\n"
-    #                 b"aBT4kejx4s9/G9C4R24lTH09J9HO2UUsuCqZYQIDAQABAoIBAQCfC90bCk+qaWqF\n"
-    #                 b"gymC+qOWwCn4bM28gswHQb1D5r6AtKBRD8mKywVvWs7azguFVV3Fi8sspkBA2FBC\n"
-    #                 b"At5p6ULoJOTL/TauzLl6djVJTCMM701WUDm2r+ZOIctXJ5bzP4n5Q4I7b0NMEL7u\n"
-    #                 b"ixib4elYGr5D1vrVQAKtZHCr8gmkqyx8Mz7wkJepzBP9EeVzETCHsmiQDd5WYlO1\n"
-    #                 b"C2IQYgw6MJzgM4entJ0V/GPytkodblGY95ORVK7ZhyNtda+r5BZ6/jeMW+hA3VoK\n"
-    #                 b"tHSWjHt06ueVCCieZIATmYzBNt+zEz5UA2l7ksg3eWfVORJQS7a6Ef4VvbJLM9Ca\n"
-    #                 b"m1kdsjelAoGBANKgvRf39i3bSuvm5VoyJuqinSb/23IH3Zo7XOZ5G164vh49E9Cq\n"
-    #                 b"dOXXVxox74ppj/kbGUoOk+AvaB48zzfzNvac0a7lRHExykPH2kVrI/NwH/1OcT/x\n"
-    #                 b"2e2DnFYocXcb4gbdZQ+m6X3zkxOYcONRzPVW1uMrFTWHcJveMUm4PGx7AoGBAMcU\n"
-    #                 b"IRvrT6ye5se0s27gHnPweV+3xjsNtXZcK82N7duXyHmNjxrwOAv0SOhUmTkRXArM\n"
-    #                 b"6aN5D8vyZBSWma2TgUKwpQYFTI+4Sp7sdkkyojGAEixJ+c5TZJNxZFrUe0FwAoic\n"
-    #                 b"c2kb7ntaiEj5G+qHvykJJro5hy6uLnjiMVbAiJDTAoGAKb67241EmHAXGEwp9sdr\n"
-    #                 b"2SMjnIAnQSF39UKAthkYqJxa6elXDQtLoeYdGE7/V+J2K3wIdhoPiuY6b4vD0iX9\n"
-    #                 b"JcGM+WntN7YTjX2FsC588JmvbWfnoDHR7HYiPR1E58N597xXdFOzgUgORVr4PMWQ\n"
-    #                 b"pqtwaZO3X2WZlvrhr+e46hMCgYBfdIdrm6jYXFjL6RkgUNZJQUTxYGzsY+ZemlNm\n"
-    #                 b"fGdQo7a8kePMRuKY2MkcnXPaqTg49YgRmjq4z8CtHokRcWjJUWnPOTs8rmEZUshk\n"
-    #                 b"0KJ0mbQdCFt/Uv0mtXgpFTkEZ3DPkDTGcV4oR4CRfOCl0/EU/A5VvL/U4i/mRo7h\n"
-    #                 b"ye+xgQKBgD58b+9z+PR5LAJm1tZHIwb4tnyczP28PzwknxFd2qylR4ZNgvAUqGtU\n"
-    #                 b"xvpUDpzMioz6zUH9YV43YNtt+5Xnzkqj+u9Mr27/H2v9XPwORGfwQ5XPwRJz/2oC\n"
-    #                 b"EnPmP1SZoY9lXKUpQXHXSpDZ2rE2Klt3RHMUMHt8Zpy36E8Vwx8o\n"
-    #                 b"-----END RSA PRIVATE KEY-----\n",
-    #     password=None,
-    #     wrapping_algorithm=_WRAPPING_ALGORITHM,
-    # )
+    RawRSAKeyring.fromPEMEncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
+    ),
+
+
+
+    RawRSAKeyring.fromDEREncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD,
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
+    ),
+    RawRSAKeyring.fromDEREncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD,
+        password=b'mypassword',
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
+    ),
+    RawRSAKeyring.fromDEREncoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,
+        password=b'mypassword',
+        wrapping_algorithm=_WRAPPING_ALGORITHM,
+    ),
 ]
 
 
 @pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
-@pytest.mark.parametrize("fake_raw_rsa_keyring", _RAW_RSA_KEYRINGS)
-def test_raw_rsa_encryption_decryption(encryption_materials_samples, fake_raw_rsa_keyring):
+@pytest.mark.parametrize("test_raw_rsa_keyring", _RAW_RSA_KEYRINGS)
+def test_raw_rsa_encryption_decryption(encryption_materials_samples, test_raw_rsa_keyring):
 
     # Call on_encrypt function for the keyring
-    encryption_materials = fake_raw_rsa_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+    encryption_materials = test_raw_rsa_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+
+    assert encryption_materials.encrypted_data_keys is not None
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
@@ -171,9 +245,10 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, fake_raw_rs
     )
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_rsa_keyring.on_decrypt(
+    decryption_materials = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
-    # Check if the data keys match
-    assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key
+    if test_raw_rsa_keyring._private_wrapping_key is not None:
+        # Check if the data keys match
+        assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key

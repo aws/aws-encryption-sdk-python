@@ -18,6 +18,7 @@ from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, Wrapping
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -92,7 +93,7 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     _wrapping_algorithm = wrapping_algorithm_samples
 
     # Creating an instance of a raw AES keyring
-    sample_raw_aes_keyring = RawAESKeyring(
+    test_raw_aes_keyring = RawAESKeyring(
         key_namespace=key_namespace,
         key_name=key_name,
         wrapping_key=_WRAPPING_KEY,
@@ -100,7 +101,7 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     )
 
     # Call on_encrypt function for the keyring
-    encryption_materials = sample_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+    encryption_materials = test_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
     print("PLAINTEXT DATA KEY")
     print(encryption_materials.data_encryption_key)
@@ -113,9 +114,22 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     )
 
     # Call on_decrypt function for the keyring
-    decryption_materials = sample_raw_aes_keyring.on_decrypt(
+    decryption_materials = test_raw_aes_keyring.on_decrypt(
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
     # Check if the data keys match
     assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key
+
+
+def test_compatibility_with_raw_mkp():
+    # Creating an instance of a raw AES keyring
+    test_raw_aes_keyring = RawAESKeyring(
+        key_namespace=key_namespace,
+        key_name=key_name,
+        wrapping_key=_WRAPPING_KEY,
+        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    )
+    test_raw_master_key_provider = RawMasterKeyProvider(
+
+    )

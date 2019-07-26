@@ -13,16 +13,23 @@
 """Unit tests for Raw AES keyring."""
 
 import pytest
-from mock import MagicMock, patch, sentinel, Mock
+import os
 
 from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm, Algorithm
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, generate_data_key, GenerateKeyError
 from aws_encryption_sdk.structures import MasterKeyInfo
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
-from .test_utils import _ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY, _ENCRYPTION_MATERIALS_WITH_DATA_KEY, _PROVIDER_ID, \
-    _WRAPPING_KEY, _DATA_KEY, _KEY_ID, _DECRYPTION_MATERIALS_WITH_DATA_KEY, _DECRYPTION_MATERIALS_WITHOUT_DATA_KEY, \
-    _ENCRYPTION_CONTEXT, _ENCRYPTED_DATA_KEY_AES, _SIGNING_KEY
+
+from .test_utils import _ENCRYPTION_MATERIALS_WITH_DATA_KEY, _PROVIDER_ID, _WRAPPING_KEY, _DATA_KEY, _KEY_ID, \
+    _DECRYPTION_MATERIALS_WITH_DATA_KEY, _ENCRYPTION_CONTEXT, _ENCRYPTED_DATA_KEY_AES, _SIGNING_KEY, \
+    _DECRYPTION_MATERIALS_WITHOUT_DATA_KEY, _ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY
+
+import aws_encryption_sdk.keyring.raw_keyring
+import aws_encryption_sdk.key_providers.raw
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from pytest_mock import mocker  # noqa pylint: disable=unused-import
+
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -31,6 +38,24 @@ except ImportError:  # pragma: no cover
     pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+@pytest.fixture
+def patch_generate_data_key(mocker):
+    mocker.patch.object(aws_encryption_sdk.keyring.raw_keyring, "generate_data_key")
+    return aws_encryption_sdk.keyring.raw_keyring.generate_data_key
+
+
+@pytest.fixture
+def patch_decrypt_data_key(mocker):
+    mocker.patch.object(WrappingKey, "decrypt")
+    return WrappingKey.decrypt
+
+
+@pytest.fixture
+def patch_os_urandom(mocker):
+    mocker.patch.object(os, "urandom")
+    return os.urandom
 
 
 def test_parent():
@@ -70,9 +95,7 @@ def test_invalid_values_as_parameter():
     assert exc_info.errisinstance(TypeError)
 
 
-@patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
-def test_on_encrypt_when_data_encryption_key_given(mock_generate_data_key):
-    mock_generate_data_key.return_value = _DATA_KEY
+def test_on_encrypt_when_data_encryption_key_given(patch_generate_data_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -82,7 +105,7 @@ def test_on_encrypt_when_data_encryption_key_given(mock_generate_data_key):
 
     test = test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
     # Check if keyring is generated
-    assert not mock_generate_data_key.called
+    assert not patch_generate_data_key.called
 
 
 def test_keyring_trace_on_encrypt_when_data_encryption_key_given():
@@ -102,6 +125,7 @@ def test_keyring_trace_on_encrypt_when_data_encryption_key_given():
 
 
 def test_on_encrypt_when_data_encryption_key_not_given():
+
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -134,9 +158,7 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     assert encrypted_flag_count == 1
 
 
-@patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")
-def test_on_decrypt_when_data_key_given(mock_decrypt):
-    mock_decrypt.return_value = _DATA_KEY
+def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -156,7 +178,7 @@ def test_on_decrypt_when_data_key_given(mock_decrypt):
                                                 )
                                             ]
     )
-    assert not mock_decrypt.called
+    assert not patch_decrypt_data_key.called
 
 
 def test_keyring_trace_on_decrypt_when_data_key_given():
@@ -185,9 +207,7 @@ def test_keyring_trace_on_decrypt_when_data_key_given():
             assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
 
 
-@patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")
-def test_on_decrypt_when_data_key_and_edk_not_provided(mock_decrypt):
-    mock_decrypt.return_value = _DATA_KEY
+def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -197,7 +217,7 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(mock_decrypt):
 
     test = test_raw_aes_keyring.on_decrypt(decryption_materials=_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY,
                                            encrypted_data_keys=[])
-    assert not mock_decrypt.called
+    assert not patch_decrypt_data_key.called
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
@@ -206,9 +226,7 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(mock_decrypt):
     assert test.data_encryption_key is None
 
 
-@patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")
-def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(mock_decrypt):
-    mock_decrypt.return_value = _DATA_KEY
+def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decrypt_data_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -230,7 +248,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(mock_decry
                                                )
                                            ]
                                            )
-    assert not mock_decrypt.called
+    assert not patch_decrypt_data_key.called
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
@@ -239,9 +257,8 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(mock_decry
     assert test.data_encryption_key is None
 
 
-@patch("aws_encryption_sdk.internal.crypto.wrapping_keys.WrappingKey.decrypt")
-def test_on_decrypt_when_data_key_not_provided_and_edk_provided(mock_decrypt):
-    mock_decrypt.return_value = _DATA_KEY
+def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_data_key):
+    patch_decrypt_data_key.return_value = _DATA_KEY
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -252,9 +269,9 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(mock_decrypt):
     test = test_raw_aes_keyring.on_decrypt(decryption_materials=_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY,
                                            encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES]
                                            )
-    assert mock_decrypt.called_once_with(encrypted_wrapped_data_key=_ENCRYPTED_DATA_KEY_AES,
-                                         encryption_context=_ENCRYPTION_CONTEXT
-                                         )
+    assert patch_decrypt_data_key.called_once_with(encrypted_wrapped_data_key=_ENCRYPTED_DATA_KEY_AES,
+                                                   encryption_context=_ENCRYPTION_CONTEXT
+                                                   )
 
 
 def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
@@ -277,23 +294,22 @@ def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
     assert decrypted_flag_count == 1
 
 
-# @patch("aws_encryption_sdk.key_providers.raw.os.urandom")
-# def test_error_when_data_key_not_generated(mock_os_urandom):
-#     mock_os_urandom.side_effect = Exception()
-#     test_raw_aes_keyring = RawAESKeyring(
-#         key_namespace=_PROVIDER_ID,
-#         key_name=_KEY_ID,
-#         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-#         wrapping_key=_WRAPPING_KEY,
-#     )
-#     with pytest.raises(GenerateKeyError) as exc_info:
-#         test_raw_aes_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
-#     assert exc_info.match("Unable to generate data encryption key.")
+def test_error_when_data_key_not_generated(patch_os_urandom):
+    patch_os_urandom.side_effect = NotImplementedError
+    with pytest.raises(GenerateKeyError) as exc_info:
+        generate_data_key(encryption_materials=EncryptionMaterials(
+                                                algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+                                                encryption_context=_ENCRYPTION_CONTEXT,
+                                                signing_key=_SIGNING_KEY,
+                                            ),
+                          key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID,
+                                                     key_info=_KEY_ID))
+    assert exc_info.match("Unable to generate data encryption key.")
 
 
 def test_generate_data_key_error_when_data_key_exists():
     with pytest.raises(TypeError) as exc_info:
-        generate_data_key(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY,
+        generate_data_key(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY,
                           key_provider=MasterKeyInfo(
                               provider_id=_PROVIDER_ID,
                               key_info=_KEY_ID
