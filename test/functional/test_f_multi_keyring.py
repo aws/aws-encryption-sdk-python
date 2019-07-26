@@ -92,13 +92,13 @@ _MULTI_KEYRINGS = [
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
             ),
             RawRSAKeyring(
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
             ),
         ],
     ),
@@ -107,7 +107,7 @@ _MULTI_KEYRINGS = [
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
             wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-            wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+            private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
         )
     ),
     MultiKeyring(
@@ -116,7 +116,7 @@ _MULTI_KEYRINGS = [
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
             ),
             RawAESKeyring(
                 key_namespace=_PROVIDER_ID,
