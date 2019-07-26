@@ -27,6 +27,12 @@ _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
+_WRAPPING_ALGORITHM = [
+    WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
+    WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING
+]
+
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
@@ -77,15 +83,16 @@ _ENCRYPTION_MATERIALS = [
 
 
 @pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
-def test_raw_aes_encryption_decryption(encryption_materials_samples):
+@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
+def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_algorithm_samples):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+    _wrapping_algorithm = wrapping_algorithm_samples
 
     # Creating an instance of a raw AES keyring
-    fake_raw_aes_keyring = RawAESKeyring(
+    sample_raw_aes_keyring = RawAESKeyring(
         key_namespace=key_namespace,
         key_name=key_name,
         wrapping_key=_WRAPPING_KEY,
@@ -93,19 +100,20 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
     )
 
     # Call on_encrypt function for the keyring
-    encryption_materials = fake_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+    encryption_materials = sample_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
     print("PLAINTEXT DATA KEY")
     print(encryption_materials.data_encryption_key)
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key",
-        encryption_context=_ENCRYPTION_CONTEXT
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        verification_key=b"ex_verification_key",
+        encryption_context=_ENCRYPTION_CONTEXT,
     )
 
     # Call on_decrypt function for the keyring
-    decryption_materials = fake_raw_aes_keyring.on_decrypt(
+    decryption_materials = sample_raw_aes_keyring.on_decrypt(
         decryption_materials=decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 

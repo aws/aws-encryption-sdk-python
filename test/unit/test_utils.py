@@ -21,20 +21,196 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.keyring.base import Keyring
+from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag
+from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey, DataKey
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable, Union  # noqa pylint: disable=unused-import
+    from typing import Iterable  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+_ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
+_PROVIDER_ID = "Random Raw Keys"
+_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
+_SIGNING_KEY = b"aws-crypto-public-key"
+_DATA_KEY = (
+    b"\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25" b"\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
+)
+_ENCRYPTED_DATA_KEY_AES = EncryptedDataKey(
+            key_provider=MasterKeyInfo(
+                provider_id='Random Raw Keys',
+                key_info=b'5325b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80'
+                         b'\x00\x00\x00\x0c\xc7\xd5d\xc9\xc5\xf21\x8d\x8b\xf9H'
+                         b'\xbb'),
+            encrypted_data_key=b'\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b'
+                               b'\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1'
+                               b'\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9'
+                               b'\xfd;\x94lTu/6\xfe'
+
+)
+
+_ENCRYPTED_DATA_KEY_RSA = EncryptedDataKey(
+            key_provider=MasterKeyInfo(
+                provider_id='Random Raw Keys',
+                key_info=_KEY_ID),
+            encrypted_data_key=b'\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b'
+                               b'\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1'
+                               b'\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9'
+                               b'\xfd;\x94lTu/6\xfe'
+
+)
+
+# _ENCRYPTED_DATA_KEYS_RSA = [
+#         EncryptedDataKey(
+#             key_provider=MasterKeyInfo(
+#                 provider_id='Random Raw Keys',
+#                 key_info=b'5325b043-5843-4629-869c-64794af77ada'),
+#             encrypted_data_key=b'd7\xc7 R\x0e\x91\x104\xadK\xcb}j\xa1e2\x86\xe1W\xac\xf2\xab\xfc\xe3@\x15\x18'
+#                                b'\xc7\xef\x10a\xf4n1`\x11\x17\x85\x0c]X\x98\xac\xc8J\x9c\xc6\xbd}Y\xbaL\xb6'
+#                                b'\xb1\xf1\xf1\n\xba\x1c\x03\xfbM\xebs\\&hW\x1b\xc8d\x1c\x81\xd2\xe0\xec\xdf'
+#                                b'\xfe\xe1j\xf4\xcaHO\xe5`\x8c\xc74\x11Cc\xf9\xb1\xe9S\xa9*\xdbK+2\x12\xd2\xb0'
+#                                b'\xc2\xdb2\xf1\xc2\xc65&\x96R\xdc\xfd\xf9\xafaE\x8c\xbc\x9f$E-R\xe6\xcd^\xf2w'
+#                                b'\x87#\x02l\xf3|;\x90\x9ez\xbfA.\xe5\x1cB\xda+[\xf1.|\xf5s\xb9\nI\xc8\xab\xf4'
+#                                b'\xee\x9f\x81\n*\xcd\xee\x975m\x85\xde-\xd59=\x87C\xfc\xe0\x8d\xaa\xc4\xdf\xb1#'
+#                                b'\x95nm\x9dc}\x05\x0e"\x0c6^\xfd\xda\xc8q\x9b\x02\x1b\x12\xb4\xd0&\x85\xb1\xd1'
+#                                b'\x97\x1f&sQ\x10]\x04\xb9o\x80\xb1\x81a\x86cI\xbd\xaaz\xf0\xfb\x1dB#zN\xa8\xba'
+#                                b'\xc0]PsT\x08\xa4\x19\x16\xc4\xd9'),
+#         EncryptedDataKey(
+#             key_provider=MasterKeyInfo(
+#                 provider_id='Random Raw Keys',
+#                 key_info=b'5325b043-5843-4629-869c-64794af77ada'),
+#             encrypted_data_key=b'\xbbno\xb3C\xd2s\xd9\xa8\x92\xcb\xd2x\n#\x0e:j\x11\xf7\xf8\xb5+\xcf\x98\xea\xa2'
+#                                b'\xdd\x8d\xf0\x0f\xca\xef\xdb\xb8\x03\xd9\xaf\x99\xca\xf1\x1c\xb2\xd6\x92\x9ch1m'
+#                                b'\xa9!\x84\x90\xbe7RI\xdc.p\xe2\xdc\x0e\x8f\x1cl\xc8\x91\xf7HHR\x01\x9d\xdf\xbd'
+#                                b'\x19\xbbt\xf7\x00\x13H\x024#\x18K\xf2qd\xef\x9a\x86\xac\x82\xe5rik\x9c\x8aI\xaf'
+#                                b'\xf6f\xf6l\xe9\\\x08\xc0\x8fq\x17\xbf\x06\x0b\xa5\xe0\xf5\x97\xf4\xc8e\n6\x83'
+#                                b'\x08J\xfb4)\x1a.\x1f6\xda\xb2\xc6n\xa9\xd2Fa\x19\x86\xa9qh\x8e\x97\x0e2\xba\xfd'
+#                                b'\xe4:/\x91~H\x0b^\x91C\xc0\xc9\x0c`C\xebt\xd8\xec\xecZ\xf10\x80\xaa\xa1/\x18\xc0'
+#                                b'\x923\xdc\x9e\xec<\xb3\x9f\xb7\x8b\xec\xc3\x8d\nb\x82\x84\xd0\x9b\xa3\x9f4\x84\x8c'
+#                                b'\xa3v*v9d\xdb\xa6=\xc2\xfa\x88s\x8a\xa4\t)6\xe8\x08\x1dOj;\xd0\x1c0\xaf\x1e\x10\xaa'
+#                                b'\x7f\x90\xff\x92\xac\xceIMs\xf6\xb0\xff+\xfdvf')
+#
+#         , ]
+
+_ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+        )
+    ],
+)
+
+_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+)
+
+_ENCRYPTION_MATERIALS_WITH_ENCRYPTED_DATA_KEY_AES = EncryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encrypted_data_keys=[
+        _ENCRYPTED_DATA_KEY_AES
+    ],
+    encryption_context=_ENCRYPTION_CONTEXT,
+    signing_key=_SIGNING_KEY,
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+        )
+    ],
+)
+
+# _ENCRYPTION_MATERIALS_WITH_ENCRYPTED_DATA_KEY_RSA = EncryptionMaterials(
+#     algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+#     data_encryption_key=RawDataKey(
+#         key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+#         data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+#     ),
+#     encrypted_data_keys=[
+#         EncryptedDataKey(
+#             key_provider=MasterKeyInfo(
+#                 provider_id='Random Raw Keys',
+#                 key_info=b'5325b043-5843-4629-869c-64794af77ada'),
+#             encrypted_data_key=b'd7\xc7 R\x0e\x91\x104\xadK\xcb}j\xa1e2\x86\xe1W\xac\xf2\xab\xfc\xe3@\x15\x18'
+#                                b'\xc7\xef\x10a\xf4n1`\x11\x17\x85\x0c]X\x98\xac\xc8J\x9c\xc6\xbd}Y\xbaL\xb6'
+#                                b'\xb1\xf1\xf1\n\xba\x1c\x03\xfbM\xebs\\&hW\x1b\xc8d\x1c\x81\xd2\xe0\xec\xdf'
+#                                b'\xfe\xe1j\xf4\xcaHO\xe5`\x8c\xc74\x11Cc\xf9\xb1\xe9S\xa9*\xdbK+2\x12\xd2\xb0'
+#                                b'\xc2\xdb2\xf1\xc2\xc65&\x96R\xdc\xfd\xf9\xafaE\x8c\xbc\x9f$E-R\xe6\xcd^\xf2w'
+#                                b'\x87#\x02l\xf3|;\x90\x9ez\xbfA.\xe5\x1cB\xda+[\xf1.|\xf5s\xb9\nI\xc8\xab\xf4'
+#                                b'\xee\x9f\x81\n*\xcd\xee\x975m\x85\xde-\xd59=\x87C\xfc\xe0\x8d\xaa\xc4\xdf\xb1#'
+#                                b'\x95nm\x9dc}\x05\x0e"\x0c6^\xfd\xda\xc8q\x9b\x02\x1b\x12\xb4\xd0&\x85\xb1\xd1'
+#                                b'\x97\x1f&sQ\x10]\x04\xb9o\x80\xb1\x81a\x86cI\xbd\xaaz\xf0\xfb\x1dB#zN\xa8\xba'
+#                                b'\xc0]PsT\x08\xa4\x19\x16\xc4\xd9'),
+#         EncryptedDataKey(
+#             key_provider=MasterKeyInfo(
+#                 provider_id='Random Raw Keys',
+#                 key_info=b'5325b043-5843-4629-869c-64794af77ada'),
+#             encrypted_data_key=b'\xbbno\xb3C\xd2s\xd9\xa8\x92\xcb\xd2x\n#\x0e:j\x11\xf7\xf8\xb5+\xcf\x98\xea\xa2'
+#                                b'\xdd\x8d\xf0\x0f\xca\xef\xdb\xb8\x03\xd9\xaf\x99\xca\xf1\x1c\xb2\xd6\x92\x9ch1m'
+#                                b'\xa9!\x84\x90\xbe7RI\xdc.p\xe2\xdc\x0e\x8f\x1cl\xc8\x91\xf7HHR\x01\x9d\xdf\xbd'
+#                                b'\x19\xbbt\xf7\x00\x13H\x024#\x18K\xf2qd\xef\x9a\x86\xac\x82\xe5rik\x9c\x8aI\xaf'
+#                                b'\xf6f\xf6l\xe9\\\x08\xc0\x8fq\x17\xbf\x06\x0b\xa5\xe0\xf5\x97\xf4\xc8e\n6\x83'
+#                                b'\x08J\xfb4)\x1a.\x1f6\xda\xb2\xc6n\xa9\xd2Fa\x19\x86\xa9qh\x8e\x97\x0e2\xba\xfd'
+#                                b'\xe4:/\x91~H\x0b^\x91C\xc0\xc9\x0c`C\xebt\xd8\xec\xecZ\xf10\x80\xaa\xa1/\x18\xc0'
+#                                b'\x923\xdc\x9e\xec<\xb3\x9f\xb7\x8b\xec\xc3\x8d\nb\x82\x84\xd0\x9b\xa3\x9f4\x84\x8c'
+#                                b'\xa3v*v9d\xdb\xa6=\xc2\xfa\x88s\x8a\xa4\t)6\xe8\x08\x1dOj;\xd0\x1c0\xaf\x1e\x10\xaa'
+#                                b'\x7f\x90\xff\x92\xac\xceIMs\xf6\xb0\xff+\xfdvf')
+#
+#         , ],
+#     encryption_context=_ENCRYPTION_CONTEXT,
+#     signing_key=_SIGNING_KEY,
+#     keyring_trace=[
+#         KeyringTrace(
+#             wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+#             flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+#         )
+#     ],
+# )
+#
+
+_DECRYPTION_MATERIALS_WITH_DATA_KEY = DecryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    data_encryption_key=RawDataKey(
+        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+        data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+    ),
+    encryption_context=_ENCRYPTION_CONTEXT,
+    verification_key=b"ex_verification_key",
+    keyring_trace=[
+        KeyringTrace(
+            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+            flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+        )
+    ],
+)
+
+_DECRYPTION_MATERIALS_WITHOUT_DATA_KEY = DecryptionMaterials(
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    verification_key=b"ex_verification_key",
+    encryption_context=_ENCRYPTION_CONTEXT,
+)
 
 
 _RAW_RSA_PRIVATE_KEY_PEM_ENCODED = (
