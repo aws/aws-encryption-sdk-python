@@ -20,6 +20,7 @@ from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -41,45 +42,57 @@ _WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb
 _SIGNING_KEY = b"aws-crypto-public-key"
 
 
-class TestMultiKeyring(object):
+def test_parent():
+    assert issubclass(MultiKeyring, Keyring)
 
-    def test_parent(self):
-        assert issubclass(MultiKeyring, Keyring)
 
-    def test_keyring_with_no_generator_no_children(self):
-        with pytest.raises(TypeError) as exc_info:
-            MultiKeyring()
-        assert exc_info.match("At least one of generator or children must be provided")
+def test_keyring_with_generator_but_no_children():
+    test_multi_keyring = MultiKeyring(
+        generator=RawAESKeyring(
 
-    def test_children_not_keyrings(self):
-        with pytest.raises(TypeError):
-            MultiKeyring(
-                children=[
-                    WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
-                ]
-            )
+        )
+    )
 
-    def test_no_generator_no_data_encryption_key(self):
-        test_multi_keyring = _MULTI_KEYRING_WITH_NO_GENERATOR
-        with pytest.raises(EncryptKeyError) as exc_info:
-            test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
-        assert exc_info.match("Generator keyring not provided and encryption materials do not already "
-                              "contain a plaintext data key.")
 
-    @patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
-    def test_data_key_not_generated(self, mock_generate):
-        mock_generate.return_value = None
-        test_multi_keyring = _MULTI_KEYRING
-        with pytest.raises(GenerateKeyError) as exc_info:
-            test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
-        assert exc_info.match("Unable to generate data encryption key")
+def test_keyring_with_no_generator_no_children():
+    with pytest.raises(TypeError) as exc_info:
+        MultiKeyring()
+    assert exc_info.match("At least one of generator or children must be provided")
 
-    def test_number_of_encrypted_data_keys_without_generator(self):
-        test_multi_keyring = _MULTI_KEYRING_WITH_NO_GENERATOR
-        test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
-        assert len(test.encrypted_data_keys) == len(test_multi_keyring.children)
 
-    def test_number_of_encrypted_data_keys_with_generator(self):
-        test_multi_keyring = _MULTI_KEYRING
-        test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
-        assert len(test.encrypted_data_keys) == len(test_multi_keyring.children) + 1
+def test_children_not_keyrings():
+    with pytest.raises(TypeError) as exc_info:
+        MultiKeyring(
+            children=[
+                WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+            ]
+        )
+    assert exc_info.errisinstance(TypeError)
+
+
+def test_no_generator_no_data_encryption_key():
+    test_multi_keyring = _MULTI_KEYRING_WITH_NO_GENERATOR
+    with pytest.raises(EncryptKeyError) as exc_info:
+        test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
+    assert exc_info.match("Generator keyring not provided and encryption materials do not already "
+                          "contain a plaintext data key.")
+
+@patch("aws_encryption_sdk.keyring.raw_keyring.generate_data_key")
+def test_data_key_not_generated(mock_generate):
+    mock_generate.return_value = None
+    test_multi_keyring = _MULTI_KEYRING
+    with pytest.raises(GenerateKeyError) as exc_info:
+        test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY)
+    assert exc_info.match("Unable to generate data encryption key")
+
+
+def test_number_of_encrypted_data_keys_without_generator():
+    test_multi_keyring = _MULTI_KEYRING_WITH_NO_GENERATOR
+    test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
+    assert len(test.encrypted_data_keys) == len(test_multi_keyring.children)
+
+
+def test_number_of_encrypted_data_keys_with_generator():
+    test_multi_keyring = _MULTI_KEYRING
+    test = test_multi_keyring.on_encrypt(encryption_materials=_ENCRYPTION_MATERIALS_WITH_DATA_KEY)
+    assert len(test.encrypted_data_keys) == len(test_multi_keyring.children) + 1

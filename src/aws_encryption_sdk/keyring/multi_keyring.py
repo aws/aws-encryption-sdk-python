@@ -74,7 +74,7 @@ class MultiKeyring(Keyring):
             encryption_materials = self.generator.on_encrypt(encryption_materials=encryption_materials)
 
         # Check if data key is generated
-        if not encryption_materials.data_encryption_key:
+        if encryption_materials.data_encryption_key is None:
             raise GenerateKeyError("Unable to generate data encryption key.")
 
         # Call on_encrypt on all other keyrings
@@ -96,7 +96,7 @@ class MultiKeyring(Keyring):
         """
         # Call on_decrypt on all keyrings till decryption is successful
         for keyring in self._decryption_keyrings:
-            if decryption_materials.data_encryption_key:
+            if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
             decryption_materials = keyring.on_decrypt(decryption_materials=decryption_materials,
                                                       encrypted_data_keys=encrypted_data_keys)
