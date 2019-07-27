@@ -136,6 +136,7 @@ class RawAESKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
         if encryption_materials.data_encryption_key is None:
+            print("Data key needs to be generated")
             plaintext_generated = generate_data_key(
                 encryption_materials=encryption_materials, key_provider=self._key_provider
             )
@@ -144,6 +145,7 @@ class RawAESKeyring(Keyring):
             if not plaintext_generated or plaintext_generated is None:
                 raise GenerateKeyError("Unable to generate data encryption key.")
 
+        print("Generated")
         # Encrypt data key
         encrypted_wrapped_key = self._wrapping_key_structure.encrypt(
             plaintext_data_key=encryption_materials.data_encryption_key.data_key,
@@ -152,6 +154,7 @@ class RawAESKeyring(Keyring):
 
         # Check if encryption is successful
         if encrypted_wrapped_key is None:
+            print("Encrypted wrapped key None")
             return encryption_materials
 
         # EncryptedData to EncryptedDataKey

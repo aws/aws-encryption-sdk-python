@@ -22,7 +22,8 @@ from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring, WrappingKey
+from aws_encryption_sdk.internal.formatting import serialize
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -42,12 +43,6 @@ except ImportError:  # pragma: no cover
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-# @pytest.fixture
-# def patch_on_encrypt(mocker):
-#     mocker.patch.object(RawAESKeyring, "on_encrypt")
-#     return RawAESKeyring.on_encrypt
-
-
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
@@ -60,6 +55,12 @@ mock_child_1 = MagicMock()
 mock_child_1.__class__ = RawAESKeyring
 mock_child_2 = MagicMock()
 mock_child_2.__class__ = RawAESKeyring
+
+
+@pytest.fixture
+def patch_encrypt(mocker):
+    mocker.patch.object(serialize, "serialize_raw_master_key_prefix")
+    return serialize.serialize_raw_master_key_prefix
 
 
 def test_parent():
@@ -158,6 +159,15 @@ def test_on_encrypt_when_data_encryption_key_given():
         keyring.on_encrypt.assert_called_once()
 
 
+def test_on_encrypt_edk_length_when_keyring_generates_but_does_not_encrypt(patch_encrypt):
+    patch_encrypt.side_effect = Exception("Raw AES Keyring unable to encrypt data key")
+    test_multi_keyring = get_multi_keyring_with_no_children()
+    test = test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_key())
+    assert test.data_encryption_key is not None
+    # print(test.encrypted_data_keys)
+    assert len(test.encrypted_data_keys) == len(get_encryption_materials_without_data_key().encrypted_data_keys)
+
+
 def test_on_decrypt_when_data_encryption_key_given():
     test_multi_keyring = MultiKeyring(
         generator=mock_generator,
@@ -172,6 +182,6 @@ def test_on_decrypt_when_data_encryption_key_given():
     for keyring in test_multi_keyring.children:
         keyring.on_decrypt.assert_not_called()
 
-
+#
 # def test_every_keyring_called_when_edk_not_added():
 #

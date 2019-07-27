@@ -113,7 +113,8 @@ def get_encryption_materials_with_encrypted_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag
+                    .WRAPPING_KEY_ENCRYPTED_DATA_KEY},
             )
         ],
     )
@@ -155,13 +156,15 @@ def get_multi_keyring_with_generator_and_children():
                     key_namespace=_PROVIDER_ID,
                     key_name=_KEY_ID,
                     wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
+                                                                  backend=default_backend()),
                 ),
                 RawRSAKeyring(
                     key_namespace=_PROVIDER_ID,
                     key_name=_KEY_ID,
                     wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
+                                                                  backend=default_backend()),
                 ),
             ],
         )
@@ -173,7 +176,8 @@ def get_multi_keyring_with_no_children():
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
+                                                              backend=default_backend()),
             )
         )
 
@@ -185,7 +189,8 @@ def get_multi_keyring_with_no_generator():
                     key_namespace=_PROVIDER_ID,
                     key_name=_KEY_ID,
                     wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend()),
+                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
+                                                                  backend=default_backend()),
                 ),
                 RawAESKeyring(
                     key_namespace=_PROVIDER_ID,
