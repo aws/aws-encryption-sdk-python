@@ -14,8 +14,8 @@
 
 import pytest
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
@@ -29,72 +29,54 @@ _PROVIDER_ID = "Random Raw Keys"
 _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _SIGNING_KEY = b"aws-crypto-public-key"
 _WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
-#
-# _PUBLIC_KEY = (
-#                   b"-----BEGIN PUBLIC KEY-----\n"
-#                   b"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCOCigedc4PMp2sopCpJSqRNQla\n"
-#                   b"KHuk2WBuNVfU3Z5oSwleZs63t/7PrKWWaVPsPfVxzAW2GK/h74KlIaN/T93W0o8Q\n"
-#                   b"hsm6cMnRobaGYLro0hmy1VyiNrLE7JAOXhExdYJuL9fhK7VnYYxEDWa7K8xbdnCp\n"
-#                   b"myFdLqOWTeSou6eF6wIDAQAB\n"
-#                   b"-----END PUBLIC KEY-----\n"
-# )
+
 _PUBLIC_EXPONENT = 65537
 _KEY_SIZE = 2048
 _BACKEND = default_backend()
 
-_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                                             key_size=_KEY_SIZE,
-                                                                             backend=_BACKEND).private_bytes(
+_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(
+    public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+).private_bytes(
     encoding=serialization.Encoding.PEM,
     format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
+    encryption_algorithm=serialization.NoEncryption(),
 )
 
-_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                                          key_size=_KEY_SIZE,
-                                                                          backend=_BACKEND).private_bytes(
+_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD = rsa.generate_private_key(
+    public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+).private_bytes(
     encoding=serialization.Encoding.PEM,
     format=serialization.PrivateFormat.PKCS8,
-    encryption_algorithm=serialization.BestAvailableEncryption(b'mypassword')
+    encryption_algorithm=serialization.BestAvailableEncryption(b"mypassword"),
 )
 
-_RAW_RSA_PUBLIC_KEY_PEM_ENCODED = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                           key_size=_KEY_SIZE,
-                                                           backend=_BACKEND).public_key().public_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+_RAW_RSA_PUBLIC_KEY_PEM_ENCODED = (
+    rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND)
+    .public_key()
+    .public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
 )
 
-_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                                             key_size=_KEY_SIZE,
-                                                                             backend=_BACKEND).private_bytes(
+_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD = rsa.generate_private_key(
+    public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+).private_bytes(
     encoding=serialization.Encoding.DER,
     format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
+    encryption_algorithm=serialization.NoEncryption(),
 )
 
-_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                                          key_size=_KEY_SIZE,
-                                                                          backend=_BACKEND).private_bytes(
+_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD = rsa.generate_private_key(
+    public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+).private_bytes(
     encoding=serialization.Encoding.DER,
     format=serialization.PrivateFormat.PKCS8,
-    encryption_algorithm=serialization.BestAvailableEncryption(b'mypassword')
+    encryption_algorithm=serialization.BestAvailableEncryption(b"mypassword"),
 )
 
-_RAW_RSA_PUBLIC_KEY_DER_ENCODED = rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                           key_size=_KEY_SIZE,
-                                                           backend=_BACKEND).public_key().public_bytes(
-    encoding=serialization.Encoding.DER,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+_RAW_RSA_PUBLIC_KEY_DER_ENCODED = (
+    rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND)
+    .public_key()
+    .public_bytes(encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo)
 )
-
-# _WRAPPING_ALGORITHMS = [
-#     WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-#     WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
-#     WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
-#     WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
-#     WrappingAlgorithm.RSA_PKCS1
-# ]
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -145,46 +127,46 @@ _ENCRYPTION_MATERIALS = [
 ]
 
 _RAW_RSA_KEYRINGS = [
-
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                      key_size=_KEY_SIZE,
-                                                      backend=_BACKEND),
+        private_wrapping_key=rsa.generate_private_key(
+            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+        ),
     ),
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+        private_wrapping_key=rsa.generate_private_key(
+            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+        ),
     ),
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+        private_wrapping_key=rsa.generate_private_key(
+            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+        ),
     ),
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+        private_wrapping_key=rsa.generate_private_key(
+            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+        ),
     ),
     RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.RSA_PKCS1,
-        private_wrapping_key=rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT,
-                                                      key_size=_KEY_SIZE, backend=_BACKEND),
+        private_wrapping_key=rsa.generate_private_key(
+            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
+        ),
     ),
-
-
-
     RawRSAKeyring.fromPEMEncoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -195,7 +177,7 @@ _RAW_RSA_KEYRINGS = [
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD,
-        password=b'mypassword',
+        password=b"mypassword",
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
     RawRSAKeyring.fromPEMEncoding(
@@ -204,9 +186,6 @@ _RAW_RSA_KEYRINGS = [
         public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-
-
-
     RawRSAKeyring.fromDEREncoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -217,14 +196,14 @@ _RAW_RSA_KEYRINGS = [
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD,
-        password=b'mypassword',
+        password=b"mypassword",
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
     RawRSAKeyring.fromDEREncoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,
-        password=b'mypassword',
+        password=b"mypassword",
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
 ]

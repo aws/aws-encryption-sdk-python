@@ -15,10 +15,10 @@
 import pytest
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
-from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -31,7 +31,7 @@ _SIGNING_KEY = b"aws-crypto-public-key"
 _WRAPPING_ALGORITHM = [
     WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
     WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-    WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING
+    WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
 ]
 
 _ENCRYPTION_MATERIALS = [
@@ -81,6 +81,13 @@ _ENCRYPTION_MATERIALS = [
         ],
     ),
 ]
+#
+# _KEY_INFO_VECTORS = [
+#     (b"5325b043-5843-4629-869c-64794af77ada", b"5325b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80\x00\x00\x00\x0c",
+#      WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING),
+#     (b"30456b043-0323-4452-332a", b"30456b043-0323-4452-332a\x00\x00\x00\x80\x00\x00\x00\x0c",
+#      WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
+# ]
 
 
 @pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
@@ -121,15 +128,36 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     # Check if the data keys match
     assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key
 
-
-def test_compatibility_with_raw_mkp():
-    # Creating an instance of a raw AES keyring
-    test_raw_aes_keyring = RawAESKeyring(
-        key_namespace=key_namespace,
-        key_name=key_name,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    test_raw_master_key = RawMasterKey(
+        key_id=test_raw_aes_keyring.key_name,
+        provider_id=test_raw_aes_keyring.key_namespace,
+        wrapping_key=test_raw_aes_keyring._wrapping_key_structure,
     )
-    test_raw_master_key_provider = RawMasterKeyProvider(
+    encryption_materials = test_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
+    assert (
+        encryption_materials.data_encryption_key.data_key
+        == test_raw_master_key.decrypt_data_key_from_list(
+            encrypted_data_keys=encryption_materials._encrypted_data_keys,
+            algorithm=encryption_materials.algorithm,
+            encryption_context=encryption_materials.encryption_context,
+        ).data_key
     )
+
+    if encryption_materials_samples.data_encryption_key is not None:
+        raw_master_key_encrypted_data_key = test_raw_master_key.encrypt_data_key(
+            data_key=encryption_materials_samples.data_encryption_key,
+            algorithm=encryption_materials_samples.algorithm,
+            encryption_context=encryption_materials_samples.encryption_context,
+        )
+        assert (
+            encryption_materials_samples.data_encryption_key.data_key
+            == test_raw_aes_keyring.on_decrypt(
+                decryption_materials=DecryptionMaterials(
+                    algorithm=encryption_materials_samples.algorithm,
+                    encryption_context=encryption_materials_samples.encryption_context,
+                    verification_key=b"ex_verification_key",
+                ),
+                encrypted_data_keys=[raw_master_key_encrypted_data_key],
+            ).data_encryption_key.data_key
+        )
