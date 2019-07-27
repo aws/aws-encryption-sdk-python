@@ -32,7 +32,7 @@ from pytest_mock import mocker  # noqa pylint: disable=unused-import
 from .test_utils import get_encryption_materials_without_data_key, get_encryption_materials_with_data_key, \
     get_multi_keyring_with_generator_and_children, get_multi_keyring_with_no_children, \
     get_multi_keyring_with_no_generator, get_identity_keyring, get_decryption_materials_with_data_key, \
-    get_decryption_materials_without_data_key
+    get_decryption_materials_without_data_key, get_keyring_which_only_generates
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -153,15 +153,16 @@ def test_on_encrypt_when_data_encryption_key_given():
             mock_child_2
         ]
     )
-    test = test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_key())
+    test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_key())
     mock_generator.on_encrypt.assert_called_once()
     for keyring in test_multi_keyring.children:
         keyring.on_encrypt.assert_called_once()
 
 
-def test_on_encrypt_edk_length_when_keyring_generates_but_does_not_encrypt(patch_encrypt):
-    patch_encrypt.side_effect = Exception("Raw AES Keyring unable to encrypt data key")
-    test_multi_keyring = get_multi_keyring_with_no_children()
+def test_on_encrypt_edk_length_when_keyring_generates_but_does_not_encrypt():
+    test_multi_keyring = MultiKeyring(
+        generator=get_keyring_which_only_generates()
+    )
     test = test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_key())
     assert test.data_encryption_key is not None
     # print(test.encrypted_data_keys)

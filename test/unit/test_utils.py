@@ -25,7 +25,7 @@ import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey, KeyringTrace
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring, Keyring
+from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring, Keyring, generate_data_key
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
@@ -64,8 +64,34 @@ class IdentityKeyring(Keyring):
         return decryption_materials
 
 
+class OnlyGenerateKeyring(Keyring):
+    def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        encryption_materials.data_encryption_key = RawDataKey(
+            key_provider=MasterKeyInfo(
+                provider_id=_PROVIDER_ID,
+                key_info=_KEY_ID
+            ),
+            data_key=generate_data_key(encryption_materials=encryption_materials,
+                                       key_provider=MasterKeyInfo(
+                                            provider_id=_PROVIDER_ID,
+                                            key_info=_KEY_ID
+                                        )
+                                       )
+        )
+        return encryption_materials
+
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        return decryption_materials
+
+
 def get_identity_keyring():
     return IdentityKeyring()
+
+
+def get_keyring_which_only_generates():
+    return OnlyGenerateKeyring()
 
 
 def get_encryption_materials_with_data_key():
