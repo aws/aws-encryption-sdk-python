@@ -110,9 +110,6 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     # Call on_encrypt function for the keyring
     encryption_materials = test_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
-    print("PLAINTEXT DATA KEY")
-    print(encryption_materials.data_encryption_key)
-
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,

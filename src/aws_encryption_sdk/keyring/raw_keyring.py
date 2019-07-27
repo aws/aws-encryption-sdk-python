@@ -419,10 +419,8 @@ class RawRSAKeyring(Keyring):
         # Decrypt data key
         for key in encrypted_data_keys:
             if decryption_materials.data_encryption_key is not None:
-                print("DEC MAT")
                 return decryption_materials
             if key.key_provider != self._key_provider:
-                print("PROVIDER PROB")
                 continue
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
