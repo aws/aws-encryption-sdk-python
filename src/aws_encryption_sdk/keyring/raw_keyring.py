@@ -20,7 +20,7 @@ import six
 from attr.validators import instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
@@ -259,7 +259,7 @@ class RawRSAKeyring(Keyring):
     _public_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(rsa.RSAPublicKey)))
 
     @classmethod
-    def fromPEMEncoding(
+    def from_pem_encoding(
         cls,
         key_namespace,  # type: str
         key_name,  # type: bytes
@@ -299,7 +299,7 @@ class RawRSAKeyring(Keyring):
         )
 
     @classmethod
-    def fromDEREncoding(
+    def from_der_encoding(
         cls,
         key_namespace,  # type: str
         key_name,  # type: bytes

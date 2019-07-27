@@ -111,7 +111,7 @@ def test_on_encrypt_when_data_encryption_key_given(patch_generate_data_key):
         wrapping_key=_WRAPPING_KEY,
     )
 
-    test = test_raw_aes_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
+    test_raw_aes_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
     # Check if keyring is generated
     assert not patch_generate_data_key.called
 
@@ -177,7 +177,7 @@ def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         wrapping_key=_WRAPPING_KEY,
     )
-    test = test_raw_aes_keyring.on_decrypt(
+    test_raw_aes_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
         encrypted_data_keys=[
             EncryptedDataKey(
@@ -276,7 +276,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_da
         wrapping_key=_WRAPPING_KEY,
     )
 
-    test = test_raw_aes_keyring.on_decrypt(
+    test_raw_aes_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
     )
@@ -331,7 +331,7 @@ def test_generate_data_key_keyring_trace():
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     )
-    plaintext = generate_data_key(
+    generate_data_key(
         encryption_materials=encryption_materials_without_data_key,
         key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
     )

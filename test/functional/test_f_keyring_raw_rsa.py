@@ -167,39 +167,39 @@ _RAW_RSA_KEYRINGS = [
             public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
         ),
     ),
-    RawRSAKeyring.fromPEMEncoding(
+    RawRSAKeyring.from_pem_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    RawRSAKeyring.fromPEMEncoding(
+    RawRSAKeyring.from_pem_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD,
         password=b"mypassword",
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    RawRSAKeyring.fromPEMEncoding(
+    RawRSAKeyring.from_pem_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    RawRSAKeyring.fromDEREncoding(
+    RawRSAKeyring.from_der_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    RawRSAKeyring.fromDEREncoding(
+    RawRSAKeyring.from_der_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD,
         password=b"mypassword",
         wrapping_algorithm=_WRAPPING_ALGORITHM,
     ),
-    RawRSAKeyring.fromDEREncoding(
+    RawRSAKeyring.from_der_encoding(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,

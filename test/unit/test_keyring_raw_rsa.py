@@ -20,7 +20,7 @@ import aws_encryption_sdk.key_providers.raw
 import aws_encryption_sdk.keyring.raw_keyring
 from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
+from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 
 from .test_utils import (
@@ -125,7 +125,7 @@ def test_on_encrypt_when_data_encryption_key_given(patch_generate_data_key):
         ),
     )
 
-    test = test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
+    test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
     # Check if keyring is generated
     assert not patch_generate_data_key.called
 
@@ -196,7 +196,7 @@ def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
             public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
         ),
     )
-    test = test_raw_rsa_keyring.on_decrypt(
+    test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
     )
@@ -277,7 +277,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_da
         ),
     )
 
-    test = test_raw_rsa_keyring.on_decrypt(
+    test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
     )
