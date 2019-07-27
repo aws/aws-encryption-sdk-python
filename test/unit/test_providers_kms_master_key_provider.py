@@ -70,17 +70,20 @@ class TestKMSMasterKeyProvider(object):
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_client")
     def test_init_with_default_region_found(self, mock_add_regional_client):
         test = KMSMasterKeyProvider()
-        assert test.default_region is None
+        if not default_region_is_set():
+            assert test.default_region is None
         with patch.object(
             test.config.botocore_session, "get_config_variable", return_value=sentinel.default_region
         ) as mock_get_config:
             test._process_config()
             mock_get_config.assert_called_once_with("region")
             assert test.default_region is sentinel.default_region
-            mock_add_regional_client.assert_called_once_with(sentinel.default_region)
+            mock_add_regional_client.assert_called_with(sentinel.default_region)
 
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_client")
     def test_init_with_default_region_not_found(self, mock_add_regional_client):
+        if default_region_is_set():
+            pytest.skip("User has configured a default region")
         test = KMSMasterKeyProvider()
         assert test.default_region is None
         with patch.object(test.config.botocore_session, "get_config_variable", return_value=None) as mock_get_config:
@@ -93,11 +96,13 @@ class TestKMSMasterKeyProvider(object):
         test = KMSMasterKeyProvider()
         test._regional_clients = {}
         test.add_regional_client("ex_region_name")
-        self.mock_boto3_session.assert_called_once_with(region_name="ex_region_name", botocore_session=ANY)
-        self.mock_boto3_session_instance.client.assert_called_once_with("kms", config=test._user_agent_adding_config)
+        self.mock_boto3_session.assert_called_with(region_name="ex_region_name", botocore_session=ANY)
+        self.mock_boto3_session_instance.client.assert_called_with("kms", config=test._user_agent_adding_config)
         assert test._regional_clients["ex_region_name"] is self.mock_boto3_client_instance
 
     def test_add_regional_client_exists(self):
+        if default_region_is_set():
+            pytest.skip("User has configured a default region")
         test = KMSMasterKeyProvider()
         test._regional_clients["ex_region_name"] = sentinel.existing_client
         test.add_regional_client("ex_region_name")
@@ -114,7 +119,7 @@ class TestKMSMasterKeyProvider(object):
         test = KMSMasterKeyProvider()
         test._regional_clients["us-east-1"] = self.mock_boto3_client_instance
         client = test._client("arn:aws:kms:us-east-1:222222222222:key/aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb")
-        mock_add_client.assert_called_once_with("us-east-1")
+        mock_add_client.assert_called_with("us-east-1")
         assert client is self.mock_boto3_client_instance
 
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_client")
@@ -124,9 +129,11 @@ class TestKMSMasterKeyProvider(object):
         test._regional_clients[sentinel.default_region] = sentinel.default_client
         client = test._client("")
         assert client is sentinel.default_client
-        mock_add_client.assert_called_once_with(sentinel.default_region)
+        mock_add_client.assert_called_with(sentinel.default_region)
 
     def test_client_no_region_name_without_default(self):
+        if default_region_is_set():
+            pytest.skip("User has configured a default region")
         test = KMSMasterKeyProvider()
         with pytest.raises(UnknownRegionError) as excinfo:
             test._client("")
@@ -141,3 +148,10 @@ class TestKMSMasterKeyProvider(object):
         key = test._new_master_key(key_info)
         check_key = KMSMasterKey(key_id=key_info, client=self.mock_boto3_client_instance)
         assert key != check_key
+
+
+def default_region_is_set():
+    """Returns whether a user has their default AWS region set. This is useful for
+       testing logic around setting the region; there are some assertions which assume
+       the region starts out as `None`."""
+    return KMSMasterKeyProvider().default_region is not None
