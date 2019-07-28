@@ -13,22 +13,22 @@
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.internal.utils"""
 import io
+import os
 
 import pytest
-from mock import MagicMock, patch, sentinel
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
+from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey, KeyringTrace
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring, RawAESKeyring, Keyring, generate_data_key
-from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
+from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
+from aws_encryption_sdk.keyring.raw_keyring import Keyring, RawAESKeyring, RawRSAKeyring, generate_data_key
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
@@ -67,18 +67,17 @@ class IdentityKeyring(Keyring):
 class OnlyGenerateKeyring(Keyring):
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
-        encryption_materials.data_encryption_key = RawDataKey(
-            key_provider=MasterKeyInfo(
-                provider_id=_PROVIDER_ID,
-                key_info=_KEY_ID
-            ),
-            data_key=generate_data_key(encryption_materials=encryption_materials,
-                                       key_provider=MasterKeyInfo(
-                                            provider_id=_PROVIDER_ID,
-                                            key_info=_KEY_ID
-                                        )
-                                       )
-        )
+        if encryption_materials.data_encryption_key is None:
+            key_provider = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID)
+            data_encryption_key = RawDataKey(
+                key_provider=key_provider, data_key=os.urandom(encryption_materials.algorithm.kdf_input_len)
+            )
+            encryption_materials.add_data_encryption_key(
+                data_encryption_key=data_encryption_key,
+                keyring_trace=KeyringTrace(
+                    wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
+                ),
+            )
         return encryption_materials
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
@@ -139,8 +138,10 @@ def get_encryption_materials_with_encrypted_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY, KeyringTraceFlag
-                    .WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+                flags={
+                    KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
+                    KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
+                },
             )
         ],
     )
@@ -155,77 +156,80 @@ def get_decryption_materials_with_data_key():
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         verification_key=b"ex_verification_key",
-        keyring_trace=[KeyringTrace(
-            wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-            flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
-        )]
+        keyring_trace=[
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+            )
+        ],
     )
 
 
 def get_decryption_materials_without_data_key():
-    return DecryptionMaterials(
-        encryption_context=_ENCRYPTION_CONTEXT,
-        verification_key=b"ex_verification_key",
-    )
+    return DecryptionMaterials(encryption_context=_ENCRYPTION_CONTEXT, verification_key=b"ex_verification_key")
 
 
 def get_multi_keyring_with_generator_and_children():
     return MultiKeyring(
-            generator=RawAESKeyring(
+        generator=RawAESKeyring(
+            key_namespace=_PROVIDER_ID,
+            key_name=_KEY_ID,
+            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_key=_WRAPPING_KEY_AES,
+        ),
+        children=[
+            RawRSAKeyring(
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
-                wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-                wrapping_key=_WRAPPING_KEY_AES,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                private_wrapping_key=rsa.generate_private_key(
+                    public_exponent=65537, key_size=2048, backend=default_backend()
+                ),
             ),
-            children=[
-                RawRSAKeyring(
-                    key_namespace=_PROVIDER_ID,
-                    key_name=_KEY_ID,
-                    wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
-                                                                  backend=default_backend()),
+            RawRSAKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                private_wrapping_key=rsa.generate_private_key(
+                    public_exponent=65537, key_size=2048, backend=default_backend()
                 ),
-                RawRSAKeyring(
-                    key_namespace=_PROVIDER_ID,
-                    key_name=_KEY_ID,
-                    wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
-                                                                  backend=default_backend()),
-                ),
-            ],
-        )
+            ),
+        ],
+    )
 
 
 def get_multi_keyring_with_no_children():
     return MultiKeyring(
-            generator=RawRSAKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
-                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
-                                                              backend=default_backend()),
-            )
+        generator=RawRSAKeyring(
+            key_namespace=_PROVIDER_ID,
+            key_name=_KEY_ID,
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+            private_wrapping_key=rsa.generate_private_key(
+                public_exponent=65537, key_size=2048, backend=default_backend()
+            ),
         )
+    )
 
 
 def get_multi_keyring_with_no_generator():
     return MultiKeyring(
-            children=[
-                RawRSAKeyring(
-                    key_namespace=_PROVIDER_ID,
-                    key_name=_KEY_ID,
-                    wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-                    private_wrapping_key=rsa.generate_private_key(public_exponent=65537, key_size=2048,
-                                                                  backend=default_backend()),
+        children=[
+            RawRSAKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                private_wrapping_key=rsa.generate_private_key(
+                    public_exponent=65537, key_size=2048, backend=default_backend()
                 ),
-                RawAESKeyring(
-                    key_namespace=_PROVIDER_ID,
-                    key_name=_KEY_ID,
-                    wrapping_algorithm=WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-                    wrapping_key=_WRAPPING_KEY_AES,
-                ),
-            ]
-        )
+            ),
+            RawAESKeyring(
+                key_namespace=_PROVIDER_ID,
+                key_name=_KEY_ID,
+                wrapping_algorithm=WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
+                wrapping_key=_WRAPPING_KEY_AES,
+            ),
+        ]
+    )
 
 
 def test_prep_stream_data_passthrough():

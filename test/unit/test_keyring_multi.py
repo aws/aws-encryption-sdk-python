@@ -13,26 +13,28 @@
 """Unit tests for Multi keyring."""
 
 import pytest
-import six
-from mock import MagicMock, patch, sentinel
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
-
-from aws_encryption_sdk.exceptions import GenerateKeyError, EncryptKeyError
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
-from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
-from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring, WrappingKey
-from aws_encryption_sdk.internal.formatting import serialize
-from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
-
+from mock import MagicMock
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from .test_utils import get_encryption_materials_without_data_key, get_encryption_materials_with_data_key, \
-    get_multi_keyring_with_generator_and_children, get_multi_keyring_with_no_children, \
-    get_multi_keyring_with_no_generator, get_identity_keyring, get_decryption_materials_with_data_key, \
-    get_decryption_materials_without_data_key, get_keyring_which_only_generates
+from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
+from aws_encryption_sdk.identifiers import WrappingAlgorithm
+from aws_encryption_sdk.internal.formatting import serialize
+from aws_encryption_sdk.keyring.base import Keyring
+from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
+
+from .test_utils import (
+    IdentityKeyring,
+    OnlyGenerateKeyring,
+    get_decryption_materials_with_data_key,
+    get_decryption_materials_without_data_key,
+    get_encryption_materials_with_data_key,
+    get_encryption_materials_with_encrypted_data_key,
+    get_encryption_materials_without_data_key,
+    get_multi_keyring_with_generator_and_children,
+    get_multi_keyring_with_no_children,
+    get_multi_keyring_with_no_generator,
+)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -51,10 +53,26 @@ _SIGNING_KEY = b"aws-crypto-public-key"
 
 mock_generator = MagicMock()
 mock_generator.__class__ = RawAESKeyring
+
 mock_child_1 = MagicMock()
 mock_child_1.__class__ = RawAESKeyring
+
 mock_child_2 = MagicMock()
 mock_child_2.__class__ = RawAESKeyring
+
+mock_child_3 = MagicMock()
+mock_child_3.__class__ = RawAESKeyring
+mock_child_3.on_decrypt.return_value = get_decryption_materials_with_data_key()
+
+
+mock_generator_does_not_add_edk = MagicMock()
+mock_generator_does_not_add_edk.__class__ = OnlyGenerateKeyring
+
+mock_child_1_does_not_add_edk = MagicMock()
+mock_child_1_does_not_add_edk.__class__ = OnlyGenerateKeyring
+
+mock_child_2_does_not_add_edk = MagicMock()
+mock_child_2_does_not_add_edk.__class__ = OnlyGenerateKeyring
 
 
 @pytest.fixture
@@ -73,10 +91,10 @@ def test_keyring_with_generator_but_no_children():
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
             wrapping_key=_WRAPPING_KEY_AES,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         )
     )
-    assert isinstance(test_multi_keyring.generator,RawAESKeyring)
+    assert isinstance(test_multi_keyring.generator, RawAESKeyring)
 
 
 def test_keyring_with_children_but_no_generator():
@@ -86,7 +104,7 @@ def test_keyring_with_children_but_no_generator():
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
                 wrapping_key=_WRAPPING_KEY_AES,
-                wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+                wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             )
         ]
     )
@@ -101,11 +119,7 @@ def test_keyring_with_no_generator_no_children():
 
 def test_children_not_keyrings():
     with pytest.raises(TypeError) as exc_info:
-        MultiKeyring(
-            children=[
-                WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
-            ]
-        )
+        MultiKeyring(children=[WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING])
     assert exc_info.errisinstance(TypeError)
 
 
@@ -113,14 +127,13 @@ def test_on_encrypt_with_no_generator_no_data_encryption_key():
     test_multi_keyring = get_multi_keyring_with_no_generator()
     with pytest.raises(EncryptKeyError) as exc_info:
         test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_key())
-    assert exc_info.match("Generator keyring not provided and encryption materials do not already "
-                          "contain a plaintext data key.")
+    assert exc_info.match(
+        "Generator keyring not provided and encryption materials do not already " "contain a plaintext data key."
+    )
 
 
 def test_identity_keyring_as_generator_and_no_data_encryption_key():
-    test_multi_keyring = MultiKeyring(
-        generator=get_identity_keyring()
-    )
+    test_multi_keyring = MultiKeyring(generator=IdentityKeyring())
     with pytest.raises(GenerateKeyError) as exc_info:
         test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_key())
     assert exc_info.match("Unable to generate data encryption key.")
@@ -146,43 +159,84 @@ def test_number_of_encrypted_data_keys_with_generator_and_children():
 
 
 def test_on_encrypt_when_data_encryption_key_given():
-    test_multi_keyring = MultiKeyring(
-        generator=mock_generator,
-        children=[
-            mock_child_1,
-            mock_child_2
-        ]
-    )
+    test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_1, mock_child_2])
     test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_key())
-    mock_generator.on_encrypt.assert_called_once()
-    for keyring in test_multi_keyring.children:
+    for keyring in test_multi_keyring._decryption_keyrings:
         keyring.on_encrypt.assert_called_once()
 
 
 def test_on_encrypt_edk_length_when_keyring_generates_but_does_not_encrypt():
-    test_multi_keyring = MultiKeyring(
-        generator=get_keyring_which_only_generates()
-    )
+    test_multi_keyring = MultiKeyring(generator=OnlyGenerateKeyring())
     test = test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_key())
     assert test.data_encryption_key is not None
-    # print(test.encrypted_data_keys)
     assert len(test.encrypted_data_keys) == len(get_encryption_materials_without_data_key().encrypted_data_keys)
+
+    test = test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_encrypted_data_key())
+    assert len(test.encrypted_data_keys) == len(get_encryption_materials_with_encrypted_data_key().encrypted_data_keys)
 
 
 def test_on_decrypt_when_data_encryption_key_given():
-    test_multi_keyring = MultiKeyring(
-        generator=mock_generator,
-        children=[
-            mock_child_1,
-            mock_child_2
-        ]
-    )
-    test = test_multi_keyring.on_decrypt(decryption_materials=get_decryption_materials_with_data_key(),
-                                         encrypted_data_keys=[])
-    mock_generator.on_decrypt.assert_not_called()
-    for keyring in test_multi_keyring.children:
+    test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_1, mock_child_2])
+    test_multi_keyring.on_decrypt(decryption_materials=get_decryption_materials_with_data_key(), encrypted_data_keys=[])
+    for keyring in test_multi_keyring._decryption_keyrings:
         keyring.on_decrypt.assert_not_called()
 
+
+def test_on_decrypt_every_keyring_called_when_data_encryption_key_not_added():
+    mock_generator.on_decrypt.return_value = get_decryption_materials_without_data_key()
+    mock_child_1.on_decrypt.return_value = get_decryption_materials_without_data_key()
+    mock_child_2.on_decrypt.return_value = get_decryption_materials_without_data_key()
+
+    test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_1, mock_child_2])
+    test_multi_keyring.on_decrypt(
+        decryption_materials=get_decryption_materials_without_data_key(), encrypted_data_keys=[]
+    )
+
+    for keyring in test_multi_keyring._decryption_keyrings:
+        keyring.on_decrypt.assert_called()
+
+
+# def test_no_keyring_called_after_data_encryption_key_added_when_data_encryption_key_not_given():
+#     mock_generator.on_decrypt(decryption_materials=get_decryption_materials_without_data_key(),
+#                               encrypted_data_keys=[])
+#     mock_generator.on_decrypt.return_value = get_decryption_materials_without_data_key()
 #
-# def test_every_keyring_called_when_edk_not_added():
+#     mock_child_3.on_decrypt(decryption_materials=mock_generator.on_decrypt.return_value,
+#                             encrypted_data_keys=[])
+#     mock_child_3.on_decrypt.return_value = get_decryption_materials_with_data_key()
 #
+#     mock_child_1.on_decrypt(decryption_materials=mock_child_3.on_decrypt.return_value,
+#                             encrypted_data_keys=[])
+#     mock_child_1.on_decrypt.return_value = get_decryption_materials_with_data_key()
+#
+#     mock_child_2.on_decrypt(decryption_materials=mock_child_1.on_decrypt.return_value,
+#                             encrypted_data_keys=[])
+#     mock_child_2.on_decrypt.return_value = get_decryption_materials_with_data_key()
+#
+#     test_multi_keyring = MultiKeyring(
+#         generator=mock_generator,
+#         children=[
+#             mock_child_3,
+#             mock_child_1,
+#             mock_child_2,
+#         ]
+#     )
+#     test_multi_keyring.on_decrypt(decryption_materials=get_decryption_materials_without_data_key(),
+#                                   encrypted_data_keys=[])
+#     mock_generator.on_decrypt.assert_called()
+#     mock_child_3.on_decrypt.assert_called()
+#     mock_child_1.on_decrypt.assert_not_called()
+#     mock_child_2.on_decrypt.assert_not_called()
+
+# def test_no_keyring_called_after_data_encryption_key_added_when_data_encryption_key_not_given():
+#     test_multi_keyring = get_multi_keyring_with_generator_and_children()
+#     test_multi_keyring.on_decrypt(decryption_materials=get_decryption_materials_without_data_key(),
+#                                   encrypted_data_keys=[
+#                                       EncryptedDataKey(
+#                                           key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+#                                           encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9"
+#                                                              b"\x7f.}\x87\x16,\x11n#\xc8p\xdb\xbf\x94\x86*Q\x06\xd2"
+#                                                              b"\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
+#                                       )
+#                                   ])
+#     for
