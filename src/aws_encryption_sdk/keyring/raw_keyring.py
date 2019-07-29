@@ -20,7 +20,7 @@ import six
 from attr.validators import instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
@@ -136,7 +136,6 @@ class RawAESKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
         if encryption_materials.data_encryption_key is None:
-            print("Data key needs to be generated")
             plaintext_generated = generate_data_key(
                 encryption_materials=encryption_materials, key_provider=self._key_provider
             )
@@ -145,7 +144,6 @@ class RawAESKeyring(Keyring):
             if not plaintext_generated or plaintext_generated is None:
                 raise GenerateKeyError("Unable to generate data encryption key.")
 
-        print("Generated")
         # Encrypt data key
         encrypted_wrapped_key = self._wrapping_key_structure.encrypt(
             plaintext_data_key=encryption_materials.data_encryption_key.data_key,
@@ -154,7 +152,6 @@ class RawAESKeyring(Keyring):
 
         # Check if encryption is successful
         if encrypted_wrapped_key is None:
-            print("Encrypted wrapped key None")
             return encryption_materials
 
         # EncryptedData to EncryptedDataKey
@@ -262,7 +259,7 @@ class RawRSAKeyring(Keyring):
     _public_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(rsa.RSAPublicKey)))
 
     @classmethod
-    def fromPEMEncoding(
+    def from_pem_encoding(
         cls,
         key_namespace,  # type: str
         key_name,  # type: bytes
@@ -302,7 +299,7 @@ class RawRSAKeyring(Keyring):
         )
 
     @classmethod
-    def fromDEREncoding(
+    def from_der_encoding(
         cls,
         key_namespace,  # type: str
         key_name,  # type: bytes
@@ -422,10 +419,8 @@ class RawRSAKeyring(Keyring):
         # Decrypt data key
         for key in encrypted_data_keys:
             if decryption_materials.data_encryption_key is not None:
-                print("DEC MAT")
                 return decryption_materials
             if key.key_provider != self._key_provider:
-                print("PROVIDER PROB")
                 continue
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
