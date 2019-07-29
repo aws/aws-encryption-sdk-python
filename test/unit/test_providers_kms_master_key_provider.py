@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Unit test suite from aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider"""
 import botocore.client
+import botocore.session
 import pytest
 from mock import ANY, MagicMock, call, patch, sentinel
 
@@ -32,6 +33,7 @@ def test_init_with_regionless_key_ids_and_region_names():
 class TestKMSMasterKeyProvider(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
+        self.botocore_no_region_session = botocore.session.Session(session_vars={"region": (None, None, None, None)})
         self.mock_botocore_session_patcher = patch("aws_encryption_sdk.key_providers.kms.botocore.session.Session")
         self.mock_botocore_session = self.mock_botocore_session_patcher.start()
         self.mock_boto3_session_patcher = patch("aws_encryption_sdk.key_providers.kms.boto3.session.Session")
@@ -69,9 +71,8 @@ class TestKMSMasterKeyProvider(object):
 
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_client")
     def test_init_with_default_region_found(self, mock_add_regional_client):
-        test = KMSMasterKeyProvider()
-        if not default_region_is_set():
-            assert test.default_region is None
+        test = KMSMasterKeyProvider(botocore_session=self.botocore_no_region_session)
+        assert test.default_region is None
         with patch.object(
             test.config.botocore_session, "get_config_variable", return_value=sentinel.default_region
         ) as mock_get_config:
@@ -82,9 +83,7 @@ class TestKMSMasterKeyProvider(object):
 
     @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_regional_client")
     def test_init_with_default_region_not_found(self, mock_add_regional_client):
-        if default_region_is_set():
-            pytest.skip("User has configured a default region")
-        test = KMSMasterKeyProvider()
+        test = KMSMasterKeyProvider(botocore_session=self.botocore_no_region_session)
         assert test.default_region is None
         with patch.object(test.config.botocore_session, "get_config_variable", return_value=None) as mock_get_config:
             test._process_config()
@@ -101,9 +100,7 @@ class TestKMSMasterKeyProvider(object):
         assert test._regional_clients["ex_region_name"] is self.mock_boto3_client_instance
 
     def test_add_regional_client_exists(self):
-        if default_region_is_set():
-            pytest.skip("User has configured a default region")
-        test = KMSMasterKeyProvider()
+        test = KMSMasterKeyProvider(botocore_session=self.botocore_no_region_session)
         test._regional_clients["ex_region_name"] = sentinel.existing_client
         test.add_regional_client("ex_region_name")
         assert not self.mock_boto3_session.called
@@ -132,9 +129,7 @@ class TestKMSMasterKeyProvider(object):
         mock_add_client.assert_called_with(sentinel.default_region)
 
     def test_client_no_region_name_without_default(self):
-        if default_region_is_set():
-            pytest.skip("User has configured a default region")
-        test = KMSMasterKeyProvider()
+        test = KMSMasterKeyProvider(botocore_session=self.botocore_no_region_session)
         with pytest.raises(UnknownRegionError) as excinfo:
             test._client("")
         excinfo.match("No default region found and no region determinable from key id: *")
@@ -148,10 +143,3 @@ class TestKMSMasterKeyProvider(object):
         key = test._new_master_key(key_info)
         check_key = KMSMasterKey(key_id=key_info, client=self.mock_boto3_client_instance)
         assert key != check_key
-
-
-def default_region_is_set():
-    """Returns whether a user has their default AWS region set. This is useful for
-       testing logic around setting the region; there are some assertions which assume
-       the region starts out as `None`."""
-    return KMSMasterKeyProvider().default_region is not None
