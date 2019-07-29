@@ -44,13 +44,13 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
 
-    # Create master key provider using the ARN of the key and the session (botocore_session)
+    # Create master key provider using the ARNs of the keys and the session (botocore_session)
     kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
     ciphertext, encrypted_message_header = encrypt(kms_key_provider, source_plaintext)
 
-    # Check if both key ARNs are in the message headers
+    # Check that both key ARNs are in the message headers
     assert len(encrypted_message_header.encrypted_data_keys) == 2
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
@@ -62,11 +62,11 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
         aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn2])), ciphertext
     )
 
-    # Check if the original message and the decrypted message are the same
+    # Check that the original message and the decrypted message are the same
     assert source_plaintext == plaintext1
     assert source_plaintext == plaintext2
 
-    # Check if the headers of the encrypted message and decrypted message match
+    # Check that the headers of the encrypted message and decrypted message match
     assert all(
         pair in encrypted_message_header.encryption_context.items()
         for pair in decrypted_message_header1.encryption_context.items()
