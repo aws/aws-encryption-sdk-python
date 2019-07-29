@@ -20,7 +20,7 @@ from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, Wrapping
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
