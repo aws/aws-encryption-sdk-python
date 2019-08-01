@@ -19,12 +19,6 @@ from attr.validators import deep_iterable, instance_of, optional
 from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.keyring.base import DecryptionMaterials, EncryptedDataKey, EncryptionMaterials, Keyring
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
-
 
 @attr.s
 class MultiKeyring(Keyring):
