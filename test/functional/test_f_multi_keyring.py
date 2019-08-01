@@ -16,7 +16,7 @@ import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
