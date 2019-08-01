@@ -58,31 +58,31 @@ def keyring_which_only_generates():
 
 @pytest.fixture
 def mock_generator():
-    mock_generator = MagicMock()
-    mock_generator.__class__ = RawAESKeyring
-    return mock_generator
+    mock_generator_keyring = MagicMock()
+    mock_generator_keyring.__class__ = RawAESKeyring
+    return mock_generator_keyring
 
 
 @pytest.fixture
 def mock_child_1():
-    mock_child_1 = MagicMock()
-    mock_child_1.__class__ = RawAESKeyring
-    return mock_child_1
+    mock_child_1_keyring = MagicMock()
+    mock_child_1_keyring.__class__ = RawAESKeyring
+    return mock_child_1_keyring
 
 
 @pytest.fixture
 def mock_child_2():
-    mock_child_2 = MagicMock()
-    mock_child_2.__class__ = RawAESKeyring
-    return mock_child_2
+    mock_child_2_keyring = MagicMock()
+    mock_child_2_keyring.__class__ = RawAESKeyring
+    return mock_child_2_keyring
 
 
 @pytest.fixture
 def mock_child_3():
-    mock_child_3 = MagicMock()
-    mock_child_3.__class__ = RawAESKeyring
-    mock_child_3.on_decrypt.return_value = get_decryption_materials_with_data_key()
-    return mock_child_3
+    mock_child_3_keyring = MagicMock()
+    mock_child_3_keyring.__class__ = RawAESKeyring
+    mock_child_3_keyring.on_decrypt.return_value = get_decryption_materials_with_data_key()
+    return mock_child_3_keyring
 
 
 @pytest.fixture
@@ -96,25 +96,21 @@ def test_parent():
 
 
 def test_keyring_with_generator_but_no_children():
-    test_multi_keyring = MultiKeyring(
-        generator=RawAESKeyring(
+    generator_keyring = RawAESKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
             wrapping_key=_WRAPPING_KEY_AES,
             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         )
+    test_multi_keyring = MultiKeyring(
+        generator=generator_keyring
     )
-    assert isinstance(test_multi_keyring.generator, Keyring)
-    assert test_multi_keyring.generator.key_namespace == _PROVIDER_ID
-    assert test_multi_keyring.generator.key_name == _KEY_ID
-    assert test_multi_keyring.generator._wrapping_key == _WRAPPING_KEY_AES
-    assert test_multi_keyring.generator._wrapping_algorithm == WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
-    assert test_multi_keyring.children == ()
+    assert test_multi_keyring.generator is generator_keyring
+    assert not test_multi_keyring.children
 
 
 def test_keyring_with_children_but_no_generator():
-    test_multi_keyring = MultiKeyring(
-        children=[
+    children_keyring = [
             RawAESKeyring(
                 key_namespace=_PROVIDER_ID,
                 key_name=_KEY_ID,
@@ -122,12 +118,10 @@ def test_keyring_with_children_but_no_generator():
                 wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             )
         ]
+    test_multi_keyring = MultiKeyring(
+        children=children_keyring
     )
-    assert len(test_multi_keyring.children) == 1
-    assert test_multi_keyring.children[0].key_namespace == _PROVIDER_ID
-    assert test_multi_keyring.children[0].key_name == _KEY_ID
-    assert test_multi_keyring.children[0]._wrapping_key == _WRAPPING_KEY_AES
-    assert test_multi_keyring.children[0]._wrapping_algorithm == WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+    assert test_multi_keyring.children is children_keyring
     assert test_multi_keyring.generator is None
 
 
@@ -157,6 +151,7 @@ def test_decryption_keyrings():
     assert test_multi_keyring.generator in test_multi_keyring._decryption_keyrings
     for child_keyring in test_multi_keyring.children:
         assert child_keyring in test_multi_keyring._decryption_keyrings
+    # assert len(list(test_multi_keyring._decryption_keyrings)) == len(test_multi_keyring.children) + 1
 
 
 def test_on_encrypt_with_no_generator_no_data_encryption_key():
