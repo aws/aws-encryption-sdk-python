@@ -26,7 +26,6 @@ from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyIn
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 

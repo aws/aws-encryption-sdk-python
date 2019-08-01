@@ -18,7 +18,6 @@ from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 _encryption_materials = EncryptionMaterials(
