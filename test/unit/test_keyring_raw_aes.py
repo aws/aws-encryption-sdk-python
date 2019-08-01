@@ -26,7 +26,7 @@ from aws_encryption_sdk.keyring.raw_keyring import GenerateKeyError, RawAESKeyri
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.structures import MasterKeyInfo
 
-from .test_utils import (
+from .unit_test_utils import (
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_AES,
     _ENCRYPTION_CONTEXT,
@@ -40,11 +40,6 @@ from .test_utils import (
     get_encryption_materials_without_data_encryption_key,
 )
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -85,22 +80,22 @@ def test_valid_parameters():
 
 
 def test_missing_required_parameters():
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(TypeError) as exc_info:
         RawAESKeyring(
             key_namespace=_PROVIDER_ID, wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
         )
-    assert exc_info.errisinstance(TypeError)
+    assert exc_info.match("__init__() missing.*")
 
 
 def test_invalid_values_as_parameter():
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(TypeError) as exc_info:
         RawAESKeyring(
             key_namespace=_PROVIDER_ID,
             key_name=_KEY_ID,
             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             wrapping_key=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         )
-    assert exc_info.errisinstance(TypeError)
+    assert exc_info.match("'_wrapping_key' must be <class 'bytes'.*")
 
 
 def test_on_encrypt_when_data_encryption_key_given(patch_generate_data_key):

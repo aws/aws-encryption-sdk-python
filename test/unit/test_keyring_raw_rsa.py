@@ -23,7 +23,7 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 
-from .test_utils import (
+from .unit_test_utils import (
     _BACKEND,
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_RSA,
@@ -38,11 +38,6 @@ from .test_utils import (
     get_encryption_materials_without_data_encryption_key,
 )
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
