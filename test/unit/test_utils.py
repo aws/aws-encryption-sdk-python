@@ -26,11 +26,6 @@ from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyIn
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
 
-try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
-except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
-    pass
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
