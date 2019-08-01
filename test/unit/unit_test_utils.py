@@ -48,6 +48,19 @@ _ENCRYPTED_DATA_KEY_AES = EncryptedDataKey(
     b"\xfd;\x94lTu/6\xfe",
 )
 
+_ENCRYPTED_DATA_KEY_NOT_IN_KEYRING = EncryptedDataKey(
+    key_provider=MasterKeyInfo(
+        provider_id="Random Raw Keys",
+        key_info=b"5430b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80"
+        b"\x00\x00\x00\x0c\xc7\xd5d\xc9\xc5\xf21\x8d\x8b\xf9H"
+        b"\xbb",
+    ),
+    encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"
+    b"\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1"
+    b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
+    b"\xfd;\x94lTu/6\xfe",
+)
+
 _ENCRYPTED_DATA_KEY_RSA = EncryptedDataKey(
     key_provider=MasterKeyInfo(provider_id="Random Raw Keys", key_info=_KEY_ID),
     encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"

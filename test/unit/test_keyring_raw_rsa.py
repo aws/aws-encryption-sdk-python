@@ -44,12 +44,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def patch_generate_data_key(mocker):
-    mocker.patch.object(aws_encryption_sdk.keyring.raw_keyring, "generate_data_key")
-    return aws_encryption_sdk.keyring.raw_keyring.generate_data_key
+    mocker.patch.object(aws_encryption_sdk.keyring.raw_keyring, "_generate_data_key")
+    return aws_encryption_sdk.keyring.raw_keyring._generate_data_key
 
 
 @pytest.fixture
-def patch_decrypt_data_key(mocker):
+def patch_decrypt_on_wrapping_key(mocker):
     mocker.patch.object(WrappingKey, "decrypt")
     return WrappingKey.decrypt
 
@@ -160,7 +160,7 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     test = test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
 
     # Check if data key is generated
-    assert test.data_encryption_key and test.data_encryption_key is not None
+    assert test.data_encryption_key is not None
 
     generated_flag_count = 0
     encrypted_flag_count = 0
@@ -182,7 +182,7 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     assert encrypted_flag_count == 1
 
 
-def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
+def test_on_decrypt_when_data_key_given(patch_decrypt_on_wrapping_key):
     test_raw_rsa_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -195,7 +195,7 @@ def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
     )
-    assert not patch_decrypt_data_key.called
+    assert not patch_decrypt_on_wrapping_key.called
 
 
 def test_keyring_trace_on_decrypt_when_data_key_given():
@@ -217,7 +217,7 @@ def test_keyring_trace_on_decrypt_when_data_key_given():
             assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
 
 
-def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
+def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_on_wrapping_key):
     test_raw_rsa_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -230,7 +230,7 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
     test = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(), encrypted_data_keys=[]
     )
-    assert not patch_decrypt_data_key.called
+    assert not patch_decrypt_on_wrapping_key.called
 
     for keyring_trace in test.keyring_trace:
         assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
@@ -238,7 +238,7 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
     assert test.data_encryption_key is None
 
 
-def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decrypt_data_key):
+def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decrypt_on_wrapping_key):
     test_raw_rsa_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -252,7 +252,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decr
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
     )
-    assert not patch_decrypt_data_key.called
+    assert not patch_decrypt_on_wrapping_key.called
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
@@ -261,8 +261,8 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decr
     assert test.data_encryption_key is None
 
 
-def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_data_key):
-    patch_decrypt_data_key.return_value = _DATA_KEY
+def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_on_wrapping_key):
+    patch_decrypt_on_wrapping_key.return_value = _DATA_KEY
     test_raw_rsa_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -276,7 +276,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_da
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
     )
-    assert patch_decrypt_data_key.called_once_with(
+    assert patch_decrypt_on_wrapping_key.called_once_with(
         encrypted_wrapped_data_key=_ENCRYPTED_DATA_KEY_RSA, encryption_context=_ENCRYPTION_CONTEXT
     )
 
@@ -304,3 +304,4 @@ def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
             decrypted_flag_count += 1
 
     assert decrypted_flag_count == 1
+    assert test.data_encryption_key is not None

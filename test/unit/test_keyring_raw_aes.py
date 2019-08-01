@@ -22,13 +22,14 @@ import aws_encryption_sdk.keyring.raw_keyring
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
-from aws_encryption_sdk.keyring.raw_keyring import GenerateKeyError, RawAESKeyring, generate_data_key
+from aws_encryption_sdk.keyring.raw_keyring import GenerateKeyError, RawAESKeyring, _generate_data_key
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.structures import MasterKeyInfo
 
 from .unit_test_utils import (
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_AES,
+    _ENCRYPTED_DATA_KEY_NOT_IN_KEYRING,
     _ENCRYPTION_CONTEXT,
     _KEY_ID,
     _PROVIDER_ID,
@@ -46,12 +47,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def patch_generate_data_key(mocker):
-    mocker.patch.object(aws_encryption_sdk.keyring.raw_keyring, "generate_data_key")
-    return aws_encryption_sdk.keyring.raw_keyring.generate_data_key
+    mocker.patch.object(aws_encryption_sdk.keyring.raw_keyring, "_generate_data_key")
+    return aws_encryption_sdk.keyring.raw_keyring._generate_data_key
 
 
 @pytest.fixture
-def patch_decrypt_data_key(mocker):
+def patch_decrypt_on_wrapping_key(mocker):
     mocker.patch.object(WrappingKey, "decrypt")
     return WrappingKey.decrypt
 
@@ -84,7 +85,7 @@ def test_missing_required_parameters():
         RawAESKeyring(
             key_namespace=_PROVIDER_ID, wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
         )
-    assert exc_info.match("__init__() missing.*")
+    assert exc_info.errisinstance(TypeError)
 
 
 def test_invalid_values_as_parameter():
@@ -143,7 +144,7 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     test = test_raw_aes_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
 
     # Check if data key is generated
-    assert test.data_encryption_key and test.data_encryption_key is not None
+    assert test.data_encryption_key is not None
 
     generated_flag_count = 0
     encrypted_flag_count = 0
@@ -165,7 +166,13 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     assert encrypted_flag_count == 1
 
 
-def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
+@pytest.mark.parametrize("decryption_materials, edk",
+                         (
+                             (get_decryption_materials_with_data_encryption_key(), [_ENCRYPTED_DATA_KEY_AES]),
+                             (get_decryption_materials_with_data_encryption_key(), [])
+                         )
+                         )
+def test_on_decrypt_when_data_key_given(decryption_materials, edk, patch_decrypt_on_wrapping_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -173,18 +180,10 @@ def test_on_decrypt_when_data_key_given(patch_decrypt_data_key):
         wrapping_key=_WRAPPING_KEY,
     )
     test_raw_aes_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_with_data_encryption_key(),
-        encrypted_data_keys=[
-            EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\
-                                   xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
-                b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\
-                                   x07FzE\xde",
-            )
-        ],
+        decryption_materials=decryption_materials,
+        encrypted_data_keys=edk,
     )
-    assert not patch_decrypt_data_key.called
+    assert not patch_decrypt_on_wrapping_key.called
 
 
 def test_keyring_trace_on_decrypt_when_data_key_given():
@@ -196,15 +195,7 @@ def test_keyring_trace_on_decrypt_when_data_key_given():
     )
     test = test_raw_aes_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
-        encrypted_data_keys=[
-            EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\
-                                   xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
-                b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\
-                                   x07FzE\xde",
-            )
-        ],
+        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
     )
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
@@ -212,7 +203,15 @@ def test_keyring_trace_on_decrypt_when_data_key_given():
             assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
 
 
-def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
+@pytest.mark.parametrize("decryption_materials, edk",
+                         (
+                             (get_decryption_materials_without_data_encryption_key(), []),
+                             (get_encryption_materials_without_data_encryption_key(),
+                              [_ENCRYPTED_DATA_KEY_NOT_IN_KEYRING])
+                         )
+                         )
+def test_on_decrypt_when_data_key_and_edk_not_provided(decryption_materials, edk,
+                                                       patch_decrypt_on_wrapping_key):
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -221,9 +220,9 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
     )
 
     test = test_raw_aes_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_without_data_encryption_key(), encrypted_data_keys=[]
+        decryption_materials=decryption_materials, encrypted_data_keys=edk
     )
-    assert not patch_decrypt_data_key.called
+    assert not patch_decrypt_on_wrapping_key.called
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
@@ -232,52 +231,19 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_data_key):
     assert test.data_encryption_key is None
 
 
-def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decrypt_data_key):
+def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_on_wrapping_key):
+    patch_decrypt_on_wrapping_key.return_value = _DATA_KEY
     test_raw_aes_keyring = RawAESKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         wrapping_key=_WRAPPING_KEY,
     )
-
-    test = test_raw_aes_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_without_data_encryption_key(),
-        encrypted_data_keys=[
-            EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
-                encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\
-                                                                    xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
-                b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\
-                                                                      x81\xf7\xf4G\
-                                                                    x07FzE\xde",
-            )
-        ],
-    )
-    assert not patch_decrypt_data_key.called
-
-    for keyring_trace in test.keyring_trace:
-        if keyring_trace.wrapping_key.key_info == _KEY_ID:
-            assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
-
-    assert test.data_encryption_key is None
-
-
-def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_data_key):
-    patch_decrypt_data_key.return_value = _DATA_KEY
-    test_raw_aes_keyring = RawAESKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-        wrapping_key=_WRAPPING_KEY,
-    )
-
     test_raw_aes_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
     )
-    assert patch_decrypt_data_key.called_once_with(
-        encrypted_wrapped_data_key=_ENCRYPTED_DATA_KEY_AES, encryption_context=_ENCRYPTION_CONTEXT
-    )
+    patch_decrypt_on_wrapping_key.assert_called_once()
 
 
 def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
@@ -304,7 +270,7 @@ def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
 def test_error_when_data_key_not_generated(patch_os_urandom):
     patch_os_urandom.side_effect = NotImplementedError
     with pytest.raises(GenerateKeyError) as exc_info:
-        generate_data_key(
+        _generate_data_key(
             encryption_materials=get_encryption_materials_without_data_encryption_key(),
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
         )
@@ -313,7 +279,7 @@ def test_error_when_data_key_not_generated(patch_os_urandom):
 
 def test_generate_data_key_error_when_data_key_exists():
     with pytest.raises(TypeError) as exc_info:
-        generate_data_key(
+        _generate_data_key(
             encryption_materials=get_encryption_materials_with_data_encryption_key(),
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
         )
@@ -326,12 +292,16 @@ def test_generate_data_key_keyring_trace():
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     )
-    generate_data_key(
+    _generate_data_key(
         encryption_materials=encryption_materials_without_data_key,
         key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
     )
 
+    assert encryption_materials_without_data_key.data_encryption_key.key_provider.provider_id == _PROVIDER_ID
+    assert encryption_materials_without_data_key.data_encryption_key.key_provider.key_info == _KEY_ID
+
     generate_flag_count = 0
+
     for keyring_trace in encryption_materials_without_data_key.keyring_trace:
         if KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY in keyring_trace.flags:
             generate_flag_count += 1

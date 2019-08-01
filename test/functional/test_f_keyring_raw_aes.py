@@ -14,7 +14,8 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm, EncryptionType
+from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
@@ -28,11 +29,7 @@ _KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
-_WRAPPING_ALGORITHM = [
-    WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-    WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-    WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
-]
+_WRAPPING_ALGORITHM = [alg for alg in WrappingAlgorithm if alg.encryption_type is EncryptionType.SYMMETRIC]
 
 _ENCRYPTION_MATERIALS = [
     EncryptionMaterials(
@@ -125,13 +122,35 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
     # Check if the data keys match
     assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key
 
+
+@pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
+@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
+def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples, wrapping_algorithm_samples):
+
+    # Initializing attributes
+    key_namespace = _PROVIDER_ID
+    key_name = _KEY_ID
+    _wrapping_algorithm = wrapping_algorithm_samples
+
+    # Creating an instance of a raw AES keyring
+    test_raw_aes_keyring = RawAESKeyring(
+        key_namespace=key_namespace,
+        key_name=key_name,
+        wrapping_key=_WRAPPING_KEY,
+        wrapping_algorithm=_wrapping_algorithm,
+    )
+
+    # Creating an instance of a raw master key
     test_raw_master_key = RawMasterKey(
         key_id=test_raw_aes_keyring.key_name,
         provider_id=test_raw_aes_keyring.key_namespace,
         wrapping_key=test_raw_aes_keyring._wrapping_key_structure,
     )
+
+    # Encrypt using raw AES keyring
     encryption_materials = test_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
 
+    # Check if plaintext data key encrypted by raw keyring is decrypted by raw master key
     assert (
         encryption_materials.data_encryption_key.data_key
         == test_raw_master_key.decrypt_data_key_from_list(
@@ -141,20 +160,50 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
         ).data_key
     )
 
-    if encryption_materials_samples.data_encryption_key is not None:
-        raw_master_key_encrypted_data_key = test_raw_master_key.encrypt_data_key(
-            data_key=encryption_materials_samples.data_encryption_key,
-            algorithm=encryption_materials_samples.algorithm,
-            encryption_context=encryption_materials_samples.encryption_context,
+
+@pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
+@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
+def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_samples, wrapping_algorithm_samples):
+
+    # Initializing attributes
+    key_namespace = _PROVIDER_ID
+    key_name = _KEY_ID
+    _wrapping_algorithm = wrapping_algorithm_samples
+
+    # Creating an instance of a raw AES keyring
+    test_raw_aes_keyring = RawAESKeyring(
+        key_namespace=key_namespace,
+        key_name=key_name,
+        wrapping_key=_WRAPPING_KEY,
+        wrapping_algorithm=_wrapping_algorithm,
+    )
+
+    # Creating an instance of a raw master key
+    test_raw_master_key = RawMasterKey(
+        key_id=test_raw_aes_keyring.key_name,
+        provider_id=test_raw_aes_keyring.key_namespace,
+        wrapping_key=test_raw_aes_keyring._wrapping_key_structure,
+    )
+
+    if encryption_materials_samples.data_encryption_key is None:
+        encryption_materials_samples.data_encryption_key = test_raw_master_key.generate_data_key(
+            algorithm=ALGORITHM,
+            encryption_context=_ENCRYPTION_CONTEXT
         )
-        assert (
-            encryption_materials_samples.data_encryption_key.data_key
-            == test_raw_aes_keyring.on_decrypt(
-                decryption_materials=DecryptionMaterials(
-                    algorithm=encryption_materials_samples.algorithm,
-                    encryption_context=encryption_materials_samples.encryption_context,
-                    verification_key=b"ex_verification_key",
-                ),
-                encrypted_data_keys=[raw_master_key_encrypted_data_key],
-            ).data_encryption_key.data_key
-        )
+
+    raw_master_key_encrypted_data_key = test_raw_master_key.encrypt_data_key(
+        data_key=encryption_materials_samples.data_encryption_key,
+        algorithm=encryption_materials_samples.algorithm,
+        encryption_context=encryption_materials_samples.encryption_context,
+    )
+    assert (
+        encryption_materials_samples.data_encryption_key.data_key
+        == test_raw_aes_keyring.on_decrypt(
+            decryption_materials=DecryptionMaterials(
+                algorithm=encryption_materials_samples.algorithm,
+                encryption_context=encryption_materials_samples.encryption_context,
+                verification_key=b"ex_verification_key",
+            ),
+            encrypted_data_keys=[raw_master_key_encrypted_data_key],
+        ).data_encryption_key.data_key
+    )
