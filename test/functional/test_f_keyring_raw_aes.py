@@ -14,7 +14,15 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import (
+    Algorithm,
+    EncryptionKeyType,
+    EncryptionType,
+    KeyringTraceFlag,
+    WrappingAlgorithm,
+)
+from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
@@ -79,15 +87,6 @@ def sample_encryption_materials():
             ],
         ),
     ]
-
-
-#
-# _KEY_INFO_VECTORS = [
-#     (b"5325b043-5843-4629-869c-64794af77ada", b"5325b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80\x00\x00\x00\x0c",
-#      WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING),
-#     (b"30456b043-0323-4452-332a", b"30456b043-0323-4452-332a\x00\x00\x00\x80\x00\x00\x00\x0c",
-#      WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
-# ]
 
 
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
@@ -205,3 +204,21 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
                 encrypted_data_keys=[raw_master_key_encrypted_data_key],
             ).data_encryption_key.data_key
         )
+
+
+@pytest.mark.parametrize("wrapping_algorithm", _WRAPPING_ALGORITHM)
+def test_key_info_prefix_vectors(wrapping_algorithm):
+    assert (
+        serialize_raw_master_key_prefix(
+            raw_master_key=RawMasterKey(
+                provider_id=_PROVIDER_ID,
+                key_id=_KEY_ID,
+                wrapping_key=WrappingKey(
+                    wrapping_algorithm=wrapping_algorithm,
+                    wrapping_key=_WRAPPING_KEY,
+                    wrapping_key_type=EncryptionKeyType.SYMMETRIC,
+                ),
+            )
+        )
+        == _KEY_ID + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
+    )
