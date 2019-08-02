@@ -49,7 +49,7 @@ class MultiKeyring(Keyring):
             raise TypeError("At least one of generator or children must be provided")
 
         _generator = (self.generator,) if self.generator is not None else ()
-        self._decryption_keyrings = itertools.chain(_generator, self.children)
+        self._decryption_keyrings = list(itertools.chain(_generator, self.children))
 
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
