@@ -14,13 +14,14 @@
 import copy
 import io
 import itertools
+
 from cryptography.hazmat.backends import default_backend
+
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag
+from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.keyring.base import EncryptedDataKey
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
-from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
-
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"

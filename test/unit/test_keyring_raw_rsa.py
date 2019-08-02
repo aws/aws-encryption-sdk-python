@@ -23,6 +23,7 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 
+from .test_values import VALUES
 from .unit_test_utils import (
     _BACKEND,
     _DATA_KEY,
@@ -38,8 +39,17 @@ from .unit_test_utils import (
     get_encryption_materials_without_data_encryption_key,
 )
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+@pytest.fixture
+def raw_rsa_keyring():
+    return RawRSAKeyring.from_pem_encoding(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+        private_encoded_key=VALUES["private_rsa_key_bytes"][1],
+    )
 
 
 @pytest.fixture
@@ -64,42 +74,31 @@ def test_parent():
     assert issubclass(RawRSAKeyring, Keyring)
 
 
-def test_valid_parameters():
-    test = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_valid_parameters(raw_rsa_keyring):
+    test = raw_rsa_keyring
     assert test.key_namespace == _PROVIDER_ID
     assert test.key_name == _KEY_ID
     assert test._wrapping_algorithm == WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
     assert isinstance(test._private_wrapping_key, rsa.RSAPrivateKey)
 
 
-def test_missing_required_parameters():
-    with pytest.raises(Exception) as exc_info:
+@pytest.mark.parametrize(
+    "key_namespace, key_name, wrapping_algorithm, private_wrapping_key, public_wrapping_key",
+    (
+        (_PROVIDER_ID, None, WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, VALUES["private_rsa_key_bytes"][1], None),
+        (None, None, None, None, None),
+        (_PROVIDER_ID, _KEY_ID, WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, None),
+    ),
+)
+def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, private_wrapping_key, public_wrapping_key):
+    with pytest.raises(TypeError):
         RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-            private_wrapping_key=rsa.generate_private_key(
-                public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-            ),
+            key_namespace=key_namespace,
+            key_name=key_name,
+            wrapping_algorithm=wrapping_algorithm,
+            private_wrapping_key=private_wrapping_key,
+            public_wrapping_key=public_wrapping_key,
         )
-    assert exc_info.errisinstance(TypeError)
-
-
-def test_invalid_values_as_parameter():
-    with pytest.raises(Exception) as exc_info:
-        RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-            private_wrapping_key=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        )
-    assert exc_info.errisinstance(TypeError)
 
 
 def test_public_and_private_key_not_provided():
@@ -110,30 +109,16 @@ def test_public_and_private_key_not_provided():
     assert exc_info.match("At least one of public key or private key must be provided.")
 
 
-def test_on_encrypt_when_data_encryption_key_given(patch_generate_data_key):
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_on_encrypt_when_data_encryption_key_given(raw_rsa_keyring, patch_generate_data_key):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
     # Check if keyring is generated
     assert not patch_generate_data_key.called
 
 
-def test_keyring_trace_on_encrypt_when_data_encryption_key_given():
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_keyring_trace_on_encrypt_when_data_encryption_key_given(raw_rsa_keyring):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test = test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
 
@@ -143,15 +128,8 @@ def test_keyring_trace_on_encrypt_when_data_encryption_key_given():
             assert KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY not in keyring_trace.flags
 
 
-def test_on_encrypt_when_data_encryption_key_not_given():
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_on_encrypt_when_data_encryption_key_not_given(raw_rsa_keyring):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     original_number_of_encrypted_data_keys = len(
         get_encryption_materials_without_data_encryption_key().encrypted_data_keys
@@ -182,15 +160,8 @@ def test_on_encrypt_when_data_encryption_key_not_given():
     assert encrypted_flag_count == 1
 
 
-def test_on_decrypt_when_data_key_given(patch_decrypt_on_wrapping_key):
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_on_decrypt_when_data_key_given(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
+    test_raw_rsa_keyring = raw_rsa_keyring
     test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
@@ -198,15 +169,8 @@ def test_on_decrypt_when_data_key_given(patch_decrypt_on_wrapping_key):
     assert not patch_decrypt_on_wrapping_key.called
 
 
-def test_keyring_trace_on_decrypt_when_data_key_given():
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_keyring_trace_on_decrypt_when_data_key_given(raw_rsa_keyring):
+    test_raw_rsa_keyring = raw_rsa_keyring
     test = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_with_data_encryption_key(),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
@@ -217,15 +181,8 @@ def test_keyring_trace_on_decrypt_when_data_key_given():
             assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
 
 
-def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_on_wrapping_key):
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_on_decrypt_when_data_key_and_edk_not_provided(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(), encrypted_data_keys=[]
@@ -238,15 +195,8 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(patch_decrypt_on_wrapping
     assert test.data_encryption_key is None
 
 
-def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decrypt_on_wrapping_key):
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
@@ -261,16 +211,9 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(patch_decr
     assert test.data_encryption_key is None
 
 
-def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_on_wrapping_key):
+def test_on_decrypt_when_data_key_not_provided_and_edk_provided(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
     patch_decrypt_on_wrapping_key.return_value = _DATA_KEY
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),
@@ -281,15 +224,8 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(patch_decrypt_on
     )
 
 
-def test_keyring_trace_when_data_key_not_provided_and_edk_provided():
-    test_raw_rsa_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_wrapping_key=rsa.generate_private_key(
-            public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND
-        ),
-    )
+def test_keyring_trace_when_data_key_not_provided_and_edk_provided(raw_rsa_keyring):
+    test_raw_rsa_keyring = raw_rsa_keyring
 
     test = test_raw_rsa_keyring.on_decrypt(
         decryption_materials=get_decryption_materials_without_data_encryption_key(),

@@ -136,9 +136,7 @@ class RawAESKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
         if encryption_materials.data_encryption_key is None:
-            _generate_data_key(
-                encryption_materials=encryption_materials, key_provider=self._key_provider
-            )
+            _generate_data_key(encryption_materials=encryption_materials, key_provider=self._key_provider)
 
         try:
             # Encrypt data key
@@ -219,10 +217,7 @@ class RawAESKeyring(Keyring):
             )
 
             # Update decryption materials
-            data_encryption_key = RawDataKey(
-                key_provider=self._key_provider,
-                data_key=plaintext_data_key,
-            )
+            data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
             decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
         return decryption_materials
@@ -354,9 +349,7 @@ class RawRSAKeyring(Keyring):
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
         """
         if encryption_materials.data_encryption_key is None:
-            _generate_data_key(
-                encryption_materials=encryption_materials, key_provider=self._key_provider
-            )
+            _generate_data_key(encryption_materials=encryption_materials, key_provider=self._key_provider)
 
         if self._public_wrapping_key is None:
             return encryption_materials
@@ -433,10 +426,7 @@ class RawRSAKeyring(Keyring):
             )
 
             # Update decryption materials
-            data_encryption_key = RawDataKey(
-                key_provider=self._key_provider,
-                data_key=plaintext_data_key,
-            )
+            data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
             decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
         return decryption_materials
