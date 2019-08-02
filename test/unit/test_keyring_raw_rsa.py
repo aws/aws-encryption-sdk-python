@@ -25,14 +25,14 @@ from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 
 from .test_values import VALUES
 from .unit_test_utils import (
+    _BACKEND,
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_RSA,
     _ENCRYPTION_CONTEXT,
     _KEY_ID,
+    _KEY_SIZE,
     _PROVIDER_ID,
     _PUBLIC_EXPONENT,
-    _BACKEND,
-    _KEY_SIZE,
     get_decryption_materials_with_data_encryption_key,
     get_decryption_materials_without_data_encryption_key,
     get_encryption_materials_with_data_encryption_key,
@@ -53,11 +53,7 @@ def raw_rsa_keyring():
 
 
 def raw_rsa_private_key():
-    return rsa.generate_private_key(
-        public_exponent=_PUBLIC_EXPONENT,
-        key_size=_KEY_SIZE,
-        backend=_BACKEND
-    )
+    return rsa.generate_private_key(public_exponent=_PUBLIC_EXPONENT, key_size=_KEY_SIZE, backend=_BACKEND)
 
 
 @pytest.fixture
@@ -97,7 +93,7 @@ def test_valid_parameters(raw_rsa_keyring):
         (None, None, None, None, None),
         (_PROVIDER_ID, _KEY_ID, WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, WrappingAlgorithm.RSA_OAEP_SHA256_MGF1, None),
         (None, None, None, raw_rsa_private_key(), raw_rsa_private_key().public_key()),
-        (len(_PROVIDER_ID), len(_KEY_ID), _PROVIDER_ID, _PROVIDER_ID, _KEY_ID)
+        (len(_PROVIDER_ID), len(_KEY_ID), _PROVIDER_ID, _PROVIDER_ID, _KEY_ID),
     ),
 )
 def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, private_wrapping_key, public_wrapping_key):

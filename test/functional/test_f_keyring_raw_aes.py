@@ -61,32 +61,6 @@ def sample_encryption_materials():
                 )
             ],
         ),
-        EncryptionMaterials(
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-            data_encryption_key=RawDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
-            ),
-            encrypted_data_keys=[
-                EncryptedDataKey(
-                    key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                    encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,"
-                                       b"\x11n#\xc8p\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G"
-                                       b"\x07FzE\xde",
-                )
-            ],
-            encryption_context=_ENCRYPTION_CONTEXT,
-            signing_key=_SIGNING_KEY,
-            keyring_trace=[
-                KeyringTrace(
-                    wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                    flags={
-                        KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
-                        KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
-                    },
-                )
-            ],
-        ),
     ]
 
 
@@ -156,14 +130,12 @@ def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_
     # Check if plaintext data key encrypted by raw keyring is decrypted by raw master key
 
     raw_mkp_decrypted_data_key = test_raw_master_key.decrypt_data_key_from_list(
-            encrypted_data_keys=encryption_materials._encrypted_data_keys,
-            algorithm=encryption_materials.algorithm,
-            encryption_context=encryption_materials.encryption_context,
-        ).data_key
+        encrypted_data_keys=encryption_materials._encrypted_data_keys,
+        algorithm=encryption_materials.algorithm,
+        encryption_context=encryption_materials.encryption_context,
+    ).data_key
 
-    assert (
-        encryption_materials.data_encryption_key.data_key == raw_mkp_decrypted_data_key
-    )
+    assert encryption_materials.data_encryption_key.data_key == raw_mkp_decrypted_data_key
 
 
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
@@ -201,17 +173,15 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
     # Check if plaintext data key encrypted by raw master key is decrypted by raw keyring
 
     raw_aes_keyring_decrypted_data_key = test_raw_aes_keyring.on_decrypt(
-            decryption_materials=DecryptionMaterials(
-                algorithm=encryption_materials_samples.algorithm,
-                encryption_context=encryption_materials_samples.encryption_context,
-                verification_key=b"ex_verification_key",
-            ),
-            encrypted_data_keys=[raw_master_key_encrypted_data_key],
-        ).data_encryption_key.data_key
+        decryption_materials=DecryptionMaterials(
+            algorithm=encryption_materials_samples.algorithm,
+            encryption_context=encryption_materials_samples.encryption_context,
+            verification_key=b"ex_verification_key",
+        ),
+        encrypted_data_keys=[raw_master_key_encrypted_data_key],
+    ).data_encryption_key.data_key
 
-    assert (
-        encryption_materials_samples.data_encryption_key.data_key == raw_aes_keyring_decrypted_data_key
-    )
+    assert encryption_materials_samples.data_encryption_key.data_key == raw_aes_keyring_decrypted_data_key
 
 
 @pytest.mark.parametrize("wrapping_algorithm", _WRAPPING_ALGORITHM)

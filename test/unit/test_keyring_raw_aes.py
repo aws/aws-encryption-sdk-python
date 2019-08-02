@@ -96,8 +96,12 @@ def test_valid_parameters(raw_aes_keyring):
             WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         ),
-        (Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256, Algorithm.AES_256_GCM_IV12_TAG16,
-         Algorithm.AES_128_GCM_IV12_TAG16, Algorithm.AES_128_GCM_IV12_TAG16)
+        (
+            Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
+            Algorithm.AES_256_GCM_IV12_TAG16,
+            Algorithm.AES_128_GCM_IV12_TAG16,
+            Algorithm.AES_128_GCM_IV12_TAG16,
+        ),
     ),
 )
 def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, wrapping_key):
