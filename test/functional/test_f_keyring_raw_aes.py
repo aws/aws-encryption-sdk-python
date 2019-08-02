@@ -26,7 +26,7 @@ from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_maste
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
