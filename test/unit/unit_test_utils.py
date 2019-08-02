@@ -131,7 +131,6 @@ def get_encryption_materials_with_data_key():
     )
 
 
-
 def get_encryption_materials_with_data_encryption_key():
     return EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
@@ -240,7 +239,6 @@ def get_decryption_materials_with_data_key():
             )
         ],
     )
-
 
 
 def get_decryption_materials_with_data_encryption_key():
