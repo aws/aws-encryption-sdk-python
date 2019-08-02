@@ -21,8 +21,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
+from aws_encryption_sdk.keyring.base import Keyring
 from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
-from aws_encryption_sdk.keyring.raw_keyring import Keyring, RawAESKeyring, RawRSAKeyring
+from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
@@ -31,7 +32,6 @@ try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
-
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
@@ -42,6 +42,44 @@ _DATA_KEY = (
     b"\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25" b"\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
 )
 _WRAPPING_KEY_AES = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
+
+_PUBLIC_EXPONENT = 65537
+_KEY_SIZE = 2048
+_BACKEND = default_backend()
+
+_ENCRYPTED_DATA_KEY_AES = EncryptedDataKey(
+    key_provider=MasterKeyInfo(
+        provider_id="Random Raw Keys",
+        key_info=b"5325b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80"
+        b"\x00\x00\x00\x0c\xc7\xd5d\xc9\xc5\xf21\x8d\x8b\xf9H"
+        b"\xbb",
+    ),
+    encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"
+    b"\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1"
+    b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
+    b"\xfd;\x94lTu/6\xfe",
+)
+
+_ENCRYPTED_DATA_KEY_NOT_IN_KEYRING = EncryptedDataKey(
+    key_provider=MasterKeyInfo(
+        provider_id="Random Raw Keys",
+        key_info=b"5430b043-5843-4629-869c-64794af77ada\x00\x00\x00\x80"
+        b"\x00\x00\x00\x0c\xc7\xd5d\xc9\xc5\xf21\x8d\x8b\xf9H"
+        b"\xbb",
+    ),
+    encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"
+    b"\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1"
+    b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
+    b"\xfd;\x94lTu/6\xfe",
+)
+
+_ENCRYPTED_DATA_KEY_RSA = EncryptedDataKey(
+    key_provider=MasterKeyInfo(provider_id="Random Raw Keys", key_info=_KEY_ID),
+    encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"
+    b"\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1"
+    b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
+    b"\xfd;\x94lTu/6\xfe",
+)
 
 
 class IdentityKeyring(Keyring):
@@ -93,6 +131,25 @@ def get_encryption_materials_with_data_key():
     )
 
 
+
+def get_encryption_materials_with_data_encryption_key():
+    return EncryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        data_encryption_key=RawDataKey(
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+        ),
+        encryption_context=_ENCRYPTION_CONTEXT,
+        signing_key=_SIGNING_KEY,
+        keyring_trace=[
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+            )
+        ],
+    )
+
+
 def get_encryption_materials_without_data_key():
     return EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
@@ -129,6 +186,44 @@ def get_encryption_materials_with_encrypted_data_key():
     )
 
 
+def get_encryption_materials_with_encrypted_data_key_aes():
+    return EncryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        data_encryption_key=RawDataKey(
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+        ),
+        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
+        encryption_context=_ENCRYPTION_CONTEXT,
+        signing_key=_SIGNING_KEY,
+        keyring_trace=[
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                flags={
+                    KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
+                    KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
+                },
+            )
+        ],
+    )
+
+
+def get_encryption_materials_without_data_encryption_key():
+    return EncryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        encryption_context=_ENCRYPTION_CONTEXT,
+        signing_key=_SIGNING_KEY,
+    )
+
+
+def get_decryption_materials_without_data_encryption_key():
+    return DecryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        verification_key=b"ex_verification_key",
+        encryption_context=_ENCRYPTION_CONTEXT,
+    )
+
+
 def get_decryption_materials_with_data_key():
     return DecryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
@@ -141,6 +236,25 @@ def get_decryption_materials_with_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+            )
+        ],
+    )
+
+
+
+def get_decryption_materials_with_data_encryption_key():
+    return DecryptionMaterials(
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        data_encryption_key=RawDataKey(
+            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
+            data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
+        ),
+        encryption_context=_ENCRYPTION_CONTEXT,
+        verification_key=b"ex_verification_key",
+        keyring_trace=[
+            KeyringTrace(
+                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
                 flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
             )
         ],

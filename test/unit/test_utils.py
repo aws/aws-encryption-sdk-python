@@ -21,7 +21,8 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.keyring.base import EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
 from .unit_test_utils import assert_prepped_stream_identity
