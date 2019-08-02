@@ -17,7 +17,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionType, KeyringTraceFlag, WrappingAlgorithm, \
+    EncryptionKeyType
+from aws_encryption_sdk.internal.crypto import WrappingKey
+from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
@@ -195,7 +198,8 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, test_raw_rs
 
     # Generate decryption materials
     decryption_materials = DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key"
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, verification_key=b"ex_verification_key",
+        encryption_context=_ENCRYPTION_CONTEXT
     )
 
     # Call on_decrypt function for the keyring
@@ -206,3 +210,46 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, test_raw_rs
     if test_raw_rsa_keyring._private_wrapping_key is not None:
         # Check if the data keys match
         assert encryption_materials.data_encryption_key.data_key == decryption_materials.data_encryption_key.data_key
+
+
+@pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
+def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples):
+    test_raw_rsa_keyring = RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+        private_wrapping_key=_PRIVATE_WRAPPING_KEY,
+    )
+
+    # Creating an instance of a raw master key
+    test_raw_master_key = RawMasterKey(
+        key_id=test_raw_rsa_keyring.key_name,
+        provider_id=test_raw_rsa_keyring.key_namespace,
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=test_raw_rsa_keyring._wrapping_algorithm,
+            ###--------HOWWWWWWW----------
+            wrapping_key=test_raw_rsa_keyring._private_wrapping_key.private_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PrivateFormat.Raw,
+                encryption_algorithm=serialization.NoEncryption()
+            ),
+            wrapping_key_type=EncryptionKeyType.PRIVATE,
+        ),
+    )
+
+    # Call on_encrypt function for the keyring
+    encryption_materials = test_raw_rsa_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
+
+    # Check if plaintext data key encrypted by raw keyring is decrypted by raw master key
+
+    raw_mkp_decrypted_data_key = test_raw_master_key.decrypt_data_key_from_list(
+        encrypted_data_keys=encryption_materials._encrypted_data_keys,
+        algorithm=encryption_materials.algorithm,
+        encryption_context=encryption_materials.encryption_context,
+    ).data_key
+
+    assert (encryption_materials.data_encryption_key.data_key == raw_mkp_decrypted_data_key)
+
+
+@pytest.mark.parametrize("encryption_materials_samples", _ENCRYPTION_MATERIALS)
+def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_samples):

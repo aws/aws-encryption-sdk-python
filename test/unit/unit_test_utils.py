@@ -19,9 +19,16 @@ from cryptography.hazmat.backends import default_backend
 
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
-from aws_encryption_sdk.keyring.base import EncryptedDataKey
+from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
+
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
@@ -69,6 +76,16 @@ _ENCRYPTED_DATA_KEY_RSA = EncryptedDataKey(
     b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
     b"\xfd;\x94lTu/6\xfe",
 )
+
+
+class IdentityKeyring(Keyring):
+    def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        return encryption_materials
+
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        return decryption_materials
 
 
 def get_encryption_materials_with_data_encryption_key():

@@ -21,8 +21,7 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
-from aws_encryption_sdk.keyring.base import EncryptedDataKey, Keyring
-from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.keyring.base import EncryptedDataKey
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
@@ -42,16 +41,6 @@ def test_prep_stream_data_wrap(source):
     test = aws_encryption_sdk.internal.utils.prep_stream_data(source)
 
     assert_prepped_stream_identity(test, io.BytesIO)
-
-
-class IdentityKeyring(Keyring):
-    def on_encrypt(self, encryption_materials):
-        # type: (EncryptionMaterials) -> EncryptionMaterials
-        return encryption_materials
-
-    def on_decrypt(self, decryption_materials, encrypted_data_keys):
-        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
-        return decryption_materials
 
 
 class TestUtils(object):

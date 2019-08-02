@@ -80,13 +80,17 @@ def _generate_data_key(
 
 @attr.s
 class RawAESKeyring(Keyring):
-    """Generate an instance for Raw AES Keyring using provided parameters
+    """Generate an instance of Raw AES Keyring which encrypts using AES-GCM algorithm using wrapping key provided as a
+    byte array
 
     :param str key_namespace: String defining the keyring.
     :param bytes key_name: Key ID
     :param bytes wrapping_key: Encryption key with which to wrap plaintext data key.
     :param wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key.
     :type wrapping_algorithm: WrappingAlgorithm
+
+    .. note::
+    Only one wrapping key can be specified in a Raw AES Keyring
     """
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))
@@ -225,8 +229,8 @@ class RawAESKeyring(Keyring):
 
 @attr.s
 class RawRSAKeyring(Keyring):
-    """Generate an instance for Raw RSA Keyring using public and private keys which are instances of RSAPublicKey
-    and RSAPrivateKey
+    """Generate an instance of Raw RSA Keyring which performs asymmetric encryption and decryption using public
+    and private keys provided
 
     :param str key_namespace: String defining the keyring ID
     :param bytes key_name: Key ID
