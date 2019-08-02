@@ -13,8 +13,8 @@
 """Unit tests for Raw AES keyring."""
 
 import os
-import unittest.mock
 
+import mock
 import pytest
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -215,7 +215,7 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(raw_aes_keyring,
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
     )
     patch_decrypt_on_wrapping_key.assert_called_once_with(
-        encrypted_wrapped_data_key=unittest.mock.ANY, encryption_context=unittest.mock.ANY
+        encrypted_wrapped_data_key=mock.ANY, encryption_context=mock.ANY
     )
 
 
