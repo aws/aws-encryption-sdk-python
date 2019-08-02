@@ -23,6 +23,19 @@ from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvi
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
+@pytest.fixture(autouse=True, params=[True, False], ids=["default region", "no default region"])
+def patch_default_region(request, monkeypatch):
+    """Run all tests in this module both with a default region set and no default region set.
+
+    This ensures that we do not regress on default region handling.
+    https://github.com/aws/aws-encryption-sdk-python/issues/31
+    """
+    if request.param:
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-west-2")
+    else:
+        monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
+
+
 def test_init_with_regionless_key_ids_and_region_names():
     key_ids = ("alias/key_1",)
     region_names = ("test-region-1",)
