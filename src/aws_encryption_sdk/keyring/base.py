@@ -11,10 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Base class interface for Keyrings."""
-import abc
-
-import six
-
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey
 
@@ -25,14 +21,12 @@ except ImportError:  # pragma: no cover
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
 class Keyring(object):
     """Parent interface for Keyring classes.
 
     .. versionadded:: 1.5.0
     """
 
-    @abc.abstractmethod
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         """Generate a data key if not present and encrypt it using any available wrapping key.
@@ -45,7 +39,6 @@ class Keyring(object):
         """
         raise NotImplementedError("Keyring does not implement on_encrypt function")
 
-    @abc.abstractmethod
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
