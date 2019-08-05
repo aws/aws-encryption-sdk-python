@@ -15,37 +15,29 @@ Example showing basic encryption and decryption of a value already in memory
 using multiple KMS CMKs in multiple regions.
 """
 import aws_encryption_sdk
+from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
+from aws_encryption_sdk.internal.crypto.encryption import encrypt, decrypt
 
 
-def encrypt(kms_key_provider, source_plaintext):
-    """Encrypts source_plaintext with the key(s) in kms_key_provider"""
-    return aws_encryption_sdk.encrypt(source=source_plaintext, key_provider=kms_key_provider)
-
-
-def decrypt(kms_key_provider, ciphertext):
-    """Decrypts ciphertext with the key(s) in kms_key_provider"""
-    return aws_encryption_sdk.decrypt(source=ciphertext, key_provider=kms_key_provider)
-
-
-def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_session=None):
+def multiple_kms_cmk_regions(key_arn_1, key_arn_2, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under multiple KMS customer master keys (CMKs) in multiple regions.
 
-    :param str key_arn1: Amazon Resource Name (ARN) of the KMS CMK
-    :param str key_arn2: Amazon Resource Name (ARN) of another KMS CMK
+    :param str key_arn_1: Amazon Resource Name (ARN) of the KMS CMK
+    :param str key_arn_2: Amazon Resource Name (ARN) of another KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
     # Check that these keys are in different regions
-    assert not key_arn1[12:21] == key_arn2[12:21]
+    assert not key_arn_1.split(":")[3] == key_arn_2.split(":")[3]
 
-    kwargs = dict(key_ids=[key_arn1, key_arn2])
+    kwargs = dict(key_ids=[key_arn_1, key_arn_2])
 
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
 
     # Create master key provider using the ARNs of the keys and the session (botocore_session)
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
+    kms_key_provider = KMSMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
     ciphertext, encrypted_message_header = encrypt(kms_key_provider, source_plaintext)
@@ -55,23 +47,26 @@ def multiple_kms_cmk_regions(key_arn1, key_arn2, source_plaintext, botocore_sess
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     # Either of our keys can be used to decrypt the message
-    plaintext1, decrypted_message_header1 = decrypt(
-        aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn1])), ciphertext
+    plaintext_1, decrypted_message_header_1 = decrypt(
+        KMSMasterKey(key_id=key_arn_1), ciphertext
     )
-    plaintext2, decrypted_message_header2 = decrypt(
-        aws_encryption_sdk.KMSMasterKeyProvider(**dict(key_ids=[key_arn2])), ciphertext
+    plaintext_2, decrypted_message_header_2 = decrypt(
+        KMSMasterKey(key_id=key_arn_2), ciphertext
     )
 
     # Check that the original message and the decrypted message are the same
-    assert source_plaintext == plaintext1
-    assert source_plaintext == plaintext2
+    if not isinstance(source_plaintext, bytes):
+        plaintext1 = plaintext_1.decode("utf-8")
+        plaintext2 = plaintext_2.decode("utf-8")
+    assert source_plaintext == plaintext_1
+    assert source_plaintext == plaintext_2
 
     # Check that the headers of the encrypted message and decrypted message match
     assert all(
         pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header1.encryption_context.items()
+        for pair in decrypted_message_header_1.encryption_context.items()
     )
     assert all(
         pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header2.encryption_context.items()
+        for pair in decrypted_message_header_2.encryption_context.items()
     )
