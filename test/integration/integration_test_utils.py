@@ -33,7 +33,7 @@ def get_cmk_arn():
         return arn
     raise ValueError("KMS CMK ARN provided for integration tests much be a key not an alias")
 
-def get_cmk_arn(region_name='us-west-2'):
+def get_cmk_arn(region_name):
     """Retrieves a CMK ARN based on the requested region_name"""
     if AWS_KMS_KEY_ID in os.environ and AWS_KMS_KEY_ID_2 in os.environ:
         raise ValueError(
@@ -44,9 +44,9 @@ def get_cmk_arn(region_name='us-west-2'):
     arn_1 = os.environ.get(AWS_KMS_KEY_ID, None)
     arn_2 = os.environ.get(AWS_KMS_KEY_ID_2, None)
     if arn_1.split(':')[3] == region_name:
-        return os.environ.get(AWS_KMS_KEY_ID, None)
+        return arn_1
     elif arn_2.split(':')[3] == region_name:
-        return os.environ.get(AWS_KMS_KEY_ID_2, None)
+        return arn_2
     else:
         raise ValueError(
             'No CMK in the region {} exist in either of your environment variables "{}" or "{}"'.format(
