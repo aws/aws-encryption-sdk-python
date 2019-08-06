@@ -14,6 +14,7 @@
 using one KMS CMK with an unsigned algorithm.
 """
 import aws_encryption_sdk
+from aws_encryption_sdk import encrypt, decrypt
 from aws_encryption_sdk.identifiers import Algorithm
 
 
@@ -34,12 +35,12 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
     kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
-    ciphertext, encrypted_message_header = aws_encryption_sdk.encrypt(
+    ciphertext, encrypted_message_header = encrypt(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16, source=source_plaintext, key_provider=kms_key_provider
     )
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
-    plaintext, decrypted_message_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=kms_key_provider)
+    plaintext, decrypted_message_header = decrypt(source=ciphertext, key_provider=kms_key_provider)
 
     # Check if the original message and the decrypted message are the same
     assert source_plaintext == plaintext
