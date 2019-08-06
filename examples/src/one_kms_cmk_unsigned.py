@@ -36,7 +36,7 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
     ciphertext, encrypted_message_header = encrypt(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16, source=source_plaintext, key_provider=kms_key_provider
+        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256, source=source_plaintext, key_provider=kms_key_provider
     )
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
