@@ -63,7 +63,10 @@ _WRAPPING_ALGORITHM_MAP = {
         }
     ),
 }
-_KEY_TYPES_MAP = {b"AES": EncryptionKeyType.SYMMETRIC, b"RSA": EncryptionKeyType.PRIVATE}
+_KEY_TYPES_MAP = {
+    b"AES": EncryptionKeyType.SYMMETRIC,
+    b"RSA": EncryptionKeyType.PRIVATE,
+}
 _STATIC_KEYS = defaultdict(dict)
 
 
@@ -75,13 +78,19 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
     def _get_raw_key(self, key_id):
         """Finds a loaded raw key."""
         try:
-            algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split(b".", 3)
+            algorithm, key_bits, padding_algorithm, padding_hash = key_id.upper().split(
+                b".", 3
+            )
             key_bits = int(key_bits)
             key_type = _KEY_TYPES_MAP[algorithm]
-            wrapping_algorithm = _WRAPPING_ALGORITHM_MAP[algorithm][key_bits][padding_algorithm][padding_hash]
+            wrapping_algorithm = _WRAPPING_ALGORITHM_MAP[algorithm][key_bits][
+                padding_algorithm
+            ][padding_hash]
             static_key = _STATIC_KEYS[algorithm][key_bits]
             return WrappingKey(
-                wrapping_algorithm=wrapping_algorithm, wrapping_key=static_key, wrapping_key_type=key_type
+                wrapping_algorithm=wrapping_algorithm,
+                wrapping_key=static_key,
+                wrapping_key_type=key_type,
             )
         except KeyError:
             _LOGGER.exception("Unknown Key ID: %s", key_id)
@@ -92,7 +101,9 @@ class StaticStoredMasterKeyProvider(RawMasterKeyProvider):
 class RawKeyDescription(object):
     """Customer raw key descriptor used by StaticStoredMasterKeyProvider."""
 
-    encryption_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    encryption_algorithm = attr.ib(
+        validator=attr.validators.instance_of(six.string_types)
+    )
     key_bits = attr.ib(validator=attr.validators.instance_of(int))
     padding_algorithm = attr.ib(validator=attr.validators.instance_of(six.string_types))
     padding_hash = attr.ib(validator=attr.validators.instance_of(six.string_types))
@@ -100,15 +111,26 @@ class RawKeyDescription(object):
     @property
     def key_id(self):
         """Build a key ID from instance parameters."""
-        return ".".join([self.encryption_algorithm, str(self.key_bits), self.padding_algorithm, self.padding_hash])
+        return ".".join(
+            [
+                self.encryption_algorithm,
+                str(self.key_bits),
+                self.padding_algorithm,
+                self.padding_hash,
+            ]
+        )
 
 
 @attr.s
 class Scenario(object):
     """Scenario details."""
 
-    plaintext_filename = attr.ib(validator=attr.validators.instance_of(six.string_types))
-    ciphertext_filename = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    plaintext_filename = attr.ib(
+        validator=attr.validators.instance_of(six.string_types)
+    )
+    ciphertext_filename = attr.ib(
+        validator=attr.validators.instance_of(six.string_types)
+    )
     key_ids = attr.ib(validator=attr.validators.instance_of(list))
 
 
@@ -120,7 +142,9 @@ def _generate_test_cases():  # noqa=C901
     if not os.path.isdir(root_dir):
         root_dir = os.getcwd()
     base_dir = os.path.join(root_dir, "aws_encryption_sdk_resources")
-    ciphertext_manifest_path = os.path.join(base_dir, "manifests", "ciphertext.manifest")
+    ciphertext_manifest_path = os.path.join(
+        base_dir, "manifests", "ciphertext.manifest"
+    )
 
     if not os.path.isfile(ciphertext_manifest_path):
         # Make no test cases if the ciphertext file is not found
@@ -147,7 +171,9 @@ def _generate_test_cases():  # noqa=C901
     # Collect test cases from ciphertext manifest
     for test_case in ciphertext_manifest["test_cases"]:
         key_ids = []
-        algorithm = aws_encryption_sdk.Algorithm.get_by_id(int(test_case["algorithm"], 16))
+        algorithm = aws_encryption_sdk.AlgorithmSuite.get_by_id(
+            int(test_case["algorithm"], 16)
+        )
         for key in test_case["master_keys"]:
             sys.stderr.write("XC:: " + json.dumps(key) + "\n")
             if key["provider_id"] == StaticStoredMasterKeyProvider.provider_id:
@@ -179,5 +205,7 @@ def test_decrypt_from_file(scenario):
         plaintext = infile.read()
     key_provider = StaticStoredMasterKeyProvider()
     key_provider.add_master_keys_from_list(scenario.key_ids)
-    decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(
+        source=ciphertext, key_provider=key_provider
+    )
     assert decrypted_ciphertext == plaintext

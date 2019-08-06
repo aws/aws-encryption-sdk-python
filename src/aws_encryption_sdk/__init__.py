@@ -14,10 +14,17 @@
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
-from aws_encryption_sdk.identifiers import Algorithm, __version__  # noqa
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig  # noqa
-from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager  # noqa
-from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager  # noqa
+from aws_encryption_sdk.identifiers import AlgorithmSuite, __version__  # noqa
+from aws_encryption_sdk.key_providers.kms import (
+    KMSMasterKeyProvider,
+    KMSMasterKeyProviderConfig,
+)  # noqa
+from aws_encryption_sdk.materials_managers.caching import (
+    CachingCryptoMaterialsManager,
+)  # noqa
+from aws_encryption_sdk.materials_managers.default import (
+    DefaultCryptoMaterialsManager,
+)  # noqa
 from aws_encryption_sdk.streaming_client import (  # noqa
     DecryptorConfig,
     EncryptorConfig,
@@ -69,8 +76,8 @@ def encrypt(**kwargs):
             this is not enforced if a `key_provider` is provided.
 
     :param dict encryption_context: Dictionary defining encryption context
-    :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: AlgorithmSuite to use for encryption
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int frame_length: Frame length in bytes
     :returns: Tuple containing the encrypted ciphertext and the message header object
     :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
@@ -177,7 +184,12 @@ def stream(**kwargs):
     :raises ValueError: if supplied with an unsupported mode value
     """
     mode = kwargs.pop("mode")
-    _stream_map = {"e": StreamEncryptor, "encrypt": StreamEncryptor, "d": StreamDecryptor, "decrypt": StreamDecryptor}
+    _stream_map = {
+        "e": StreamEncryptor,
+        "encrypt": StreamEncryptor,
+        "d": StreamDecryptor,
+        "decrypt": StreamDecryptor,
+    }
     try:
         return _stream_map[mode.lower()](**kwargs)
     except KeyError:

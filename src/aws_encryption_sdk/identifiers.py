@@ -50,7 +50,15 @@ class EncryptionSuite(Enum):
     AES_192_GCM_IV12_TAG16 = (algorithms.AES, modes.GCM, 24, 12, 16)
     AES_256_GCM_IV12_TAG16 = (algorithms.AES, modes.GCM, 32, 12, 16)
 
-    def __init__(self, algorithm, mode, data_key_length, iv_length, auth_length, auth_key_length=0):
+    def __init__(
+        self,
+        algorithm,
+        mode,
+        data_key_length,
+        iv_length,
+        auth_length,
+        auth_key_length=0,
+    ):
         """Prepare a new EncryptionSuite."""
         self.algorithm = algorithm
         self.mode = mode
@@ -157,9 +165,21 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
     AES_128_GCM_IV12_TAG16 = (0x0014, EncryptionSuite.AES_128_GCM_IV12_TAG16)
     AES_192_GCM_IV12_TAG16 = (0x0046, EncryptionSuite.AES_192_GCM_IV12_TAG16)
     AES_256_GCM_IV12_TAG16 = (0x0078, EncryptionSuite.AES_256_GCM_IV12_TAG16)
-    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (0x0114, EncryptionSuite.AES_128_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
-    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (0x0146, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
-    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (0x0178, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
+    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (
+        0x0114,
+        EncryptionSuite.AES_128_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA256,
+    )
+    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (
+        0x0146,
+        EncryptionSuite.AES_192_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA256,
+    )
+    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (
+        0x0178,
+        EncryptionSuite.AES_256_GCM_IV12_TAG16,
+        KDFSuite.HKDF_SHA256,
+    )
     AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256 = (
         0x0214,
         EncryptionSuite.AES_128_GCM_IV12_TAG16,
@@ -240,6 +260,8 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         return self.kdf is not KDFSuite.NONE
 
 
+# algorithm is just an alias for AlgorithmSuite ... but Sphinx does not recognize this fact
+# so we need to go through and fix the references
 Algorithm = AlgorithmSuite
 
 
@@ -271,16 +293,60 @@ class WrappingAlgorithm(Enum):
     :type padding_mgf:
     """
 
-    AES_128_GCM_IV12_TAG16_NO_PADDING = (EncryptionType.SYMMETRIC, Algorithm.AES_128_GCM_IV12_TAG16, None, None, None)
-    AES_192_GCM_IV12_TAG16_NO_PADDING = (EncryptionType.SYMMETRIC, Algorithm.AES_192_GCM_IV12_TAG16, None, None, None)
-    AES_256_GCM_IV12_TAG16_NO_PADDING = (EncryptionType.SYMMETRIC, Algorithm.AES_256_GCM_IV12_TAG16, None, None, None)
+    AES_128_GCM_IV12_TAG16_NO_PADDING = (
+        EncryptionType.SYMMETRIC,
+        AlgorithmSuite.AES_128_GCM_IV12_TAG16,
+        None,
+        None,
+        None,
+    )
+    AES_192_GCM_IV12_TAG16_NO_PADDING = (
+        EncryptionType.SYMMETRIC,
+        AlgorithmSuite.AES_192_GCM_IV12_TAG16,
+        None,
+        None,
+        None,
+    )
+    AES_256_GCM_IV12_TAG16_NO_PADDING = (
+        EncryptionType.SYMMETRIC,
+        AlgorithmSuite.AES_256_GCM_IV12_TAG16,
+        None,
+        None,
+        None,
+    )
     RSA_PKCS1 = (EncryptionType.ASYMMETRIC, rsa, padding.PKCS1v15, None, None)
-    RSA_OAEP_SHA1_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA1, padding.MGF1)
-    RSA_OAEP_SHA256_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA256, padding.MGF1)
-    RSA_OAEP_SHA384_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA384, padding.MGF1)
-    RSA_OAEP_SHA512_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA512, padding.MGF1)
+    RSA_OAEP_SHA1_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA1,
+        padding.MGF1,
+    )
+    RSA_OAEP_SHA256_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA256,
+        padding.MGF1,
+    )
+    RSA_OAEP_SHA384_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA384,
+        padding.MGF1,
+    )
+    RSA_OAEP_SHA512_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA512,
+        padding.MGF1,
+    )
 
-    def __init__(self, encryption_type, algorithm, padding_type, padding_algorithm, padding_mgf):
+    def __init__(
+        self, encryption_type, algorithm, padding_type, padding_algorithm, padding_mgf
+    ):
         """Prepares new WrappingAlgorithm."""
         self.encryption_type = encryption_type
         self.algorithm = algorithm
