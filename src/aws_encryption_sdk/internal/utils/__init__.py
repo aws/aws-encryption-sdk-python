@@ -18,7 +18,11 @@ import os
 import six
 
 import aws_encryption_sdk.internal.defaults
-from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
+from aws_encryption_sdk.exceptions import (
+    InvalidDataKeyError,
+    SerializationError,
+    UnknownIdentityError,
+)
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import EncryptedDataKey
@@ -45,12 +49,15 @@ def validate_frame_length(frame_length, algorithm):
     """Validates that frame length is within the defined limits and is compatible with the selected algorithm.
 
     :param int frame_length: Frame size in bytes
-    :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite to use for encryption
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :raises SerializationError: if frame size is negative or not a multiple of the algorithm block size
     :raises SerializationError: if frame size is larger than the maximum allowed frame size
     """
-    if frame_length < 0 or frame_length % algorithm.encryption_algorithm.block_size != 0:
+    if (
+        frame_length < 0
+        or frame_length % algorithm.encryption_algorithm.block_size != 0
+    ):
         raise SerializationError(
             "Frame size must be a non-negative multiple of the block size of the crypto algorithm: {block_size}".format(
                 block_size=algorithm.encryption_algorithm.block_size
@@ -59,7 +66,8 @@ def validate_frame_length(frame_length, algorithm):
     if frame_length > aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE:
         raise SerializationError(
             "Frame size too large: {frame} > {max}".format(
-                frame=frame_length, max=aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE
+                frame=frame_length,
+                max=aws_encryption_sdk.internal.defaults.MAX_FRAME_SIZE,
             )
         )
 
@@ -103,29 +111,39 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
     :type primary_master_key: aws_encryption_sdk.key_providers.base.MasterKey
     :param master_keys: All master keys with which to encrypt data keys
     :type master_keys: list of :class:`aws_encryption_sdk.key_providers.base.MasterKey`
-    :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite to use for encryption
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param dict encryption_context: Encryption context to use when generating data key
     :rtype: tuple containing :class:`aws_encryption_sdk.structures.DataKey`
         and set of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
     """
     encrypted_data_keys = set()
     encrypted_data_encryption_key = None
-    data_encryption_key = primary_master_key.generate_data_key(algorithm, encryption_context)
-    _LOGGER.debug("encryption data generated with master key: %s", data_encryption_key.key_provider)
+    data_encryption_key = primary_master_key.generate_data_key(
+        algorithm, encryption_context
+    )
+    _LOGGER.debug(
+        "encryption data generated with master key: %s",
+        data_encryption_key.key_provider,
+    )
     for master_key in master_keys:
         # Don't re-encrypt the encryption data key; we already have the ciphertext
         if master_key is primary_master_key:
             encrypted_data_encryption_key = EncryptedDataKey(
-                key_provider=data_encryption_key.key_provider, encrypted_data_key=data_encryption_key.encrypted_data_key
+                key_provider=data_encryption_key.key_provider,
+                encrypted_data_key=data_encryption_key.encrypted_data_key,
             )
             encrypted_data_keys.add(encrypted_data_encryption_key)
             continue
         encrypted_key = master_key.encrypt_data_key(
-            data_key=data_encryption_key, algorithm=algorithm, encryption_context=encryption_context
+            data_key=data_encryption_key,
+            algorithm=algorithm,
+            encryption_context=encryption_context,
         )
         encrypted_data_keys.add(encrypted_key)
-        _LOGGER.debug("encryption key encrypted with master key: %s", master_key.key_provider)
+        _LOGGER.debug(
+            "encryption key encrypted with master key: %s", master_key.key_provider
+        )
     return data_encryption_key, encrypted_data_keys
 
 
@@ -151,8 +169,8 @@ def source_data_key_length_check(source_data_key, algorithm):
     :param source_data_key: Source data key object received from MasterKey decrypt or generate data_key methods
     :type source_data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
         or :class:`aws_encryption_sdk.structures.DataKey`
-    :param algorithm: Algorithm object which directs how this data key will be used
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite object which directs how this data key will be used
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :raises InvalidDataKeyError: if data key length does not match required kdf input length
     """
     if len(source_data_key.data_key) != algorithm.kdf_input_len:

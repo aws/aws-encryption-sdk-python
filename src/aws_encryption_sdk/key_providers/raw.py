@@ -22,7 +22,12 @@ import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.identifiers import EncryptionType
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.base import (
+    MasterKey,
+    MasterKeyConfig,
+    MasterKeyProvider,
+    MasterKeyProviderConfig,
+)
 from aws_encryption_sdk.structures import DataKey, RawDataKey
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,7 +48,9 @@ class RawMasterKeyConfig(MasterKeyConfig):
         validator=attr.validators.instance_of((six.string_types, bytes)),
         converter=aws_encryption_sdk.internal.str_ops.to_str,
     )
-    wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
+    wrapping_key = attr.ib(
+        hash=True, validator=attr.validators.instance_of(WrappingKey)
+    )
 
 
 class RawMasterKey(MasterKey):
@@ -84,13 +91,18 @@ class RawMasterKey(MasterKey):
         """
         expected_key_info_len = -1
         if (
-            self.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC
+            self.config.wrapping_key.wrapping_algorithm.encryption_type
+            is EncryptionType.ASYMMETRIC
             and data_key.key_provider == self.key_provider
         ):
             return True
-        elif self.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.SYMMETRIC:
+        elif (
+            self.config.wrapping_key.wrapping_algorithm.encryption_type
+            is EncryptionType.SYMMETRIC
+        ):
             expected_key_info_len = (
-                len(self._key_info_prefix) + self.config.wrapping_key.wrapping_algorithm.algorithm.iv_len
+                len(self._key_info_prefix)
+                + self.config.wrapping_key.wrapping_algorithm.algorithm.iv_len
             )
             if (
                 data_key.key_provider.provider_id == self.provider_id
@@ -115,15 +127,17 @@ class RawMasterKey(MasterKey):
     def _generate_data_key(self, algorithm, encryption_context):
         """Generates data key and returns :class:`aws_encryption_sdk.structures.DataKey`.
 
-        :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite on which to base data key
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
         """
         plaintext_data_key = os.urandom(algorithm.kdf_input_len)
         encrypted_data_key = self._encrypt_data_key(
-            data_key=RawDataKey(key_provider=self.key_provider, data_key=plaintext_data_key),
+            data_key=RawDataKey(
+                key_provider=self.key_provider, data_key=plaintext_data_key
+            ),
             algorithm=algorithm,
             encryption_context=encryption_context,
         )
@@ -139,8 +153,8 @@ class RawMasterKey(MasterKey):
         :param data_key: Unencrypted data key
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
             or :class:`aws_encryption_sdk.structures.DataKey`
-        :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite object which directs how this Master Key will encrypt the data key
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
@@ -163,8 +177,8 @@ class RawMasterKey(MasterKey):
 
         :param data_key: Encrypted data key
         :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
-        :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite object which directs how this Master Key will encrypt the data key
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -178,7 +192,8 @@ class RawMasterKey(MasterKey):
         )
         # EncryptedData to raw key string
         plaintext_data_key = self.config.wrapping_key.decrypt(
-            encrypted_wrapped_data_key=encrypted_wrapped_key, encryption_context=encryption_context
+            encrypted_wrapped_data_key=encrypted_wrapped_key,
+            encryption_context=encryption_context,
         )
         # Raw key string to DataKey
         return DataKey(
@@ -222,5 +237,7 @@ class RawMasterKeyProvider(MasterKeyProvider):
         _LOGGER.debug("Retrieving wrapping key with id: %s", key_id)
         wrapping_key = self._get_raw_key(key_id)
         return self._master_key_class(
-            config=RawMasterKeyConfig(key_id=key_id, provider_id=self.provider_id, wrapping_key=wrapping_key)
+            config=RawMasterKeyConfig(
+                key_id=key_id, provider_id=self.provider_id, wrapping_key=wrapping_key
+            )
         )

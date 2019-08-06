@@ -17,8 +17,17 @@ from collections import namedtuple
 import six
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
-from cryptography.utils import InterfaceNotImplemented, int_from_bytes, int_to_bytes, verify_interface
+from cryptography.hazmat.primitives.asymmetric.utils import (
+    Prehashed,
+    decode_dss_signature,
+    encode_dss_signature,
+)
+from cryptography.utils import (
+    InterfaceNotImplemented,
+    int_from_bytes,
+    int_to_bytes,
+    verify_interface,
+)
 
 from ...exceptions import NotSupportedError
 from ..str_ops import to_bytes
@@ -57,8 +66,8 @@ def _ecc_static_length_signature(key, algorithm, digest):
 
     :param key: Elliptic curve private key
     :type key: cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
-    :param algorithm: Master algorithm to use
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Master algorithm suite to use
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes digest: Pre-calculated hash digest
     :returns: Signature with required length
     :rtype: bytes
@@ -67,14 +76,18 @@ def _ecc_static_length_signature(key, algorithm, digest):
     signature = b""
     while len(signature) != algorithm.signature_len:
         _LOGGER.debug(
-            "Signature length %d is not desired length %d.  Recalculating.", len(signature), algorithm.signature_len
+            "Signature length %d is not desired length %d.  Recalculating.",
+            len(signature),
+            algorithm.signature_len,
         )
         signature = key.sign(digest, pre_hashed_algorithm)
         if len(signature) != algorithm.signature_len:
             # Most of the time, a signature of the wrong length can be fixed
             # by negating s in the signature relative to the group order.
             _LOGGER.debug(
-                "Signature length %d is not desired length %d.  Negating s.", len(signature), algorithm.signature_len
+                "Signature length %d is not desired length %d.  Negating s.",
+                len(signature),
+                algorithm.signature_len,
             )
             r, s = decode_dss_signature(signature)
             s = _ECC_CURVE_PARAMETERS[algorithm.signing_algorithm_info.name].order - s
@@ -136,7 +149,9 @@ def _ecc_decode_compressed_point(curve, compressed_point):
         try:
             params = _ECC_CURVE_PARAMETERS[curve.name]
         except KeyError:
-            raise NotSupportedError("Curve {name} is not supported at this time".format(name=curve.name))
+            raise NotSupportedError(
+                "Curve {name} is not supported at this time".format(name=curve.name)
+            )
         alpha = (pow(x, 3, params.p) + (params.a * x % params.p) + params.b) % params.p
         # Only works for p % 4 == 3 at this time.
         # This is the case for all currently supported algorithms.
@@ -177,13 +192,15 @@ def _ecc_public_numbers_from_compressed_point(curve, compressed_point):
 def generate_ecc_signing_key(algorithm):
     """Returns an ECC signing key.
 
-    :param algorithm: Algorithm object which determines what signature to generate
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite object which determines what signature to generate
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :returns: Generated signing key
-    :raises NotSupportedError: if signing algorithm is not supported on this platform
+    :raises NotSupportedError: if signing algorithm suite is not supported on this platform
     """
     try:
         verify_interface(ec.EllipticCurve, algorithm.signing_algorithm_info)
-        return ec.generate_private_key(curve=algorithm.signing_algorithm_info(), backend=default_backend())
+        return ec.generate_private_key(
+            curve=algorithm.signing_algorithm_info(), backend=default_backend()
+        )
     except InterfaceNotImplemented:
         raise NotSupportedError("Unsupported signing algorithm info")

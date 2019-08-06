@@ -17,7 +17,7 @@
 import attr
 import six
 
-from ..identifiers import Algorithm
+from ..identifiers import AlgorithmSuite
 from ..internal.utils.streams import ROStream
 from ..structures import DataKey
 
@@ -35,19 +35,26 @@ class EncryptionMaterialsRequest(object):
     :param int frame_length: Frame length to be used while encrypting stream
     :param plaintext_rostream: Source plaintext read-only stream (optional)
     :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
-    :param algorithm: Algorithm passed to underlying master key provider and master keys (optional)
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite passed to underlying master key provider and master keys (optional)
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int plaintext_length: Length of source plaintext (optional)
     """
 
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
     frame_length = attr.ib(validator=attr.validators.instance_of(six.integer_types))
     plaintext_rostream = attr.ib(
-        default=None, validator=attr.validators.optional(attr.validators.instance_of(ROStream))
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(ROStream)),
     )
-    algorithm = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(Algorithm)))
+    algorithm = attr.ib(
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(AlgorithmSuite)),
+    )
     plaintext_length = attr.ib(
-        default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
+        default=None,
+        validator=attr.validators.optional(
+            attr.validators.instance_of(six.integer_types)
+        ),
     )
 
 
@@ -57,8 +64,8 @@ class EncryptionMaterials(object):
 
     .. versionadded:: 1.3.0
 
-    :param algorithm: Algorithm to use for encrypting message
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite to use for encrypting message
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param data_encryption_key: Plaintext data key to use for encrypting message
     :type data_encryption_key: aws_encryption_sdk.structures.DataKey
     :param encrypted_data_keys: List of encrypted data keys
@@ -67,11 +74,14 @@ class EncryptionMaterials(object):
     :param bytes signing_key: Encoded signing key
     """
 
-    algorithm = attr.ib(validator=attr.validators.instance_of(Algorithm))
+    algorithm = attr.ib(validator=attr.validators.instance_of(AlgorithmSuite))
     data_encryption_key = attr.ib(validator=attr.validators.instance_of(DataKey))
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
-    signing_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
+    signing_key = attr.ib(
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(bytes)),
+    )
 
 
 @attr.s(hash=False)
@@ -80,14 +90,14 @@ class DecryptionMaterialsRequest(object):
 
     .. versionadded:: 1.3.0
 
-    :param algorithm: Algorithm to provide to master keys for underlying decrypt requests
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite to provide to master keys for underlying decrypt requests
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param encrypted_data_keys: Set of encrypted data keys
     :type encrypted_data_keys: set of `aws_encryption_sdk.structures.EncryptedDataKey`
     :param dict encryption_context: Encryption context to provide to master keys for underlying decrypt requests
     """
 
-    algorithm = attr.ib(validator=attr.validators.instance_of(Algorithm))
+    algorithm = attr.ib(validator=attr.validators.instance_of(AlgorithmSuite))
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
 
@@ -104,4 +114,7 @@ class DecryptionMaterials(object):
     """
 
     data_key = attr.ib(validator=attr.validators.instance_of(DataKey))
-    verification_key = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes)))
+    verification_key = attr.ib(
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(bytes)),
+    )

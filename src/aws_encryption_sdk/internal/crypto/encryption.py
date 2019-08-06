@@ -24,8 +24,8 @@ _LOGGER = logging.getLogger(__name__)
 class Encryptor(object):
     """Abstract encryption handler.
 
-    :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite used to encrypt this body
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Encryption key
     :param bytes associated_data: Associated Data to send to encryption subsystem
     :param bytes iv: IV to use when encrypting message
@@ -39,7 +39,9 @@ class Encryptor(object):
         # This is intentionally generic to leave an option for non-Cipher encryptor types in the future.
         self.iv = iv
         self._encryptor = Cipher(
-            algorithm.encryption_algorithm(key), algorithm.encryption_mode(self.iv), backend=default_backend()
+            algorithm.encryption_algorithm(key),
+            algorithm.encryption_mode(self.iv),
+            backend=default_backend(),
         ).encryptor()
 
         # associated_data will be authenticated but not encrypted,
@@ -76,8 +78,8 @@ class Encryptor(object):
 def encrypt(algorithm, key, plaintext, associated_data, iv):
     """Encrypts a frame body.
 
-    :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite used to encrypt this body
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Encryption key
     :param bytes plaintext: Body plaintext
     :param bytes associated_data: Body AAD Data
@@ -93,8 +95,8 @@ def encrypt(algorithm, key, plaintext, associated_data, iv):
 class Decryptor(object):
     """Abstract decryption handler.
 
-    :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite used to encrypt this body
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Raw source key
     :param bytes associated_data: Associated Data to send to decryption subsystem
     :param bytes iv: IV value with which to initialize decryption subsystem
@@ -108,7 +110,9 @@ class Decryptor(object):
         # Construct a decryptor object with the given key and a provided IV.
         # This is intentionally generic to leave an option for non-Cipher decryptor types in the future.
         self._decryptor = Cipher(
-            algorithm.encryption_algorithm(key), algorithm.encryption_mode(iv, tag), backend=default_backend()
+            algorithm.encryption_algorithm(key),
+            algorithm.encryption_mode(iv, tag),
+            backend=default_backend(),
         ).decryptor()
 
         # Put associated_data back in or the tag will fail to verify when the _decryptor is finalized.
@@ -135,8 +139,8 @@ class Decryptor(object):
 def decrypt(algorithm, key, encrypted_data, associated_data):
     """Decrypts a frame body.
 
-    :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite used to encrypt this body
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Plaintext data key
     :param encrypted_data: EncryptedData containing body data
     :type encrypted_data: :class:`aws_encryption_sdk.internal.structures.EncryptedData`,
@@ -147,5 +151,7 @@ def decrypt(algorithm, key, encrypted_data, associated_data):
     :returns: Plaintext of body
     :rtype: bytes
     """
-    decryptor = Decryptor(algorithm, key, associated_data, encrypted_data.iv, encrypted_data.tag)
+    decryptor = Decryptor(
+        algorithm, key, associated_data, encrypted_data.iv, encrypted_data.tag
+    )
     return decryptor.update(encrypted_data.ciphertext) + decryptor.finalize()

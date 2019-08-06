@@ -39,13 +39,17 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
     """
 
     algorithm = ALGORITHM
-    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
+    master_key_provider = attr.ib(
+        validator=attr.validators.instance_of(MasterKeyProvider)
+    )
 
-    def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):
+    def _generate_signing_key_and_update_encryption_context(
+        self, algorithm, encryption_context
+    ):
         """Generates a signing key based on the provided algorithm.
 
-        :param algorithm: Algorithm for which to generate signing key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite for which to generate signing key
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context from request
         :returns: Signing key bytes
         :rtype: bytes or None
@@ -54,7 +58,9 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         if algorithm.signing_algorithm_info is None:
             return None
 
-        signer = Signer(algorithm=algorithm, key=generate_ecc_signing_key(algorithm=algorithm))
+        signer = Signer(
+            algorithm=algorithm, key=generate_ecc_signing_key(algorithm=algorithm)
+        )
         encryption_context[ENCODED_SIGNER_KEY] = to_str(signer.encoded_public_key())
         return signer.key_bytes()
 
@@ -69,10 +75,14 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :raises MasterKeyProviderError: if the primary master key provided by the underlying master key provider
             is not included in the full set of master keys provided by that provider
         """
-        algorithm = request.algorithm if request.algorithm is not None else self.algorithm
+        algorithm = (
+            request.algorithm if request.algorithm is not None else self.algorithm
+        )
         encryption_context = request.encryption_context.copy()
 
-        signing_key = self._generate_signing_key_and_update_encryption_context(algorithm, encryption_context)
+        signing_key = self._generate_signing_key_and_update_encryption_context(
+            algorithm, encryption_context
+        )
 
         primary_master_key, master_keys = self.master_key_provider.master_keys_for_encryption(
             encryption_context=encryption_context,
@@ -80,9 +90,13 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
             plaintext_length=request.plaintext_length,
         )
         if not master_keys:
-            raise MasterKeyProviderError("No Master Keys available from Master Key Provider")
+            raise MasterKeyProviderError(
+                "No Master Keys available from Master Key Provider"
+            )
         if primary_master_key not in master_keys:
-            raise MasterKeyProviderError("Primary Master Key not in provided Master Keys")
+            raise MasterKeyProviderError(
+                "Primary Master Key not in provided Master Keys"
+            )
 
         data_encryption_key, encrypted_data_keys = prepare_data_keys(
             primary_master_key=primary_master_key,
@@ -101,11 +115,13 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
             signing_key=signing_key,
         )
 
-    def _load_verification_key_from_encryption_context(self, algorithm, encryption_context):
+    def _load_verification_key_from_encryption_context(
+        self, algorithm, encryption_context
+    ):
         """Loads the verification key from the encryption context if used by algorithm suite.
 
-        :param algorithm: Algorithm for which to generate signing key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite for which to generate signing key
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context from request
         :returns: Raw verification key
         :rtype: bytes
@@ -113,15 +129,24 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         """
         encoded_verification_key = encryption_context.get(ENCODED_SIGNER_KEY, None)
 
-        if algorithm.signing_algorithm_info is not None and encoded_verification_key is None:
-            raise SerializationError("No signature verification key found in header for signed algorithm.")
+        if (
+            algorithm.signing_algorithm_info is not None
+            and encoded_verification_key is None
+        ):
+            raise SerializationError(
+                "No signature verification key found in header for signed algorithm."
+            )
 
         if algorithm.signing_algorithm_info is None:
             if encoded_verification_key is not None:
-                raise SerializationError("Signature verification key found in header for non-signed algorithm.")
+                raise SerializationError(
+                    "Signature verification key found in header for non-signed algorithm."
+                )
             return None
 
-        verifier = Verifier.from_encoded_point(algorithm=algorithm, encoded_point=encoded_verification_key)
+        verifier = Verifier.from_encoded_point(
+            algorithm=algorithm, encoded_point=encoded_verification_key
+        )
         return verifier.key_bytes()
 
     def decrypt_materials(self, request):

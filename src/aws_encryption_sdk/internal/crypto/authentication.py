@@ -33,8 +33,8 @@ _LOGGER = logging.getLogger(__name__)
 class _PrehashingAuthenticator(object):
     """Parent class for Signer/Verifier. Provides common behavior and interface.
 
-    :param algorithm: Algorithm on which to base authenticator
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite on which to base authenticator
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param key: Key with which to build authenticator
     """
 
@@ -46,7 +46,7 @@ class _PrehashingAuthenticator(object):
         self._hasher = self._build_hasher()
 
     def _set_signature_type(self):
-        """Ensures that the algorithm signature type is a known type and sets a reference value."""
+        """Ensures that the algorithm (suite) signature type is a known type and sets a reference value."""
         try:
             verify_interface(ec.EllipticCurve, self.algorithm.signing_algorithm_info)
             return ec.EllipticCurve
@@ -58,14 +58,16 @@ class _PrehashingAuthenticator(object):
 
         :returns: Hasher object
         """
-        return hashes.Hash(self.algorithm.signing_hash_type(), backend=default_backend())
+        return hashes.Hash(
+            self.algorithm.signing_hash_type(), backend=default_backend()
+        )
 
 
 class Signer(_PrehashingAuthenticator):
     """Abstract signing handler.
 
-    :param algorithm: Algorithm on which to base signer
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param algorithm: Algorithm suite on which to base signer
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param key: Private key from which a signer can be generated
     :type key: currently only Elliptic Curve Private Keys are supported
     """
@@ -74,12 +76,14 @@ class Signer(_PrehashingAuthenticator):
     def from_key_bytes(cls, algorithm, key_bytes):
         """Builds a `Signer` from an algorithm suite and a raw signing key.
 
-        :param algorithm: Algorithm on which to base signer
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite on which to base signer
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes key_bytes: Raw signing key
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
-        key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+        key = serialization.load_der_private_key(
+            data=key_bytes, password=None, backend=default_backend()
+        )
         return cls(algorithm, key)
 
     def key_bytes(self):
@@ -118,7 +122,9 @@ class Signer(_PrehashingAuthenticator):
         :rtype: bytes
         """
         prehashed_digest = self._hasher.finalize()
-        return _ecc_static_length_signature(key=self.key, algorithm=self.algorithm, digest=prehashed_digest)
+        return _ecc_static_length_signature(
+            key=self.key, algorithm=self.algorithm, digest=prehashed_digest
+        )
 
 
 class Verifier(_PrehashingAuthenticator):
@@ -127,18 +133,18 @@ class Verifier(_PrehashingAuthenticator):
     .. note::
         For ECC curves, the signature must be DER encoded as specified in RFC 3279.
 
-    :param algorithm: Algorithm on which to base verifier
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
-    :param public_key: Appropriate public key object for algorithm
+    :param algorithm: Algorithm suite on which to base verifier
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
+    :param public_key: Appropriate public key object for algorithm suite
     :type public_key: may vary
     """
 
     @classmethod
     def from_encoded_point(cls, algorithm, encoded_point):
-        """Creates a Verifier object based on the supplied algorithm and encoded compressed ECC curve point.
+        """Creates a Verifier object based on the supplied algorithm suite and encoded compressed ECC curve point.
 
-        :param algorithm: Algorithm on which to base verifier
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite on which to base verifier
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes encoded_point: ECC public point compressed and encoded with _ecc_encode_compressed_point
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
@@ -146,22 +152,26 @@ class Verifier(_PrehashingAuthenticator):
         return cls(
             algorithm=algorithm,
             key=_ecc_public_numbers_from_compressed_point(
-                curve=algorithm.signing_algorithm_info(), compressed_point=base64.b64decode(encoded_point)
+                curve=algorithm.signing_algorithm_info(),
+                compressed_point=base64.b64decode(encoded_point),
             ).public_key(default_backend()),
         )
 
     @classmethod
     def from_key_bytes(cls, algorithm, key_bytes):
-        """Creates a `Verifier` object based on the supplied algorithm and raw verification key.
+        """Creates a `Verifier` object based on the supplied algorithm suite and raw verification key.
 
-        :param algorithm: Algorithm on which to base verifier
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param algorithm: Algorithm suite on which to base verifier
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes encoded_point: Raw verification key
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
         return cls(
-            algorithm=algorithm, key=serialization.load_der_public_key(data=key_bytes, backend=default_backend())
+            algorithm=algorithm,
+            key=serialization.load_der_public_key(
+                data=key_bytes, backend=default_backend()
+            ),
         )
 
     def key_bytes(self):
@@ -170,7 +180,8 @@ class Verifier(_PrehashingAuthenticator):
         :rtype: bytes
         """
         return self.key.public_bytes(
-            encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
 
     def update(self, data):

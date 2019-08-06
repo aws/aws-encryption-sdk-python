@@ -76,7 +76,7 @@ def encrypt(**kwargs):
             this is not enforced if a `key_provider` is provided.
 
     :param dict encryption_context: Dictionary defining encryption context
-    :param algorithm: AlgorithmSuite to use for encryption
+    :param algorithm: Algorithm suite to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int frame_length: Frame length in bytes
     :returns: Tuple containing the encrypted ciphertext and the message header object
