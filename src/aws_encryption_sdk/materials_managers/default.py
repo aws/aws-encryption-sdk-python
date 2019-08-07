@@ -49,13 +49,21 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :param dict encryption_context: Encryption context from request
         :returns: Signing key bytes
         :rtype: bytes or None
+        :raises ValueError if a signer key that is already present in the encryption
+            context is added
         """
         _LOGGER.debug("Generating signing key")
         if algorithm.signing_algorithm_info is None:
             return None
 
         signer = Signer(algorithm=algorithm, key=generate_ecc_signing_key(algorithm=algorithm))
-        encryption_context[ENCODED_SIGNER_KEY] = to_str(signer.encoded_public_key())
+        signer_key = signer.encoded_public_key()
+        # raise error if key already present, even if different value
+        # we don't care about the value, but we do care about the key (in the DICT)
+        # remember this is dict(key -> value) = dict(key_name -> key)
+        if ENCODED_SIGNER_KEY in encryption_context:
+            raise ValueError("Tried to add key that was already present in Encryption Context")
+        encryption_context[ENCODED_SIGNER_KEY] = to_str(signer_key)
         return signer.key_bytes()
 
     def get_encryption_materials(self, request):
@@ -68,6 +76,8 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :raises MasterKeyProviderError: if no master keys are available from the underlying master key provider
         :raises MasterKeyProviderError: if the primary master key provided by the underlying master key provider
             is not included in the full set of master keys provided by that provider
+        :raises ValueError if in calling _generate_signing_key_and_update_encryption_context()
+            a key is attempted to be added to the encryption context, when it already has that key.
         """
         algorithm = request.algorithm if request.algorithm is not None else self.algorithm
         encryption_context = request.encryption_context.copy()

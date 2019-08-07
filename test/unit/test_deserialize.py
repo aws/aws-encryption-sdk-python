@@ -27,6 +27,14 @@ from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
+def test_deserialize_malformed_encryption_context():
+    """
+    If the client deserialization receives a malformed ciphertext 
+    that defines the AAD length as 0 and then also defines a AAD fields 
+    as 0, the deserialization logic SHOULD raise an error.
+    """
+    bad_ciphertext = b'AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAAAAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhDRUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQjFFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHym2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amYwxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/wMviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmThUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQLLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vpedxpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAGAAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAAAAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw=='
+    pass
 
 def test_deserialize_non_framed_values():
     iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11"

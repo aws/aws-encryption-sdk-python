@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers.default"""
 import pytest
+import os
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -20,9 +21,13 @@ from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationE
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.materials_managers import EncryptionMaterials
+from aws_encryption_sdk.materials_managers import EncryptionMaterials, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey
+
+from aws_encryption_sdk.internal.crypto.authentication import Signer
+from aws_encryption_sdk.internal.crypto.elliptic_curve import generate_ecc_signing_key
+from aws_encryption_sdk.internal.str_ops import to_str
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -234,3 +239,21 @@ def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
     )
     assert test.data_key is cmm.master_key_provider.decrypt_data_key_from_list.return_value
     assert test.verification_key == patch_for_dcmm_decrypt
+
+# tests that we correctly through an error when we try to add a key 
+# to the encryption context but it is already present
+def test_signer_key_in_encryption_context():
+    cmm = build_cmm()
+    algo = ALGORITHM # default
+
+    # key value does not matter
+    key = to_str(Signer(algorithm=algo, key=generate_ecc_signing_key(algorithm=algo)).encoded_public_key())
+    context = {ENCODED_SIGNER_KEY: key}
+    request = EncryptionMaterialsRequest(
+        algorithm=algo,
+        encryption_context=context,
+        frame_length=4096
+    )
+    with pytest.raises(ValueError) as excinfo:
+        cmm.get_encryption_materials(request)
+    excinfo.match(r"Tried to add key that was already present in Encryption Context")
