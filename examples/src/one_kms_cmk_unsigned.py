@@ -13,8 +13,7 @@
 """Example showing basic encryption and decryption of a value already in memory
 using one KMS CMK with an unsigned algorithm.
 """
-import aws_encryption_sdk
-from aws_encryption_sdk import encrypt, decrypt
+from aws_encryption_sdk import KMSMasterKeyProvider, decrypt, encrypt
 from aws_encryption_sdk.identifiers import Algorithm
 
 
@@ -32,7 +31,7 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
         kwargs["botocore_session"] = botocore_session
 
     # Create master key provider using the ARN of the key and the session (botocore_session)
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
+    kms_key_provider = KMSMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
     ciphertext, encrypted_message_header = encrypt(
