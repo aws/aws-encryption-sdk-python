@@ -40,41 +40,17 @@ class MessageHeader(object):
     """
 
     version = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of(
-            aws_encryption_sdk.identifiers.SerializationVersion
-        ),
+        hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.SerializationVersion)
     )
-    type = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of(
-            aws_encryption_sdk.identifiers.ObjectType
-        ),
-    )
-    algorithm = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of(
-            aws_encryption_sdk.identifiers.AlgorithmSuite
-        ),
-    )
+    type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ObjectType))
+    algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.AlgorithmSuite))
     message_id = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
     encryption_context = attr.ib(hash=True, validator=attr.validators.instance_of(dict))
     encrypted_data_keys = attr.ib(hash=True, validator=attr.validators.instance_of(set))
-    content_type = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of(
-            aws_encryption_sdk.identifiers.ContentType
-        ),
-    )
-    content_aad_length = attr.ib(
-        hash=True, validator=attr.validators.instance_of(six.integer_types)
-    )
-    header_iv_length = attr.ib(
-        hash=True, validator=attr.validators.instance_of(six.integer_types)
-    )
-    frame_length = attr.ib(
-        hash=True, validator=attr.validators.instance_of(six.integer_types)
-    )
+    content_type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ContentType))
+    content_aad_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
+    header_iv_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
+    frame_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
 
 
 @attr.s(hash=True)
@@ -85,16 +61,8 @@ class MasterKeyInfo(object):
     :param bytes key_info: MasterKey key_info value
     """
 
-    provider_id = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=to_str,
-    )
-    key_info = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=to_bytes,
-    )
+    provider_id = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_str)
+    key_info = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_bytes)
 
 
 @attr.s(hash=True)
@@ -106,12 +74,8 @@ class RawDataKey(object):
     :param bytes data_key: Plaintext data key
     """
 
-    key_provider = attr.ib(
-        hash=True, validator=attr.validators.instance_of(MasterKeyInfo)
-    )
-    data_key = attr.ib(
-        hash=True, repr=False, validator=attr.validators.instance_of(bytes)
-    )
+    key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
+    data_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(bytes))
 
 
 @attr.s(hash=True)
@@ -124,15 +88,9 @@ class DataKey(object):
     :param bytes encrypted_data_key: Encrypted data key
     """
 
-    key_provider = attr.ib(
-        hash=True, validator=attr.validators.instance_of(MasterKeyInfo)
-    )
-    data_key = attr.ib(
-        hash=True, repr=False, validator=attr.validators.instance_of(bytes)
-    )
-    encrypted_data_key = attr.ib(
-        hash=True, validator=attr.validators.instance_of(bytes)
-    )
+    key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
+    data_key = attr.ib(hash=True, repr=False, validator=attr.validators.instance_of(bytes))
+    encrypted_data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
 
 
 @attr.s(hash=True)
@@ -144,9 +102,5 @@ class EncryptedDataKey(object):
     :param bytes encrypted_data_key: Encrypted data key
     """
 
-    key_provider = attr.ib(
-        hash=True, validator=attr.validators.instance_of(MasterKeyInfo)
-    )
-    encrypted_data_key = attr.ib(
-        hash=True, validator=attr.validators.instance_of(bytes)
-    )
+    key_provider = attr.ib(hash=True, validator=attr.validators.instance_of(MasterKeyInfo))
+    encrypted_data_key = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))

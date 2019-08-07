@@ -17,11 +17,7 @@ import struct
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
 from aws_encryption_sdk.exceptions import SerializationError
-from aws_encryption_sdk.identifiers import (
-    ContentAADString,
-    EncryptionType,
-    SequenceIdentifier,
-)
+from aws_encryption_sdk.identifiers import ContentAADString, EncryptionType, SequenceIdentifier
 from aws_encryption_sdk.internal.crypto.encryption import encrypt
 from aws_encryption_sdk.internal.crypto.iv import frame_iv, header_auth_iv
 from aws_encryption_sdk.internal.str_ops import to_bytes
@@ -114,12 +110,7 @@ def serialize_header(header, signer=None):
         "I"  # frame length
     )
     header_bytes.extend(
-        struct.pack(
-            header_close_format,
-            header.content_type.value,
-            header.algorithm.iv_len,
-            header.frame_length,
-        )
+        struct.pack(header_close_format, header.content_type.value, header.algorithm.iv_len, header.frame_length)
     )
     output = bytes(header_bytes)
     if signer is not None:
@@ -147,9 +138,7 @@ def serialize_header_auth(algorithm, header, data_encryption_key, signer=None):
         iv=header_auth_iv(algorithm),
     )
     output = struct.pack(
-        ">{iv_len}s{tag_len}s".format(
-            iv_len=algorithm.iv_len, tag_len=algorithm.tag_len
-        ),
+        ">{iv_len}s{tag_len}s".format(iv_len=algorithm.iv_len, tag_len=algorithm.tag_len),
         header_auth.iv,
         header_auth.tag,
     )
@@ -170,9 +159,7 @@ def serialize_non_framed_open(algorithm, iv, plaintext_length, signer=None):
     :returns: Serialized body start block
     :rtype: bytes
     """
-    body_start_format = (">" "{iv_length}s" "Q").format(
-        iv_length=algorithm.iv_len
-    )  # nonce (IV)  # content length
+    body_start_format = (">" "{iv_length}s" "Q").format(iv_length=algorithm.iv_len)  # nonce (IV)  # content length
     body_start = struct.pack(body_start_format, iv, plaintext_length)
     if signer:
         signer.update(body_start)
@@ -195,14 +182,7 @@ def serialize_non_framed_close(tag, signer=None):
 
 
 def serialize_frame(
-    algorithm,
-    plaintext,
-    message_id,
-    data_encryption_key,
-    frame_length,
-    sequence_number,
-    is_final_frame,
-    signer=None,
+    algorithm, plaintext, message_id, data_encryption_key, frame_length, sequence_number, is_final_frame, signer=None
 ):
     """Receives a message plaintext, breaks off a frame, encrypts and serializes
     the frame, and returns the encrypted frame and the remaining plaintext.
@@ -247,9 +227,7 @@ def serialize_frame(
         _LOGGER.debug("Serializing final frame")
         packed_frame = struct.pack(
             ">II{iv_len}sI{content_len}s{auth_len}s".format(
-                iv_len=algorithm.iv_len,
-                content_len=len(frame_ciphertext.ciphertext),
-                auth_len=algorithm.auth_len,
+                iv_len=algorithm.iv_len, content_len=len(frame_ciphertext.ciphertext), auth_len=algorithm.auth_len
             ),
             SequenceIdentifier.SEQUENCE_NUMBER_END.value,
             sequence_number,
@@ -262,9 +240,7 @@ def serialize_frame(
         _LOGGER.debug("Serializing frame")
         packed_frame = struct.pack(
             ">I{iv_len}s{content_len}s{auth_len}s".format(
-                iv_len=algorithm.iv_len,
-                content_len=frame_length,
-                auth_len=algorithm.auth_len,
+                iv_len=algorithm.iv_len, content_len=frame_length, auth_len=algorithm.auth_len
             ),
             sequence_number,
             frame_ciphertext.iv,
@@ -288,9 +264,7 @@ def serialize_footer(signer):
     footer = b""
     if signer is not None:
         signature = signer.finalize()
-        footer = struct.pack(
-            ">H{sig_len}s".format(sig_len=len(signature)), len(signature), signature
-        )
+        footer = struct.pack(">H{sig_len}s".format(sig_len=len(signature)), len(signature), signature)
     return footer
 
 
@@ -303,10 +277,7 @@ def serialize_raw_master_key_prefix(raw_master_key):
     :returns: Serialized key_info prefix
     :rtype: bytes
     """
-    if (
-        raw_master_key.config.wrapping_key.wrapping_algorithm.encryption_type
-        is EncryptionType.ASYMMETRIC
-    ):
+    if raw_master_key.config.wrapping_key.wrapping_algorithm.encryption_type is EncryptionType.ASYMMETRIC:
         return to_bytes(raw_master_key.key_id)
     return struct.pack(
         ">{}sII".format(len(raw_master_key.key_id)),
@@ -317,9 +288,7 @@ def serialize_raw_master_key_prefix(raw_master_key):
     )
 
 
-def serialize_wrapped_key(
-    key_provider, wrapping_algorithm, wrapping_key_id, encrypted_wrapped_key
-):
+def serialize_wrapped_key(key_provider, wrapping_algorithm, wrapping_key_id, encrypted_wrapped_key):
     """Serializes EncryptedData into a Wrapped EncryptedDataKey.
 
     :param key_provider: Info for Wrapping MasterKey
@@ -338,19 +307,15 @@ def serialize_wrapped_key(
     else:
         key_info = struct.pack(
             ">{key_id_len}sII{iv_len}s".format(
-                key_id_len=len(wrapping_key_id),
-                iv_len=wrapping_algorithm.algorithm.iv_len,
+                key_id_len=len(wrapping_key_id), iv_len=wrapping_algorithm.algorithm.iv_len
             ),
             to_bytes(wrapping_key_id),
-            len(encrypted_wrapped_key.tag)
-            * 8,  # Tag Length is stored in bits, not bytes
+            len(encrypted_wrapped_key.tag) * 8,  # Tag Length is stored in bits, not bytes
             wrapping_algorithm.algorithm.iv_len,
             encrypted_wrapped_key.iv,
         )
         key_ciphertext = encrypted_wrapped_key.ciphertext + encrypted_wrapped_key.tag
     return EncryptedDataKey(
-        key_provider=MasterKeyInfo(
-            provider_id=key_provider.provider_id, key_info=key_info
-        ),
+        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_info),
         encrypted_data_key=key_ciphertext,
     )

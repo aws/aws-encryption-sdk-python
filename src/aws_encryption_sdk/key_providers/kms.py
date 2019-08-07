@@ -21,20 +21,10 @@ import botocore.config
 import botocore.session
 from botocore.exceptions import ClientError
 
-from aws_encryption_sdk.exceptions import (
-    DecryptKeyError,
-    EncryptKeyError,
-    GenerateKeyError,
-    UnknownRegionError,
-)
+from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError, UnknownRegionError
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.str_ops import to_str
-from aws_encryption_sdk.key_providers.base import (
-    MasterKey,
-    MasterKeyConfig,
-    MasterKeyProvider,
-    MasterKeyProviderConfig,
-)
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,9 +46,7 @@ def _region_from_key_id(key_id, default_region=None):
     except IndexError:
         if default_region is None:
             raise UnknownRegionError(
-                "No default region found and no region determinable from key id: {}".format(
-                    key_id
-                )
+                "No default region found and no region determinable from key id: {}".format(key_id)
             )
         region_name = default_region
     return region_name
@@ -80,16 +68,10 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
         validator=attr.validators.instance_of(botocore.session.Session),
     )
     key_ids = attr.ib(
-        hash=True,
-        default=attr.Factory(tuple),
-        validator=attr.validators.instance_of(tuple),
-        converter=tuple,
+        hash=True, default=attr.Factory(tuple), validator=attr.validators.instance_of(tuple), converter=tuple
     )
     region_names = attr.ib(
-        hash=True,
-        default=attr.Factory(tuple),
-        validator=attr.validators.instance_of(tuple),
-        converter=tuple,
+        hash=True, default=attr.Factory(tuple), validator=attr.validators.instance_of(tuple), converter=tuple
     )
 
 
@@ -132,16 +114,12 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
     def _process_config(self):
         """Traverses the config and adds master keys and regional clients as needed."""
-        self._user_agent_adding_config = botocore.config.Config(
-            user_agent_extra=USER_AGENT_SUFFIX
-        )
+        self._user_agent_adding_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
         if self.config.region_names:
             self.add_regional_clients_from_list(self.config.region_names)
             self.default_region = self.config.region_names[0]
         else:
-            self.default_region = self.config.botocore_session.get_config_variable(
-                "region"
-            )
+            self.default_region = self.config.botocore_session.get_config_variable("region")
             if self.default_region is not None:
                 self.add_regional_client(self.default_region)
         if self.config.key_ids:
@@ -160,9 +138,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         except botocore.exceptions.BotoCoreError:
             self._regional_clients.pop(region_name)
             _LOGGER.error(
-                'Removing regional client "%s" from cache due to BotoCoreError on %s call',
-                region_name,
-                method.__name__,
+                'Removing regional client "%s" from cache due to BotoCoreError on %s call', region_name, method.__name__
             )
             raise
 
@@ -183,9 +159,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         :param str region_name: AWS Region ID (ex: us-east-1)
         """
         if region_name not in self._regional_clients:
-            session = boto3.session.Session(
-                region_name=region_name, botocore_session=self.config.botocore_session
-            )
+            session = boto3.session.Session(region_name=region_name, botocore_session=self.config.botocore_session)
             client = session.client("kms", config=self._user_agent_adding_config)
             self._register_client(client, region_name)
             self._regional_clients[region_name] = client
@@ -216,9 +190,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         :raises InvalidKeyIdError: if key_id is not a valid KMS CMK ID to which this key provider has access
         """
         _key_id = to_str(key_id)  # KMS client requires str, not bytes
-        return KMSMasterKey(
-            config=KMSMasterKeyConfig(key_id=key_id, client=self._client(_key_id))
-        )
+        return KMSMasterKey(config=KMSMasterKeyConfig(key_id=key_id, client=self._client(_key_id)))
 
 
 @attr.s(hash=True)
@@ -232,14 +204,9 @@ class KMSMasterKeyConfig(MasterKeyConfig):
     """
 
     provider_id = _PROVIDER_ID
-    client = attr.ib(
-        hash=True, validator=attr.validators.instance_of(botocore.client.BaseClient)
-    )
+    client = attr.ib(hash=True, validator=attr.validators.instance_of(botocore.client.BaseClient))
     grant_tokens = attr.ib(
-        hash=True,
-        default=attr.Factory(tuple),
-        validator=attr.validators.instance_of(tuple),
-        converter=tuple,
+        hash=True, default=attr.Factory(tuple), validator=attr.validators.instance_of(tuple), converter=tuple
     )
 
     @client.default
@@ -293,9 +260,7 @@ class KMSMasterKey(MasterKey):
             ciphertext = response["CiphertextBlob"]
             key_id = response["KeyId"]
         except (ClientError, KeyError):
-            error_message = "Master Key {key_id} unable to generate data key".format(
-                key_id=self._key_id
-            )
+            error_message = "Master Key {key_id} unable to generate data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
             raise GenerateKeyError(error_message)
         return DataKey(
@@ -327,14 +292,11 @@ class KMSMasterKey(MasterKey):
             ciphertext = response["CiphertextBlob"]
             key_id = response["KeyId"]
         except (ClientError, KeyError):
-            error_message = "Master Key {key_id} unable to encrypt data key".format(
-                key_id=self._key_id
-            )
+            error_message = "Master Key {key_id} unable to encrypt data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
             raise EncryptKeyError(error_message)
         return EncryptedDataKey(
-            key_provider=MasterKeyInfo(provider_id=self.provider_id, key_info=key_id),
-            encrypted_data_key=ciphertext,
+            key_provider=MasterKeyInfo(provider_id=self.provider_id, key_info=key_id), encrypted_data_key=ciphertext
         )
 
     def _decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context=None):
@@ -358,13 +320,9 @@ class KMSMasterKey(MasterKey):
             response = self.config.client.decrypt(**kms_params)
             plaintext = response["Plaintext"]
         except (ClientError, KeyError):
-            error_message = "Master Key {key_id} unable to decrypt data key".format(
-                key_id=self._key_id
-            )
+            error_message = "Master Key {key_id} unable to decrypt data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
             raise DecryptKeyError(error_message)
         return DataKey(
-            key_provider=self.key_provider,
-            data_key=plaintext,
-            encrypted_data_key=encrypted_data_key.encrypted_data_key,
+            key_provider=self.key_provider, data_key=plaintext, encrypted_data_key=encrypted_data_key.encrypted_data_key
         )

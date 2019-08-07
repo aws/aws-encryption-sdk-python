@@ -58,9 +58,7 @@ class _PrehashingAuthenticator(object):
 
         :returns: Hasher object
         """
-        return hashes.Hash(
-            self.algorithm.signing_hash_type(), backend=default_backend()
-        )
+        return hashes.Hash(self.algorithm.signing_hash_type(), backend=default_backend())
 
 
 class Signer(_PrehashingAuthenticator):
@@ -81,9 +79,7 @@ class Signer(_PrehashingAuthenticator):
         :param bytes key_bytes: Raw signing key
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
-        key = serialization.load_der_private_key(
-            data=key_bytes, password=None, backend=default_backend()
-        )
+        key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
         return cls(algorithm, key)
 
     def key_bytes(self):
@@ -122,9 +118,7 @@ class Signer(_PrehashingAuthenticator):
         :rtype: bytes
         """
         prehashed_digest = self._hasher.finalize()
-        return _ecc_static_length_signature(
-            key=self.key, algorithm=self.algorithm, digest=prehashed_digest
-        )
+        return _ecc_static_length_signature(key=self.key, algorithm=self.algorithm, digest=prehashed_digest)
 
 
 class Verifier(_PrehashingAuthenticator):
@@ -152,8 +146,7 @@ class Verifier(_PrehashingAuthenticator):
         return cls(
             algorithm=algorithm,
             key=_ecc_public_numbers_from_compressed_point(
-                curve=algorithm.signing_algorithm_info(),
-                compressed_point=base64.b64decode(encoded_point),
+                curve=algorithm.signing_algorithm_info(), compressed_point=base64.b64decode(encoded_point)
             ).public_key(default_backend()),
         )
 
@@ -168,10 +161,7 @@ class Verifier(_PrehashingAuthenticator):
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
         return cls(
-            algorithm=algorithm,
-            key=serialization.load_der_public_key(
-                data=key_bytes, backend=default_backend()
-            ),
+            algorithm=algorithm, key=serialization.load_der_public_key(data=key_bytes, backend=default_backend())
         )
 
     def key_bytes(self):
@@ -180,8 +170,7 @@ class Verifier(_PrehashingAuthenticator):
         :rtype: bytes
         """
         return self.key.public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
     def update(self, data):

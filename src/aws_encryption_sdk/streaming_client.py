@@ -34,13 +34,7 @@ from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
 from aws_encryption_sdk.internal.crypto.data_keys import derive_data_encryption_key
 from aws_encryption_sdk.internal.crypto.encryption import Decryptor, Encryptor, decrypt
 from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
-from aws_encryption_sdk.internal.defaults import (
-    FRAME_LENGTH,
-    LINE_LENGTH,
-    MAX_NON_FRAMED_SIZE,
-    TYPE,
-    VERSION,
-)
+from aws_encryption_sdk.internal.defaults import FRAME_LENGTH, LINE_LENGTH, MAX_NON_FRAMED_SIZE, TYPE, VERSION
 from aws_encryption_sdk.internal.formatting.deserialize import (
     deserialize_footer,
     deserialize_frame,
@@ -50,9 +44,7 @@ from aws_encryption_sdk.internal.formatting.deserialize import (
     deserialize_tag,
     validate_header,
 )
-from aws_encryption_sdk.internal.formatting.encryption_context import (
-    assemble_content_aad,
-)
+from aws_encryption_sdk.internal.formatting.encryption_context import assemble_content_aad
 from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_footer,
     serialize_frame,
@@ -62,10 +54,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_open,
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.materials_managers import (
-    DecryptionMaterialsRequest,
-    EncryptionMaterialsRequest,
-)
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
@@ -93,53 +82,29 @@ class _ClientConfig(object):
             will attempt to seek() to the end of the stream and tell() to find the length of source data.
     """
 
-    source = attr.ib(
-        hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data
-    )
+    source = attr.ib(hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data)
     materials_manager = attr.ib(
-        hash=True,
-        default=None,
-        validator=attr.validators.optional(
-            attr.validators.instance_of(CryptoMaterialsManager)
-        ),
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
     )
     key_provider = attr.ib(
-        hash=True,
-        default=None,
-        validator=attr.validators.optional(
-            attr.validators.instance_of(MasterKeyProvider)
-        ),
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
     source_length = attr.ib(
-        hash=True,
-        default=None,
-        validator=attr.validators.optional(
-            attr.validators.instance_of(six.integer_types)
-        ),
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
     line_length = attr.ib(
-        hash=True,
-        default=LINE_LENGTH,
-        validator=attr.validators.instance_of(six.integer_types),
+        hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def __attrs_post_init__(self):
         """Normalize inputs to crypto material manager."""
-        both_cmm_and_mkp_defined = (
-            self.materials_manager is not None and self.key_provider is not None
-        )
-        neither_cmm_nor_mkp_defined = (
-            self.materials_manager is None and self.key_provider is None
-        )
+        both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
+        neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
 
         if both_cmm_and_mkp_defined or neither_cmm_nor_mkp_defined:
-            raise TypeError(
-                "Exactly one of materials_manager or key_provider must be provided"
-            )
+            raise TypeError("Exactly one of materials_manager or key_provider must be provided")
         if self.materials_manager is None:
-            self.materials_manager = DefaultCryptoMaterialsManager(
-                master_key_provider=self.key_provider
-            )
+            self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
 
 
 class _EncryptionStream(io.IOBase):
@@ -192,21 +157,15 @@ class _EncryptionStream(io.IOBase):
         instance = super(_EncryptionStream, cls).__new__(cls)
 
         config = kwargs.pop("config", None)
-        if not isinstance(
-            config, instance._config_class
-        ):  # pylint: disable=protected-access
-            config = instance._config_class(
-                **kwargs
-            )  # pylint: disable=protected-access
+        if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
+            config = instance._config_class(**kwargs)  # pylint: disable=protected-access
         instance.config = config
 
         instance.bytes_read = 0
         instance.output_buffer = b""
         instance._message_prepped = False  # pylint: disable=protected-access
         instance.source_stream = instance.config.source
-        instance._stream_length = (
-            instance.config.source_length
-        )  # pylint: disable=protected-access
+        instance._stream_length = instance.config.source_length  # pylint: disable=protected-access
 
         return instance
 
@@ -385,20 +344,12 @@ class EncryptorConfig(_ClientConfig):
         validator=attr.validators.instance_of(dict),
     )
     algorithm = attr.ib(
-        hash=True,
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(AlgorithmSuite)),
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(AlgorithmSuite))
     )
-    frame_length = attr.ib(
-        hash=True,
-        default=FRAME_LENGTH,
-        validator=attr.validators.instance_of(six.integer_types),
-    )
+    frame_length = attr.ib(hash=True, default=FRAME_LENGTH, validator=attr.validators.instance_of(six.integer_types))
 
 
-class StreamEncryptor(
-    _EncryptionStream
-):  # pylint: disable=too-many-instance-attributes
+class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-attributes
     """Provides a streaming encryptor for encrypting a stream source.
     Behaves as a standard file-like object.
 
@@ -440,20 +391,15 @@ class StreamEncryptor(
 
     _config_class = EncryptorConfig
 
-    def __init__(
-        self, **kwargs
-    ):  # pylint: disable=unused-argument,super-init-not-called
+    def __init__(self, **kwargs):  # pylint: disable=unused-argument,super-init-not-called
         """Prepares necessary initial values."""
         self.sequence_number = 1
 
-        self.content_type = aws_encryption_sdk.internal.utils.content_type(
-            self.config.frame_length
-        )
+        self.content_type = aws_encryption_sdk.internal.utils.content_type(self.config.frame_length)
         self._bytes_encrypted = 0
 
         if self.config.frame_length == 0 and (
-            self.config.source_length is not None
-            and self.config.source_length > MAX_NON_FRAMED_SIZE
+            self.config.source_length is not None and self.config.source_length > MAX_NON_FRAMED_SIZE
         ):
             raise SerializationError("Source too large for non-framed message")
 
@@ -485,41 +431,31 @@ class StreamEncryptor(
             algorithm=self.config.algorithm,
             encryption_context=self.config.encryption_context.copy(),
             frame_length=self.config.frame_length,
-            plaintext_rostream=aws_encryption_sdk.internal.utils.streams.ROStream(
-                self.source_stream
-            ),
+            plaintext_rostream=aws_encryption_sdk.internal.utils.streams.ROStream(self.source_stream),
             plaintext_length=plaintext_length,
         )
         self._encryption_materials = self.config.materials_manager.get_encryption_materials(
             request=encryption_materials_request
         )
 
-        if (
-            self.config.algorithm is not None
-            and self._encryption_materials.algorithm != self.config.algorithm
-        ):
+        if self.config.algorithm is not None and self._encryption_materials.algorithm != self.config.algorithm:
             raise ActionNotAllowedError(
                 (
                     "Cryptographic materials manager provided algorithm suite"
                     " differs from algorithm suite in request.\n"
                     "Required: {requested}\n"
                     "Provided: {provided}"
-                ).format(
-                    requested=self.config.algorithm,
-                    provided=self._encryption_materials.algorithm,
-                )
+                ).format(requested=self.config.algorithm, provided=self._encryption_materials.algorithm)
             )
 
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
             self.signer = Signer.from_key_bytes(
-                algorithm=self._encryption_materials.algorithm,
-                key_bytes=self._encryption_materials.signing_key,
+                algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
             )
         aws_encryption_sdk.internal.utils.validate_frame_length(
-            frame_length=self.config.frame_length,
-            algorithm=self._encryption_materials.algorithm,
+            frame_length=self.config.frame_length, algorithm=self._encryption_materials.algorithm
         )
 
         self._derived_data_key = derive_data_encryption_key(
@@ -609,20 +545,14 @@ class StreamEncryptor(
             self.signer.update(ciphertext)
 
         if len(plaintext) < b:
-            _LOGGER.debug(
-                "Closing encryptor after receiving only %d bytes of %d bytes requested",
-                plaintext_length,
-                b,
-            )
+            _LOGGER.debug("Closing encryptor after receiving only %d bytes of %d bytes requested", plaintext_length, b)
 
             closing = self.encryptor.finalize()
 
             if self.signer is not None:
                 self.signer.update(closing)
 
-            closing += serialize_non_framed_close(
-                tag=self.encryptor.tag, signer=self.signer
-            )
+            closing += serialize_non_framed_close(tag=self.encryptor.tag, signer=self.signer)
 
             if self.signer is not None:
                 closing += serialize_footer(self.signer)
@@ -644,11 +574,7 @@ class StreamEncryptor(
         if b > 0:
             _frames_to_read = math.ceil(b / float(self.config.frame_length))
             b = int(_frames_to_read * self.config.frame_length)
-        _LOGGER.debug(
-            "%d bytes requested; reading %d bytes after normalizing to frame length",
-            _b,
-            b,
-        )
+        _LOGGER.debug("%d bytes requested; reading %d bytes after normalizing to frame length", _b, b)
 
         plaintext = self.source_stream.read(b)
         plaintext_length = len(plaintext)
@@ -670,9 +596,7 @@ class StreamEncryptor(
             or (finalize and not final_frame_written)
         ):
             current_plaintext_length = len(plaintext)
-            is_final_frame = (
-                finalize and current_plaintext_length < self.config.frame_length
-            )
+            is_final_frame = finalize and current_plaintext_length < self.config.frame_length
             bytes_in_frame = min(current_plaintext_length, self.config.frame_length)
             _LOGGER.debug(
                 "Writing %d bytes into%s frame %d",
@@ -708,9 +632,7 @@ class StreamEncryptor(
         :param int b: Number of bytes to read
         :raises NotSupportedError: if content type is not supported
         """
-        _LOGGER.debug(
-            "%d bytes requested from stream with content type: %s", b, self.content_type
-        )
+        _LOGGER.debug("%d bytes requested from stream with content type: %s", b, self.content_type)
         if 0 <= b <= len(self.output_buffer) or self.__message_complete:
             _LOGGER.debug("No need to read from source stream or source stream closed")
             return
@@ -731,8 +653,7 @@ class StreamEncryptor(
             if self._bytes_encrypted > self.config.source_length:
                 raise CustomMaximumValueExceeded(
                     "Bytes encrypted has exceeded stated source length estimate:\n{actual:d} > {estimated:d}".format(
-                        actual=self._bytes_encrypted,
-                        estimated=self.config.source_length,
+                        actual=self._bytes_encrypted, estimated=self.config.source_length
                     )
                 )
 
@@ -765,17 +686,11 @@ class DecryptorConfig(_ClientConfig):
     """
 
     max_body_length = attr.ib(
-        hash=True,
-        default=None,
-        validator=attr.validators.optional(
-            attr.validators.instance_of(six.integer_types)
-        ),
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
 
 
-class StreamDecryptor(
-    _EncryptionStream
-):  # pylint: disable=too-many-instance-attributes
+class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-attributes
     """Provides a streaming encryptor for encrypting a stream source.
     Behaves as a standard file-like object.
 
@@ -808,9 +723,7 @@ class StreamDecryptor(
 
     _config_class = DecryptorConfig
 
-    def __init__(
-        self, **kwargs
-    ):  # pylint: disable=unused-argument,super-init-not-called
+    def __init__(self, **kwargs):  # pylint: disable=unused-argument,super-init-not-called
         """Prepares necessary initial values."""
         self.last_sequence_number = 0
         self.__unframed_bytes_read = 0
@@ -849,35 +762,23 @@ class StreamDecryptor(
             algorithm=header.algorithm,
             encryption_context=header.encryption_context,
         )
-        decryption_materials = self.config.materials_manager.decrypt_materials(
-            request=decrypt_materials_request
-        )
+        decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
         if decryption_materials.verification_key is None:
             self.verifier = None
         else:
             self.verifier = Verifier.from_key_bytes(
-                algorithm=header.algorithm,
-                key_bytes=decryption_materials.verification_key,
+                algorithm=header.algorithm, key_bytes=decryption_materials.verification_key
             )
         if self.verifier is not None:
             self.verifier.update(raw_header)
 
         header_auth = deserialize_header_auth(
-            stream=self.source_stream,
-            algorithm=header.algorithm,
-            verifier=self.verifier,
+            stream=self.source_stream, algorithm=header.algorithm, verifier=self.verifier
         )
         self._derived_data_key = derive_data_encryption_key(
-            source_key=decryption_materials.data_key.data_key,
-            algorithm=header.algorithm,
-            message_id=header.message_id,
+            source_key=decryption_materials.data_key.data_key, algorithm=header.algorithm, message_id=header.message_id
         )
-        validate_header(
-            header=header,
-            header_auth=header_auth,
-            raw_header=raw_header,
-            data_key=self._derived_data_key,
-        )
+        validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
         return header, header_auth
 
     def _prep_non_framed(self):
@@ -886,10 +787,7 @@ class StreamDecryptor(
             stream=self.source_stream, header=self._header, verifier=self.verifier
         )
 
-        if (
-            self.config.max_body_length is not None
-            and self.body_length > self.config.max_body_length
-        ):
+        if self.config.max_body_length is not None and self.body_length > self.config.max_body_length:
             raise CustomMaximumValueExceeded(
                 "Non-framed message content length found larger than custom value: {found:d} > {custom:d}".format(
                     found=self.body_length, custom=self.config.max_body_length
@@ -916,16 +814,12 @@ class StreamDecryptor(
         ciphertext = self.source_stream.read(bytes_to_read)
 
         if len(self.output_buffer) + len(ciphertext) < self.body_length:
-            raise SerializationError(
-                "Total message body contents less than specified in body description"
-            )
+            raise SerializationError("Total message body contents less than specified in body description")
 
         if self.verifier is not None:
             self.verifier.update(ciphertext)
 
-        tag = deserialize_tag(
-            stream=self.source_stream, header=self._header, verifier=self.verifier
-        )
+        tag = deserialize_tag(stream=self.source_stream, header=self._header, verifier=self.verifier)
 
         aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
             content_type=self._header.content_type, is_final_frame=True
@@ -947,9 +841,7 @@ class StreamDecryptor(
         plaintext = self.decryptor.update(ciphertext)
         plaintext += self.decryptor.finalize()
 
-        self.footer = deserialize_footer(
-            stream=self.source_stream, verifier=self.verifier
-        )
+        self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
         return plaintext
 
     def _read_bytes_from_framed_body(self, b):
@@ -972,8 +864,7 @@ class StreamDecryptor(
                 raise SerializationError("Malformed message: frames out of order")
             self.last_sequence_number += 1
             aad_content_string = aws_encryption_sdk.internal.utils.get_aad_content_string(
-                content_type=self._header.content_type,
-                is_final_frame=frame_data.final_frame,
+                content_type=self._header.content_type, is_final_frame=frame_data.final_frame
             )
             associated_data = assemble_content_aad(
                 message_id=self._header.message_id,
@@ -991,9 +882,7 @@ class StreamDecryptor(
             _LOGGER.debug("bytes collected: %d", plaintext_length)
         if final_frame:
             _LOGGER.debug("Reading footer")
-            self.footer = deserialize_footer(
-                stream=self.source_stream, verifier=self.verifier
-            )
+            self.footer = deserialize_footer(stream=self.source_stream, verifier=self.verifier)
 
         return plaintext
 
@@ -1009,11 +898,7 @@ class StreamDecryptor(
 
         buffer_length = len(self.output_buffer)
         if 0 <= b <= buffer_length:
-            _LOGGER.debug(
-                "%d bytes requested less than or equal to current output buffer size %d",
-                b,
-                buffer_length,
-            )
+            _LOGGER.debug("%d bytes requested less than or equal to current output buffer size %d", b, buffer_length)
             return
 
         if self._header.content_type == ContentType.FRAMED_DATA:

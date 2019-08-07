@@ -42,9 +42,7 @@ def _generate_test_cases():
     if not os.path.isdir(root_dir):
         root_dir = os.getcwd()
     base_dir = os.path.join(root_dir, "aws_encryption_sdk_resources")
-    ciphertext_manifest_path = os.path.join(
-        base_dir, "manifests", "ciphertext.manifest"
-    )
+    ciphertext_manifest_path = os.path.join(base_dir, "manifests", "ciphertext.manifest")
 
     if not os.path.isfile(ciphertext_manifest_path):
         # Make no test cases if the ciphertext file is not found
@@ -68,9 +66,7 @@ def _generate_test_cases():
     return _test_cases
 
 
-@pytest.mark.parametrize(
-    "plaintext_filename, ciphertext_filename", _generate_test_cases()
-)
+@pytest.mark.parametrize("plaintext_filename, ciphertext_filename", _generate_test_cases())
 def test_decrypt_from_file(plaintext_filename, ciphertext_filename):
     """Tests decrypt from known good files."""
     with open(ciphertext_filename, "rb") as infile:

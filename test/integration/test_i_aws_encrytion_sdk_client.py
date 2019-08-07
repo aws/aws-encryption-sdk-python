@@ -44,10 +44,7 @@ def test_encrypt_verify_user_agent_kms_master_key_provider(caplog):
     mkp = setup_kms_master_key_provider()
     mk = mkp.master_key(get_cmk_arn())
 
-    mk.generate_data_key(
-        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        encryption_context={},
-    )
+    mk.generate_data_key(algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
 
     assert USER_AGENT_SUFFIX in caplog.text
 
@@ -56,10 +53,7 @@ def test_encrypt_verify_user_agent_kms_master_key(caplog):
     caplog.set_level(level=logging.DEBUG)
     mk = KMSMasterKey(key_id=get_cmk_arn())
 
-    mk.generate_data_key(
-        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        encryption_context={},
-    )
+    mk.generate_data_key(algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
 
     assert USER_AGENT_SUFFIX in caplog.text
 
@@ -99,9 +93,7 @@ class TestKMSThickClientIntegration(object):
             ciphertext = encryptor.read()
         header_1 = encryptor.header
         with aws_encryption_sdk.stream(
-            source=io.BytesIO(ciphertext),
-            key_provider=self.kms_master_key_provider,
-            mode="d",
+            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="d"
         ) as decryptor:
             plaintext = decryptor.read()
         header_2 = decryptor.header
@@ -125,9 +117,7 @@ class TestKMSThickClientIntegration(object):
         header_1 = encryptor.header
         plaintext = b""
         with aws_encryption_sdk.stream(
-            source=io.BytesIO(ciphertext),
-            key_provider=self.kms_master_key_provider,
-            mode="d",
+            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="d"
         ) as decryptor:
             for chunk in decryptor:
                 plaintext += chunk
@@ -145,9 +135,7 @@ class TestKMSThickClientIntegration(object):
             encryption_context=VALUES["encryption_context"],
             frame_length=0,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_default_algorithm_non_framed_no_encryption_context(self):
@@ -155,13 +143,9 @@ class TestKMSThickClientIntegration(object):
             for a non-framed message using the default algorithm.
         """
         ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            frame_length=0,
+            source=VALUES["plaintext_128"], key_provider=self.kms_master_key_provider, frame_length=0
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_default_algorithm_single_frame(self):
@@ -174,9 +158,7 @@ class TestKMSThickClientIntegration(object):
             encryption_context=VALUES["encryption_context"],
             frame_length=1024,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_default_algorithm_multiple_frames(self):
@@ -190,9 +172,7 @@ class TestKMSThickClientIntegration(object):
             encryption_context=VALUES["encryption_context"],
             frame_length=1024,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"] * 100
 
     def test_encryption_cycle_aes_128_gcm_iv12_tag16_single_frame(self):
@@ -207,9 +187,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_128_gcm_iv12_tag16_non_framed(self):
@@ -224,9 +202,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_192_gcm_iv12_tag16_single_frame(self):
@@ -241,9 +217,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_192_gcm_iv12_tag16_non_framed(self):
@@ -258,9 +232,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_256_gcm_iv12_tag16_single_frame(self):
@@ -275,9 +247,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_256_gcm_iv12_tag16_non_framed(self):
@@ -292,9 +262,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
@@ -309,9 +277,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
@@ -326,9 +292,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
@@ -343,9 +307,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
@@ -360,9 +322,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
@@ -377,9 +337,7 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
     def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
@@ -394,14 +352,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_single_frame(
-        self
-    ):
+    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_single_frame(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             frame message using the aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256
             algorithm.
@@ -413,14 +367,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_non_framed(
-        self
-    ):
+    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256
             algorithm.
@@ -432,14 +382,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(
-        self
-    ):
+    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             frame message using the aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.
@@ -451,14 +397,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(
-        self
-    ):
+    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.
@@ -470,14 +412,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(
-        self
-    ):
+    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             frame message using the aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.
@@ -489,14 +427,10 @@ class TestKMSThickClientIntegration(object):
             frame_length=1024,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]
 
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(
-        self
-    ):
+    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
         """Test that the enrypt/decrypt cycle completes successfully for a single
             block message using the aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
             algorithm.
@@ -508,7 +442,5 @@ class TestKMSThickClientIntegration(object):
             frame_length=0,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         )
-        plaintext, _ = aws_encryption_sdk.decrypt(
-            source=ciphertext, key_provider=self.kms_master_key_provider
-        )
+        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
         assert plaintext == VALUES["plaintext_128"]

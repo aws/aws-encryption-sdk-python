@@ -15,16 +15,9 @@
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.identifiers import AlgorithmSuite, __version__  # noqa
-from aws_encryption_sdk.key_providers.kms import (
-    KMSMasterKeyProvider,
-    KMSMasterKeyProviderConfig,
-)  # noqa
-from aws_encryption_sdk.materials_managers.caching import (
-    CachingCryptoMaterialsManager,
-)  # noqa
-from aws_encryption_sdk.materials_managers.default import (
-    DefaultCryptoMaterialsManager,
-)  # noqa
+from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig  # noqa
+from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager  # noqa
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager  # noqa
 from aws_encryption_sdk.streaming_client import (  # noqa
     DecryptorConfig,
     EncryptorConfig,
@@ -184,12 +177,7 @@ def stream(**kwargs):
     :raises ValueError: if supplied with an unsupported mode value
     """
     mode = kwargs.pop("mode")
-    _stream_map = {
-        "e": StreamEncryptor,
-        "encrypt": StreamEncryptor,
-        "d": StreamDecryptor,
-        "decrypt": StreamDecryptor,
-    }
+    _stream_map = {"e": StreamEncryptor, "encrypt": StreamEncryptor, "d": StreamDecryptor, "decrypt": StreamDecryptor}
     try:
         return _stream_map[mode.lower()](**kwargs)
     except KeyError:

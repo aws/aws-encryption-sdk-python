@@ -71,12 +71,8 @@ class MasterKeyProvider(object):
         """
         instance = super(MasterKeyProvider, cls).__new__(cls)
         config = kwargs.pop("config", None)
-        if not isinstance(
-            config, instance._config_class
-        ):  # pylint: disable=protected-access
-            config = instance._config_class(
-                **kwargs
-            )  # pylint: disable=protected-access
+        if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
+            config = instance._config_class(**kwargs)  # pylint: disable=protected-access
         instance.config = config
         #: Index matching key IDs to existing MasterKey objects.
         instance._encrypt_key_index = {}  # pylint: disable=protected-access
@@ -92,15 +88,11 @@ class MasterKeyProvider(object):
             name=self.__class__.__name__,
             kwargs=", ".join(
                 "{key}={value}".format(key=key, value=value)
-                for key, value in sorted(
-                    attr.asdict(self.config, recurse=True).items(), key=lambda x: x[0]
-                )
+                for key, value in sorted(attr.asdict(self.config, recurse=True).items(), key=lambda x: x[0])
             ),
         )
 
-    def master_keys_for_encryption(
-        self, encryption_context, plaintext_rostream, plaintext_length=None
-    ):
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
         """Returns a set containing all Master Keys added to this Provider, or any member Providers,
         which should be used to encrypt data keys for the specified data.
 
@@ -133,9 +125,7 @@ class MasterKeyProvider(object):
                 primary = _primary
             master_keys.extend(_master_keys)
         if not master_keys:
-            raise MasterKeyProviderError(
-                "No Master Keys available from Master Key Provider"
-            )
+            raise MasterKeyProviderError("No Master Keys available from Master Key Provider")
         return primary, master_keys
 
     @abc.abstractmethod
@@ -240,38 +230,26 @@ class MasterKeyProvider(object):
         _LOGGER.debug("starting decrypt data key attempt")
         for member in [self] + self._members:
             if member.provider_id == encrypted_data_key.key_provider.provider_id:
-                _LOGGER.debug(
-                    "attempting to locate master key from key provider: %s",
-                    member.provider_id,
-                )
+                _LOGGER.debug("attempting to locate master key from key provider: %s", member.provider_id)
                 if isinstance(member, MasterKey):
                     _LOGGER.debug("using existing master key")
                     master_key = member
                 elif self.vend_masterkey_on_decrypt:
                     try:
-                        _LOGGER.debug(
-                            "attempting to add master key: %s",
-                            encrypted_data_key.key_provider.key_info,
-                        )
-                        master_key = member.master_key_for_decrypt(
-                            encrypted_data_key.key_provider.key_info
-                        )
+                        _LOGGER.debug("attempting to add master key: %s", encrypted_data_key.key_provider.key_info)
+                        master_key = member.master_key_for_decrypt(encrypted_data_key.key_provider.key_info)
                     except InvalidKeyIdError:
                         _LOGGER.debug(
-                            "master key %s not available in provider",
-                            encrypted_data_key.key_provider.key_info,
+                            "master key %s not available in provider", encrypted_data_key.key_provider.key_info
                         )
                         continue
                 else:
                     continue
                 try:
                     _LOGGER.debug(
-                        "attempting to decrypt data key with provider %s",
-                        encrypted_data_key.key_provider.key_info,
+                        "attempting to decrypt data key with provider %s", encrypted_data_key.key_provider.key_info
                     )
-                    data_key = master_key.decrypt_data_key(
-                        encrypted_data_key, algorithm, encryption_context
-                    )
+                    data_key = master_key.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
                 except (IncorrectMasterKeyError, DecryptKeyError) as error:
                     _LOGGER.debug(
                         "%s raised when attempting to decrypt data key with master key %s",
@@ -284,9 +262,7 @@ class MasterKeyProvider(object):
             raise DecryptKeyError("Unable to decrypt data key")
         return data_key
 
-    def decrypt_data_key_from_list(
-        self, encrypted_data_keys, algorithm, encryption_context
-    ):
+    def decrypt_data_key_from_list(self, encrypted_data_keys, algorithm, encryption_context):
         """Receives a list of encrypted data keys and returns the first one which this provider is able to decrypt.
 
         :param encrypted_data_keys: List of encrypted data keys
@@ -301,9 +277,7 @@ class MasterKeyProvider(object):
         data_key = None
         for encrypted_data_key in encrypted_data_keys:
             try:
-                data_key = self.decrypt_data_key(
-                    encrypted_data_key, algorithm, encryption_context
-                )
+                data_key = self.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
             # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
             # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
             except (DecryptKeyError, IncorrectMasterKeyError):
@@ -322,18 +296,12 @@ class MasterKeyConfig(object):
     :param bytes key_id: Key ID for Master Key
     """
 
-    key_id = attr.ib(
-        hash=True,
-        validator=attr.validators.instance_of((six.string_types, bytes)),
-        converter=to_bytes,
-    )
+    key_id = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_bytes)
 
     def __attrs_post_init__(self):
         """Verify that children of this class define a "provider_id" attribute."""
         if not hasattr(self, "provider_id"):
-            raise TypeError(
-                'Instances of MasterKeyConfig must have a "provider_id" attribute defined.'
-            )
+            raise TypeError('Instances of MasterKeyConfig must have a "provider_id" attribute defined.')
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -350,9 +318,7 @@ class MasterKey(MasterKeyProvider):
         instance = super(MasterKey, cls).__new__(cls, **kwargs)
 
         if not hasattr(instance.config, "provider_id"):
-            raise TypeError(
-                'MasterKey config classes must have a "provider_id" attribute defined.'
-            )
+            raise TypeError('MasterKey config classes must have a "provider_id" attribute defined.')
 
         if instance.config.provider_id is not None:
             # Only allow override if provider_id is NOT set to non-None for the class
@@ -361,14 +327,11 @@ class MasterKey(MasterKeyProvider):
             elif instance.provider_id != instance.config.provider_id:
                 raise ConfigMismatchError(
                     "Config provider_id does not match MasterKey provider_id: {config} != {instance}".format(
-                        config=instance.config.provider_id,
-                        instance=instance.provider_id,
+                        config=instance.config.provider_id, instance=instance.provider_id
                     )
                 )
         instance.key_id = instance.config.key_id
-        instance._encrypt_key_index = {
-            instance.key_id: instance
-        }  # pylint: disable=protected-access
+        instance._encrypt_key_index = {instance.key_id: instance}  # pylint: disable=protected-access
         # We cannot make any general statements about key_info, so specifically enforce that decrypt index is empty.
         instance._decrypt_key_index = {}  # pylint: disable=protected-access
         instance._members = [instance]  # pylint: disable=protected-access
@@ -397,9 +360,7 @@ class MasterKey(MasterKeyProvider):
             return True
         return False
 
-    def master_keys_for_encryption(
-        self, encryption_context, plaintext_rostream, plaintext_length=None
-    ):
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
         """Returns self and a list containing self, to match the format of output for a Master Key Provider.
 
         .. warning::
@@ -455,12 +416,8 @@ class MasterKey(MasterKeyProvider):
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
         """
-        _LOGGER.info(
-            "generating data key with encryption context: %s", encryption_context
-        )
-        generated_data_key = self._generate_data_key(
-            algorithm=algorithm, encryption_context=encryption_context
-        )
+        _LOGGER.info("generating data key with encryption context: %s", encryption_context)
+        generated_data_key = self._generate_data_key(algorithm=algorithm, encryption_context=encryption_context)
         aws_encryption_sdk.internal.utils.source_data_key_length_check(
             source_data_key=generated_data_key, algorithm=algorithm
         )
@@ -493,14 +450,8 @@ class MasterKey(MasterKeyProvider):
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
-        _LOGGER.info(
-            "encrypting data key with encryption context: %s", encryption_context
-        )
-        return self._encrypt_data_key(
-            data_key=data_key,
-            algorithm=algorithm,
-            encryption_context=encryption_context,
-        )
+        _LOGGER.info("encrypting data key with encryption context: %s", encryption_context)
+        return self._encrypt_data_key(data_key=data_key, algorithm=algorithm, encryption_context=encryption_context)
 
     @abc.abstractmethod
     def _encrypt_data_key(self, data_key, algorithm, encryption_context):
@@ -532,14 +483,10 @@ class MasterKey(MasterKeyProvider):
         :rtype: aws_encryption_sdk.structures.DataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
-        _LOGGER.info(
-            "decrypting data key with encryption context: %s", encryption_context
-        )
+        _LOGGER.info("decrypting data key with encryption context: %s", encryption_context)
         self._key_check(encrypted_data_key)
         decrypted_data_key = self._decrypt_data_key(
-            encrypted_data_key=encrypted_data_key,
-            algorithm=algorithm,
-            encryption_context=encryption_context,
+            encrypted_data_key=encrypted_data_key, algorithm=algorithm, encryption_context=encryption_context
         )
         aws_encryption_sdk.internal.utils.source_data_key_length_check(
             source_data_key=decrypted_data_key, algorithm=algorithm
