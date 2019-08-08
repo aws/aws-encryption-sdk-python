@@ -167,6 +167,13 @@ class TestDeserialize(object):
             stream = io.BytesIO(VALUES["serialized_header_unknown_content_type"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
         excinfo.match("Unknown content type *")
+    
+    def test_deserialize_header_malformed_aad(self):
+        malformed_header = io.BytesIO(b"AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAAAAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhDRUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQjFFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHym2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amYwxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/wMviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmThUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQLLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vpedxpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAGAAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAAAAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw==")
+        #malformed_header = io.BytesIO(b"\x00\x00")
+        with pytest.raises(SerializationError) as excinfo:
+            test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(malformed_header)
+        excinfo.match(r"Malformed AAD: zero length AAD with non-zero length AAD length field")
 
     def test_deserialize_header_invalid_reserved_space(self):
         """Validate that the deserialize_header function behaves
