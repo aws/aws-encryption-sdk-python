@@ -139,20 +139,19 @@ def deserialize_encryption_context(serialized_encryption_context):
     :raises SerializationError: if duplicate key found in serialized encryption context
     :raises SerializationError: if malformed data found in serialized encryption context
     """
+    _LOGGER.debug("Deserializing Encryption Context")
     if len(serialized_encryption_context) > aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE:
         raise SerializationError("Serialized context is too long.")
-
     if serialized_encryption_context == b"":
         _LOGGER.debug("No encryption context data found")
         return {}
 
     deserialized_size = 0
     encryption_context = {}
-
     dict_size, deserialized_size = read_short(source=serialized_encryption_context, offset=deserialized_size)
     _LOGGER.debug("Found %d keys", dict_size)
 
-    # either the dict_size is just wrong, or this is malformed 
+    # either the dict_size is just wrong, or this is malformed
     # (and we assume the worst case and more common is the latter... former caught later)
     if dict_size == 0:
         raise SerializationError("Malformed AAD: zero length AAD with non-zero length AAD length field")

@@ -29,6 +29,7 @@ from aws_encryption_sdk.identifiers import (
 )
 from aws_encryption_sdk.internal.crypto.encryption import decrypt
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
+# necessary for it to call the correct deserialize_encryption_context
 from aws_encryption_sdk.internal.formatting.encryption_context import deserialize_encryption_context
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.internal.structures import (
@@ -242,6 +243,7 @@ def deserialize_header(stream):
     tee = io.BytesIO()
     tee_stream = TeeStream(stream, tee)
     version_id, message_type_id = unpack_values(">BB", tee_stream)
+
     header = dict()
     header["version"] = _verified_version_from_id(version_id)
     header["type"] = _verified_message_type_from_id(message_type_id)
@@ -251,7 +253,10 @@ def deserialize_header(stream):
     header["algorithm"] = _verified_algorithm_from_id(algorithm_id)
     header["message_id"] = message_id
 
-    header["encryption_context"] = deserialize_encryption_context(tee_stream.read(ser_encryption_context_length))
+    aad = tee_stream.read(ser_encryption_context_length)
+    # d_aad = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(aad)
+    d_aad = deserialize_encryption_context(aad)
+    header["encryption_context"] = d_aad
 
     header["encrypted_data_keys"] = _deserialize_encrypted_data_keys(tee_stream)
 

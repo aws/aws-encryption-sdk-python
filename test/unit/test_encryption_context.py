@@ -190,9 +190,11 @@ class TestEncryptionContext(object):
             serialized_encryption_context=b""
         )
         assert test == {}
-        
+
     def test_malformed_aad(self):
         malformed_aad = b"\x00\x00"
         with pytest.raises(SerializationError) as excinfo:
-            test = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(malformed_aad)
+            test = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
+                malformed_aad
+            )
         excinfo.match(r"Malformed AAD: zero length AAD with non-zero length AAD length field")
