@@ -57,11 +57,27 @@ def test_deserialize_tag():
 
 # important to have this outside of the class to avoid mocking issues
 def test_deserialize_header_malformed_aad():
-    mencoded = b"AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAAAAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhDRUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQjFFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHym2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amYwxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/wMviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmThUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQLLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vpedxpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAGAAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAAAAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw=="
+    # line was too long before which is why linters failed
+    mencoded = (
+        "AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAA"
+        + "AAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhD"
+        + "RUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQj"
+        + "FFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHy"
+        + "m2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amY"
+        + "wxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/w"
+        + "MviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmT"
+        + "hUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQ"
+        + "LLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vped"
+        + "xpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2"
+        + "SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAG"
+        + "AAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAA"
+        + "AAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw=="
+    )
+    mencoded = mencoded.encode("utf-8")
     mdecoded = base64.b64decode(mencoded)
     malformed_header = io.BytesIO(mdecoded)
     with pytest.raises(SerializationError) as excinfo:
-        test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(malformed_header)
+        aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(malformed_header)
     excinfo.match(r"Malformed AAD: zero length AAD with non-zero length AAD length field")
 
 
