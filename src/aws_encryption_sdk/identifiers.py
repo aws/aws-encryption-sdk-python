@@ -348,3 +348,13 @@ class ContentAADString(Enum):
     FRAME_STRING_ID = b"AWSKMSEncryptionClient Frame"
     FINAL_FRAME_STRING_ID = b"AWSKMSEncryptionClient Final Frame"
     NON_FRAMED_STRING_ID = b"AWSKMSEncryptionClient Single Block"
+
+
+class KeyringTraceFlag(Enum):
+    """KeyRing Trace actions."""
+
+    WRAPPING_KEY_GENERATED_DATA_KEY = 1
+    WRAPPING_KEY_ENCRYPTED_DATA_KEY = 1 << 1
+    WRAPPING_KEY_DECRYPTED_DATA_KEY = 1 << 2
+    WRAPPING_KEY_SIGNED_ENC_CTX = 1 << 3
+    WRAPPING_KEY_VERIFIED_ENC_CTX = 1 << 4

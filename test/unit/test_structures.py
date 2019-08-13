@@ -107,3 +107,30 @@ def test_data_key_repr_str(cls, params):
 
     assert data_key_check not in str(test)
     assert data_key_check not in repr(test)
+
+
+@pytest.fixture
+def ex_data_key():
+    return DataKey(**VALID_KWARGS[DataKey][0])
+
+
+def test_encrypted_data_key_from_data_key_success(ex_data_key):
+    test = EncryptedDataKey.from_data_key(ex_data_key)
+
+    assert test.key_provider == ex_data_key.key_provider
+    assert test.encrypted_data_key == ex_data_key.encrypted_data_key
+
+
+def test_raw_data_key_from_data_key_success(ex_data_key):
+    test = RawDataKey.from_data_key(ex_data_key)
+
+    assert test.key_provider == ex_data_key.key_provider
+    assert test.data_key == ex_data_key.data_key
+
+
+@pytest.mark.parametrize("data_key_class", (EncryptedDataKey, RawDataKey))
+def test_raw_and_encrypted_data_key_from_data_key_fail(data_key_class):
+    with pytest.raises(TypeError) as excinfo:
+        data_key_class.from_data_key(b"ahjseofij")
+
+    excinfo.match(r"data_key must be type DataKey not *")
