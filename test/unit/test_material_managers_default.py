@@ -247,7 +247,7 @@ def test_signer_key_in_encryption_context():
     cmm = build_cmm()
     algo = ALGORITHM  # default
 
-    # key value does not matter
+    # key value does not matter... instead we care about whether its populated
     key = to_str(Signer(algorithm=algo, key=generate_ecc_signing_key(algorithm=algo)).encoded_public_key())
     context = {ENCODED_SIGNER_KEY: key}
     request = EncryptionMaterialsRequest(algorithm=algo, encryption_context=context, frame_length=4096)
