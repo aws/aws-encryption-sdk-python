@@ -55,6 +55,16 @@ def test_deserialize_tag():
     assert parsed_tag == tag
 
 
+# important to have this outside of the class to avoid mocking issues
+def test_deserialize_header_malformed_aad():
+    mencoded = b"AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAAAAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhDRUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQjFFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHym2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amYwxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/wMviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmThUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQLLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vpedxpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAGAAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAAAAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw=="
+    mdecoded = base64.b64decode(mencoded)
+    malformed_header = io.BytesIO(mdecoded)
+    with pytest.raises(SerializationError) as excinfo:
+        test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(malformed_header)
+    excinfo.match(r"Malformed AAD: zero length AAD with non-zero length AAD length field")
+
+
 class TestDeserialize(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
@@ -168,34 +178,6 @@ class TestDeserialize(object):
             stream = io.BytesIO(VALUES["serialized_header_unknown_content_type"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
         excinfo.match("Unknown content type *")
-
-    """
-    Decoded looks like this (with important incorrect AAD fields on their own lines):
-    b'\x01\x80\x00\x14\x9c\r\xf0\x88\x10\xf7\xed,\xc7,\xbb\xfb\xdd\x1c\x08(
-        \x00\x02
-        \x00\x00
-        \x00\x01\x00\x13WEB-CRYPTO-RSA-OAEP\x00(8CED2FD20FC88A9C06EFDB073707EB1EF1655780\x01
-        \x00V\xc8\x8b\xe8&J\xbb\xde\x8d\xf3\x82\x8d\xb14\xf2\xb4\xd8\x1f)\xb6\xb8\xb5\xac\x8a,\xd0\x1et\xf2
-        \xdf??U\xe4~\xec\xc2\xaf6\xfe\xd9|\xf7\xf9-~\xe2\xf5\xa9\x98\xc3\x10\x8c!+\xd8\xf8\x10\x9c\x9d\xd2
-        \xda\x90\x7f\xd1\x945\x1d\x83>\x7fCB\x80\xc6\xb19-~\xc3\x1f\x13\xbf\xc0\xcb\xe2$(\xbe\xa9u\x8co\xeen
-        \xd2hpz\x94b\x84\xef\xdd\x93\xed\xe4\x1a\xac\x9a.\x19\xc6\xb8\x0e\xb1\xa9\x89\x93\x85IBe\x1eA\xc1\xfc
-        \x84u\xd4\x9a\x9e\n;\xbaa\x16\xc3V\x10\xf2\xfa$\x8e\xa53\x08\xa4r\x93ui_\x04\x13]\x02\xcb\xac\x1c
-        \xfbff{\x02|\xe7\xd1*\x1a-\x89<\x0fJ\xcfZ\x12\x87\xbdE\xd0\x0c\x96\x03a\xd4;\xbe\x97\x9d\xc6\x9b\x04
-        \xe6\xf9b,\x8f|\x08\x07\x08ZYd\xb2\xdfz\xe02\x01\xc0\xa8\x00_\xa2\x1c\xf0\xd8\xfe\xf1>\xd5\xba\xb7J
-        \xd9!nL~\x0b"\xf9\x1ena\x06\x0b\x19\xe0u\x1a_\xa2\x91\x14\xfd\x17t-\x85\xd9\x8aN\x02\x00\x00\x00\x00
-        \x0c\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00+\xdb\xcdF\xfc\xa6\x0eJ1;\xa7r\xeb
-        \xbaC\xb9\xff\xff\xff\xff\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00
-        \x050*\x9a)P\xad\xa8\x13\x156\x1d?=\xb7\xc3SLG\xe7<S'
-    """
-
-    def test_deserialize_header_malformed_aad(self):
-        mencoded = b"AYAAFJwN8IgQ9+0sxyy7+90cCCgAAgAAAAEAE1dFQi1DUllQVE8tUlNBLU9BRVAAKDhDRUQyRkQyMEZDODhBOUMwNkVGREIwNzM3MDdFQjFFRjE2NTU3ODABAFbIi+gmSrvejfOCjbE08rTYHym2uLWsiizQHnTy3z8/VeR+7MKvNv7ZfPf5LX7i9amYwxCMISvY+BCcndLakH/RlDUdgz5/Q0KAxrE5LX7DHxO/wMviJCi+qXWMb+5u0mhwepRihO/dk+3kGqyaLhnGuA6xqYmThUlCZR5BwfyEddSango7umEWw1YQ8vokjqUzCKRyk3VpXwQTXQLLrBz7ZmZ7Anzn0SoaLYk8D0rPWhKHvUXQDJYDYdQ7vpedxpsE5vliLI98CAcIWllkst964DIBwKgAX6Ic8Nj+8T7VurdK2SFuTH4LIvkebmEGCxngdRpfopEU/Rd0LYXZik4CAAAAAAwAAAAGAAAAAAAAAAAAAAAAK9vNRvymDkoxO6dy67pDuf////8AAAABAAAAAAAAAAAAAAABAAAABTAqmilQragTFTYdPz23w1NMR+c8Uw=="
-        mdecoded = base64.b64decode(mencoded)
-        malformed_header = io.BytesIO(mdecoded)
-
-        with pytest.raises(SerializationError) as excinfo:
-            test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(malformed_header)
-        excinfo.match(r"Malformed AAD: zero length AAD with non-zero length AAD length field")
 
     def test_deserialize_header_invalid_reserved_space(self):
         """Validate that the deserialize_header function behaves
