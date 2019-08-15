@@ -64,14 +64,8 @@ def test_remove_bad_client():
     with pytest.raises(BotoCoreError):
         test._regional_clients["us-fakey-12"].list_keys()
 
-    # I believe that because KMSMasterKeyProvider() sets a default regional client
-    # we want to test that the fake key was properly removed, instead of the dict (of regional clients)
-    # being empty.  That is to say, after the first line of this test function
-    # the dict is NOT EMPTY, and this default first value will stay with us, so
-    # if we test for emptiness of the dict then we will get a non-passing test, when really
-    # it might be passing.  The old line is commented out in case it matters later.
-
-    # assert not test._regional_clients
+    # instead of asserting emptiness we check for the specific bad key we added
+    # because there may be other keys depending on other factors
     assert "us-fakey-12" not in test._regional_clients
 
 

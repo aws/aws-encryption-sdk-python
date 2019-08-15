@@ -46,7 +46,7 @@ class _PrehashingAuthenticator(object):
         self._hasher = self._build_hasher()
 
     def _set_signature_type(self):
-        """Ensures that the algorithm (suite) signature type is a known type and sets a reference value."""
+        """Ensures that the algorithm suite signature type is a known type and sets a reference value."""
         try:
             verify_interface(ec.EllipticCurve, self.algorithm.signing_algorithm_info)
             return ec.EllipticCurve
