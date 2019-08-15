@@ -163,7 +163,8 @@ class RawAESKeyring(Keyring):
 
         # Update Keyring Trace
         keyring_trace = KeyringTrace(
-            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+            wrapping_key=encrypted_data_key.key_provider,
+            flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY, KeyringTraceFlag.WRAPPING_KEY_SIGNED_ENC_CTX},
         )
 
         # Add encrypted data key to encryption_materials
@@ -217,7 +218,11 @@ class RawAESKeyring(Keyring):
 
             # Create a keyring trace
             keyring_trace = KeyringTrace(
-                wrapping_key=self._key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
+                wrapping_key=self._key_provider,
+                flags={
+                    KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY,
+                    KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX,
+                },
             )
 
             # Update decryption materials
