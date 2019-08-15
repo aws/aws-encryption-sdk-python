@@ -239,6 +239,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         """Determine whether encryption materials for this algorithm suite should be cached."""
         return self.kdf is not KDFSuite.NONE
 
+
 # sphinx linking won't work if you reference Algorithm instead of AlgorithmSuite
 Algorithm = AlgorithmSuite
 
