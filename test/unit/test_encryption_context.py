@@ -190,3 +190,7 @@ class TestEncryptionContext(object):
             serialized_encryption_context=b""
         )
         assert test == {}
+    # important to not have autouse=true with a mock
+    def test_serialize_encryption_context_key_value_too_long(self):
+        dictionary = {}
+        serialize.serialize_encryption_context(dictionary)
