@@ -47,6 +47,33 @@ def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     return struct.pack(fmt, message_id, aad_content_string.value, seq_num, length)
 
 
+# help function to simplify code
+# this is necessary to pass flake8
+def _serialize_encryption_context_list(encryption_context_list, serialized_context):
+    for key, value in sorted(encryption_context_list, key=lambda x: x[0]):
+        try:
+            serialized_context.extend(
+                struct.pack(
+                    ">H{key_size}sH{value_size}s".format(key_size=len(key), value_size=len(value)),
+                    len(key),
+                    key,
+                    len(value),
+                    value,
+                )
+            )
+        # we check to make sure that we return the right type of error message for an overly long key or value
+        except struct.error as struct_error:
+            message = str(struct_error)
+            if message == "'H' format requires 0 <= number <= 65535":
+                # the key or value were too large
+                raise SerializationError("Key or Value are too large.  Maximum length is 65535")
+            # else we can just raise the struct error as it was (unknown)
+            raise struct_error
+        if len(serialized_context) > aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE:
+            raise SerializationError("The serialized context is too large.")
+    return bytes(serialized_context)
+
+
 def serialize_encryption_context(encryption_context):
     """Serializes the contents of a dictionary into a byte string.
 
@@ -80,30 +107,7 @@ def serialize_encryption_context(encryption_context):
             raise SerializationError(
                 "Cannot encode dictionary key or value using {}.".format(aws_encryption_sdk.internal.defaults.ENCODING)
             )
-
-    for key, value in sorted(encryption_context_list, key=lambda x: x[0]):
-        try:
-            serialized_context.extend(
-                struct.pack(
-                    ">H{key_size}sH{value_size}s".format(key_size=len(key), value_size=len(value)),
-                    len(key),
-                    key,
-                    len(value),
-                    value,
-                )
-            )
-        # we check to make sure that we return the right type of error message for an overly long key or value
-        except struct.error as struct_error:
-            message = str(struct_error)
-            if message == "'H' format requires 0 <= number <= 65535":
-                # the key or value were too large
-                raise SerializationError("Key or Value are too large.  Maximum is 2^16-1 (equivalent to \xff\xff).")
-            else:
-                # unknown struct error
-                raise struct_error 
-        if len(serialized_context) > aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE:
-            raise SerializationError("The serialized context is too large.")
-    return bytes(serialized_context)
+    return _serialize_encryption_context_list(encryption_context_list, serialized_context)
 
 
 def read_short(source, offset):

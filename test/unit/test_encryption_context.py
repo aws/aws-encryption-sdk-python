@@ -191,18 +191,11 @@ class TestEncryptionContext(object):
         )
         assert test == {}
 
-    # important to not have autouse=true with a mock
-    # these three tests make sure that whether a key or value or both are too long
+    # these three tests (in one function) make sure that whether a key or value or both are too long
     # we throw the right type of serialization error and not the struct.error
     # from struct.pack()
-    def test_serialize_encryption_context_key_too_long(self):
-        dictionary = {"0"*2**16:"short"}
-        aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
-
-    def test_serialize_encryption_context_value_too_long(self):
-        dictionary = {"short":"0"*2**16}
-        aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
-
     def test_serialize_encryption_context_key_value_too_long(self):
-        dictionary = {"0"*2**16:"0"*2**16}
-        aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
+        for dictionary in [{"0" * 2 ** 16: "short"}, {"short": "0" * 2 ** 16}, {"0" * 2 ** 16: "0" * 2 ** 16}]:
+            with pytest.raises(SerializationError) as excinfo:
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
+            excinfo.match(r"Key or Value are too large.  Maximum length is 65535")

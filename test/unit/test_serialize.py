@@ -48,6 +48,7 @@ def test_serialize_frame_invalid_sequence_number(sequence_number, error_message)
 
     excinfo.match(error_message)
 
+
 class TestSerialize(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
