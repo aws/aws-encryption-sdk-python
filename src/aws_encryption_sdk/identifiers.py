@@ -293,11 +293,41 @@ class WrappingAlgorithm(Enum):
         None,
         None,
     )
-    RSA_PKCS1 = (EncryptionType.ASYMMETRIC, rsa, padding.PKCS1v15, None, None)
-    RSA_OAEP_SHA1_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA1, padding.MGF1)
-    RSA_OAEP_SHA256_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA256, padding.MGF1)
-    RSA_OAEP_SHA384_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA384, padding.MGF1)
-    RSA_OAEP_SHA512_MGF1 = (EncryptionType.ASYMMETRIC, rsa, padding.OAEP, hashes.SHA512, padding.MGF1)
+    RSA_PKCS1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.PKCS1v15,
+        None,
+        None
+    )
+    RSA_OAEP_SHA1_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA1,
+        padding.MGF1
+    )
+    RSA_OAEP_SHA256_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA256,
+        padding.MGF1
+    )
+    RSA_OAEP_SHA384_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA384,
+        padding.MGF1
+    )
+    RSA_OAEP_SHA512_MGF1 = (
+        EncryptionType.ASYMMETRIC,
+        rsa,
+        padding.OAEP,
+        hashes.SHA512,
+        padding.MGF1
+    )
 
     def __init__(self, encryption_type, algorithm, padding_type, padding_algorithm, padding_mgf):
         """Prepares new WrappingAlgorithm."""
