@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.internal.formatting.encryption_context"""
+import struct
+
 import pytest
 
 import aws_encryption_sdk.internal.defaults
@@ -21,6 +23,23 @@ from aws_encryption_sdk.identifiers import ContentAADString
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+def test_struct_behavior_pack_too_large():
+    """
+    If a key or value in the encryption context are too large we need to throw
+    a serialization error instead of the implicit struct.error caused by trying to
+    >H pack a key or value that is too long.  The current implementation requires
+    the error to be thrown and checks for some conditions involving the size of a
+    key or value and the error message thrown.  For it to work properly we need
+    struct to fail in a certain manner, thus this test.
+    """
+    value = struct.pack(">H", 2 ** 16 - 1)
+    assert value
+
+    with pytest.raises(struct.error) as excinfo:
+        struct.pack(">H", 2 ** 16)
+    excinfo.match(r"'H' format requires 0 <= number <= 65535")
 
 
 class TestEncryptionContext(object):
@@ -191,11 +210,20 @@ class TestEncryptionContext(object):
         )
         assert test == {}
 
-    # these three tests (in one function) make sure that whether a key or value or both are too long
-    # we throw the right type of serialization error and not the struct.error
-    # from struct.pack()
     def test_serialize_encryption_context_key_value_too_long(self):
-        for dictionary in [{"0" * 2 ** 16: "short"}, {"short": "0" * 2 ** 16}, {"0" * 2 ** 16: "0" * 2 ** 16}]:
-            with pytest.raises(SerializationError) as excinfo:
-                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
-            excinfo.match(r"Key or Value are too large.  Maximum length is 65535")
+        dictionary = {"0" * 2 ** 16: "0" * 2 ** 16}
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
+        excinfo.match(r"Key or Value are too large.  Maximum length is 65535")
+
+    def test_serialize_encryption_context_value_too_long(self):
+        dictionary = {"short": "0" * 2 ** 16}
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
+        excinfo.match(r"Key or Value are too large.  Maximum length is 65535")
+
+    def test_serialize_encryption_context_key_too_long(self):
+        dictionary = {"0" * 2 ** 16: "short"}
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(dictionary)
+        excinfo.match(r"Key or Value are too large.  Maximum length is 65535")
