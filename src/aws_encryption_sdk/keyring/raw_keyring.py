@@ -188,7 +188,6 @@ class RawAESKeyring(Keyring):
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
         for key in encrypted_data_keys:
-
             if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
 

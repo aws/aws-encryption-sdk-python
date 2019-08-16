@@ -165,6 +165,7 @@ def test_on_encrypt_when_data_encryption_key_not_given(raw_aes_keyring):
 
     assert encrypted_flag_count == 1
 
+
 def test_on_encrypt_keyring_trace_contains_signed_when_key_given(raw_aes_keyring):
     test_keyring = raw_aes_keyring
     test = test_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
@@ -173,14 +174,15 @@ def test_on_encrypt_keyring_trace_contains_signed_when_key_given(raw_aes_keyring
     most_recent_trace = test.keyring_trace[1]
     assert KeyringTraceFlag.WRAPPING_KEY_SIGNED_ENC_CTX in most_recent_trace.flags
 
+
 def test_on_encrypt_keyring_trace_contains_signed_when_key_not_given(raw_aes_keyring):
     test_keyring = raw_aes_keyring
     test = test_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
     # keyring_trace[0] tells us about the generation of the key
     # keyring_trace[1] tells us about the encryption and signing
     most_recent_trace = test.keyring_trace[1]
-    print(most_recent_trace,len(test.keyring_trace))
     assert KeyringTraceFlag.WRAPPING_KEY_SIGNED_ENC_CTX in most_recent_trace.flags
+
 
 @pytest.mark.parametrize(
     "decryption_materials, edk",
@@ -241,33 +243,16 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(raw_aes_keyring,
     )
 
 
-@pytest.mark.parametrize(
-    "decryption_materials, edk",
-    (
-        (get_decryption_materials_without_data_encryption_key(), []),
-        (get_encryption_materials_without_data_encryption_key(), [_ENCRYPTED_DATA_KEY_NOT_IN_KEYRING]),
-    ),
-)
-def test_on_decrypt_keyring_trace_contains_verify_when_key_given((
-    raw_aes_keyring, decryption_materials, edk, patch_decrypt_on_wrapping_key
-):
+def test_on_decrypt_keyring_trace_contains_verify_when_key_not_given(raw_aes_keyring):
+    # if key given then no changes are made so we won't be adding the trace flag
     test_raw_aes_keyring = raw_aes_keyring
 
-    test = test_raw_aes_keyring.on_decrypt(decryption_materials=decryption_materials, encrypted_data_keys=edk)
-    # keyring_trace[0] tells us about the generation of the key
-    # keyring_trace[1] tells us about the encryption and signing
-    print(len(test.keyring_trace))
-    print(test.keyring_trace[0].flags)
+    test = test_raw_aes_keyring.on_decrypt(
+        decryption_materials=get_decryption_materials_without_data_encryption_key(),
+        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
+    )
+    # keyring_trace[0] tells us about the decryption (only one action performed)
     most_recent_trace = test.keyring_trace[0]
-    assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in most_recent_trace.flags
-
-def test_on_decrypt_keyring_trace_contains_verify_when_key_not_given(raw_aes_keyring):
-    test_keyring = raw_aes_keyring
-    test = test_keyring.on_decrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
-    # keyring_trace[0] tells us about the generation of the key
-    # keyring_trace[1] tells us about the encryption and signing
-    most_recent_trace = test.keyring_trace[1]
-    print(most_recent_trace,len(test.keyring_trace))
     assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in most_recent_trace.flags
 
 
