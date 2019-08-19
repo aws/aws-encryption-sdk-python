@@ -47,17 +47,13 @@ def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     return struct.pack(fmt, message_id, aad_content_string.value, seq_num, length)
 
 
-def _key_or_value_too_large(encryption_context_list):
-    """Helper method to check whether a key or value are too long."""
-    longest_key = max(encryption_context_list, key=lambda x: len(x[0]))[0]
-    longest_value = max(encryption_context_list, key=lambda x: len(x[1]))[1]
-    return len(longest_key) > 2 ** 16 - 1 or len(longest_value) > 2 ** 16 - 1
-
-
 def _serialize_encryption_context_list(encryption_context_list, serialized_context):
     """Helper function to serialize the list of encryption context key-value pairs."""
     for key, value in sorted(encryption_context_list, key=lambda x: x[0]):
         try:
+            if len(key) > 2 ** 16 - 1 or len(value) > 2 ** 16 - 1:
+                raise SerializationError("Key or Value are too large.  Maximum length is 65535")
+
             serialized_context.extend(
                 struct.pack(
                     ">H{key_size}sH{value_size}s".format(key_size=len(key), value_size=len(value)),
@@ -67,19 +63,19 @@ def _serialize_encryption_context_list(encryption_context_list, serialized_conte
                     value,
                 )
             )
-        # we check to make sure that we return the right type of error message for an overly long key or value
         except struct.error as struct_error:
             message = str(struct_error)
-            # a key or value were too long and struct gave us the expected error
             if message == "'H' format requires 0 <= number <= 65535":
                 raise SerializationError("Key or Value are too large.  Maximum length is 65535")
-            # a key or value were too long and struct's error message is different (maybe an update)
-            if _key_or_value_too_large(encryption_context_list):
-                raise SerializationError("Key or Value are too large.  Maximum length is 65535")
-            # else we can just raise the struct error as it was (unknown)
-            raise SerializationError("Unknown Error with struct pack.  Could not serialize key or value")
+
+            # else unknown
+            raise SerializationError(
+                [SerializationError("Unknown Error with struct pack.  Could not serialize key or value"), struct_error]
+            )
+
         if len(serialized_context) > aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE:
             raise SerializationError("The serialized context is too large.")
+
     return bytes(serialized_context)
 
 
