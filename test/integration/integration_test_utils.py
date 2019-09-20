@@ -11,8 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Utility functions to handle configuration and credentials setup for integration tests."""
-import botocore.session
 import os
+
+import botocore.session
 
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 
