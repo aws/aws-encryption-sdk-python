@@ -23,8 +23,8 @@ from aws_encryption_sdk.internal.defaults import LINE_LENGTH
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.streaming_client import _ClientConfig, _EncryptionStream
 
-from .test_values import VALUES
-from .unit_test_utils import assert_prepped_stream_identity
+from ...test_values import VALUES
+from ...unit_test_utils import assert_prepped_stream_identity
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

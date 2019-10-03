@@ -16,7 +16,7 @@ import pytest
 from aws_encryption_sdk.identifiers import Algorithm, ContentType, ObjectType, SerializationVersion
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader, RawDataKey
 
-from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
+from ..unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

@@ -20,7 +20,7 @@ from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider
 from aws_encryption_sdk.structures import MasterKeyInfo
 
-from .test_values import VALUES
+from ....test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

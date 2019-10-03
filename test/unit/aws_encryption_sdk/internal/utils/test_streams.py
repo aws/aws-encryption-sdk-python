@@ -19,7 +19,7 @@ from aws_encryption_sdk.exceptions import ActionNotAllowedError
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO, ROStream, TeeStream
 
-from .unit_test_utils import ExactlyTwoReads, NothingButRead, SometimesIncompleteReaderIO
+from ....unit_test_utils import ExactlyTwoReads, NothingButRead, SometimesIncompleteReaderIO
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

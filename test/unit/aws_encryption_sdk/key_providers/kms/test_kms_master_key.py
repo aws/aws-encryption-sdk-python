@@ -22,7 +22,7 @@ from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
 
-from .test_values import VALUES
+from ....test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

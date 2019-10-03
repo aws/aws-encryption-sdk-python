@@ -17,7 +17,6 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.elliptic_curve
 from aws_encryption_sdk.exceptions import NotSupportedError
@@ -30,7 +29,6 @@ from aws_encryption_sdk.internal.crypto.elliptic_curve import (
     _ECCCurveParameters,
     generate_ecc_signing_key,
 )
-
 from .test_crypto import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]

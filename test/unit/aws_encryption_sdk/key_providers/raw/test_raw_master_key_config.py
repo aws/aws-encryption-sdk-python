@@ -19,7 +19,7 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.base import MasterKeyConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyConfig
 
-from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
+from ....unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

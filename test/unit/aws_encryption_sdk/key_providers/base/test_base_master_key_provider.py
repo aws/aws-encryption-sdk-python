@@ -23,7 +23,7 @@ from aws_encryption_sdk.exceptions import (
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 
-from .test_values import VALUES
+from ....test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

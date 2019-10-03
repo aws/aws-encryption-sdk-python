@@ -21,7 +21,7 @@ from aws_encryption_sdk.internal.defaults import MAX_FRAME_COUNT
 from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 
-from .test_values import VALUES
+from ....test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
