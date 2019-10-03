@@ -143,6 +143,7 @@ class CryptoMaterialsCacheEntryHints(object):
 
 @attr.s(hash=False)
 class CryptoMaterialsCacheEntry(object):
+    # pylint: disable=too-many-instance-attributes
     """Value and metadata store for cryptographic materials cache entries.
 
     :param bytes cache_key: Identifier for entries in cache
