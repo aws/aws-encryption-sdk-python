@@ -283,7 +283,7 @@ class _EncryptionStream(io.IOBase):
 
     def readlines(self):
         """Reads all chunks of output, outputting a list as defined in the IOBase specification."""
-        return [line for line in self]
+        return list(self)
 
     def __iter__(self):
         """Make this class and subclasses identify as iterators."""

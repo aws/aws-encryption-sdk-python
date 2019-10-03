@@ -41,7 +41,7 @@ def test_algorithm_safe_to_cache(check_algorithm, safe_to_cache):
         assert not check_algorithm.safe_to_cache()
 
 
-@pytest.mark.parametrize("suite", [suite for suite in EncryptionSuite])
+@pytest.mark.parametrize("suite", list(EncryptionSuite))
 def test_encryption_suite_invalid_kdf(suite):
     mock_kdf = Mock()
     mock_kdf.input_length.return_value = 1
