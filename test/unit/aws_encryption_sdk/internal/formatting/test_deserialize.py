@@ -23,7 +23,7 @@ from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError,
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.internal.structures import EncryptedData
 
-from ....test_values import VALUES
+from ....vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

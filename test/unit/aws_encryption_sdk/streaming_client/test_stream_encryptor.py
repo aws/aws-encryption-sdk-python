@@ -30,7 +30,7 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
 from aws_encryption_sdk.structures import MessageHeader
 
-from ...test_values import VALUES
+from ...vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

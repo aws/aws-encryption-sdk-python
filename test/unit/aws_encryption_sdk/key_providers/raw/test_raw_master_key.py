@@ -20,7 +20,7 @@ from aws_encryption_sdk.key_providers.base import MasterKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
-from ....test_values import VALUES
+from ....vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

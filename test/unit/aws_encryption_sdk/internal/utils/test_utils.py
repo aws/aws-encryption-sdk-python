@@ -24,7 +24,7 @@ from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENG
 from aws_encryption_sdk.keyrings.base import EncryptedDataKey
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
 
-from ....test_values import VALUES
+from ....vectors import VALUES
 from ....unit_test_utils import assert_prepped_stream_identity
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
