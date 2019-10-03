@@ -23,7 +23,7 @@ from six.moves import queue  # six.moves confuses pylint: disable=import-error
 
 import aws_encryption_sdk
 
-from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
+from ..integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]
 
