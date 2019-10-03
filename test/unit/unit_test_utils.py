@@ -22,8 +22,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring, RawRSAKeyring
+from aws_encryption_sdk.keyring.multi import MultiKeyring
+from aws_encryption_sdk.keyring.raw import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 

@@ -20,10 +20,10 @@ from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.internal.formatting import serialize
 from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.keyring.multi_keyring import MultiKeyring
-from aws_encryption_sdk.keyring.raw_keyring import RawAESKeyring
+from aws_encryption_sdk.keyring.multi import MultiKeyring
+from aws_encryption_sdk.keyring.raw import RawAESKeyring
 
-from .unit_test_utils import (
+from ...unit_test_utils import (
     IdentityKeyring,
     OnlyGenerateKeyring,
     get_decryption_materials_with_data_key,
