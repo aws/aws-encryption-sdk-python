@@ -11,8 +11,13 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Base class interface for Keyrings."""
-from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey
+from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import,duplicate-code
+    DecryptionMaterials,
+    EncryptionMaterials,
+)
+from aws_encryption_sdk.structures import (  # only used for mypy; pylint: disable=unused-import,duplicate-code
+    EncryptedDataKey,
+)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
