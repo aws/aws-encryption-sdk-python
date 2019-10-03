@@ -17,10 +17,14 @@ import attr
 from attr.validators import deep_iterable, instance_of, optional
 
 from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
-from aws_encryption_sdk.keyring.base import DecryptionMaterials  # only used for mypy so pylint: disable=unused-import
-from aws_encryption_sdk.keyring.base import EncryptionMaterials  # only used for mypy so pylint: disable=unused-import
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.structures import EncryptedDataKey  # only used for mypy so pylint: disable=unused-import
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import
+    DecryptionMaterials,
+    EncryptionMaterials,
+)
+from aws_encryption_sdk.structures import (  # only used for mypy; pylint: disable=unused-import
+    EncryptedDataKey,
+)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import

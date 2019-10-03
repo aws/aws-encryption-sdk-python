@@ -19,9 +19,9 @@ from pytest_mock import mocker  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.internal.formatting import serialize
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.keyring.multi import MultiKeyring
-from aws_encryption_sdk.keyring.raw import RawAESKeyring
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.keyrings.multi import MultiKeyring
+from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 
 from ...unit_test_utils import (
     IdentityKeyring,
@@ -139,10 +139,10 @@ def test_keyring_with_no_generator_no_children():
 def test_keyring_with_invalid_parameters(generator, children):
     with pytest.raises(TypeError) as exc_info:
         MultiKeyring(generator=generator, children=children)
-    assert exc_info.match("('children'|'generator') must be <class 'aws_encryption_sdk.keyring.base.Keyring'>.*")
+    assert exc_info.match("('children'|'generator') must be <class 'aws_encryption_sdk.keyrings.base.Keyring'>.*")
 
 
-def test_decryption_keyrings():
+def test_decryption_keyring():
     test_multi_keyring = get_multi_keyring_with_generator_and_children()
     assert test_multi_keyring.generator in test_multi_keyring._decryption_keyrings
     for child_keyring in test_multi_keyring.children:

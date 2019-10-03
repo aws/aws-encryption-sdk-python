@@ -17,11 +17,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.key_providers.raw
-import aws_encryption_sdk.keyring.raw
+import aws_encryption_sdk.keyrings.raw
 from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.keyring.raw import RawRSAKeyring
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
 from ....test_values import VALUES
 from ....unit_test_utils import (
@@ -58,8 +58,8 @@ def raw_rsa_private_key():
 
 @pytest.fixture
 def patch_generate_data_key(mocker):
-    mocker.patch.object(aws_encryption_sdk.keyring.raw, "_generate_data_key")
-    return aws_encryption_sdk.keyring.raw._generate_data_key
+    mocker.patch.object(aws_encryption_sdk.keyrings.raw, "_generate_data_key")
+    return aws_encryption_sdk.keyrings.raw._generate_data_key
 
 
 @pytest.fixture

@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Resources required for Raw Keyrings."""
-
 import logging
 import os
 
@@ -28,13 +27,17 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, Wrap
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.materials_managers import (  # only used for mypy so pylint: disable=unused-import
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import
     DecryptionMaterials,
     EncryptionMaterials,
 )
-from aws_encryption_sdk.structures import EncryptedDataKey  # only used for mypy so pylint: disable=unused-import
-from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import (  # pylint: disable=unused-import
+    EncryptedDataKey,
+    KeyringTrace,
+    MasterKeyInfo,
+    RawDataKey,
+)
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import

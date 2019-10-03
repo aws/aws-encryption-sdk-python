@@ -18,8 +18,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM
-from aws_encryption_sdk.keyring.multi import MultiKeyring
-from aws_encryption_sdk.keyring.raw import RawAESKeyring, RawRSAKeyring
+from aws_encryption_sdk.keyrings.multi import MultiKeyring
+from aws_encryption_sdk.keyrings.raw import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 

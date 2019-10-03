@@ -19,11 +19,11 @@ import pytest
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.key_providers.raw
-import aws_encryption_sdk.keyring.raw
+import aws_encryption_sdk.keyrings.raw
 from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.keyring.base import Keyring
-from aws_encryption_sdk.keyring.raw import GenerateKeyError, RawAESKeyring, _generate_data_key
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.keyrings.raw import GenerateKeyError, RawAESKeyring, _generate_data_key
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.structures import MasterKeyInfo
 
@@ -57,8 +57,8 @@ def raw_aes_keyring():
 
 @pytest.fixture
 def patch_generate_data_key(mocker):
-    mocker.patch.object(aws_encryption_sdk.keyring.raw, "_generate_data_key")
-    return aws_encryption_sdk.keyring.raw._generate_data_key
+    mocker.patch.object(aws_encryption_sdk.keyrings.raw, "_generate_data_key")
+    return aws_encryption_sdk.keyrings.raw._generate_data_key
 
 
 @pytest.fixture

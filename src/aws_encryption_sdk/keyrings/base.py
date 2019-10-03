@@ -11,11 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Base class interface for Keyrings."""
-from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import,duplicate-code
+from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import
     DecryptionMaterials,
     EncryptionMaterials,
 )
-from aws_encryption_sdk.structures import (  # only used for mypy; pylint: disable=unused-import,duplicate-code
+from aws_encryption_sdk.structures import (  # only used for mypy; pylint: disable=unused-import
     EncryptedDataKey,
 )
 
