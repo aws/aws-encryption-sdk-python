@@ -21,7 +21,7 @@ from aws_encryption_sdk.identifiers import EncryptionKeyType, EncryptionType
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.structures import EncryptedData
 
-from .test_crypto import VALUES
+from .vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

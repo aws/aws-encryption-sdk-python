@@ -19,7 +19,7 @@ import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.internal.crypto.authentication import Signer
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 
-from ..test_crypto import VALUES
+from ..vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
