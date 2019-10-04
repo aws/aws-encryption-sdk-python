@@ -23,7 +23,7 @@ from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 
-from ...unit_test_utils import (
+from ..unit_test_utils import (
     IdentityKeyring,
     OnlyGenerateKeyring,
     get_decryption_materials_with_data_key,

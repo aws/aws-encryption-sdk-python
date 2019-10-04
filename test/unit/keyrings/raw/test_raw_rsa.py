@@ -23,8 +23,8 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
-from ....test_values import VALUES
-from ....unit_test_utils import (
+from ...test_values import VALUES
+from ...unit_test_utils import (
     _BACKEND,
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_RSA,

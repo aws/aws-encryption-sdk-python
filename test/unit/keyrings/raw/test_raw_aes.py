@@ -27,7 +27,7 @@ from aws_encryption_sdk.keyrings.raw import GenerateKeyError, RawAESKeyring, _ge
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.structures import MasterKeyInfo
 
-from ....unit_test_utils import (
+from ...unit_test_utils import (
     _DATA_KEY,
     _ENCRYPTED_DATA_KEY_AES,
     _ENCRYPTED_DATA_KEY_NOT_IN_KEYRING,
