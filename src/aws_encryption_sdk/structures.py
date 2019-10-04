@@ -117,6 +117,7 @@ class KeyringTrace(object):
 
 @attr.s(hash=True)
 class MessageHeader(object):
+    # pylint: disable=too-many-instance-attributes
     """Deserialized message header object.
 
     :param version: Message format version, per spec
