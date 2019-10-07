@@ -23,7 +23,6 @@ from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
-from ...test_values import VALUES
 from ...unit_test_utils import (
     _BACKEND,
     _DATA_KEY,
@@ -38,6 +37,7 @@ from ...unit_test_utils import (
     get_encryption_materials_with_data_encryption_key,
     get_encryption_materials_without_data_encryption_key,
 )
+from ...vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
