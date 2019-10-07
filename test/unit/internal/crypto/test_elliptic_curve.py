@@ -29,6 +29,7 @@ from aws_encryption_sdk.internal.crypto.elliptic_curve import (
     _ECCCurveParameters,
     generate_ecc_signing_key,
 )
+
 from .vectors import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
