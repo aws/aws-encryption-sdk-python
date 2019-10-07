@@ -33,6 +33,9 @@ additional-builtins = raw_input
 [DESIGN]
 max-args = 10
 
+[SIMILARITIES]
+ignore-imports = yes
+
 [FORMAT]
 max-line-length = 120
 

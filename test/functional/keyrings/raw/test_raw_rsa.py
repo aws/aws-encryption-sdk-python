@@ -26,7 +26,7 @@ from aws_encryption_sdk.identifiers import (
 )
 from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
-from aws_encryption_sdk.keyring.raw_keyring import RawRSAKeyring
+from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
 
