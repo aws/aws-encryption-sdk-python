@@ -27,7 +27,7 @@ from aws_encryption_sdk.exceptions import (
     UnknownIdentityError,
 )
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.structures import MasterKeyInfo, RawDataKey, DataKey, EncryptedDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Union  # noqa pylint: disable=unused-import
@@ -245,9 +245,7 @@ class MasterKeyProvider(object):
                     _LOGGER.debug("attempting to add master key: %s", data_key.key_provider.key_info)
                     yield member.master_key_for_decrypt(data_key.key_provider.key_info)
                 except InvalidKeyIdError:
-                    _LOGGER.debug(
-                        "master key %s not available in provider", data_key.key_provider.key_info
-                    )
+                    _LOGGER.debug("master key %s not available in provider", data_key.key_provider.key_info)
                     continue
 
     def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
