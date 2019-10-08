@@ -377,9 +377,7 @@ class MasterKey(MasterKeyProvider):
         :returns: Boolean statement of ownership
         :rtype: bool
         """
-        if data_key.key_provider == self.key_provider:
-            return True
-        return False
+        return data_key.key_provider == self.key_provider
 
     def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
         """Returns self and a list containing self, to match the format of output for a Master Key Provider.
