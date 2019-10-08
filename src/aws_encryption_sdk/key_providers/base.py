@@ -24,10 +24,12 @@ from aws_encryption_sdk.exceptions import (
     IncorrectMasterKeyError,
     InvalidKeyIdError,
     MasterKeyProviderError,
-    UnknownIdentityError,
 )
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import DataKey  # pylint: disable=unused-import
+from aws_encryption_sdk.structures import EncryptedDataKey  # pylint: disable=unused-import
+from aws_encryption_sdk.structures import RawDataKey  # pylint: disable=unused-import
+from aws_encryption_sdk.structures import MasterKeyInfo
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Union  # noqa pylint: disable=unused-import
