@@ -24,7 +24,7 @@ from ..caches import (
 )
 from ..caches.base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError
-from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
+from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY, FRAME_LENGTH
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
 from . import EncryptionMaterialsRequest
@@ -190,9 +190,15 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         # Inner request strips any information about the plaintext from the actual request.
         # This is done because the resulting encryption materials may be used to encrypt
         #  multiple plaintexts.
+
+        if request.frame_length is None:
+            frame_length = FRAME_LENGTH
+        else:
+            frame_length = request.frame_length
+
         inner_request = EncryptionMaterialsRequest(
             encryption_context=request.encryption_context,
-            frame_length=request.frame_length,
+            frame_length=frame_length,
             algorithm=request.algorithm,
         )
         cache_key = build_encryption_materials_cache_key(partition=self.partition_name, request=inner_request)

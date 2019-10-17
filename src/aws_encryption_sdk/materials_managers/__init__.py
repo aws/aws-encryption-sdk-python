@@ -32,7 +32,7 @@ class EncryptionMaterialsRequest(object):
         If plaintext_rostream seek position is modified, it must be returned before leaving method.
 
     :param dict encryption_context: Encryption context passed to underlying master key provider and master keys
-    :param int frame_length: Frame length to be used while encrypting stream
+    :param int frame_length: Frame length to be used while encrypting stream (optional)
     :param plaintext_rostream: Source plaintext read-only stream (optional)
     :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
     :param algorithm: Algorithm passed to underlying master key provider and master keys (optional)
@@ -41,7 +41,8 @@ class EncryptionMaterialsRequest(object):
     """
 
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
-    frame_length = attr.ib(validator=attr.validators.instance_of(six.integer_types))
+    frame_length = attr.ib(default=None, validator=attr.validators.optional(
+        attr.validators.instance_of(six.integer_types)))
     plaintext_rostream = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(ROStream))
     )
