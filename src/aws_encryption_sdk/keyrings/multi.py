@@ -36,6 +36,8 @@ except ImportError:  # pragma: no cover
 class MultiKeyring(Keyring):
     """Public class for Multi Keyring.
 
+    .. versionadded:: 1.5.0
+
     :param generator: Generator keyring used to generate data encryption key (optional)
     :type generator: Keyring
     :param list children: List of keyrings used to encrypt the data encryption key (optional)
