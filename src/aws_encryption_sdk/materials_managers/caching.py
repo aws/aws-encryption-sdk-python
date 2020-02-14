@@ -16,6 +16,7 @@ import uuid
 
 import attr
 import six
+from attr.validators import instance_of, optional
 
 from ..caches import (
     CryptoMaterialsCacheEntryHints,
@@ -27,6 +28,7 @@ from ..exceptions import CacheKeyError
 from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
+from ..keyrings.base import Keyring
 from . import EncryptionMaterialsRequest
 from .base import CryptoMaterialsManager
 from .default import DefaultCryptoMaterialsManager
@@ -36,9 +38,13 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s(hash=False)
 class CachingCryptoMaterialsManager(CryptoMaterialsManager):
+    # pylint: disable=too-many-instance-attributes
     """Crypto material manager which caches results from an underlying material manager.
 
     .. versionadded:: 1.3.0
+
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
 
     >>> import aws_encryption_sdk
     >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
@@ -62,14 +68,14 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         Either `backing_materials_manager` or `master_key_provider` must be provided.
         `backing_materials_manager` will always be used if present.
 
-    :param cache: Crypto cache to use with material manager
-    :type cache: aws_encryption_sdk.caches.base.CryptoMaterialsCache
-    :param backing_materials_manager: Crypto material manager to back this caching material manager
+    :param CryptoMaterialsCache cache: Crypto cache to use with material manager
+    :param CryptoMaterialsManager backing_materials_manager:
+        Crypto material manager to back this caching material manager
         (either `backing_materials_manager` or `master_key_provider` required)
-    :type backing_materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param master_key_provider: Master key provider to use (either `backing_materials_manager` or
-        `master_key_provider` required)
-    :type master_key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param MasterKeyProvider master_key_provider: Master key provider to use
+        (either `backing_materials_manager`, `keyring`, or `master_key_provider` is required)
+    :param Keyring keyring: Keyring to use
+        (either `backing_materials_manager`, `keyring`, or `master_key_provider` is required)
     :param float max_age: Maximum time in seconds that a cache entry may be kept in the cache
     :param int max_messages_encrypted: Maximum number of messages that may be encrypted under
         a cache entry (optional)
@@ -78,21 +84,14 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
     :param bytes partition_name: Partition name to use for this instance (optional)
     """
 
-    cache = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsCache))
-    max_age = attr.ib(validator=attr.validators.instance_of(float))
-    max_messages_encrypted = attr.ib(
-        default=MAX_MESSAGES_PER_KEY, validator=attr.validators.instance_of(six.integer_types)
-    )
-    max_bytes_encrypted = attr.ib(default=MAX_BYTES_PER_KEY, validator=attr.validators.instance_of(six.integer_types))
-    partition_name = attr.ib(
-        default=None, converter=to_bytes, validator=attr.validators.optional(attr.validators.instance_of(bytes))
-    )
-    master_key_provider = attr.ib(
-        default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
-    )
-    backing_materials_manager = attr.ib(
-        default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
-    )
+    cache = attr.ib(validator=instance_of(CryptoMaterialsCache))
+    max_age = attr.ib(validator=instance_of(float))
+    max_messages_encrypted = attr.ib(default=MAX_MESSAGES_PER_KEY, validator=instance_of(six.integer_types))
+    max_bytes_encrypted = attr.ib(default=MAX_BYTES_PER_KEY, validator=instance_of(six.integer_types))
+    partition_name = attr.ib(default=None, converter=to_bytes, validator=optional(instance_of(bytes)))
+    master_key_provider = attr.ib(default=None, validator=optional(instance_of(MasterKeyProvider)))
+    keyring = attr.ib(default=None, validator=optional(instance_of(Keyring)))
+    backing_materials_manager = attr.ib(default=None, validator=optional(instance_of(CryptoMaterialsManager)))
 
     def __attrs_post_init__(self):
         """Applies post-processing which cannot be handled by attrs."""
@@ -111,10 +110,23 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         if self.max_age <= 0.0:
             raise ValueError("max_age cannot be less than or equal to 0")
 
+        exactly_one = (
+            len([i for i in (self.master_key_provider, self.keyring, self.backing_materials_manager) if i is not None])
+            == 1
+        )
+
+        if not exactly_one:
+            raise TypeError(
+                "Exactly one of 'backing_materials_manager', 'keyring', or 'master_key_provider' must be provided."
+            )
+
         if self.backing_materials_manager is None:
-            if self.master_key_provider is None:
-                raise TypeError("Either backing_materials_manager or master_key_provider must be defined")
-            self.backing_materials_manager = DefaultCryptoMaterialsManager(self.master_key_provider)
+            if self.keyring is not None:
+                self.backing_materials_manager = DefaultCryptoMaterialsManager(keyring=self.keyring)
+            else:
+                self.backing_materials_manager = DefaultCryptoMaterialsManager(
+                    master_key_provider=self.master_key_provider
+                )
 
         if self.partition_name is None:
             self.partition_name = to_bytes(str(uuid.uuid4()))

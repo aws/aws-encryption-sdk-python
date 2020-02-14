@@ -12,17 +12,23 @@
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers.default"""
 import pytest
-from mock import MagicMock, sentinel
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
+from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.materials_managers.default
 from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.materials_managers import EncryptionMaterials
+from aws_encryption_sdk.keyrings.base import Keyring
+from aws_encryption_sdk.materials_managers import (
+    DecryptionMaterialsRequest,
+    EncryptionMaterials,
+    EncryptionMaterialsRequest,
+)
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
+
+from ..unit_test_utils import ephemeral_raw_rsa_master_key
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -39,11 +45,9 @@ def patch_for_dcmm_encrypt(mocker):
     mocker.patch.object(DefaultCryptoMaterialsManager, "_generate_signing_key_and_update_encryption_context")
     mock_signing_key = b"ex_signing_key"
     DefaultCryptoMaterialsManager._generate_signing_key_and_update_encryption_context.return_value = mock_signing_key
-    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "prepare_data_keys")
     mock_data_encryption_key = _DATA_KEY
     mock_encrypted_data_keys = (_ENCRYPTED_DATA_KEY,)
     result_pair = mock_data_encryption_key, mock_encrypted_data_keys
-    aws_encryption_sdk.materials_managers.default.prepare_data_keys.return_value = result_pair
     yield result_pair, mock_signing_key
 
 
@@ -56,18 +60,15 @@ def patch_for_dcmm_decrypt(mocker):
 
 
 def build_cmm():
-    mock_mkp = MagicMock(__class__=MasterKeyProvider)
-    mock_mkp.decrypt_data_key_from_list.return_value = _DATA_KEY
-    mock_mkp.master_keys_for_encryption.return_value = (
-        sentinel.primary_mk,
-        set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b]),
-    )
-    return DefaultCryptoMaterialsManager(master_key_provider=mock_mkp)
+    return DefaultCryptoMaterialsManager(master_key_provider=ephemeral_raw_rsa_master_key())
 
 
-def test_attributes_fail():
+@pytest.mark.parametrize(
+    "mkp, keyring", ((None, None), (MagicMock(__class__=MasterKeyProvider), MagicMock(__class__=Keyring)))
+)
+def test_attributes_fail(mkp, keyring):
     with pytest.raises(TypeError):
-        DefaultCryptoMaterialsManager(master_key_provider=None)
+        DefaultCryptoMaterialsManager(master_key_provider=mkp, keyring=keyring)
 
 
 def test_attributes_default():
@@ -115,33 +116,23 @@ def test_generate_signing_key_and_update_encryption_context(mocker):
 
 def test_get_encryption_materials(patch_for_dcmm_encrypt):
     encryption_context = {"a": "b"}
-    mock_request = MagicMock(algorithm=None, encryption_context=encryption_context)
+    request = EncryptionMaterialsRequest(encryption_context=encryption_context, frame_length=128)
     cmm = build_cmm()
 
-    test = cmm.get_encryption_materials(request=mock_request)
+    test = cmm.get_encryption_materials(request=request)
 
-    cmm.master_key_provider.master_keys_for_encryption.assert_called_once_with(
-        encryption_context=encryption_context,
-        plaintext_rostream=mock_request.plaintext_rostream,
-        plaintext_length=mock_request.plaintext_length,
-    )
-    cmm._generate_signing_key_and_update_encryption_context.assert_called_once_with(cmm.algorithm, encryption_context)
-    aws_encryption_sdk.materials_managers.default.prepare_data_keys.assert_called_once_with(
-        primary_master_key=cmm.master_key_provider.master_keys_for_encryption.return_value[0],
-        master_keys=cmm.master_key_provider.master_keys_for_encryption.return_value[1],
-        algorithm=cmm.algorithm,
-        encryption_context=encryption_context,
-    )
     assert isinstance(test, EncryptionMaterials)
     assert test.algorithm is cmm.algorithm
-    assert test.data_encryption_key == RawDataKey.from_data_key(patch_for_dcmm_encrypt[0][0])
-    assert test.encrypted_data_keys == patch_for_dcmm_encrypt[0][1]
+    assert test.data_encryption_key.data_key
+    assert test.data_encryption_key.key_provider.provider_id == "fake"
+    assert test.data_encryption_key.key_provider.key_id == b"rsa-4096"
+    assert len(test.encrypted_data_keys) == 1
     assert test.encryption_context == encryption_context
     assert test.signing_key == patch_for_dcmm_encrypt[1]
 
 
 def test_get_encryption_materials_override_algorithm(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(algorithm=Algorithm.AES_128_GCM_IV12_TAG16, encryption_context={})
     cmm = build_cmm()
 
     test = cmm.get_encryption_materials(request=mock_request)
@@ -150,26 +141,28 @@ def test_get_encryption_materials_override_algorithm(patch_for_dcmm_encrypt):
 
 
 def test_get_encryption_materials_no_mks(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(algorithm=ALGORITHM, encryption_context={})
     cmm = build_cmm()
-    cmm.master_key_provider.master_keys_for_encryption.return_value = (None, set([]))
 
-    with pytest.raises(MasterKeyProviderError) as excinfo:
-        cmm.get_encryption_materials(request=mock_request)
+    with patch.object(cmm.master_key_provider, "master_keys_for_encryption", return_value=(None, set([]))):
+
+        with pytest.raises(MasterKeyProviderError) as excinfo:
+            cmm.get_encryption_materials(request=mock_request)
 
     excinfo.match(r"No Master Keys available from Master Key Provider")
 
 
 def test_get_encryption_materials_primary_mk_not_in_mks(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(algorithm=ALGORITHM, encryption_context={})
     cmm = build_cmm()
-    cmm.master_key_provider.master_keys_for_encryption.return_value = (
-        sentinel.primary_mk,
-        {sentinel.mk_a, sentinel.mk_b},
-    )
+    with patch.object(
+        cmm.master_key_provider,
+        "master_keys_for_encryption",
+        return_value=(sentinel.primary_mk, {sentinel.mk_a, sentinel.mk_b},),
+    ):
 
-    with pytest.raises(MasterKeyProviderError) as excinfo:
-        cmm.get_encryption_materials(request=mock_request)
+        with pytest.raises(MasterKeyProviderError) as excinfo:
+            cmm.get_encryption_materials(request=mock_request)
 
     excinfo.match(r"Primary Master Key not in provided Master Keys")
 
@@ -225,19 +218,14 @@ def test_load_verification_key_from_encryption_context_key_is_needed_and_is_foun
     assert test is mock_verifier.key_bytes.return_value
 
 
-def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
-    mock_request = MagicMock()
+def test_decrypt_materials(patch_for_dcmm_decrypt):
     cmm = build_cmm()
+    dk = cmm.master_key_provider.generate_data_key(algorithm=ALGORITHM, encryption_context={})
+    edk = EncryptedDataKey(key_provider=dk.key_provider, encrypted_data_key=dk.encrypted_data_key)
 
-    test = cmm.decrypt_materials(request=mock_request)
+    test = cmm.decrypt_materials(
+        request=DecryptionMaterialsRequest(algorithm=ALGORITHM, encryption_context={}, encrypted_data_keys={edk})
+    )
 
-    cmm.master_key_provider.decrypt_data_key_from_list.assert_called_once_with(
-        encrypted_data_keys=mock_request.encrypted_data_keys,
-        algorithm=mock_request.algorithm,
-        encryption_context=mock_request.encryption_context,
-    )
-    cmm._load_verification_key_from_encryption_context.assert_called_once_with(
-        algorithm=mock_request.algorithm, encryption_context=mock_request.encryption_context
-    )
-    assert test.data_key == RawDataKey.from_data_key(cmm.master_key_provider.decrypt_data_key_from_list.return_value)
+    assert test.data_key.data_key == dk.data_key
     assert test.verification_key == patch_for_dcmm_decrypt

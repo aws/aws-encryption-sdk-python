@@ -96,7 +96,7 @@ def test_mkp_to_default_cmm(mocker):
     )
 
     aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.assert_called_once_with(
-        mock_mkp
+        master_key_provider=mock_mkp
     )  # noqa pylint: disable=line-too-long
     assert (
         test.backing_materials_manager
