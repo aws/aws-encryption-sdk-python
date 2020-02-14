@@ -17,10 +17,15 @@ import itertools
 import os
 
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.exceptions import DecryptKeyError
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyProvider
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring, RawRSAKeyring
@@ -401,3 +406,92 @@ def assert_prepped_stream_identity(prepped_stream, wrapped_type):
     assert isinstance(prepped_stream, wrapped_type)
     # Check the wrapping streams
     assert isinstance(prepped_stream, InsistentReaderBytesIO)
+
+
+def ephemeral_raw_rsa_master_key(size=4096):
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=size, backend=default_backend())
+    key_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    return RawMasterKey(
+        provider_id="fake",
+        key_id="rsa-{}".format(size).encode("utf-8"),
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+            wrapping_key=key_bytes,
+            wrapping_key_type=EncryptionKeyType.PRIVATE,
+        ),
+    )
+
+
+def ephemeral_raw_aes_master_key(size=256):
+    key = os.urandom(size // 8)
+    return RawMasterKey(
+        provider_id="fake",
+        key_id="aes-{}".format(size).encode("utf-8"),
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            wrapping_key=key,
+            wrapping_key_type=EncryptionKeyType.SYMMETRIC,
+        ),
+    )
+
+
+class EphemeralRawMasterKeyProvider(RawMasterKeyProvider):
+    """Master key provider with raw master keys that are generated on each initialization."""
+
+    provider_id = "fake"
+
+    def __init__(self):
+        self.__keys = {b"aes-256": ephemeral_raw_aes_master_key(256), b"rsa-4096": ephemeral_raw_rsa_master_key(4096)}
+
+    def _get_raw_key(self, key_id):
+        return self.__keys[key_id].config.wrapping_key
+
+
+class EmptyMasterKeyProvider(MasterKeyProvider):
+    """Master key provider that provides no master keys."""
+
+    provider_id = "empty"
+    _config_class = MasterKeyProviderConfig
+    vend_masterkey_on_decrypt = False
+
+    def _new_master_key(self, key_id):
+        raise Exception("How did this happen??")
+
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
+        return ephemeral_raw_aes_master_key(), []
+
+
+class DisjointMasterKeyProvider(MasterKeyProvider):
+    """Master key provider that does not provide the primary master key in the additional master keys."""
+
+    provider_id = "disjoint"
+    _config_class = MasterKeyProviderConfig
+    vend_masterkey_on_decrypt = False
+
+    def _new_master_key(self, key_id):
+        raise Exception("How did this happen??")
+
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
+        return ephemeral_raw_aes_master_key(), [ephemeral_raw_rsa_master_key()]
+
+
+class UnknownDataKeyInfoMasterKeyProvider(EphemeralRawMasterKeyProvider):
+    """EphemeralRawMasterKeyProvider that cannot locate a master key from a decrypted data key."""
+
+    def master_keys_for_data_key(self, data_key):
+        """Only fail on post-decryption check."""
+        if hasattr(data_key, "data_key"):
+            return []
+
+        return super(UnknownDataKeyInfoMasterKeyProvider, self).master_keys_for_data_key(data_key)
+
+
+class FailingDecryptMasterKeyProvider(EphemeralRawMasterKeyProvider):
+    """EphemeralRawMasterKeyProvider that cannot decrypt."""
+
+    def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
+        raise DecryptKeyError("FailingDecryptMasterKeyProvider cannot decrypt!")
