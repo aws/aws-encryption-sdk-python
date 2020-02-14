@@ -316,6 +316,6 @@ def serialize_wrapped_key(key_provider, wrapping_algorithm, wrapping_key_id, enc
         )
         key_ciphertext = encrypted_wrapped_key.ciphertext + encrypted_wrapped_key.tag
     return EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_info),
+        key_provider=MasterKeyInfo(provider_id=key_provider.provider_id, key_info=key_info, key_id=wrapping_key_id),
         encrypted_data_key=key_ciphertext,
     )

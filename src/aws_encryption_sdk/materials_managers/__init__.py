@@ -133,7 +133,10 @@ class CryptographicMaterials(object):
             if flag not in keyring_trace.flags:
                 raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
-        if keyring_trace.wrapping_key != data_encryption_key.key_provider:
+        if not (
+            keyring_trace.wrapping_key.provider_id == data_encryption_key.key_provider.provider_id
+            and keyring_trace.wrapping_key.key_id == data_encryption_key.key_provider.key_id
+        ):
             raise InvalidKeyringTraceError("Keyring trace does not match data key provider.")
 
         if len(data_encryption_key.data_key) != self.algorithm.kdf_input_len:
@@ -302,7 +305,10 @@ class EncryptionMaterials(CryptographicMaterials):
         if KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY not in keyring_trace.flags:
             raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
-        if keyring_trace.wrapping_key != encrypted_data_key.key_provider:
+        if not (
+            keyring_trace.wrapping_key.provider_id == encrypted_data_key.key_provider.provider_id
+            and keyring_trace.wrapping_key.key_id == encrypted_data_key.key_provider.key_id
+        ):
             raise InvalidKeyringTraceError("Keyring trace does not match data key encryptor.")
 
         self._encrypted_data_keys.append(encrypted_data_key)

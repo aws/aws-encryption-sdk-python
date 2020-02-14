@@ -15,7 +15,7 @@ import copy
 
 import attr
 import six
-from attr.validators import deep_iterable, deep_mapping, instance_of
+from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
 from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
@@ -25,12 +25,32 @@ from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 class MasterKeyInfo(object):
     """Contains information necessary to identify a Master Key.
 
+    ``key_id`` is optional because ``key_id`` and ``key_info`` SHOULD
+    always be the same except in the case of the Raw AES Keyring/MasterKey.
+    This gives the option to specify a different ``key_id`` value if needed.
+
     :param str provider_id: MasterKey provider_id value
     :param bytes key_info: MasterKey key_info value
+    :param bytes key_id: MasterKey key_id value (optional)
     """
 
     provider_id = attr.ib(hash=True, validator=instance_of((six.string_types, bytes)), converter=to_str)
     key_info = attr.ib(hash=True, validator=instance_of((six.string_types, bytes)), converter=to_bytes)
+    _key_id = attr.ib(
+        hash=True,
+        eq=False,
+        default=None,
+        validator=optional(instance_of((six.string_types, bytes))),
+        converter=to_bytes,
+    )
+
+    @property
+    def key_id(self):
+        """Return the key ID if separately specified, or the key info if not."""
+        if self._key_id is None:
+            return self.key_info
+
+        return self._key_id
 
 
 @attr.s(hash=True)

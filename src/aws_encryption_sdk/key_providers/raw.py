@@ -23,7 +23,7 @@ import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.identifiers import EncryptionType
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
-from aws_encryption_sdk.structures import DataKey, RawDataKey
+from aws_encryption_sdk.structures import DataKey, MasterKeyInfo, RawDataKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -182,7 +182,11 @@ class RawMasterKey(MasterKey):
         )
         # Raw key string to DataKey
         return DataKey(
-            key_provider=encrypted_data_key.key_provider,
+            key_provider=MasterKeyInfo(
+                provider_id=encrypted_data_key.key_provider.provider_id,
+                key_info=encrypted_data_key.key_provider.key_info,
+                key_id=self.key_id,
+            ),
             data_key=plaintext_data_key,
             encrypted_data_key=encrypted_data_key.encrypted_data_key,
         )
