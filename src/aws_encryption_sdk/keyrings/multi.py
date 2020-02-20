@@ -31,6 +31,8 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
+__all__ = ("MultiKeyring",)
+
 
 @attr.s
 class MultiKeyring(Keyring):

@@ -23,6 +23,8 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
+__all__ = ("Keyring",)
+
 
 class Keyring(object):
     """Parent interface for Keyring classes.

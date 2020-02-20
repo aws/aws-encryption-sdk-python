@@ -46,6 +46,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
+__all__ = ("RawAESKeyring", "RawRSAKeyring")
 _LOGGER = logging.getLogger(__name__)
 
 
