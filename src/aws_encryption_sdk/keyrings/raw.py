@@ -92,6 +92,8 @@ class RawAESKeyring(Keyring):
     """Generate an instance of Raw AES Keyring which encrypts using AES-GCM algorithm using wrapping key provided as a
     byte array
 
+    .. versionadded:: 1.5.0
+
     :param str key_namespace: String defining the keyring.
     :param bytes key_name: Key ID
     :param bytes wrapping_key: Encryption key with which to wrap plaintext data key.
@@ -240,6 +242,8 @@ class RawAESKeyring(Keyring):
 class RawRSAKeyring(Keyring):
     """Generate an instance of Raw RSA Keyring which performs asymmetric encryption and decryption using public
     and private keys provided
+
+    .. versionadded:: 1.5.0
 
     :param str key_namespace: String defining the keyring ID
     :param bytes key_name: Key ID
