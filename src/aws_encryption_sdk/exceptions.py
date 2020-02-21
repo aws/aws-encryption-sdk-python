@@ -87,6 +87,13 @@ class SignatureKeyError(AWSEncryptionSDKClientError):
     """
 
 
+class InvalidCryptographicMaterialsError(AWSEncryptionSDKClientError):
+    """Exception class for errors encountered when attempting to validate cryptographic materials.
+
+    .. versionadded:: 1.5.0
+    """
+
+
 class ActionNotAllowedError(AWSEncryptionSDKClientError):
     """Exception class for errors encountered when attempting to perform unallowed actions."""
 
