@@ -13,16 +13,23 @@
 """Test suite for aws_encryption_sdk.materials_managers.default"""
 import pytest
 from mock import MagicMock, sentinel
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.materials_managers.default
 from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+
+from ..unit_test_utils import (
+    ephemeral_raw_aes_keyring,
+    ephemeral_raw_aes_master_key,
+    ephemeral_raw_rsa_keyring,
+    ephemeral_raw_rsa_master_key,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -60,14 +67,25 @@ def build_cmm():
     mock_mkp.decrypt_data_key_from_list.return_value = _DATA_KEY
     mock_mkp.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
-        set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b]),
+        {sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b},
     )
     return DefaultCryptoMaterialsManager(master_key_provider=mock_mkp)
 
 
-def test_attributes_fail():
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        pytest.param(dict(), id="no parameters"),
+        pytest.param(dict(master_key_provider=None, keyring=None), id="explicit None for both"),
+        pytest.param(
+            dict(master_key_provider=ephemeral_raw_aes_master_key(), keyring=ephemeral_raw_aes_keyring()),
+            id="both provided",
+        ),
+    ),
+)
+def test_attributes_fail(kwargs):
     with pytest.raises(TypeError):
-        DefaultCryptoMaterialsManager(master_key_provider=None)
+        DefaultCryptoMaterialsManager(**kwargs)
 
 
 def test_attributes_default():

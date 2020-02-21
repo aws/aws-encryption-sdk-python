@@ -17,10 +17,15 @@ import itertools
 import os
 
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.exceptions import DecryptKeyError
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyProvider
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring, RawRSAKeyring
@@ -401,3 +406,112 @@ def assert_prepped_stream_identity(prepped_stream, wrapped_type):
     assert isinstance(prepped_stream, wrapped_type)
     # Check the wrapping streams
     assert isinstance(prepped_stream, InsistentReaderBytesIO)
+
+
+def _generate_rsa_key_bytes(size):
+    # type: (int) -> bytes
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=size, backend=default_backend())
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+
+def ephemeral_raw_rsa_master_key(size=4096):
+    # type: (int) -> RawMasterKey
+    key_bytes = _generate_rsa_key_bytes(size)
+    return RawMasterKey(
+        provider_id="fake",
+        key_id="rsa-{}".format(size).encode("utf-8"),
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+            wrapping_key=key_bytes,
+            wrapping_key_type=EncryptionKeyType.PRIVATE,
+        ),
+    )
+
+
+def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1):
+    # type: (int, WrappingAlgorithm) -> RawRSAKeyring
+    key_bytes = _generate_rsa_key_bytes(size)
+    return RawRSAKeyring.from_pem_encoding(
+        key_namespace="fake",
+        key_name="rsa-{}".format(size).encode("utf-8"),
+        wrapping_algorithm=wrapping_algorithm,
+        private_encoded_key=key_bytes,
+    )
+
+
+def ephemeral_raw_aes_master_key(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING):
+    # type: (WrappingAlgorithm) -> RawMasterKey
+    key_length = wrapping_algorithm.algorithm.data_key_len
+    key = os.urandom(key_length)
+    return RawMasterKey(
+        provider_id="fake",
+        key_id="aes-{}".format(key_length * 8).encode("utf-8"),
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=wrapping_algorithm,
+            wrapping_key=key,
+            wrapping_key_type=EncryptionKeyType.SYMMETRIC,
+        ),
+    )
+
+
+def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING):
+    # type: (WrappingAlgorithm) -> RawAESKeyring
+    key_length = wrapping_algorithm.algorithm.data_key_len
+    key = os.urandom(key_length)
+    return RawAESKeyring(
+        key_namespace="fake",
+        key_name="aes-{}".format(key_length * 8).encode("utf-8"),
+        wrapping_algorithm=wrapping_algorithm,
+        wrapping_key=key,
+    )
+
+
+class EphemeralRawMasterKeyProvider(RawMasterKeyProvider):
+    """Master key provider with raw master keys that are generated on each initialization."""
+
+    provider_id = "fake"
+
+    def __init__(self):
+        self.__keys = {b"aes-256": ephemeral_raw_aes_master_key(256), b"rsa-4096": ephemeral_raw_rsa_master_key(4096)}
+
+    def _get_raw_key(self, key_id):
+        return self.__keys[key_id].config.wrapping_key
+
+
+class EmptyMasterKeyProvider(MasterKeyProvider):
+    """Master key provider that provides no master keys."""
+
+    provider_id = "empty"
+    _config_class = MasterKeyProviderConfig
+    vend_masterkey_on_decrypt = False
+
+    def _new_master_key(self, key_id):
+        raise Exception("How did this happen??")
+
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
+        return ephemeral_raw_aes_master_key(), []
+
+
+class DisjointMasterKeyProvider(MasterKeyProvider):
+    """Master key provider that does not provide the primary master key in the additional master keys."""
+
+    provider_id = "disjoint"
+    _config_class = MasterKeyProviderConfig
+    vend_masterkey_on_decrypt = False
+
+    def _new_master_key(self, key_id):
+        raise Exception("How did this happen??")
+
+    def master_keys_for_encryption(self, encryption_context, plaintext_rostream, plaintext_length=None):
+        return ephemeral_raw_aes_master_key(), [ephemeral_raw_rsa_master_key()]
+
+
+class FailingDecryptMasterKeyProvider(EphemeralRawMasterKeyProvider):
+    """EphemeralRawMasterKeyProvider that cannot decrypt."""
+
+    def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
+        raise DecryptKeyError("FailingDecryptMasterKeyProvider cannot decrypt!")
