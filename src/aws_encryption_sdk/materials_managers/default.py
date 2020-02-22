@@ -50,6 +50,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
     keyring = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
     def __attrs_post_init__(self):
+        """Apply input requirements."""
         both = self.master_key_provider is not None and self.keyring is not None
         neither = self.master_key_provider is None and self.keyring is None
 

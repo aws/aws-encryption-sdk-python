@@ -44,7 +44,6 @@ from ..unit.unit_test_utils import (
     ephemeral_raw_aes_keyring,
     ephemeral_raw_aes_master_key,
     ephemeral_raw_rsa_keyring,
-    ephemeral_raw_rsa_master_key,
     raw_rsa_mkps_from_keyring,
 )
 
@@ -410,12 +409,22 @@ def _raw_rsa(include_pre_sha2=True, include_sha2=True):
             id="raw RSA keyring -- public encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
         )
         private_mkp, public_mkp = raw_rsa_mkps_from_keyring(private_keyring)
+
         yield pytest.param(
             "key_provider",
             private_mkp,
             "keyring",
             private_keyring,
-            id="raw RSA keyring -- encrypt with master key provider and decrypt with keyring -- {}".format(
+            id="raw RSA keyring -- private master key provider encrypt and private keyring decrypt -- {}".format(
+                wrapping_algorithm
+            ),
+        )
+        yield pytest.param(
+            "key_provider",
+            public_mkp,
+            "keyring",
+            private_keyring,
+            id="raw RSA keyring -- public master key provider encrypt and private keyring decrypt -- {}".format(
                 wrapping_algorithm
             ),
         )
@@ -424,7 +433,16 @@ def _raw_rsa(include_pre_sha2=True, include_sha2=True):
             private_keyring,
             "key_provider",
             private_mkp,
-            id="raw RSA keyring -- encrypt with keyring and decrypt with master key provider -- {}".format(
+            id="raw RSA keyring -- private keyring encrypt and private master key provider decrypt -- {}".format(
+                wrapping_algorithm
+            ),
+        )
+        yield pytest.param(
+            "keyring",
+            public_keyring,
+            "key_provider",
+            private_mkp,
+            id="raw RSA keyring -- public keyring encrypt and private master key provider decrypt -- {}".format(
                 wrapping_algorithm
             ),
         )

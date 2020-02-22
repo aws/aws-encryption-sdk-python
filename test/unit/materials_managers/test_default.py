@@ -19,17 +19,11 @@ from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationE
 from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
-from ..unit_test_utils import (
-    ephemeral_raw_aes_keyring,
-    ephemeral_raw_aes_master_key,
-    ephemeral_raw_rsa_keyring,
-    ephemeral_raw_rsa_master_key,
-)
+from ..unit_test_utils import ephemeral_raw_aes_keyring, ephemeral_raw_aes_master_key
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
