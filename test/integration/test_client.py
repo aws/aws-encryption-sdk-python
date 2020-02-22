@@ -64,12 +64,13 @@ def test_encrypt_verify_user_agent_kms_master_key(caplog):
 
 def test_remove_bad_client():
     test = KMSMasterKeyProvider()
-    test.add_regional_client("us-fakey-12")
+    fake_region = "us-fakey-12"
+    test.add_regional_client(fake_region)
 
     with pytest.raises(BotoCoreError):
-        test._regional_clients["us-fakey-12"].list_keys()
+        test._regional_clients[fake_region].list_keys()
 
-    assert not test._regional_clients
+    assert fake_region not in test._regional_clients
 
 
 def test_regional_client_does_not_modify_botocore_session(caplog):
