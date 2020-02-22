@@ -33,7 +33,7 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterials, Encryptio
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable  # noqa pylint: disable=unused-import
+    from typing import Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -433,7 +433,7 @@ def ephemeral_raw_rsa_master_key(size=4096):
 
 
 def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1):
-    # type: (int, WrappingAlgorithm) -> RawRSAKeyring
+    # type: (int, WrappingAlgorithm, Optional[bytes]) -> RawRSAKeyring
     key_bytes = _generate_rsa_key_bytes(size)
     return RawRSAKeyring.from_pem_encoding(
         key_namespace="fake",
@@ -443,25 +443,25 @@ def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RS
     )
 
 
-def ephemeral_raw_aes_master_key(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING):
-    # type: (WrappingAlgorithm) -> RawMasterKey
+def ephemeral_raw_aes_master_key(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING, key=None):
+    # type: (WrappingAlgorithm, Optional[bytes]) -> RawMasterKey
     key_length = wrapping_algorithm.algorithm.data_key_len
-    key = os.urandom(key_length)
+    if key is None:
+        key = os.urandom(key_length)
     return RawMasterKey(
         provider_id="fake",
         key_id="aes-{}".format(key_length * 8).encode("utf-8"),
         wrapping_key=WrappingKey(
-            wrapping_algorithm=wrapping_algorithm,
-            wrapping_key=key,
-            wrapping_key_type=EncryptionKeyType.SYMMETRIC,
+            wrapping_algorithm=wrapping_algorithm, wrapping_key=key, wrapping_key_type=EncryptionKeyType.SYMMETRIC,
         ),
     )
 
 
-def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING):
-    # type: (WrappingAlgorithm) -> RawAESKeyring
+def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING, key=None):
+    # type: (WrappingAlgorithm, Optional[bytes]) -> RawAESKeyring
     key_length = wrapping_algorithm.algorithm.data_key_len
-    key = os.urandom(key_length)
+    if key is None:
+        key = os.urandom(key_length)
     return RawAESKeyring(
         key_namespace="fake",
         key_name="aes-{}".format(key_length * 8).encode("utf-8"),

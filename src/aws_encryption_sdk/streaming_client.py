@@ -19,8 +19,8 @@ import logging
 import math
 
 import attr
-from attr.validators import instance_of, optional
 import six
+from attr.validators import instance_of, optional
 
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
@@ -55,11 +55,11 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_open,
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
-from aws_encryption_sdk.keyrings.base import Keyring
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,18 +87,10 @@ class _ClientConfig(object):
     """
 
     source = attr.ib(hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data)
-    materials_manager = attr.ib(
-        hash=True, default=None, validator=optional(instance_of(CryptoMaterialsManager))
-    )
-    keyring = attr.ib(
-        default=None, validator=optional(instance_of(Keyring))
-    )
-    key_provider = attr.ib(
-        hash=True, default=None, validator=optional(instance_of(MasterKeyProvider))
-    )
-    source_length = attr.ib(
-        hash=True, default=None, validator=optional(instance_of(six.integer_types))
-    )
+    materials_manager = attr.ib(hash=True, default=None, validator=optional(instance_of(CryptoMaterialsManager)))
+    keyring = attr.ib(default=None, validator=optional(instance_of(Keyring)))
+    key_provider = attr.ib(hash=True, default=None, validator=optional(instance_of(MasterKeyProvider)))
+    source_length = attr.ib(hash=True, default=None, validator=optional(instance_of(six.integer_types)))
     line_length = attr.ib(
         hash=True, default=LINE_LENGTH, validator=instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
