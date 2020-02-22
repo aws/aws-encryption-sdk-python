@@ -433,7 +433,7 @@ def ephemeral_raw_rsa_master_key(size=4096):
 
 
 def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1):
-    # type: (int, WrappingAlgorithm, Optional[bytes]) -> RawRSAKeyring
+    # type: (int, WrappingAlgorithm) -> RawRSAKeyring
     key_bytes = _generate_rsa_key_bytes(size)
     return RawRSAKeyring.from_pem_encoding(
         key_namespace="fake",
@@ -441,6 +441,39 @@ def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RS
         wrapping_algorithm=wrapping_algorithm,
         private_encoded_key=key_bytes,
     )
+
+
+def raw_rsa_mkps_from_keyring(keyring):
+    # type: (RawRSAKeyring) -> (MasterKeyProvider, MasterKeyProvider)
+    """Constructs a private and public raw RSA MKP using the private key in the raw RSA keyring."""
+    private_key = keyring._private_wrapping_key
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    private_key_mkp = RawMasterKey(
+        provider_id=keyring.key_namespace,
+        key_id=keyring.key_name,
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=keyring._wrapping_algorithm,
+            wrapping_key=private_pem,
+            wrapping_key_type=EncryptionKeyType.PRIVATE,
+        ),
+    )
+    public_key_mkp = RawMasterKey(
+        provider_id=keyring.key_namespace,
+        key_id=keyring.key_name,
+        wrapping_key=WrappingKey(
+            wrapping_algorithm=keyring._wrapping_algorithm,
+            wrapping_key=public_pem,
+            wrapping_key_type=EncryptionKeyType.PUBLIC,
+        ),
+    )
+    return private_key_mkp, public_key_mkp
 
 
 def ephemeral_raw_aes_master_key(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING, key=None):

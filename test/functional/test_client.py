@@ -45,6 +45,7 @@ from ..unit.unit_test_utils import (
     ephemeral_raw_aes_master_key,
     ephemeral_raw_rsa_keyring,
     ephemeral_raw_rsa_master_key,
+    raw_rsa_mkps_from_keyring,
 )
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
@@ -407,6 +408,25 @@ def _raw_rsa(include_pre_sha2=True, include_sha2=True):
             "keyring",
             private_keyring,
             id="raw RSA keyring -- public encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
+        )
+        private_mkp, public_mkp = raw_rsa_mkps_from_keyring(private_keyring)
+        yield pytest.param(
+            "key_provider",
+            private_mkp,
+            "keyring",
+            private_keyring,
+            id="raw RSA keyring -- encrypt with master key provider and decrypt with keyring -- {}".format(
+                wrapping_algorithm
+            ),
+        )
+        yield pytest.param(
+            "keyring",
+            private_keyring,
+            "key_provider",
+            private_mkp,
+            id="raw RSA keyring -- encrypt with keyring and decrypt with master key provider -- {}".format(
+                wrapping_algorithm
+            ),
         )
 
 
