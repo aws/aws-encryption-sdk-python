@@ -11,17 +11,20 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Utility functions to handle common test framework functions."""
+import base64
 import copy
 import io
 import itertools
 import os
 
+import attr
+from attr.validators import instance_of
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.exceptions import DecryptKeyError
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import AlgorithmSuite, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
@@ -33,7 +36,7 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterials, Encryptio
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Iterable, Optional  # noqa pylint: disable=unused-import
+    from typing import Dict, Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -120,7 +123,7 @@ class OnlyGenerateKeyring(Keyring):
 
 def get_encryption_materials_with_data_key():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -138,7 +141,7 @@ def get_encryption_materials_with_data_key():
 
 def get_encryption_materials_with_data_encryption_key():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -156,7 +159,7 @@ def get_encryption_materials_with_data_encryption_key():
 
 def get_encryption_materials_without_data_key():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     )
@@ -164,7 +167,7 @@ def get_encryption_materials_without_data_key():
 
 def get_encryption_materials_with_encrypted_data_key():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -192,7 +195,7 @@ def get_encryption_materials_with_encrypted_data_key():
 
 def get_encryption_materials_with_encrypted_data_key_aes():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -214,7 +217,7 @@ def get_encryption_materials_with_encrypted_data_key_aes():
 
 def get_encryption_materials_without_data_encryption_key():
     return EncryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     )
@@ -222,7 +225,7 @@ def get_encryption_materials_without_data_encryption_key():
 
 def get_decryption_materials_without_data_encryption_key():
     return DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         verification_key=b"ex_verification_key",
         encryption_context=_ENCRYPTION_CONTEXT,
     )
@@ -230,7 +233,7 @@ def get_decryption_materials_without_data_encryption_key():
 
 def get_decryption_materials_with_data_key():
     return DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -248,7 +251,7 @@ def get_decryption_materials_with_data_key():
 
 def get_decryption_materials_with_data_encryption_key():
     return DecryptionMaterials(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
@@ -509,7 +512,10 @@ class EphemeralRawMasterKeyProvider(RawMasterKeyProvider):
     provider_id = "fake"
 
     def __init__(self):
-        self.__keys = {b"aes-256": ephemeral_raw_aes_master_key(256), b"rsa-4096": ephemeral_raw_rsa_master_key(4096)}
+        self.__keys = {
+            b"aes-256": ephemeral_raw_aes_master_key(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING),
+            b"rsa-4096": ephemeral_raw_rsa_master_key(4096),
+        }
 
     def _get_raw_key(self, key_id):
         return self.__keys[key_id].config.wrapping_key
@@ -548,3 +554,110 @@ class FailingDecryptMasterKeyProvider(EphemeralRawMasterKeyProvider):
 
     def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
         raise DecryptKeyError("FailingDecryptMasterKeyProvider cannot decrypt!")
+
+
+@attr.s
+class BrokenKeyring(Keyring):
+    """Keyring that wraps another keyring and selectively breaks the returned values."""
+
+    _inner_keyring = attr.ib(validator=instance_of(Keyring))
+    _break_algorithm = attr.ib(default=False, validator=instance_of(bool))
+    _break_encryption_context = attr.ib(default=False, validator=instance_of(bool))
+    _break_signing = attr.ib(default=False, validator=instance_of(bool))
+
+    @staticmethod
+    def _random_string(bytes_len):
+        # type: (int) -> str
+        return base64.b64encode(os.urandom(bytes_len)).decode("utf-8")
+
+    def _broken_algorithm(self, algorithm):
+        # type: (AlgorithmSuite) -> AlgorithmSuite
+        if not self._break_algorithm:
+            return algorithm
+
+        # We want to make sure that we return something different,
+        #  so find this suite in all suites and grab the next one,
+        #  whatever that is.
+        all_suites = list(AlgorithmSuite)
+        suite_index = all_suites.index(algorithm)
+        next_index = (suite_index + 1) % (len(all_suites) - 1)
+
+        return all_suites[next_index]
+
+    def _broken_encryption_context(self, encryption_context):
+        # type: (Dict[str, str]) -> Dict[str, str]
+        broken_ec = encryption_context.copy()
+
+        if not self._break_encryption_context:
+            return broken_ec
+
+        # Remove a random value
+        try:
+            broken_ec.popitem()
+        except KeyError:
+            pass
+
+        # add a random value
+        broken_ec[self._random_string(5)] = self._random_string(10)
+
+        return broken_ec
+
+    def _broken_key(self, key):
+        # type: (bytes) -> bytes
+        if not self._break_signing:
+            return key
+
+        return self._random_string(32).encode("utf-8")
+
+    def _break_encryption_materials(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        return EncryptionMaterials(
+            algorithm=self._broken_algorithm(encryption_materials.algorithm),
+            data_encryption_key=encryption_materials.data_encryption_key,
+            encrypted_data_keys=encryption_materials.encrypted_data_keys,
+            encryption_context=self._broken_encryption_context(encryption_materials.encryption_context),
+            signing_key=self._broken_key(encryption_materials.signing_key),
+            keyring_trace=encryption_materials.keyring_trace,
+        )
+
+    def _break_decryption_materials(self, decryption_materials):
+        # type: (DecryptionMaterials) -> DecryptionMaterials
+        return DecryptionMaterials(
+            algorithm=self._broken_algorithm(decryption_materials.algorithm),
+            data_encryption_key=decryption_materials.data_encryption_key,
+            encryption_context=self._broken_encryption_context(decryption_materials.encryption_context),
+            verification_key=self._broken_key(decryption_materials.verification_key),
+            keyring_trace=decryption_materials.keyring_trace,
+        )
+
+    def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        return self._break_encryption_materials(self._inner_keyring.on_encrypt(encryption_materials))
+
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        return self._break_decryption_materials(
+            self._inner_keyring.on_decrypt(decryption_materials, encrypted_data_keys)
+        )
+
+
+@attr.s
+class OnlyGenerateKeyring(Keyring):
+    """Keyring that wraps another keyring and removes any encrypted data keys."""
+
+    _inner_keyring = attr.ib(validator=instance_of(Keyring))
+
+    def on_encrypt(self, encryption_materials):
+        # type: (EncryptionMaterials) -> EncryptionMaterials
+        materials = self._inner_keyring.on_encrypt(encryption_materials)
+        return EncryptionMaterials(
+            algorithm=materials.algorithm,
+            data_encryption_key=materials.data_encryption_key,
+            encryption_context=materials.encryption_context,
+            signing_key=materials.signing_key,
+            keyring_trace=materials.keyring_trace,
+        )
+
+    def on_decrypt(self, decryption_materials, encrypted_data_keys):
+        # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        return self._inner_keyring.on_decrypt(decryption_materials, encrypted_data_keys)
