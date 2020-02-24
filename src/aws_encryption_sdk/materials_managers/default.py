@@ -252,7 +252,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
             final_materials.verification_key is verification_key,
         )
         if not all(materials_are_valid):
-            raise InvalidCryptographicMaterialsError("Decryption materials do not match reqest!")
+            raise InvalidCryptographicMaterialsError("Decryption materials do not match request!")
 
         return final_materials
 
