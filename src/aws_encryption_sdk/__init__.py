@@ -33,6 +33,9 @@ def encrypt(**kwargs):
         When using this function, the entire ciphertext message is encrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     .. code:: python
 
         >>> import aws_encryption_sdk
@@ -86,6 +89,9 @@ def decrypt(**kwargs):
     .. note::
         When using this function, the entire ciphertext message is decrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
+
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
 
     .. code:: python
 

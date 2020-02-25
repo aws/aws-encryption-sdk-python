@@ -44,6 +44,9 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
 
     .. versionadded:: 1.3.0
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     >>> import aws_encryption_sdk
     >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
     ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',

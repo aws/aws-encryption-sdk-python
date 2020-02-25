@@ -69,6 +69,9 @@ _LOGGER = logging.getLogger(__name__)
 class _ClientConfig(object):
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param CryptoMaterialsManager materials_manager:
@@ -314,6 +317,9 @@ class _EncryptionStream(io.IOBase):
 class EncryptorConfig(_ClientConfig):
     """Configuration object for StreamEncryptor class.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param CryptoMaterialsManager materials_manager:
@@ -364,6 +370,9 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     .. note::
         If config is provided, all other parameters are ignored.
+
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
 
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
@@ -674,6 +683,9 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 class DecryptorConfig(_ClientConfig):
     """Configuration object for StreamDecryptor class.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param CryptoMaterialsManager materials_manager:
@@ -709,6 +721,9 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     .. note::
         If config is provided, all other parameters are ignored.
+
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
 
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
