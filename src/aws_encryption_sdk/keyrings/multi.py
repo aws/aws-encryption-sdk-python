@@ -30,16 +30,15 @@ class MultiKeyring(Keyring):
 
     .. versionadded:: 1.5.0
 
-    :param generator: Generator keyring used to generate data encryption key (optional)
-    :type generator: Keyring
-    :param list children: List of keyrings used to encrypt the data encryption key (optional)
+    :param Keyring generator: Generator keyring used to generate data encryption key (optional)
+    :param List[Keyring] children: List of keyrings used to encrypt the data encryption key (optional)
     :raises EncryptKeyError: if encryption of data key fails for any reason
     """
 
+    generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
     children = attr.ib(
         default=attr.Factory(tuple), validator=optional(deep_iterable(member_validator=instance_of(Keyring)))
     )
-    generator = attr.ib(default=None, validator=optional(instance_of(Keyring)))
 
     def __attrs_post_init__(self):
         # type: () -> None
@@ -56,10 +55,9 @@ class MultiKeyring(Keyring):
         """Generate a data key using generator keyring
         and encrypt it using any available wrapping key in any child keyring.
 
-        :param encryption_materials: Encryption materials for keyring to modify.
-        :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :param EncryptionMaterials encryption_materials: Encryption materials for keyring to modify.
         :returns: Optionally modified encryption materials.
-        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :rtype: EncryptionMaterials
         :raises EncryptKeyError: if unable to encrypt data key.
         """
         # Check if generator keyring is not provided and data key is not generated
@@ -88,12 +86,10 @@ class MultiKeyring(Keyring):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
 
-        :param decryption_materials: Decryption materials for keyring to modify.
-        :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
-        :param encrypted_data_keys: List of encrypted data keys.
-        :type: List of `aws_encryption_sdk.structures.EncryptedDataKey`
+        :param DecryptionMaterials decryption_materials: Decryption materials for keyring to modify.
+        :param List[EncryptedDataKey] encrypted_data_keys: List of encrypted data keys.
         :returns: Optionally modified decryption materials.
-        :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
+        :rtype: DecryptionMaterials
         """
         # Call on_decrypt on all keyrings till decryption is successful
         for keyring in self._decryption_keyrings:

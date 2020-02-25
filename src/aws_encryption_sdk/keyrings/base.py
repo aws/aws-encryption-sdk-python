@@ -26,10 +26,9 @@ class Keyring(object):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         """Generate a data key if not present and encrypt it using any available wrapping key.
 
-        :param encryption_materials: Encryption materials for the keyring to modify.
-        :type encryption_materials: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :param EncryptionMaterials encryption_materials: Encryption materials for keyring to modify.
         :returns: Optionally modified encryption materials.
-        :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :rtype: EncryptionMaterials
         :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_encrypt function")
@@ -38,12 +37,10 @@ class Keyring(object):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
         """Attempt to decrypt the encrypted data keys.
 
-        :param decryption_materials: Decryption materials for the keyring to modify.
-        :type decryption_materials: aws_encryption_sdk.materials_managers.DecryptionMaterials
-        :param encrypted_data_keys: List of encrypted data keys.
-        :type: Iterable of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
+        :param DecryptionMaterials decryption_materials: Decryption materials for keyring to modify.
+        :param List[EncryptedDataKey] encrypted_data_keys: List of encrypted data keys.
         :returns: Optionally modified decryption materials.
-        :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
+        :rtype: DecryptionMaterials
         :raises NotImplementedError: if method is not implemented
         """
         raise NotImplementedError("Keyring does not implement on_decrypt function")
