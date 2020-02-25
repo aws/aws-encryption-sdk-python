@@ -52,12 +52,14 @@ def encrypt(**kwargs):
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -109,12 +111,14 @@ def decrypt(**kwargs):
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
