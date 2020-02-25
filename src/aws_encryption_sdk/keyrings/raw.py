@@ -10,7 +10,8 @@ from attr.validators import instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey  # noqa pylint: disable=unused-import
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
@@ -19,14 +20,14 @@ from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapp
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyrings.base import Keyring
-from aws_encryption_sdk.structures import (  # pylint: disable=unused-import
+from aws_encryption_sdk.structures import (
     EncryptedDataKey,
     KeyringTrace,
     MasterKeyInfo,
     RawDataKey,
 )
 
-from aws_encryption_sdk.materials_managers import (  # only used for mypy; pylint: disable=unused-import
+from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials,
     EncryptionMaterials,
 )
