@@ -13,16 +13,18 @@
 """Unit test suite for CachingCryptoMaterialsManager"""
 import pytest
 from mock import MagicMock, sentinel
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.materials_managers.caching
 from aws_encryption_sdk.caches.base import CryptoMaterialsCache
+from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
 from aws_encryption_sdk.exceptions import CacheKeyError
 from aws_encryption_sdk.internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
 from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
+
+from ..unit_test_utils import ephemeral_raw_aes_keyring, ephemeral_raw_aes_master_key
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -54,7 +56,7 @@ def fake_encryption_request():
         dict(max_messages_encrypted=None),
         dict(max_bytes_encrypted=None),
         dict(partition_name=55),
-        dict(master_key_provider=None, backing_materials_manager=None),
+        dict(master_key_provider=None, backing_materials_manager=None, keyring=None),
     ),
 )
 def test_attrs_fail(invalid_kwargs):
@@ -88,20 +90,26 @@ def test_custom_partition_name(patch_uuid4):
     assert test.partition_name == custom_partition_name
 
 
-def test_mkp_to_default_cmm(mocker):
-    mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "DefaultCryptoMaterialsManager")
-    mock_mkp = MagicMock(__class__=MasterKeyProvider)
+def test_mkp_to_default_cmm():
+    mkp = ephemeral_raw_aes_master_key()
+
     test = CachingCryptoMaterialsManager(
-        cache=MagicMock(__class__=CryptoMaterialsCache), max_age=10.0, master_key_provider=mock_mkp
+        cache=LocalCryptoMaterialsCache(capacity=10), max_age=10.0, master_key_provider=mkp
     )
 
-    aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.assert_called_once_with(
-        mock_mkp
-    )  # noqa pylint: disable=line-too-long
-    assert (
-        test.backing_materials_manager
-        is aws_encryption_sdk.materials_managers.caching.DefaultCryptoMaterialsManager.return_value
-    )  # noqa pylint: disable=line-too-long
+    assert isinstance(test.backing_materials_manager, DefaultCryptoMaterialsManager)
+    assert test.backing_materials_manager.master_key_provider is mkp
+    assert test.backing_materials_manager.keyring is None
+
+
+def test_keyring_to_default_cmm():
+    keyring = ephemeral_raw_aes_keyring()
+
+    test = CachingCryptoMaterialsManager(cache=LocalCryptoMaterialsCache(capacity=10), max_age=10.0, keyring=keyring)
+
+    assert isinstance(test.backing_materials_manager, DefaultCryptoMaterialsManager)
+    assert test.backing_materials_manager.keyring is keyring
+    assert test.backing_materials_manager.master_key_provider is None
 
 
 @pytest.mark.parametrize(

@@ -40,9 +40,9 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
        The *keyring* parameter.
 
     :param MasterKeyProvider master_key_provider: Master key provider to use
-       (either `keyring` or `master_key_provider` is required)
+       (either ``keyring`` or ``master_key_provider`` is required)
     :param Keyring keyring: Keyring to use
-       (either `keyring` or `master_key_provider` is required)
+       (either ``keyring`` or ``master_key_provider`` is required)
     """
 
     algorithm = ALGORITHM
