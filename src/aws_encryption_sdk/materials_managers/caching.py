@@ -39,6 +39,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s(hash=False)
 class CachingCryptoMaterialsManager(CryptoMaterialsManager):
+    # pylint: disable=too-many-instance-attributes
     """Crypto material manager which caches results from an underlying material manager.
 
     .. versionadded:: 1.3.0
