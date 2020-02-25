@@ -642,7 +642,7 @@ class BrokenKeyring(Keyring):
 
 
 @attr.s
-class OnlyGenerateKeyring(Keyring):
+class NoEncryptedDataKeysKeyring(Keyring):
     """Keyring that wraps another keyring and removes any encrypted data keys."""
 
     _inner_keyring = attr.ib(validator=instance_of(Keyring))

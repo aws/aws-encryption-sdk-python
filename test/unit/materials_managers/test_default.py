@@ -29,7 +29,7 @@ from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyIn
 
 from ..unit_test_utils import (
     BrokenKeyring,
-    OnlyGenerateKeyring,
+    NoEncryptedDataKeysKeyring,
     ephemeral_raw_aes_keyring,
     ephemeral_raw_aes_master_key,
 )
@@ -267,7 +267,7 @@ def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
 def test_encrypt_with_keyring_materials_incomplete():
     raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
 
-    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=OnlyGenerateKeyring(inner_keyring=raw_aes256_keyring))
+    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=NoEncryptedDataKeysKeyring(inner_keyring=raw_aes256_keyring))
 
     encryption_materials_request = EncryptionMaterialsRequest(encryption_context={}, frame_length=1024)
 
