@@ -20,17 +20,8 @@ from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapp
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyrings.base import Keyring
-from aws_encryption_sdk.structures import (
-    EncryptedDataKey,
-    KeyringTrace,
-    MasterKeyInfo,
-    RawDataKey,
-)
-
-from aws_encryption_sdk.materials_managers import (
-    DecryptionMaterials,
-    EncryptionMaterials,
-)
+from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
+from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
