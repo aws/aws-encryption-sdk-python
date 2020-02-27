@@ -56,8 +56,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         value.  If no partition name is provided, a random UUID will be used.
 
     .. note::
-        Either ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` must be provided.
-        ``backing_materials_manager`` will always be used if present.
+        Exactly one of ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` must be provided.
 
     :param CryptoMaterialsCache cache: Crypto cache to use with material manager
     :param CryptoMaterialsManager backing_materials_manager:
@@ -107,7 +106,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         provided_count = len([is_set for is_set in options_provided if is_set])
 
         if provided_count != 1:
-            raise TypeError("Exactly one of 'materials_manager', 'keyring', or 'key_provider' must be provided")
+            raise TypeError("Exactly one of 'backing_materials_manager', 'keyring', or 'key_provider' must be provided")
 
         if self.backing_materials_manager is None:
             if self.master_key_provider is not None:
