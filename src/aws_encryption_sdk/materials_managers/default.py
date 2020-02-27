@@ -131,9 +131,6 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
 
         final_materials = self.keyring.on_encrypt(encryption_materials=encryption_materials)
 
-        if not final_materials.is_complete:
-            raise InvalidCryptographicMaterialsError("Encryption materials are incomplete!")
-
         materials_are_valid = (
             final_materials.algorithm is algorithm,
             final_materials.encryption_context == expected_encryption_context,
@@ -141,6 +138,9 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         )
         if not all(materials_are_valid):
             raise InvalidCryptographicMaterialsError("Encryption materials do not match request!")
+
+        if not final_materials.is_complete:
+            raise InvalidCryptographicMaterialsError("Encryption materials are incomplete!")
 
         _LOGGER.debug("Post-encrypt encryption context: %s", encryption_context)
 
@@ -233,9 +233,6 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
             decryption_materials=decryption_materials, encrypted_data_keys=request.encrypted_data_keys
         )
 
-        if not final_materials.is_complete:
-            raise InvalidCryptographicMaterialsError("Decryption materials are incomplete!")
-
         materials_are_valid = (
             final_materials.algorithm is request.algorithm,
             final_materials.encryption_context == request.encryption_context,
@@ -243,6 +240,9 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         )
         if not all(materials_are_valid):
             raise InvalidCryptographicMaterialsError("Decryption materials do not match request!")
+
+        if not final_materials.is_complete:
+            raise InvalidCryptographicMaterialsError("Decryption materials are incomplete!")
 
         return final_materials
 
