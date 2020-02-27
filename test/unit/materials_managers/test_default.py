@@ -254,12 +254,15 @@ def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
     assert test.verification_key == patch_for_dcmm_decrypt
 
 
-def test_encrypt_with_keyring_materials_incomplete():
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+def test_encrypt_with_keyring_materials_incomplete(algorithm_suite):
     raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
 
     encrypt_cmm = DefaultCryptoMaterialsManager(keyring=NoEncryptedDataKeysKeyring(inner_keyring=raw_aes256_keyring))
 
-    encryption_materials_request = EncryptionMaterialsRequest(encryption_context={}, frame_length=1024)
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
 
     with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
         encrypt_cmm.get_encryption_materials(encryption_materials_request)
@@ -273,13 +276,16 @@ def _broken_materials_scenarios():
     yield pytest.param(dict(break_signing=True), id="broken signing/verification key")
 
 
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
 @pytest.mark.parametrize("kwargs", _broken_materials_scenarios())
-def test_encrypt_with_keyring_materials_do_not_match_request(kwargs):
+def test_encrypt_with_keyring_materials_do_not_match_request(kwargs, algorithm_suite):
     raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
 
     encrypt_cmm = DefaultCryptoMaterialsManager(keyring=BrokenKeyring(inner_keyring=raw_aes256_keyring, **kwargs))
 
-    encryption_materials_request = EncryptionMaterialsRequest(encryption_context={}, frame_length=1024)
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
 
     with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
         encrypt_cmm.get_encryption_materials(encryption_materials_request)
@@ -287,14 +293,17 @@ def test_encrypt_with_keyring_materials_do_not_match_request(kwargs):
     excinfo.match("Encryption materials do not match request!")
 
 
-def test_decrypt_with_keyring_materials_incomplete():
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+def test_decrypt_with_keyring_materials_incomplete(algorithm_suite):
     raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
     raw_aes128_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING)
 
     encrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes256_keyring)
     decrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes128_keyring)
 
-    encryption_materials_request = EncryptionMaterialsRequest(encryption_context={}, frame_length=1024)
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
     encryption_materials = encrypt_cmm.get_encryption_materials(encryption_materials_request)
 
     decryption_materials_request = DecryptionMaterialsRequest(
@@ -309,14 +318,17 @@ def test_decrypt_with_keyring_materials_incomplete():
     excinfo.match("Decryption materials are incomplete!")
 
 
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
 @pytest.mark.parametrize("kwargs", _broken_materials_scenarios())
-def test_decrypt_with_keyring_materials_do_not_match_request(kwargs):
+def test_decrypt_with_keyring_materials_do_not_match_request(kwargs, algorithm_suite):
     raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
 
     encrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes256_keyring)
     decrypt_cmm = DefaultCryptoMaterialsManager(keyring=BrokenKeyring(inner_keyring=raw_aes256_keyring, **kwargs))
 
-    encryption_materials_request = EncryptionMaterialsRequest(encryption_context={}, frame_length=1024)
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
     encryption_materials = encrypt_cmm.get_encryption_materials(encryption_materials_request)
 
     decryption_materials_request = DecryptionMaterialsRequest(
