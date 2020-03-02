@@ -21,7 +21,11 @@ import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX, AlgorithmSuite
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
-from .integration_test_utils import get_cmk_arn, setup_kms_master_key_provider
+from .integration_test_utils import (
+    get_cmk_arn,
+    setup_kms_master_key_provider,
+    setup_kms_master_key_provider_with_botocore_session,
+)
 
 pytestmark = [pytest.mark.integ]
 
@@ -73,6 +77,15 @@ def test_remove_bad_client():
 
     # assert not test._regional_clients
     assert "us-fakey-12" not in test._regional_clients
+
+
+def test_regional_client_does_not_modify_botocore_session(caplog):
+    mkp = setup_kms_master_key_provider_with_botocore_session()
+    fake_region = "us-fakey-12"
+
+    assert mkp.config.botocore_session.get_config_variable("region") != fake_region
+    mkp.add_regional_client(fake_region)
+    assert mkp.config.botocore_session.get_config_variable("region") != fake_region
 
 
 class TestKMSThickClientIntegration(object):

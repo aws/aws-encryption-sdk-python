@@ -235,7 +235,7 @@ class _EncryptionStream(io.IOBase):
         if not self._message_prepped:
             self._prep_message()
 
-        if self.closed:
+        if self.closed:  # dynamic values confuse pylint: disable=using-constant-test
             raise ValueError("I/O operation on closed file")
 
         if b >= 0:
@@ -283,7 +283,7 @@ class _EncryptionStream(io.IOBase):
 
     def readlines(self):
         """Reads all chunks of output, outputting a list as defined in the IOBase specification."""
-        return [line for line in self]
+        return list(self)
 
     def __iter__(self):
         """Make this class and subclasses identify as iterators."""
@@ -292,7 +292,7 @@ class _EncryptionStream(io.IOBase):
     def next(self):
         """Provides hook for Python2 iterator functionality."""
         _LOGGER.debug("reading next")
-        if self.closed:
+        if self.closed:  # dynamic values confuse pylint: disable=using-constant-test
             _LOGGER.debug("stream is closed")
             raise StopIteration()
 

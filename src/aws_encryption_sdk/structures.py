@@ -20,6 +20,7 @@ from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 
 @attr.s(hash=True)
 class MessageHeader(object):
+    # pylint: disable=too-many-instance-attributes
     """Deserialized message header object.
 
     :param version: Message format version, per spec
