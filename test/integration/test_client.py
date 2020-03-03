@@ -1,15 +1,5 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Integration test suite for `aws_encryption_sdk`."""
 import io
 import logging
@@ -64,12 +54,13 @@ def test_encrypt_verify_user_agent_kms_master_key(caplog):
 
 def test_remove_bad_client():
     test = KMSMasterKeyProvider()
-    test.add_regional_client("us-fakey-12")
+    fake_region = "us-fakey-12"
+    test.add_regional_client(fake_region)
 
     with pytest.raises(BotoCoreError):
-        test._regional_clients["us-fakey-12"].list_keys()
+        test._regional_clients[fake_region].list_keys()
 
-    assert not test._regional_clients
+    assert fake_region not in test._regional_clients
 
 
 def test_regional_client_does_not_modify_botocore_session(caplog):

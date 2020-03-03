@@ -1,28 +1,28 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Test suite for aws_encryption_sdk.materials_managers.default"""
 import pytest
 from mock import MagicMock, sentinel
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.materials_managers.default
-from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
-from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.exceptions import InvalidCryptographicMaterialsError, MasterKeyProviderError, SerializationError
+from aws_encryption_sdk.identifiers import Algorithm, WrappingAlgorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.materials_managers import EncryptionMaterials
+from aws_encryption_sdk.materials_managers import (
+    DecryptionMaterialsRequest,
+    EncryptionMaterials,
+    EncryptionMaterialsRequest,
+)
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
+
+from ..unit_test_utils import (
+    BrokenKeyring,
+    NoEncryptedDataKeysKeyring,
+    ephemeral_raw_aes_keyring,
+    ephemeral_raw_aes_master_key,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -60,14 +60,25 @@ def build_cmm():
     mock_mkp.decrypt_data_key_from_list.return_value = _DATA_KEY
     mock_mkp.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
-        set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b]),
+        {sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b},
     )
     return DefaultCryptoMaterialsManager(master_key_provider=mock_mkp)
 
 
-def test_attributes_fail():
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        pytest.param(dict(), id="no parameters"),
+        pytest.param(dict(master_key_provider=None, keyring=None), id="explicit None for both"),
+        pytest.param(
+            dict(master_key_provider=ephemeral_raw_aes_master_key(), keyring=ephemeral_raw_aes_keyring()),
+            id="both provided",
+        ),
+    ),
+)
+def test_attributes_fail(kwargs):
     with pytest.raises(TypeError):
-        DefaultCryptoMaterialsManager(master_key_provider=None)
+        DefaultCryptoMaterialsManager(**kwargs)
 
 
 def test_attributes_default():
@@ -241,3 +252,92 @@ def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
     )
     assert test.data_key == RawDataKey.from_data_key(cmm.master_key_provider.decrypt_data_key_from_list.return_value)
     assert test.verification_key == patch_for_dcmm_decrypt
+
+
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+def test_encrypt_with_keyring_materials_incomplete(algorithm_suite):
+    raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
+
+    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=NoEncryptedDataKeysKeyring(inner_keyring=raw_aes256_keyring))
+
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
+
+    with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
+        encrypt_cmm.get_encryption_materials(encryption_materials_request)
+
+    excinfo.match("Encryption materials are incomplete!")
+
+
+def _broken_materials_scenarios():
+    yield pytest.param(dict(break_algorithm=True), id="broken algorithm")
+    yield pytest.param(dict(break_encryption_context=True), id="broken encryption context")
+    yield pytest.param(dict(break_signing=True), id="broken signing/verification key")
+
+
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+@pytest.mark.parametrize("kwargs", _broken_materials_scenarios())
+def test_encrypt_with_keyring_materials_do_not_match_request(kwargs, algorithm_suite):
+    raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
+
+    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=BrokenKeyring(inner_keyring=raw_aes256_keyring, **kwargs))
+
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
+
+    with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
+        encrypt_cmm.get_encryption_materials(encryption_materials_request)
+
+    excinfo.match("Encryption materials do not match request!")
+
+
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+def test_decrypt_with_keyring_materials_incomplete(algorithm_suite):
+    raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
+    raw_aes128_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING)
+
+    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes256_keyring)
+    decrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes128_keyring)
+
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
+    encryption_materials = encrypt_cmm.get_encryption_materials(encryption_materials_request)
+
+    decryption_materials_request = DecryptionMaterialsRequest(
+        algorithm=encryption_materials.algorithm,
+        encrypted_data_keys=encryption_materials.encrypted_data_keys,
+        encryption_context=encryption_materials.encryption_context,
+    )
+
+    with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
+        decrypt_cmm.decrypt_materials(decryption_materials_request)
+
+    excinfo.match("Decryption materials are incomplete!")
+
+
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+@pytest.mark.parametrize("kwargs", _broken_materials_scenarios())
+def test_decrypt_with_keyring_materials_do_not_match_request(kwargs, algorithm_suite):
+    raw_aes256_keyring = ephemeral_raw_aes_keyring(WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING)
+
+    encrypt_cmm = DefaultCryptoMaterialsManager(keyring=raw_aes256_keyring)
+    decrypt_cmm = DefaultCryptoMaterialsManager(keyring=BrokenKeyring(inner_keyring=raw_aes256_keyring, **kwargs))
+
+    encryption_materials_request = EncryptionMaterialsRequest(
+        encryption_context={}, frame_length=1024, algorithm=algorithm_suite
+    )
+    encryption_materials = encrypt_cmm.get_encryption_materials(encryption_materials_request)
+
+    decryption_materials_request = DecryptionMaterialsRequest(
+        algorithm=encryption_materials.algorithm,
+        encrypted_data_keys=encryption_materials.encrypted_data_keys,
+        encryption_context=encryption_materials.encryption_context,
+    )
+
+    with pytest.raises(InvalidCryptographicMaterialsError) as excinfo:
+        decrypt_cmm.decrypt_materials(decryption_materials_request)
+
+    excinfo.match("Decryption materials do not match request!")

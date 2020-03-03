@@ -248,7 +248,7 @@ class EncryptionMaterials(CryptographicMaterials):
     @property
     def is_complete(self):
         # type: () -> bool
-        """Determine whether these materials are sufficiently complete for use as decryption materials.
+        """Determine whether these materials are sufficiently complete for use as encryption materials.
 
         :rtype: bool
         """
