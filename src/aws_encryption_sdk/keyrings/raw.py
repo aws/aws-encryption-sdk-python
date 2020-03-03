@@ -9,9 +9,7 @@ import six
 from attr.validators import instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey  # noqa pylint: disable=unused-import
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey  # noqa pylint: disable=unused-import
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from aws_encryption_sdk.exceptions import GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
@@ -223,21 +221,23 @@ class RawRSAKeyring(Keyring):
 
     :param str key_namespace: String defining the keyring ID
     :param bytes key_name: Key ID
-    :param RSAPrivateKey private_wrapping_key: Private encryption key with which to wrap plaintext data key (optional)
-    :param RSAPublicKey public_wrapping_key: Public encryption key with which to wrap plaintext data key (optional)
+    :param cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey private_wrapping_key:
+        Private encryption key with which to wrap plaintext data key (optional)
+    :param cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey public_wrapping_key:
+        Public encryption key with which to wrap plaintext data key (optional)
     :param WrappingAlgorithm wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key
     :param MasterKeyInfo key_provider: Complete information about the key in the keyring
 
     .. note::
 
-       At least one of public wrapping key or private wrapping key must be provided.
+        At least one of public wrapping key or private wrapping key must be provided.
     """
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))
     key_name = attr.ib(validator=instance_of(six.binary_type))
     _wrapping_algorithm = attr.ib(repr=False, validator=instance_of(WrappingAlgorithm))
-    _private_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(rsa.RSAPrivateKey)))
-    _public_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(rsa.RSAPublicKey)))
+    _private_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(RSAPrivateKey)))
+    _public_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(RSAPublicKey)))
 
     def __attrs_post_init__(self):
         # type: () -> None
