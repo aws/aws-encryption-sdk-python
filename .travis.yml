@@ -15,19 +15,6 @@ matrix:
     - python: 2.7
       env: TOXENV=py27-examples
       stage: Client Tests
-    # CPython 3.4
-    - python: 3.4
-      env: TOXENV=py34-local
-      stage: Client Tests
-    - python: 3.4
-      env: TOXENV=py34-integ
-      stage: Client Tests
-    - python: 3.4
-      env: TOXENV=py34-accept
-      stage: Client Tests
-    - python: 3.4
-      env: TOXENV=py34-examples
-      stage: Client Tests
     # CPython 3.5
     - python: 3.5
       env: TOXENV=py35-local
@@ -74,6 +61,29 @@ matrix:
       stage: Client Tests
     - python: 3.7
       env: TOXENV=py37-examples
+      dist: xenial
+      sudo: true
+      stage: Client Tests
+    # CPython 3.8
+    # xenial + sudo are currently needed to get 3.8
+    # https://github.com/travis-ci/travis-ci/issues/9815
+    - python: 3.8
+      env: TOXENV=py38-local
+      dist: xenial
+      sudo: true
+      stage: Client Tests
+    - python: 3.8
+      env: TOXENV=py38-integ
+      dist: xenial
+      sudo: true
+      stage: Client Tests
+    - python: 3.8
+      env: TOXENV=py38-accept
+      dist: xenial
+      sudo: true
+      stage: Client Tests
+    - python: 3.8
+      env: TOXENV=py38-examples
       dist: xenial
       sudo: true
       stage: Client Tests
@@ -148,22 +158,6 @@ matrix:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_latest
       stage: Test Vector Handler Tests
-    # CPython 3.4
-    - python: 3.4
-      env:
-        TEST_VECTOR_HANDLERS=1
-        TOXENV=py34-awses_1.3.3
-      stage: Test Vector Handler Tests
-    - python: 3.4
-      env:
-        TEST_VECTOR_HANDLERS=1
-        TOXENV=py34-awses_1.3.max
-      stage: Test Vector Handler Tests
-    - python: 3.4
-      env:
-        TEST_VECTOR_HANDLERS=1
-        TOXENV=py34-awses_latest
-      stage: Test Vector Handler Tests
     # CPython 3.5
     - python: 3.5
       env:
@@ -215,6 +209,28 @@ matrix:
       env:
         TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_latest
+      dist: xenial
+      sudo: true
+      stage: Test Vector Handler Tests
+    # CPython 3.8
+    - python: 3.8
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py38-awses_1.3.3
+      dist: xenial
+      sudo: true
+      stage: Test Vector Handler Tests
+    - python: 3.8
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py38-awses_1.3.max
+      dist: xenial
+      sudo: true
+      stage: Test Vector Handler Tests
+    - python: 3.8
+      env:
+        TEST_VECTOR_HANDLERS=1
+        TOXENV=py38-awses_latest
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
