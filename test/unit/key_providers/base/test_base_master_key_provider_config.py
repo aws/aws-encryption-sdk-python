@@ -11,7 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig"""
+import pytest
+
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig  # noqa pylint: disable=unused-import
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 # Nothing to test at this time, but import will ensure that it exists.
 # If this MasterKeyProviderConfig has attributes added in the future, they should be tested here.
