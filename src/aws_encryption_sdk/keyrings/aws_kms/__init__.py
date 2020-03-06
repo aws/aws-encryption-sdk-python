@@ -9,7 +9,7 @@ import logging
 
 import attr
 import six
-from attr.validators import deep_iterable, instance_of, optional
+from attr.validators import deep_iterable, instance_of, is_callable, optional
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError
 from aws_encryption_sdk.identifiers import AlgorithmSuite
@@ -23,6 +23,7 @@ from .client_suppliers import ClientSupplier, DefaultClientSupplier
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Any, Dict, Iterable, Union  # noqa pylint: disable=unused-import
+    from .client_suppliers import ClientSupplierType  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -77,7 +78,7 @@ class KmsKeyring(Keyring):
     :param List[str] grant_tokens: AWS KMS grant tokens to include in requests (optional)
     """
 
-    _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=instance_of(ClientSupplier))
+    _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=is_callable())
     _generator_key_id = attr.ib(default=None, validator=optional(instance_of(six.string_types)))
     _child_key_ids = attr.ib(
         default=attr.Factory(tuple),
@@ -154,7 +155,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
     """
 
     _key_id = attr.ib(validator=instance_of(six.string_types))
-    _client_supplier = attr.ib(validator=instance_of(ClientSupplier))
+    _client_supplier = attr.ib(validator=is_callable())
     _grant_tokens = attr.ib(
         default=attr.Factory(tuple),
         validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string),
@@ -231,7 +232,7 @@ class _AwsKmsDiscoveryKeyring(Keyring):
     :param List[str] grant_tokens: AWS KMS grant tokens to include in requests (optional)
     """
 
-    _client_supplier = attr.ib(validator=instance_of(ClientSupplier))
+    _client_supplier = attr.ib(validator=is_callable())
     _grant_tokens = attr.ib(
         default=attr.Factory(tuple),
         validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string),
@@ -261,7 +262,7 @@ class _AwsKmsDiscoveryKeyring(Keyring):
 
 
 def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, encrypted_data_key):
-    # type: (ClientSupplier, DecryptionMaterials, Iterable[str], EncryptedDataKey) -> DecryptionMaterials
+    # type: (ClientSupplierType, DecryptionMaterials, Iterable[str], EncryptedDataKey) -> DecryptionMaterials
     """Attempt to call ``kms:Decrypt`` and return the resulting plaintext data key.
 
     Any errors encountered are caught and logged.
@@ -291,7 +292,7 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
 
 
 def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryption_context, grant_tokens):
-    # type: (ClientSupplier, str, EncryptedDataKey, Dict[str, str], Iterable[str]) -> RawDataKey
+    # type: (ClientSupplierType, str, EncryptedDataKey, Dict[str, str], Iterable[str]) -> RawDataKey
     """Attempt to call ``kms:Decrypt`` and return the resulting plaintext data key.
 
     Any errors encountered are passed up the chain without comment.
@@ -318,7 +319,7 @@ def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryptio
 
 
 def _do_aws_kms_encrypt(client_supplier, key_name, plaintext_data_key, encryption_context, grant_tokens):
-    # type: (ClientSupplier, str, RawDataKey, Dict[str, str], Iterable[str]) -> EncryptedDataKey
+    # type: (ClientSupplierType, str, RawDataKey, Dict[str, str], Iterable[str]) -> EncryptedDataKey
     """Attempt to call ``kms:Encrypt`` and return the resulting encrypted data key.
 
     Any errors encountered are passed up the chain without comment.
@@ -338,7 +339,7 @@ def _do_aws_kms_encrypt(client_supplier, key_name, plaintext_data_key, encryptio
 
 
 def _do_aws_kms_generate_data_key(client_supplier, key_name, encryption_context, algorithm, grant_tokens):
-    # type: (ClientSupplier, str, Dict[str, str], AlgorithmSuite, Iterable[str]) -> (RawDataKey, EncryptedDataKey)
+    # type: (ClientSupplierType, str, Dict[str, str], AlgorithmSuite, Iterable[str]) -> (RawDataKey, EncryptedDataKey)
     """Attempt to call ``kms:GenerateDataKey`` and return the resulting plaintext and encrypted data keys.
 
     Any errors encountered are passed up the chain without comment.
