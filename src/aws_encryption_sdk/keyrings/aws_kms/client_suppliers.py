@@ -9,7 +9,7 @@ import logging
 
 import attr
 import six
-from attr.validators import deep_iterable, instance_of, optional
+from attr.validators import deep_iterable, instance_of, is_callable, optional
 from botocore.client import BaseClient
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
@@ -86,9 +86,7 @@ class AllowRegionsClientSupplier(ClientSupplier):
     allowed_regions = attr.ib(
         validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string)
     )
-    _client_supplier = attr.ib(
-        default=attr.Factory(DefaultClientSupplier), validator=optional(instance_of(ClientSupplier))
-    )
+    _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=optional(is_callable()))
 
     def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
@@ -116,9 +114,7 @@ class DenyRegionsClientSupplier(ClientSupplier):
     denied_regions = attr.ib(
         validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string)
     )
-    _client_supplier = attr.ib(
-        default=attr.Factory(DefaultClientSupplier), validator=optional(instance_of(ClientSupplier))
-    )
+    _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=optional(is_callable()))
 
     def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
