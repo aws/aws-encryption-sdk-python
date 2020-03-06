@@ -19,10 +19,12 @@ from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
 from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, KeyringTraceFlag, MasterKeyInfo, RawDataKey
 
-from .client_suppliers import ClientSupplier, DefaultClientSupplier
+from .client_suppliers import DefaultClientSupplier
+
+from .client_suppliers import ClientSupplier  # noqa - only used in docstring params; this confuses flake8
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, Dict, Iterable, Union  # noqa pylint: disable=unused-import
+    from typing import Dict, Iterable, Union  # noqa pylint: disable=unused-import
     from .client_suppliers import ClientSupplierType  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
