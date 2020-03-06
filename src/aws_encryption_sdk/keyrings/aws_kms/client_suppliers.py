@@ -35,13 +35,13 @@ class ClientSupplier(object):
 
     """
 
-    def client(self, region_name):
+    def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
         """Return a client for the requested region.
 
         :rtype: BaseClient
         """
-        raise NotImplementedError("'ClientSupplier' does not implement 'client'")
+        raise NotImplementedError("'ClientSupplier' is not callable")
 
 
 @attr.s
@@ -61,7 +61,7 @@ class DefaultClientSupplier(ClientSupplier):
         """Set up internal client cache."""
         self._cache = ClientCache(botocore_session=self._botocore_session)
 
-    def client(self, region_name):
+    def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
         """Return a client for the requested region.
 
@@ -100,7 +100,7 @@ class AllowRegionsClientSupplier(ClientSupplier):
         if region_name not in self.allowed_regions:
             raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
 
-        return self._supplier.client(region_name)
+        return self._supplier(region_name)
 
 
 @attr.s
@@ -123,7 +123,7 @@ class DenyRegionsClientSupplier(ClientSupplier):
         """Set up internal client supplier."""
         self._supplier = DefaultClientSupplier(botocore_session=self._botocore_session)
 
-    def client(self, region_name):
+    def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
         """Return a client for the requested region.
 
@@ -133,4 +133,4 @@ class DenyRegionsClientSupplier(ClientSupplier):
         if region_name in self.denied_regions:
             raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
 
-        return self._supplier.client(region_name)
+        return self._supplier(region_name)

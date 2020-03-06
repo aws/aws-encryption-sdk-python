@@ -300,7 +300,7 @@ def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryptio
 
     """
     region = _region_from_key_id(encrypted_data_key.key_provider.key_info.decode("utf-8"))
-    client = client_supplier.client(region)
+    client = client_supplier(region)
     response = client.decrypt(
         CiphertextBlob=encrypted_data_key.encrypted_data_key,
         EncryptionContext=encryption_context,
@@ -324,7 +324,7 @@ def _do_aws_kms_encrypt(client_supplier, key_name, plaintext_data_key, encryptio
     Any errors encountered are passed up the chain without comment.
     """
     region = _region_from_key_id(key_name)
-    client = client_supplier.client(region)
+    client = client_supplier(region)
     response = client.encrypt(
         KeyId=key_name,
         Plaintext=plaintext_data_key.data_key,
@@ -347,7 +347,7 @@ def _do_aws_kms_generate_data_key(client_supplier, key_name, encryption_context,
 
     """
     region = _region_from_key_id(key_name)
-    client = client_supplier.client(region)
+    client = client_supplier(region)
     response = client.generate_data_key(
         KeyId=key_name,
         NumberOfBytes=algorithm.kdf_input_len,

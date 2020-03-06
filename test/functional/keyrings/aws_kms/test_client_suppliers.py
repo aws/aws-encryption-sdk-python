@@ -19,7 +19,7 @@ def test_default_supplier_not_implemented():
     test = ClientSupplier()
 
     with pytest.raises(NotImplementedError) as excinfo:
-        test.client("region")
+        test("region")
 
     excinfo.match("'ClientSupplier' does not implement 'client'")
 
@@ -30,7 +30,7 @@ def test_default_supplier_uses_cache():
     region = "us-west-2"
     expected = supplier._cache.client(region_name=region, service="kms")
 
-    test = supplier.client(region)
+    test = supplier(region)
 
     assert test is expected
 
@@ -66,14 +66,14 @@ def test_allow_regions_supplier_invalid_parameters(kwargs):
 def test_allow_regions_supplier_allows_allowed_region():
     test = AllowRegionsClientSupplier(allowed_regions=["us-west-2", "us-east-2"])
 
-    assert test.client("us-west-2")
+    assert test("us-west-2")
 
 
 def test_allow_regions_supplier_denied_not_allowed_region():
     test = AllowRegionsClientSupplier(allowed_regions=["us-west-2", "us-east-2"])
 
     with pytest.raises(UnknownRegionError) as excinfo:
-        test.client("ap-northeast-2")
+        test("ap-northeast-2")
 
     excinfo.match("Unable to provide client for region 'ap-northeast-2'")
 
@@ -102,7 +102,7 @@ def test_deny_regions_supplier_denies_denied_region():
     test = DenyRegionsClientSupplier(denied_regions=["us-west-2", "us-east-2"])
 
     with pytest.raises(UnknownRegionError) as excinfo:
-        test.client("us-west-2")
+        test("us-west-2")
 
     excinfo.match("Unable to provide client for region 'us-west-2'")
 
@@ -110,4 +110,4 @@ def test_deny_regions_supplier_denies_denied_region():
 def test_deny_regions_supplier_allows_not_denied_region():
     test = DenyRegionsClientSupplier(denied_regions=["us-west-2", "us-east-2"])
 
-    assert test.client("ap-northeast-2")
+    assert test("ap-northeast-2")
