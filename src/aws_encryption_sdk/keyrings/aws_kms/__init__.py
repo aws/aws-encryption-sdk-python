@@ -205,18 +205,16 @@ class _AwsKmsSingleCmkKeyring(Keyring):
             if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
 
-            if not (
+            if (
                 edk.key_provider.provider_id == _PROVIDER_ID
                 and edk.key_provider.key_info.decode("utf-8") == self._key_id
             ):
-                continue
-
-            decryption_materials = _try_aws_kms_decrypt(
-                client_supplier=self._client_supplier,
-                decryption_materials=decryption_materials,
-                grant_tokens=self._grant_tokens,
-                encrypted_data_key=edk,
-            )
+                decryption_materials = _try_aws_kms_decrypt(
+                    client_supplier=self._client_supplier,
+                    decryption_materials=decryption_materials,
+                    grant_tokens=self._grant_tokens,
+                    encrypted_data_key=edk,
+                )
 
         return decryption_materials
 
@@ -250,15 +248,13 @@ class _AwsKmsDiscoveryKeyring(Keyring):
             if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
 
-            if edk.key_provider.provider_id != _PROVIDER_ID:
-                continue
-
-            decryption_materials = _try_aws_kms_decrypt(
-                client_supplier=self._client_supplier,
-                decryption_materials=decryption_materials,
-                grant_tokens=self._grant_tokens,
-                encrypted_data_key=edk,
-            )
+            if edk.key_provider.provider_id == _PROVIDER_ID:
+                decryption_materials = _try_aws_kms_decrypt(
+                    client_supplier=self._client_supplier,
+                    decryption_materials=decryption_materials,
+                    grant_tokens=self._grant_tokens,
+                    encrypted_data_key=edk,
+                )
 
         return decryption_materials
 
