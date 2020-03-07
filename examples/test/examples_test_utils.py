@@ -9,13 +9,20 @@ import pytest
 import six
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Callable, List, Iterable  # noqa pylint: disable=unused-import
+    from typing import Callable, Dict, Iterable, List  # noqa pylint: disable=unused-import
+    # we only need pathlib here for typehints
+    from pathlib import Path
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 EXAMPLES_SOURCE = os.path.join(HERE, "..", "src")
+SINGLE_CMK_ARG = "aws_kms_cmk_arn"
+GENERATOR_CMK_ARG = "aws_kms_generator_cmk"
+CHILD_CMK_ARG = "aws_kms_child_cmks"
+PLAINTEXT_ARG = "source_plaintext"
+PLAINTEXT_FILE_ARG = "source_plaintext_filename"
 
 os.environ["AWS_ENCRYPTION_SDK_EXAMPLES_TESTING"] = "yes"
 sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"])])
@@ -53,12 +60,6 @@ static_plaintext = (
 from integration_test_utils import get_cmk_arn  # noqa pylint: disable=unused-import,import-error
 
 
-@pytest.fixture
-def aws_kms_cmk_arns():
-    # type: () -> List[str]
-    return [get_cmk_arn()]
-
-
 def all_examples():
     # type: () -> Iterable[pytest.param]
     for (dirpath, dirnames, filenames) in os.walk(EXAMPLES_SOURCE):
@@ -87,3 +88,28 @@ def get_arg_names(function):
 
     spec = inspect.getfullargspec(function)
     return spec.args
+
+
+def build_kwargs(function, temp_dir):
+    # type: (Callable, Path) -> Dict[str, str]
+
+    plaintext_file = temp_dir / "plaintext"
+    plaintext_file.write_bytes(static_plaintext)
+
+    cmk_arns = [get_cmk_arn()]
+
+    args = get_arg_names(function)
+    possible_kwargs = {
+        SINGLE_CMK_ARG: cmk_arns[0],
+        GENERATOR_CMK_ARG: cmk_arns[0],
+        CHILD_CMK_ARG: cmk_arns[1:],
+        PLAINTEXT_ARG: static_plaintext,
+        PLAINTEXT_FILE_ARG: str(plaintext_file.absolute()),
+    }
+    kwargs = {}
+    for name in args:
+        try:
+            kwargs[name] = possible_kwargs[name]
+        except KeyError:
+            pass
+    return kwargs
