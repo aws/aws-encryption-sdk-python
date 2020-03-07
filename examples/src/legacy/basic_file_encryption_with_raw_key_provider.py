@@ -38,7 +38,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         )
 
 
-def cycle_file(source_plaintext_filename):
+def run(source_plaintext_filename):
     """Encrypts and then decrypts a file under a custom static master key provider.
 
     :param str source_plaintext_filename: Filename of file to encrypt

@@ -4,16 +4,16 @@
 import aws_encryption_sdk
 
 
-def cycle_string(key_arn, source_plaintext, botocore_session=None):
+def run(aws_kms_cmk_arn, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under a KMS customer master key (CMK).
 
-    :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
+    :param str aws_kms_cmk_arn: Amazon Resource Name (ARN) of the KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
     # Create a KMS master key provider
-    kms_kwargs = dict(key_ids=[key_arn])
+    kms_kwargs = dict(key_ids=[aws_kms_cmk_arn])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
     master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
