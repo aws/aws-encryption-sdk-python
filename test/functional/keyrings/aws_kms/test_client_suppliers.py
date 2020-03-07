@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Functional tests for ``aws_encryption_sdk.keyrings.aws_kms.client_suppliers``."""
 import pytest
+from botocore.config import Config
+from botocore.session import Session
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import (
@@ -32,6 +34,16 @@ def test_default_supplier_uses_cache():
     test = supplier(region)
 
     assert test is expected
+
+
+def test_default_supplier_passes_through_configs():
+    session = Session()
+    config = Config()
+
+    test = DefaultClientSupplier(botocore_session=session, client_config=config)
+
+    assert test._client_cache._botocore_session is session
+    assert test._client_cache._client_config is config
 
 
 @pytest.mark.parametrize(

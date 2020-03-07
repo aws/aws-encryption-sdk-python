@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Integration tests for ``aws_encryption_sdk.keyrings.aws_kms.client_cache``."""
 import pytest
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError
 from botocore.session import Session
 
@@ -11,7 +12,7 @@ pytestmark = [pytest.mark.integ]
 
 
 def test_client_cache_removes_bad_client():
-    cache = ClientCache()
+    cache = ClientCache(botocore_session=Session(), client_config=Config())
     fake_region = "us-fake-1"
 
     initial_client = cache.client(fake_region, "kms")
@@ -25,7 +26,7 @@ def test_client_cache_removes_bad_client():
 
 
 def test_regional_client_does_not_modify_botocore_session():
-    cache = ClientCache(botocore_session=Session())
+    cache = ClientCache(botocore_session=Session(), client_config=Config())
     fake_region = "us-fake-1"
 
     assert cache._botocore_session.get_config_variable("region") != fake_region
@@ -34,7 +35,7 @@ def test_regional_client_does_not_modify_botocore_session():
 
 
 def test_client_cache_remove_bad_client_when_already_removed():
-    cache = ClientCache()
+    cache = ClientCache(botocore_session=Session(), client_config=Config())
     fake_region = "us-fake-1"
 
     initial_client = cache.client(fake_region, "kms")

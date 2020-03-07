@@ -5,14 +5,18 @@
 .. versionadded:: 1.5.0
 
 """
+import functools
 import logging
 
 import attr
 import six
 from attr.validators import deep_iterable, instance_of, is_callable, optional
 from botocore.client import BaseClient
+from botocore.config import Config as BotocoreConfig
+from botocore.session import Session as BotocoreSession
 
 from aws_encryption_sdk.exceptions import UnknownRegionError
+from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.validators import value_is_not_a_string
 
 from .client_cache import ClientCache
@@ -58,11 +62,36 @@ class DefaultClientSupplier(ClientSupplier):
 
     .. versionadded:: 1.5.0
 
-    :param botocore_session: botocore session to use when creating clients (optional)
+    If you want clients to have special credentials or other configuration,
+    you can provide those with custom ``botocore`` Session and/or `Config`_ instances.
+
+    .. _Config: https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+
+    .. code-block:: python
+
+        from aws_encryption_sdk.keyrings.aws_kms.client_supplier import DefaultClientSupplier
+        from botocore.session import Session
+        from botocore.config import Config
+
+        my_client_supplier = DefaultClientSupplier(
+            botocore_session=Session(**_get_custom_credentials()),
+            client_config=Config(connect_timeout=10),
+        )
+
+    :param botocore_session: Botocore session to use when creating clients (optional)
     :type botocore_session: botocore.session.Session
+    :param client_config: Config to use when creating client (optional)
+    :type client_config: botocore.config.Config
     """
 
-    _client_cache = attr.ib(default=attr.Factory(ClientCache), validator=instance_of(ClientCache))
+    _botocore_session = attr.ib(default=attr.Factory(BotocoreSession), validator=instance_of(BotocoreSession))
+    _client_config = attr.ib(
+        default=attr.Factory(functools.partial(BotocoreConfig, user_agent_extra=USER_AGENT_SUFFIX)),
+        validator=instance_of(BotocoreConfig),
+    )
+
+    def __attrs_post_init__(self):
+        self._client_cache = ClientCache(botocore_session=self._botocore_session, client_config=self._client_config)
 
     def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient

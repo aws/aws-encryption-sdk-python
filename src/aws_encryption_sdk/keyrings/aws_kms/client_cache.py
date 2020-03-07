@@ -16,8 +16,6 @@ from botocore.config import Config as BotocoreConfig
 from botocore.exceptions import BotoCoreError
 from botocore.session import Session as BotocoreSession
 
-from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
-
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Dict  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
@@ -36,17 +34,14 @@ class ClientCache(object):
 
     .. versionadded:: 1.5.0
 
-    :param botocore_session: Botocore session to use when creating clients (optional)
+    :param botocore_session: Botocore session to use when creating clients
     :type botocore_session: botocore.session.Session
     :param client_config: Config to use when creating client
     :type client_config: botocore.config.Config
     """
 
-    _botocore_session = attr.ib(default=attr.Factory(BotocoreSession), validator=instance_of(BotocoreSession))
-    _client_config = attr.ib(
-        default=attr.Factory(functools.partial(BotocoreConfig, user_agent_extra=USER_AGENT_SUFFIX)),
-        validator=instance_of(BotocoreConfig),
-    )
+    _botocore_session = attr.ib(validator=instance_of(BotocoreSession))
+    _client_config = attr.ib(validator=instance_of(BotocoreConfig))
 
     def __attrs_post_init__(self):
         """Set up internal cache."""
