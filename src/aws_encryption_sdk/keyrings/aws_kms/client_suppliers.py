@@ -91,6 +91,7 @@ class DefaultClientSupplier(ClientSupplier):
     )
 
     def __attrs_post_init__(self):
+        """Set up the internal cache."""
         self._client_cache = ClientCache(botocore_session=self._botocore_session, client_config=self._client_config)
 
     def __call__(self, region_name):
