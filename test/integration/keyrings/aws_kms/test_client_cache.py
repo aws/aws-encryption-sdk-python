@@ -6,7 +6,7 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError
 from botocore.session import Session
 
-from aws_encryption_sdk.keyrings.aws_kms.client_cache import ClientCache
+from aws_encryption_sdk.keyrings.aws_kms._client_cache import ClientCache
 
 pytestmark = [pytest.mark.integ]
 

@@ -17,7 +17,6 @@ Modules
     aws_encryption_sdk.keyrings.base
     aws_encryption_sdk.keyrings.aws_kms
     aws_encryption_sdk.keyrings.aws_kms.client_suppliers
-    aws_encryption_sdk.keyrings.aws_kms.client_cache
     aws_encryption_sdk.keyrings.multi
     aws_encryption_sdk.keyrings.raw
     aws_encryption_sdk.key_providers.base
@@ -45,5 +44,6 @@ Modules
     aws_encryption_sdk.internal.structures
     aws_encryption_sdk.internal.validators
     aws_encryption_sdk.internal.utils
+    aws_encryption_sdk.keyrings.aws_kms._client_cache
 
 .. include:: ../CHANGELOG.rst

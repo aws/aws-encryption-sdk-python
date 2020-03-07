@@ -19,7 +19,7 @@ from aws_encryption_sdk.exceptions import UnknownRegionError
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.validators import value_is_not_a_string
 
-from .client_cache import ClientCache
+from ._client_cache import ClientCache
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Union  # noqa pylint: disable=unused-import

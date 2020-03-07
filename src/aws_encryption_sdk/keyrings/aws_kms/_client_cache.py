@@ -4,6 +4,10 @@
 
 .. versionadded:: 1.5.0
 
+.. warning::
+    No guarantee is provided on the modules and APIs within this
+    namespace staying consistent. Directly reference at your own risk.
+
 """
 import functools
 import logging
