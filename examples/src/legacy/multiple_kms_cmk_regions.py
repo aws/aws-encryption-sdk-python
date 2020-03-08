@@ -1,15 +1,5 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """
 Example showing basic encryption and decryption of a value already in memory
 using multiple KMS CMKs in multiple regions.
@@ -18,19 +8,20 @@ import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
 
-def multiple_kms_cmk_regions(key_arn_1, key_arn_2, source_plaintext, botocore_session=None):
+def run(aws_kms_generator_cmk, aws_kms_child_cmks, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under multiple KMS customer master keys (CMKs) in multiple regions.
 
-    :param str key_arn_1: Amazon Resource Name (ARN) of the KMS CMK
-    :param str key_arn_2: Amazon Resource Name (ARN) of another KMS CMK
+    :param str aws_kms_generator_cmk: Amazon Resource Name (ARN) of the primary KMS CMK
+    :param List[str] aws_kms_child_cmks: Additional Amazon Resource Names (ARNs) of secondary KMS CMKs
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
+    child_cmk = aws_kms_child_cmks[0]
     # Check that these keys are in different regions
-    assert not key_arn_1.split(":")[3] == key_arn_2.split(":")[3]
+    assert not aws_kms_generator_cmk.split(":")[3] == child_cmk.split(":")[3]
 
-    kwargs = dict(key_ids=[key_arn_1, key_arn_2])
+    kwargs = dict(key_ids=[aws_kms_generator_cmk, child_cmk])
 
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
@@ -49,10 +40,10 @@ def multiple_kms_cmk_regions(key_arn_1, key_arn_2, source_plaintext, botocore_se
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     # Either of our keys can be used to decrypt the message
     plaintext_1, decrypted_message_header_1 = aws_encryption_sdk.decrypt(
-        key_provider=KMSMasterKey(key_id=key_arn_1), source=ciphertext
+        key_provider=KMSMasterKey(key_id=aws_kms_generator_cmk), source=ciphertext
     )
     plaintext_2, decrypted_message_header_2 = aws_encryption_sdk.decrypt(
-        key_provider=KMSMasterKey(key_id=key_arn_2), source=ciphertext
+        key_provider=KMSMasterKey(key_id=child_cmk), source=ciphertext
     )
 
     # Check that the original message and the decrypted message are the same
