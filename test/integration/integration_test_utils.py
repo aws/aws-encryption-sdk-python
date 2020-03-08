@@ -20,6 +20,7 @@ from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
+AWS_KMS_KEY_ID_2 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2"
 _KMS_MKP = None
 _KMS_MKP_BOTO = None
 _KMS_KEYRING = None
@@ -38,6 +39,26 @@ def get_cmk_arn():
         return arn
     raise ValueError("KMS CMK ARN provided for integration tests much be a key not an alias")
 
+def get_cmk_arn(region_name):
+    """Retrieves a CMK ARN based on the requested region_name"""
+    if AWS_KMS_KEY_ID in os.environ and AWS_KMS_KEY_ID_2 in os.environ:
+        raise ValueError(
+            'Environment variable "{}" or "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(
+                AWS_KMS_KEY_ID, AWS_KMS_KEY_ID_2
+            )
+        )
+    arn_1 = os.environ.get(AWS_KMS_KEY_ID, None)
+    arn_2 = os.environ.get(AWS_KMS_KEY_ID_2, None)
+    if arn_1.split(':')[3] == region_name:
+        return arn_1
+    elif arn_2.split(':')[3] == region_name:
+        return arn_2
+    else:
+        raise ValueError(
+            'No CMK in the region {} exist in either of your environment variables "{}" or "{}"'.format(
+                region_name, AWS_KMS_KEY_ID, AWS_KMS_KEY_ID_2
+            )
+        )
 
 def setup_kms_master_key_provider(cache=True):
     """Build an AWS KMS Master Key Provider."""
