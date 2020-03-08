@@ -14,6 +14,9 @@ Modules
     aws_encryption_sdk.caches.base
     aws_encryption_sdk.caches.local
     aws_encryption_sdk.caches.null
+    aws_encryption_sdk.keyrings.base
+    aws_encryption_sdk.keyrings.multi
+    aws_encryption_sdk.keyrings.raw
     aws_encryption_sdk.key_providers.base
     aws_encryption_sdk.key_providers.kms
     aws_encryption_sdk.key_providers.raw

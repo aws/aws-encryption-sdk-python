@@ -161,8 +161,8 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         :param str region_name: AWS Region ID (ex: us-east-1)
         """
         if region_name not in self._regional_clients:
-            session = boto3.session.Session(region_name=region_name, botocore_session=self.config.botocore_session)
-            client = session.client("kms", config=self._user_agent_adding_config)
+            session = boto3.session.Session(botocore_session=self.config.botocore_session)
+            client = session.client("kms", region_name=region_name, config=self._user_agent_adding_config)
             self._register_client(client, region_name)
             self._regional_clients[region_name] = client
 

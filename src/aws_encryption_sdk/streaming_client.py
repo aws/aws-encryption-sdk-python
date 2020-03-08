@@ -1,15 +1,5 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """High level AWS Encryption SDK client for streaming objects."""
 from __future__ import division
 
@@ -20,6 +10,7 @@ import math
 
 import attr
 import six
+from attr.validators import instance_of, optional
 
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
@@ -54,6 +45,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_open,
 )
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
@@ -67,14 +59,19 @@ _LOGGER = logging.getLogger(__name__)
 class _ClientConfig(object):
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -83,28 +80,27 @@ class _ClientConfig(object):
     """
 
     source = attr.ib(hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data)
-    materials_manager = attr.ib(
-        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
-    )
-    key_provider = attr.ib(
-        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
-    )
-    source_length = attr.ib(
-        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
-    )
+    materials_manager = attr.ib(hash=True, default=None, validator=optional(instance_of(CryptoMaterialsManager)))
+    keyring = attr.ib(default=None, validator=optional(instance_of(Keyring)))
+    key_provider = attr.ib(hash=True, default=None, validator=optional(instance_of(MasterKeyProvider)))
+    source_length = attr.ib(hash=True, default=None, validator=optional(instance_of(six.integer_types)))
     line_length = attr.ib(
-        hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
+        hash=True, default=LINE_LENGTH, validator=instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def __attrs_post_init__(self):
         """Normalize inputs to crypto material manager."""
-        both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
-        neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
+        options_provided = [option is not None for option in (self.materials_manager, self.keyring, self.key_provider)]
+        provided_count = len([is_set for is_set in options_provided if is_set])
 
-        if both_cmm_and_mkp_defined or neither_cmm_nor_mkp_defined:
-            raise TypeError("Exactly one of materials_manager or key_provider must be provided")
+        if provided_count != 1:
+            raise TypeError("Exactly one of 'materials_manager', 'keyring', or 'key_provider' must be provided")
+
         if self.materials_manager is None:
-            self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+            if self.key_provider is not None:
+                self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+            else:
+                self.materials_manager = DefaultCryptoMaterialsManager(keyring=self.keyring)
 
 
 class _EncryptionStream(io.IOBase):
@@ -235,7 +231,7 @@ class _EncryptionStream(io.IOBase):
         if not self._message_prepped:
             self._prep_message()
 
-        if self.closed:
+        if self.closed:  # dynamic values confuse pylint: disable=using-constant-test
             raise ValueError("I/O operation on closed file")
 
         if b >= 0:
@@ -283,7 +279,7 @@ class _EncryptionStream(io.IOBase):
 
     def readlines(self):
         """Reads all chunks of output, outputting a list as defined in the IOBase specification."""
-        return [line for line in self]
+        return list(self)
 
     def __iter__(self):
         """Make this class and subclasses identify as iterators."""
@@ -292,7 +288,7 @@ class _EncryptionStream(io.IOBase):
     def next(self):
         """Provides hook for Python2 iterator functionality."""
         _LOGGER.debug("reading next")
-        if self.closed:
+        if self.closed:  # dynamic values confuse pylint: disable=using-constant-test
             _LOGGER.debug("stream is closed")
             raise StopIteration()
 
@@ -311,14 +307,19 @@ class _EncryptionStream(io.IOBase):
 class EncryptorConfig(_ClientConfig):
     """Configuration object for StreamEncryptor class.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -360,16 +361,21 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     .. note::
         If config is provided, all other parameters are ignored.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -667,14 +673,19 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 class DecryptorConfig(_ClientConfig):
     """Configuration object for StreamDecryptor class.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -701,16 +712,21 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     .. note::
         If config is provided, all other parameters are ignored.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::

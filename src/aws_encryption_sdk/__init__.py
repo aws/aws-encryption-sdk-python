@@ -1,15 +1,5 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """High level AWS Encryption SDK client functions."""
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
@@ -33,6 +23,9 @@ def encrypt(**kwargs):
         When using this function, the entire ciphertext message is encrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     .. code:: python
 
         >>> import aws_encryption_sdk
@@ -49,12 +42,14 @@ def encrypt(**kwargs):
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -87,6 +82,9 @@ def decrypt(**kwargs):
         When using this function, the entire ciphertext message is decrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
+    .. versionadded:: 1.5.0
+       The *keyring* parameter.
+
     .. code:: python
 
         >>> import aws_encryption_sdk
@@ -103,12 +101,14 @@ def decrypt(**kwargs):
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
-    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param CryptoMaterialsManager materials_manager:
+        Cryptographic materials manager to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param Keyring keyring: Keyring to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param MasterKeyProvider key_provider:
+        Master key provider to use for encryption
+        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
     :param int source_length: Length of source data (optional)
 
         .. note::

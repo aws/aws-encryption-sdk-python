@@ -2,6 +2,23 @@
 Changelog
 *********
 
+1.4.1 -- 2019-09-20
+===================
+
+Bugfixes
+--------
+
+* Fix region configuration override in botocore sessions.
+  `#190 <https://github.com/aws/aws-encryption-sdk-python/issues/190>`_
+  `#193 <https://github.com/aws/aws-encryption-sdk-python/pull/193>`_
+
+Minor
+-----
+
+* Caching CMM must require that max age configuration value is greater than 0.
+  `#147 <https://github.com/aws/aws-encryption-sdk-python/issues/147>`_
+  `#172 <https://github.com/aws/aws-encryption-sdk-python/pull/172>`_
+
 1.4.0 -- 2019-05-23
 ===================
 
