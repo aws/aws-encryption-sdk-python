@@ -26,39 +26,28 @@ _KMS_MKP_BOTO = None
 _KMS_KEYRING = None
 
 
-def get_cmk_arn():
-    """Retrieves the target CMK ARN from environment variable."""
-    arn = os.environ.get(AWS_KMS_KEY_ID, None)
+def _get_single_cmk_arn(name):
+    # type: (str) -> str
+    """Retrieve a single target AWS KMS CMK ARN from the specified environment variable name."""
+    arn = os.environ.get(name, None)
     if arn is None:
         raise ValueError(
-            'Environment variable "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(
-                AWS_KMS_KEY_ID
-            )
+            'Environment variable "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(name)
         )
     if arn.startswith("arn:") and ":alias/" not in arn:
         return arn
     raise ValueError("KMS CMK ARN provided for integration tests much be a key not an alias")
 
-def get_cmk_arn(region_name):
-    """Retrieves a CMK ARN based on the requested region_name"""
-    if AWS_KMS_KEY_ID in os.environ and AWS_KMS_KEY_ID_2 in os.environ:
-        raise ValueError(
-            'Environment variable "{}" or "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(
-                AWS_KMS_KEY_ID, AWS_KMS_KEY_ID_2
-            )
-        )
-    arn_1 = os.environ.get(AWS_KMS_KEY_ID, None)
-    arn_2 = os.environ.get(AWS_KMS_KEY_ID_2, None)
-    if arn_1.split(':')[3] == region_name:
-        return arn_1
-    elif arn_2.split(':')[3] == region_name:
-        return arn_2
-    else:
-        raise ValueError(
-            'No CMK in the region {} exist in either of your environment variables "{}" or "{}"'.format(
-                region_name, AWS_KMS_KEY_ID, AWS_KMS_KEY_ID_2
-            )
-        )
+
+def get_cmk_arn():
+    """Retrieves the target AWS KMS CMK ARN from environment variable."""
+    return _get_single_cmk_arn(AWS_KMS_KEY_ID)
+
+
+def get_all_cmk_arns():
+    """Retrieve all known target AWS KMS CMK ARNs from environment variables."""
+    return [_get_single_cmk_arn(AWS_KMS_KEY_ID), _get_single_cmk_arn(AWS_KMS_KEY_ID_2)]
+
 
 def setup_kms_master_key_provider(cache=True):
     """Build an AWS KMS Master Key Provider."""
@@ -68,7 +57,7 @@ def setup_kms_master_key_provider(cache=True):
 
     cmk_arn = get_cmk_arn()
     kms_master_key_provider = KMSMasterKeyProvider()
-    kms_master_key_provider.add_master_key(cmk_arn)
+    kms_master_key_provider.add_master_key(cmk_arn.encode("utf-8"))
 
     if cache:
         _KMS_MKP = kms_master_key_provider
@@ -84,7 +73,7 @@ def setup_kms_master_key_provider_with_botocore_session(cache=True):
 
     cmk_arn = get_cmk_arn()
     kms_master_key_provider = KMSMasterKeyProvider(botocore_session=botocore.session.Session())
-    kms_master_key_provider.add_master_key(cmk_arn)
+    kms_master_key_provider.add_master_key(cmk_arn.encode("utf-8"))
 
     if cache:
         _KMS_MKP_BOTO = kms_master_key_provider

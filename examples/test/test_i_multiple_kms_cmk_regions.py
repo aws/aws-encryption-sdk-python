@@ -17,7 +17,7 @@ import pytest
 
 from ..src.multiple_kms_cmk_regions import multiple_kms_cmk_regions
 
-from .examples_test_utils import get_cmk_arn
+from .examples_test_utils import get_all_cmk_arns
 from .examples_test_utils import static_plaintext
 
 
@@ -26,8 +26,7 @@ pytestmark = [pytest.mark.examples]
 
 def test_multiple_kms_cmk_regions():
     plaintext = static_plaintext
-    cmk_arn_1 = get_cmk_arn("us-west-2")
-    cmk_arn_2 = get_cmk_arn("eu-central-1")
+    cmk_arn_1, cmk_arn_2 = get_all_cmk_arns()[:2]
     multiple_kms_cmk_regions(
         cmk_arn_1, cmk_arn_2, source_plaintext=plaintext, botocore_session=botocore.session.Session()
     )

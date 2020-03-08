@@ -10,6 +10,7 @@ import six
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Callable, Dict, Iterable, List  # noqa pylint: disable=unused-import
+
     # we only need pathlib here for typehints
     from pathlib import Path
 except ImportError:  # pragma: no cover
@@ -57,7 +58,7 @@ static_plaintext = (
 )
 
 
-from integration_test_utils import get_cmk_arn  # noqa pylint: disable=unused-import,import-error
+from integration_test_utils import get_all_cmk_arns  # noqa pylint: disable=unused-import,import-error
 
 
 def all_examples():
@@ -96,7 +97,7 @@ def build_kwargs(function, temp_dir):
     plaintext_file = temp_dir / "plaintext"
     plaintext_file.write_bytes(static_plaintext)
 
-    cmk_arns = [get_cmk_arn()]
+    cmk_arns = get_all_cmk_arns()
 
     args = get_arg_names(function)
     possible_kwargs = {
