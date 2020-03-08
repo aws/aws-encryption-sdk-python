@@ -16,7 +16,6 @@ using multiple KMS CMKs in multiple regions.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
-from aws_encryption_sdk.internal.crypto.encryption import encrypt, decrypt
 
 
 def multiple_kms_cmk_regions(key_arn_1, key_arn_2, source_plaintext, botocore_session=None):
@@ -40,24 +39,26 @@ def multiple_kms_cmk_regions(key_arn_1, key_arn_2, source_plaintext, botocore_se
     kms_key_provider = KMSMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
-    ciphertext, encrypted_message_header = encrypt(kms_key_provider, source_plaintext)
+    ciphertext, encrypted_message_header = aws_encryption_sdk.encrypt(
+        key_provider=kms_key_provider, source=source_plaintext
+    )
 
     # Check that both key ARNs are in the message headers
     assert len(encrypted_message_header.encrypted_data_keys) == 2
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     # Either of our keys can be used to decrypt the message
-    plaintext_1, decrypted_message_header_1 = decrypt(
-        KMSMasterKey(key_id=key_arn_1), ciphertext
+    plaintext_1, decrypted_message_header_1 = aws_encryption_sdk.decrypt(
+        key_provider=KMSMasterKey(key_id=key_arn_1), source=ciphertext
     )
-    plaintext_2, decrypted_message_header_2 = decrypt(
-        KMSMasterKey(key_id=key_arn_2), ciphertext
+    plaintext_2, decrypted_message_header_2 = aws_encryption_sdk.decrypt(
+        key_provider=KMSMasterKey(key_id=key_arn_2), source=ciphertext
     )
 
     # Check that the original message and the decrypted message are the same
     if not isinstance(source_plaintext, bytes):
-        plaintext1 = plaintext_1.decode("utf-8")
-        plaintext2 = plaintext_2.decode("utf-8")
+        plaintext_1 = plaintext_1.decode("utf-8")
+        plaintext_2 = plaintext_2.decode("utf-8")
     assert source_plaintext == plaintext_1
     assert source_plaintext == plaintext_2
 
