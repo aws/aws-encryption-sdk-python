@@ -63,7 +63,7 @@ from integration_test_utils import get_all_cmk_arns  # noqa pylint: disable=unus
 
 def all_examples():
     # type: () -> Iterable[pytest.param]
-    for (dirpath, dirnames, filenames) in os.walk(EXAMPLES_SOURCE):
+    for (dirpath, _dirnames, filenames) in os.walk(EXAMPLES_SOURCE):
         for testfile in filenames:
             split_path = testfile.rsplit(".", 1)
             if len(split_path) != 2:
@@ -84,7 +84,7 @@ def get_arg_names(function):
     # type: (Callable) -> List[str]
     if six.PY2:
         # getargspec was deprecated in CPython 3.0 but 2.7 does not have either of the new options
-        spec = inspect.getargspec(function)
+        spec = inspect.getargspec(function)  # pylint: disable=deprecated-method
         return spec.args
 
     spec = inspect.getfullargspec(function)

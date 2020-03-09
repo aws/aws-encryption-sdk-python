@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.examples]
 def test_examples(import_path, tmp_path):
     module = import_module(name=import_path, package=__package__)
     try:
-        run_function = getattr(module, "run")
+        run_function = module.run
     except AttributeError:
         pytest.skip("Module lacks 'run' function.")
         return
