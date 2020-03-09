@@ -76,7 +76,7 @@ please make sure that it meets the following requirements:
 1. Each example file MUST contain a function called `run` that runs the example.
 1. If your `run` function needs any of the following inputs,
     the parameters MUST have the following names:
-    * `aws_kms_cmk_arn` (`str`) : A single AWS KMS CMK ARN.
+    * `aws_kms_cmk` (`str`) : A single AWS KMS CMK ARN.
         * NOTE: You can assume that automatically discovered credentials have
             `kms:GenerateDataKey`, `kms:Encrypt`, and `kms:Decrypt` permissions on this CMK.
     * `aws_kms_generator_cmk` (`str`) : A single AWS KMS CMK ARN to use as a generator key.

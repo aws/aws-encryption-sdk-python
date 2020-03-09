@@ -4,10 +4,10 @@
 import aws_encryption_sdk
 
 
-def run(aws_kms_cmk_arn, max_age_in_cache=10.0, cache_capacity=10):
+def run(aws_kms_cmk, max_age_in_cache=10.0, cache_capacity=10):
     """Encrypts a string using an AWS KMS customer master key (CMK) and data key caching.
 
-    :param str aws_kms_cmk_arn: Amazon Resource Name (ARN) of the KMS customer master key
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS customer master key
     :param float max_age_in_cache: Maximum time in seconds that a cached entry can be used
     :param int cache_capacity: Maximum number of entries to retain in cache at once
     """
@@ -22,7 +22,7 @@ def run(aws_kms_cmk_arn, max_age_in_cache=10.0, cache_capacity=10):
     encryption_context = {"purpose": "test"}
 
     # Create a master key provider for the KMS customer master key (CMK)
-    key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[aws_kms_cmk_arn])
+    key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[aws_kms_cmk])
 
     # Create a local cache
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(cache_capacity)

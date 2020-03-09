@@ -25,11 +25,11 @@ from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 
-def run(aws_kms_cmk_arn, source_plaintext):
+def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
     """Demonstrate requesting a specific algorithm suite through the one-shot encrypt/decrypt APIs.
 
-    :param str aws_kms_cmk_arn: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
@@ -42,7 +42,7 @@ def run(aws_kms_cmk_arn, source_plaintext):
     }
 
     # Create the keyring that determines how your keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk_arn)
+    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

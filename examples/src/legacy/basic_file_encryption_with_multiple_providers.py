@@ -50,12 +50,12 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         )
 
 
-def run(aws_kms_cmk_arn, source_plaintext_filename, botocore_session=None):
+def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
     """Encrypts and then decrypts a file using a KMS master key provider and a custom static master
     key provider. Both master key providers are used to encrypt the plaintext file, so either one alone
     can decrypt it.
 
-    :param str aws_kms_cmk_arn: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK)
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK)
     (http://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html)
     :param str source_plaintext_filename: Filename of file to encrypt
     :param botocore_session: existing botocore session instance
@@ -67,7 +67,7 @@ def run(aws_kms_cmk_arn, source_plaintext_filename, botocore_session=None):
     cycled_static_plaintext_filename = source_plaintext_filename + ".static.decrypted"
 
     # Create a KMS master key provider
-    kms_kwargs = dict(key_ids=[aws_kms_cmk_arn])
+    kms_kwargs = dict(key_ids=[aws_kms_cmk])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
     kms_master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)

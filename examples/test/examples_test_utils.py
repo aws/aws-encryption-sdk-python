@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 EXAMPLES_SOURCE = os.path.join(HERE, "..", "src")
-SINGLE_CMK_ARG = "aws_kms_cmk_arn"
+SINGLE_CMK_ARG = "aws_kms_cmk"
 GENERATOR_CMK_ARG = "aws_kms_generator_cmk"
 CHILD_CMK_ARG = "aws_kms_child_cmks"
 PLAINTEXT_ARG = "source_plaintext"

@@ -14,11 +14,11 @@ import aws_encryption_sdk
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 
-def run(aws_kms_cmk_arn, source_plaintext_filename):
+def run(aws_kms_cmk, source_plaintext_filename):
     # type: (str, str) -> None
     """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs to work with files.
 
-    :param str aws_kms_cmk_arn: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
     :param str source_plaintext_filename: Path to plaintext file to encrypt
     """
     # We assume that you can also write in the directory containing the plaintext file,
@@ -36,7 +36,7 @@ def run(aws_kms_cmk_arn, source_plaintext_filename):
     }
 
     # Create the keyring that determines how your keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk_arn)
+    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Open the files you want to work with.
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:

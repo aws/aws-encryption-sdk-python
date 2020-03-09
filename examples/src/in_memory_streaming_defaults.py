@@ -14,11 +14,11 @@ import aws_encryption_sdk
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 
-def run(aws_kms_cmk_arn, source_plaintext):
+def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
     """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs in-memory.
 
-    :param str aws_kms_cmk_arn: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
@@ -31,7 +31,7 @@ def run(aws_kms_cmk_arn, source_plaintext):
     }
 
     # Create the keyring that determines how your keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk_arn)
+    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     ciphertext = io.BytesIO()
 
