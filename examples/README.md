@@ -7,7 +7,7 @@ as well as how to set up some common configuration patterns.
 
 ## APIs
 
-The AWS Encryption SDK provides two high-level APIS:
+The AWS Encryption SDK provides two high-level APIs:
 one-shot APIs that process the entire operation in memory
 and streaming APIs.
 
@@ -38,13 +38,13 @@ enforcing certain algorithm suites or encryption context settings,
 reusing data keys across messages,
 or changing how you interact with keyrings.
 You can find these examples in
-[`examples/src/crypto_materials_managers`](./src/crypto_materials_manager).
+[`examples/src/crypto_materials_manager`](./src/crypto_materials_manager).
 
 ### Master Key Providers
 
 Before there were keyrings, there were master key providers.
 Master key providers were the original configuration structure
-that we defined for defining how you want to protect your data keys.
+that we provided for defining how you want to protect your data keys.
 Keyrings provide a simpler experience and often more powerful configuration options,
 but if you need to use master key providers,
 need help migrating from master key providers to keyrings,
