@@ -14,12 +14,15 @@
 import os
 
 import botocore.session
+import pytest
 
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
 _KMS_MKP = None
 _KMS_MKP_BOTO = None
+_KMS_KEYRING = None
 
 
 def get_cmk_arn():
@@ -37,7 +40,7 @@ def get_cmk_arn():
 
 
 def setup_kms_master_key_provider(cache=True):
-    """Reads the test_values config file and builds the requested KMS Master Key Provider."""
+    """Build an AWS KMS Master Key Provider."""
     global _KMS_MKP  # pylint: disable=global-statement
     if cache and _KMS_MKP is not None:
         return _KMS_MKP
@@ -53,7 +56,7 @@ def setup_kms_master_key_provider(cache=True):
 
 
 def setup_kms_master_key_provider_with_botocore_session(cache=True):
-    """Reads the test_values config file and builds the requested KMS Master Key Provider with botocore_session."""
+    """Build an AWS KMS Master Key Provider with an explicit botocore_session."""
     global _KMS_MKP_BOTO  # pylint: disable=global-statement
     if cache and _KMS_MKP_BOTO is not None:
         return _KMS_MKP_BOTO
@@ -66,3 +69,29 @@ def setup_kms_master_key_provider_with_botocore_session(cache=True):
         _KMS_MKP_BOTO = kms_master_key_provider
 
     return kms_master_key_provider
+
+
+def build_aws_kms_keyring(generate=True, cache=True):
+    """Build an AWS KMS keyring."""
+    global _KMS_KEYRING  # pylint: disable=global-statement
+    if cache and _KMS_KEYRING is not None:
+        return _KMS_KEYRING
+
+    cmk_arn = get_cmk_arn()
+
+    if generate:
+        kwargs = dict(generator_key_id=cmk_arn)
+    else:
+        kwargs = dict(child_key_ids=[cmk_arn])
+
+    keyring = KmsKeyring(**kwargs)
+
+    if cache:
+        _KMS_KEYRING = keyring
+
+    return keyring
+
+
+@pytest.fixture
+def aws_kms_keyring():
+    return build_aws_kms_keyring()

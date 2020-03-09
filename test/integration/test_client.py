@@ -5,17 +5,11 @@ import io
 import logging
 
 import pytest
-from botocore.exceptions import BotoCoreError
 
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX, Algorithm
-from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
-from .integration_test_utils import (
-    get_cmk_arn,
-    setup_kms_master_key_provider,
-    setup_kms_master_key_provider_with_botocore_session,
-)
+from .integration_test_utils import build_aws_kms_keyring, get_cmk_arn, setup_kms_master_key_provider
 
 pytestmark = [pytest.mark.integ]
 
@@ -33,411 +27,90 @@ VALUES = {
 }
 
 
-def test_encrypt_verify_user_agent_kms_master_key_provider(caplog):
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="AWS KMS master key provider"),
+        pytest.param(
+            dict(key_provider=setup_kms_master_key_provider().master_key(get_cmk_arn())), id="AWS KMS master key"
+        ),
+        pytest.param(dict(keyring=build_aws_kms_keyring()), id="AWS KMS keyring"),
+    ),
+)
+def test_encrypt_verify_user_agent_in_logs(caplog, kwargs):
     caplog.set_level(level=logging.DEBUG)
-    mkp = setup_kms_master_key_provider()
-    mk = mkp.master_key(get_cmk_arn())
 
-    mk.generate_data_key(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
+    aws_encryption_sdk.encrypt(source=VALUES["plaintext_128"], **kwargs)
 
     assert USER_AGENT_SUFFIX in caplog.text
 
 
-def test_encrypt_verify_user_agent_kms_master_key(caplog):
-    caplog.set_level(level=logging.DEBUG)
-    mk = KMSMasterKey(key_id=get_cmk_arn())
+@pytest.mark.parametrize("frame_size", (pytest.param(0, id="unframed"), pytest.param(1024, id="1024 byte frame")))
+@pytest.mark.parametrize("algorithm_suite", Algorithm)
+@pytest.mark.parametrize(
+    "encrypt_key_provider_kwargs",
+    (
+        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="encrypt with MKP"),
+        pytest.param(dict(keyring=build_aws_kms_keyring()), id="encrypt with keyring"),
+    ),
+)
+@pytest.mark.parametrize(
+    "decrypt_key_provider_kwargs",
+    (
+        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="decrypt with MKP"),
+        pytest.param(dict(keyring=build_aws_kms_keyring()), id="decrypt with keyring"),
+    ),
+)
+@pytest.mark.parametrize(
+    "encryption_context",
+    (
+        pytest.param({}, id="empty encryption context"),
+        pytest.param(VALUES["encryption_context"], id="non-empty encryption context"),
+    ),
+)
+@pytest.mark.parametrize(
+    "plaintext",
+    (
+        pytest.param(VALUES["plaintext_128"], id="plaintext smaller than frame"),
+        pytest.param(VALUES["plaintext_128"] * 100, id="plaintext larger than frame"),
+    ),
+)
+def test_encrypt_decrypt_cycle_aws_kms(
+    frame_size, algorithm_suite, encrypt_key_provider_kwargs, decrypt_key_provider_kwargs, encryption_context, plaintext
+):
+    ciphertext, _ = aws_encryption_sdk.encrypt(
+        source=plaintext,
+        encryption_context=encryption_context,
+        frame_length=frame_size,
+        algorithm=algorithm_suite,
+        **encrypt_key_provider_kwargs
+    )
+    decrypted, _ = aws_encryption_sdk.decrypt(source=ciphertext, **decrypt_key_provider_kwargs)
+    assert decrypted == plaintext
 
-    mk.generate_data_key(algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={})
 
-    assert USER_AGENT_SUFFIX in caplog.text
+@pytest.mark.parametrize(
+    "plaintext",
+    (
+        pytest.param(VALUES["plaintext_128"], id="plaintext smaller than frame"),
+        pytest.param(VALUES["plaintext_128"] * 100, id="plaintext larger than frame"),
+    ),
+)
+def test_encrypt_decrypt_cycle_aws_kms_streaming(plaintext):
+    keyring = build_aws_kms_keyring()
+    ciphertext = b""
+    with aws_encryption_sdk.stream(
+        source=io.BytesIO(plaintext), keyring=keyring, mode="e", encryption_context=VALUES["encryption_context"],
+    ) as encryptor:
+        for chunk in encryptor:
+            ciphertext += chunk
+    header_1 = encryptor.header
 
+    decrypted = b""
+    with aws_encryption_sdk.stream(source=io.BytesIO(ciphertext), keyring=keyring, mode="d") as decryptor:
+        for chunk in decryptor:
+            decrypted += chunk
+    header_2 = decryptor.header
 
-def test_remove_bad_client():
-    test = KMSMasterKeyProvider()
-    fake_region = "us-fakey-12"
-    test.add_regional_client(fake_region)
-
-    with pytest.raises(BotoCoreError):
-        test._regional_clients[fake_region].list_keys()
-
-    assert fake_region not in test._regional_clients
-
-
-def test_regional_client_does_not_modify_botocore_session(caplog):
-    mkp = setup_kms_master_key_provider_with_botocore_session()
-    fake_region = "us-fakey-12"
-
-    assert mkp.config.botocore_session.get_config_variable("region") != fake_region
-    mkp.add_regional_client(fake_region)
-    assert mkp.config.botocore_session.get_config_variable("region") != fake_region
-
-
-class TestKMSThickClientIntegration(object):
-    @pytest.fixture(autouse=True)
-    def apply_fixtures(self):
-        self.kms_master_key_provider = setup_kms_master_key_provider()
-
-    def test_encryption_cycle_default_algorithm_framed_stream(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a framed message using the default algorithm.
-        """
-        with aws_encryption_sdk.stream(
-            source=io.BytesIO(VALUES["plaintext_128"]),
-            key_provider=self.kms_master_key_provider,
-            mode="e",
-            encryption_context=VALUES["encryption_context"],
-        ) as encryptor:
-            ciphertext = encryptor.read()
-        header_1 = encryptor.header
-        with aws_encryption_sdk.stream(
-            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="d"
-        ) as decryptor:
-            plaintext = decryptor.read()
-        header_2 = decryptor.header
-        assert plaintext == VALUES["plaintext_128"]
-        assert header_1.encryption_context == header_2.encryption_context
-
-    def test_encryption_cycle_default_algorithm_framed_stream_many_lines(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a framed message with many frames using the default algorithm.
-        """
-        ciphertext = b""
-        with aws_encryption_sdk.stream(
-            source=io.BytesIO(VALUES["plaintext_128"] * 10),
-            key_provider=self.kms_master_key_provider,
-            mode="e",
-            encryption_context=VALUES["encryption_context"],
-            frame_length=128,
-        ) as encryptor:
-            for chunk in encryptor:
-                ciphertext += chunk
-        header_1 = encryptor.header
-        plaintext = b""
-        with aws_encryption_sdk.stream(
-            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="d"
-        ) as decryptor:
-            for chunk in decryptor:
-                plaintext += chunk
-        header_2 = decryptor.header
-        assert plaintext == VALUES["plaintext_128"] * 10
-        assert header_1.encryption_context == header_2.encryption_context
-
-    def test_encryption_cycle_default_algorithm_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a non-framed message using the default algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_default_algorithm_non_framed_no_encryption_context(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a non-framed message using the default algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"], key_provider=self.kms_master_key_provider, frame_length=0
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_default_algorithm_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a single frame message using the default algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_default_algorithm_multiple_frames(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a framed message with multiple frames using the
-            default algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"] * 100,
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"] * 100
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a single frame message using the aes_128_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a non-framed message using the aes_128_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a single frame message using the aes_192_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a non-framed message using the aes_192_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a single frame message using the aes_256_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully
-            for a non-framed message using the aes_256_gcm_iv12_tag16
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            single frame message using the aes_128_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            non-framed message using the aes_128_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            single frame message using the aes_192_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            non-framed message using the aes_192_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            single frame message using the aes_256_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha256_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a
-            non-framed message using the aes_256_gcm_iv12_tag16_hkdf_sha256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            frame message using the aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            block message using the aes_128_gcm_iv12_tag16_hkdf_sha256_ecdsa_p256
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            frame message using the aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            block message using the aes_192_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_single_frame(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            frame message using the aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=1024,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
-
-    def test_encryption_cycle_aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384_non_framed(self):
-        """Test that the enrypt/decrypt cycle completes successfully for a single
-            block message using the aes_256_gcm_iv12_tag16_hkdf_sha384_ecdsa_p384
-            algorithm.
-        """
-        ciphertext, _ = aws_encryption_sdk.encrypt(
-            source=VALUES["plaintext_128"],
-            key_provider=self.kms_master_key_provider,
-            encryption_context=VALUES["encryption_context"],
-            frame_length=0,
-            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
-        )
-        plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=self.kms_master_key_provider)
-        assert plaintext == VALUES["plaintext_128"]
+    assert decrypted == plaintext
+    assert header_1.encryption_context == header_2.encryption_context
