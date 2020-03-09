@@ -53,4 +53,41 @@ you can find these examples in [`examples/src/master_key_provider`](./src/master
 
 ## Legacy
 
-The examples in [`examples/src/legacy`](./src/legacy).
+These are any examples that were already defined
+before we started revamping our examples.
+We are keeping them around for anyone who needs them as reference material,
+but we recommend looking at the newer examples
+that should provide a clearer picture of how to use this library.
+You can find these examples in [`examples/src/legacy`](./src/legacy).
+
+# Writing Examples
+
+If you want to write a new example, that's awesome!
+There are a couple things you need to keep in mind, though.
+To make sure that your example is tested in our CI,
+please make sure that it meets the following requirements:
+
+1. The example MUST be a distinct module in the [`examples/src/`](./src) directory.
+1. The example MAY be nested arbitrarily deeply,
+    but every intermediate directory MUST contain a `__init__.py` file
+    so that CPython 2.7 will recognize it as a module.
+1. Every example MUST be CPython 2.7 compatible.
+1. Each example file MUST contain exactly one example.
+1. Each example file MUST contain a function called `run` that runs the example.
+1. If your `run` function needs any of the following inputs,
+    the parameters MUST have the following names:
+    * `aws_kms_cmk_arn` (`str`) : A single AWS KMS CMK ARN.
+        * NOTE: You can assume that automatically discovered credentials have
+            `kms:GenerateDataKey`, `kms:Encrypt`, and `kms:Decrypt` permissions on this CMK.
+    * `aws_kms_generator_cmk` (`str`) : A single AWS KMS CMK ARN to use as a generator key.
+        * NOTE: You can assume that automatically discovered credentials have
+            `kms:GenerateDataKey`, `kms:Encrypt`, and `kms:Decrypt` permissions on this CMK.
+    * `aws_kms_child_cmks` (`List[str]`) : A list of AWS KMS CMK ARNs to use as child keys.
+        * NOTE: You can assume that automatically discovered credentials have
+            `kms:Encrypt` and `kms:Decrypt` permissions on these CMKs.
+    * `source_plaintext` (`bytes`) : Plaintext data to encrypt.
+    * `source_plaintext_filename` (`str`) : A path to a file containing plaintext to encrypt.
+        * NOTE: You can assume that you have write access to the parent directory
+            and that anything you do in that directory will be cleaned up
+            by our test runners.
+1. Any additional parameters MUST be optional.
