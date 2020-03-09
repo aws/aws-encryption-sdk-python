@@ -1,9 +1,9 @@
 # AWS Encryption SDK Examples
 
-Here you can find some examples that show you
+This section features examples that show you
 how to use the AWS Encryption SDK.
-We demonstrate how to use the high-level APIs
-as well as how to set up some common configuration patterns.
+We demonstrate how to use the encryption and decryption APIs
+and how to set up some common configuration patterns.
 
 ## APIs
 
@@ -17,24 +17,24 @@ in the [`examples/src/`](./src) directory root.
 ## Configuration
 
 In order to use the library APIs,
-you must provide some configuration that defines
+you must provide a configuration that defines
 how you want to protect your data keys.
 
 ### Keyrings
 
-Keyrings are the most common way for you to configure that AWS Encryption SDK.
-These let you define how you want the AWS Encryption SDK to protect your data keys.
+Keyrings are the most common way for you to configure the AWS Encryption SDK.
+They determine how the AWS Encryption SDK protects your data.
 You can find these examples in [`examples/src/keyring`](./src/keyring).
 
 ### Cryptographic Materials Managers
 
-Keyrings define how you want to protect your data keys,
-but there is more going on here than just data keys.
+Keyrings define how your data keys are protected,
+but there is more going on here than just protecting data keys.
 
 Cryptographic materials managers give you higher-level controls
 over how the AWS Encryption SDK protects your data.
 This can include things like
-enforcing certain algorithm suites or encryption context settings,
+enforcing the use of certain algorithm suites or encryption context settings,
 reusing data keys across messages,
 or changing how you interact with keyrings.
 You can find these examples in
@@ -53,17 +53,15 @@ you can find these examples in [`examples/src/master_key_provider`](./src/master
 
 ## Legacy
 
-These are any examples that were already defined
-before we started revamping our examples.
-We are keeping them around for anyone who needs them as reference material,
+This section includes older examples, including examples of using master keys and master key providers in Java and Python.
+You can use them as a reference,
 but we recommend looking at the newer examples
-that should provide a clearer picture of how to use this library.
+but we recommend looking at the newer examples, which explain the preferred ways of using this library.
 You can find these examples in [`examples/src/legacy`](./src/legacy).
 
 # Writing Examples
 
-If you want to write a new example, that's awesome!
-There are a couple things you need to keep in mind, though.
+If you want to contribute a new example, that's awesome!
 To make sure that your example is tested in our CI,
 please make sure that it meets the following requirements:
 

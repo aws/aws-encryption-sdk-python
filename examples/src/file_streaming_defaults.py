@@ -3,7 +3,7 @@
 """
 This example shows how to use the streaming encrypt and decrypt APIs when working with files.
 
-For the purposes of this example, we demonstrate using AWS KMS,
+This example uses an AWS KMS CMK,
 but you can use other key management options with the AWS Encryption SDK.
 Look in the ``keyring`` and ``master_key_provider`` directories
 for examples that demonstrate how to use other key management configurations.
@@ -21,7 +21,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
     :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
     :param str source_plaintext_filename: Path to plaintext file to encrypt
     """
-    # We assume that you can also write in the directory containing the plaintext file,
+    # We assume that you can also write to the directory containing the plaintext file,
     # so that is where we will put all of the results.
     ciphertext_filename = source_plaintext_filename + ".encrypted"
     decrypted_filename = ciphertext_filename + ".decrypted"
@@ -35,13 +35,13 @@ def run(aws_kms_cmk, source_plaintext_filename):
         "the data you are handling": "is what you think it is",
     }
 
-    # Create the keyring that determines how your keys are protected.
+    # Create the keyring that determines how your data keys are protected.
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Open the files you want to work with.
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
-        # The streaming API provides you with a context manager
-        # that you can read from similar to how you would read from a file.
+        # The streaming API provides a context manager.
+        # You can read from it just as you read from a file.
         with aws_encryption_sdk.stream(
             mode="encrypt", source=plaintext, encryption_context=encryption_context, keyring=keyring
         ) as encryptor:
@@ -63,17 +63,17 @@ def run(aws_kms_cmk, source_plaintext_filename):
             # One benefit of using the streaming API is that
             # we can check the encryption context in the header before we start decrypting.
             #
-            # Verify that the encryption context used in the decrypt operation matches what you expect.
+            # Verify that the encryption context used in the decrypt operation includes the encryption context that you specified when encrypting.
             # The AWS Encryption SDK can add pairs, so don't require an exact match.
             #
             # In production, always use a meaningful encryption context.
             assert set(encryption_context.items()) <= set(decryptor.header.encryption_context.items())
 
-            # Now that we are confident that the message is what we think it should be,
+            # Now that we are more confident that we will decrypt the right message,
             # we can start decrypting.
             for chunk in decryptor:
                 decrypted.write(chunk)
 
-    # Verify that the "cycled" (encrypted then decrypted) plaintext
+    # Verify that the decrypted plaintext
     # is identical to the original plaintext.
     assert filecmp.cmp(source_plaintext_filename, decrypted_filename)
