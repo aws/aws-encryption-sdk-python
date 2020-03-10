@@ -4,10 +4,10 @@
 This example shows how to specify an algorithm suite
 when using the one-step encrypt and decrypt APIs.
 
-For the purposes of this example, we demonstrate using AWS KMS,
+This example uses an AWS KMS CMK,
 but you can use other key management options with the AWS Encryption SDK.
-Look in the ``keyring`` and ``master_key_provider`` directories
-for examples that demonstrate how to use other key management configurations.
+For examples that demonstrate how to use other key management configurations,
+see the ``keyring`` and ``mater_key_provider`` directories.
 
 The default algorithm suite includes a message-level signature
 that protects you from an attacker who has *decrypt* but not *encrypt* capability
@@ -33,6 +33,7 @@ def run(aws_kms_cmk, source_plaintext):
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
+    # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
     encryption_context = {
         "encryption": "context",
         "is not": "secret",
@@ -41,7 +42,7 @@ def run(aws_kms_cmk, source_plaintext):
         "the data you are handling": "is what you think it is",
     }
 
-    # Create the keyring that determines how your keys are protected.
+    # Create the keyring that determines how your data keys are protected.
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Encrypt your plaintext data.
@@ -65,11 +66,11 @@ def run(aws_kms_cmk, source_plaintext):
     # because the header message includes the algorithm suite identifier.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 
-    # Verify that the "cycled" (encrypted then decrypted) plaintext
-    # is identical to the original plaintext.
+    # Verify that the decrypted plaintext is identical to the original plaintext.
     assert decrypted == source_plaintext
 
-    # Verify that the encryption context used in the decrypt operation matches what you expect.
+    # Verify that the encryption context used in the decrypt operation includes
+    # the encryption context that you specified when encrypting.
     # The AWS Encryption SDK can add pairs, so don't require an exact match.
     #
     # In production, always use a meaningful encryption context.
