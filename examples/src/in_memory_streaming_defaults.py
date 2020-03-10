@@ -1,12 +1,12 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to use the streaming encrypt and decrypt APIs when working in memory.
+This example shows how to use the streaming encrypt and decrypt APIs on data in memory.
 
 One benefit of using the streaming API is that
 we can check the encryption context in the header before we start decrypting.
 
-For the purposes of this example, we demonstrate using AWS KMS,
+In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
 see the ``keyring`` and ``mater_key_provider`` directories.

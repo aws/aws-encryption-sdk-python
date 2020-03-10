@@ -1,13 +1,13 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing basic encryption and decryption of a value already in memory."""
+"""Example showing how to encrypt and decrypt a value in memory."""
 import aws_encryption_sdk
 
 
 def run(aws_kms_cmk, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under a KMS customer master key (CMK).
 
-    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS CMK
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the AWS KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session

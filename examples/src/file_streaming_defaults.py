@@ -9,7 +9,7 @@ we can check the encryption context in the header before we start decrypting.
 This example uses an AWS KMS CMK,
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
-see the ``keyring`` and ``mater_key_provider`` directories.
+see the ``keyring`` and ``master_key_provider`` directories.
 """
 import filecmp
 
@@ -19,7 +19,7 @@ from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 def run(aws_kms_cmk, source_plaintext_filename):
     # type: (str, str) -> None
-    """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs to work with files.
+    """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs with files.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param str source_plaintext_filename: Path to plaintext file to encrypt
@@ -62,7 +62,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
         # Decrypt your encrypted data.
         #
         # We do not need to specify the encryption context on decrypt
-        # because the header message includes the encryption context.
+        # because the message header includes the encryption context.
         with aws_encryption_sdk.stream(mode="decrypt", source=ciphertext, keyring=keyring) as decryptor:
             # Check the encryption context in the header before we start decrypting.
             #

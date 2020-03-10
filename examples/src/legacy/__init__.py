@@ -3,9 +3,5 @@
 """
 Legacy examples.
 
-These are any examples that were already defined
-before we started revamping our examples.
-We are keeping them around for anyone who needs them as reference material,
-but we recommend looking at the newer examples
-that should provide a clearer picture of how to use this library.
+We keep these older examples as reference material, but we recommend that you use the new examples. They new examples reflect our current guidance for using the library.
 """

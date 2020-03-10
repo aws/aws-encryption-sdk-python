@@ -12,7 +12,7 @@ one-step APIs that process the entire operation in memory
 and streaming APIs.
 
 You can find examples that demonstrate these APIs
-in the [`examples/src/`](./src) directory root.
+in the [`examples/src/`](./src) directory.
 
 ## Configuration
 
@@ -55,7 +55,6 @@ you can find these examples in [`examples/src/master_key_provider`](./src/master
 
 This section includes older examples, including examples of using master keys and master key providers in Java and Python.
 You can use them as a reference,
-but we recommend looking at the newer examples
 but we recommend looking at the newer examples, which explain the preferred ways of using this library.
 You can find these examples in [`examples/src/legacy`](./src/legacy).
 
