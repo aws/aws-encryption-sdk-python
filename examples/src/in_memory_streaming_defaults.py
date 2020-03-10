@@ -21,7 +21,7 @@ def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
     """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs in-memory.
 
-    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.

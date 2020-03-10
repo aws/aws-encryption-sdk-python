@@ -21,7 +21,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
     # type: (str, str) -> None
     """Demonstrate an encrypt/decrypt cycle using the streaming encrypt/decrypt APIs to work with files.
 
-    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param str source_plaintext_filename: Path to plaintext file to encrypt
     """
     # We assume that you can also write to the directory containing the plaintext file,

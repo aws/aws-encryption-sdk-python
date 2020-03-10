@@ -29,7 +29,7 @@ def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
     """Demonstrate requesting a specific algorithm suite through the one-step encrypt/decrypt APIs.
 
-    :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
+    :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
