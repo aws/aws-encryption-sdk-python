@@ -16,7 +16,7 @@ in the [`examples/src/`](./src) directory root.
 
 ## Configuration
 
-In order to use the library APIs,
+To use the library APIs,
 you must provide a configuration that defines
 how you want to protect your data keys.
 
