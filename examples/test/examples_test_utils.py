@@ -21,7 +21,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 EXAMPLES_SOURCE = os.path.join(HERE, "..", "src")
 SINGLE_CMK_ARG = "aws_kms_cmk"
 GENERATOR_CMK_ARG = "aws_kms_generator_cmk"
-CHILD_CMK_ARG = "aws_kms_child_cmks"
+ADDITIONAL_CMKS_ARG = "aws_kms_additional_cmks"
 PLAINTEXT_ARG = "source_plaintext"
 PLAINTEXT_FILE_ARG = "source_plaintext_filename"
 
@@ -103,7 +103,7 @@ def build_kwargs(function, temp_dir):
     possible_kwargs = {
         SINGLE_CMK_ARG: cmk_arns[0],
         GENERATOR_CMK_ARG: cmk_arns[0],
-        CHILD_CMK_ARG: cmk_arns[1:],
+        ADDITIONAL_CMKS_ARG: cmk_arns[1:],
         PLAINTEXT_ARG: static_plaintext,
         PLAINTEXT_FILE_ARG: str(plaintext_file.absolute()),
     }

@@ -79,7 +79,8 @@ please make sure that it meets the following requirements:
     * `aws_kms_generator_cmk` (`str`) : A single AWS KMS CMK ARN to use as a generator key.
         * NOTE: You can assume that automatically discovered credentials have
             `kms:GenerateDataKey`, `kms:Encrypt`, and `kms:Decrypt` permissions on this CMK.
-    * `aws_kms_child_cmks` (`List[str]`) : A list of AWS KMS CMK ARNs to use as child keys.
+    * `aws_kms_additional_cmks` (`List[str]`) :
+        A list of AWS KMS CMK ARNs to use for encrypting and decrypting data keys.
         * NOTE: You can assume that automatically discovered credentials have
             `kms:Encrypt` and `kms:Decrypt` permissions on these CMKs.
     * `source_plaintext` (`bytes`) : Plaintext data to encrypt.

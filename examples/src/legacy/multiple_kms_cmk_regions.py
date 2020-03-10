@@ -8,20 +8,21 @@ import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
 
 
-def run(aws_kms_generator_cmk, aws_kms_child_cmks, source_plaintext, botocore_session=None):
+def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under multiple KMS customer master keys (CMKs) in multiple regions.
 
     :param str aws_kms_generator_cmk: Amazon Resource Name (ARN) of the primary KMS CMK
-    :param List[str] aws_kms_child_cmks: Additional Amazon Resource Names (ARNs) of secondary KMS CMKs
+    :param List[str] aws_kms_additional_cmks: Additional Amazon Resource Names (ARNs) of secondary KMS CMKs
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
-    child_cmk = aws_kms_child_cmks[0]
-    # Check that these keys are in different regions
-    assert not aws_kms_generator_cmk.split(":")[3] == child_cmk.split(":")[3]
+    encrypt_cmk = aws_kms_additional_cmks[0]
 
-    kwargs = dict(key_ids=[aws_kms_generator_cmk, child_cmk])
+    # Check that these keys are in different regions
+    assert not aws_kms_generator_cmk.split(":")[3] == encrypt_cmk.split(":")[3]
+
+    kwargs = dict(key_ids=[aws_kms_generator_cmk, encrypt_cmk])
 
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
@@ -43,7 +44,7 @@ def run(aws_kms_generator_cmk, aws_kms_child_cmks, source_plaintext, botocore_se
         key_provider=KMSMasterKey(key_id=aws_kms_generator_cmk), source=ciphertext
     )
     plaintext_2, decrypted_message_header_2 = aws_encryption_sdk.decrypt(
-        key_provider=KMSMasterKey(key_id=child_cmk), source=ciphertext
+        key_provider=KMSMasterKey(key_id=encrypt_cmk), source=ciphertext
     )
 
     # Check that the original message and the decrypted message are the same
