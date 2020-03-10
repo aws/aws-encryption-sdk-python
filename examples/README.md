@@ -8,7 +8,7 @@ and how to set up some common configuration patterns.
 ## APIs
 
 The AWS Encryption SDK provides two high-level APIs:
-one-shot APIs that process the entire operation in memory
+one-step APIs that process the entire operation in memory
 and streaming APIs.
 
 You can find examples that demonstrate these APIs

@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to use the one-shot encrypt and decrypt APIs.
+This example shows how to use the one-step encrypt and decrypt APIs.
 
 For the purposes of this example, we demonstrate using AWS KMS,
 but you can use other key management options with the AWS Encryption SDK.
@@ -14,7 +14,7 @@ from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using the one-shot encrypt/decrypt APIs.
+    """Demonstrate an encrypt/decrypt cycle using the one-step encrypt/decrypt APIs.
 
     :param str aws_kms_cmk: AWS KMS CMK ARN to use to protect data keys
     :param bytes source_plaintext: Plaintext to encrypt
