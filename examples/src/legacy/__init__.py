@@ -3,5 +3,7 @@
 """
 Legacy examples.
 
-We keep these older examples as reference material, but we recommend that you use the new examples. They new examples reflect our current guidance for using the library.
+We keep these older examples as reference material,
+but we recommend that you use the new examples.
+They new examples reflect our current guidance for using the library.
 """
