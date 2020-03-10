@@ -6,7 +6,7 @@ This example shows how to use the streaming encrypt and decrypt APIs when workin
 One benefit of using the streaming API is that
 we can check the encryption context in the header before we start decrypting.
 
-This example uses an AWS KMS CMK,
+In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
 see the ``keyring`` and ``master_key_provider`` directories.
@@ -59,7 +59,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
 
     # Open the files you want to work with.
     with open(ciphertext_filename, "rb") as ciphertext, open(decrypted_filename, "wb") as decrypted:
-        # Decrypt your encrypted data.
+        # Decrypt your encrypted data using the same keyring you used on encrypt.
         #
         # We do not need to specify the encryption context on decrypt
         # because the message header includes the encryption context.

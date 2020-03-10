@@ -55,7 +55,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Reset the ciphertext stream position so that we can read from the beginning.
     ciphertext.seek(0)
 
-    # Decrypt your encrypted data.
+    # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
     # We do not need to specify the encryption context on decrypt
     # because the header message includes the encryption context.

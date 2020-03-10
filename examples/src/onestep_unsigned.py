@@ -4,7 +4,7 @@
 This example shows how to specify an algorithm suite
 when using the one-step encrypt and decrypt APIs.
 
-This example uses an AWS KMS CMK,
+In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
 see the ``keyring`` and ``mater_key_provider`` directories.
@@ -57,7 +57,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Verify that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
-    # Decrypt your encrypted data.
+    # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
     # We do not need to specify the encryption context on decrypt
     # because the header message includes the encryption context.
