@@ -17,8 +17,11 @@ in the [`examples/src/`](./src) directory.
 ## Configuration
 
 To use the library APIs,
-you must provide a configuration that defines
-how you want to protect your data keys.
+you need to describe how you want the library to protect your data keys.
+You can do this using
+[keyrings][#keyrings] or [cryptographic materials managers][#cryptographic-materials-managers],
+or using [master key providers][#master-key-providers].
+These examples will show you how.
 
 ### Keyrings
 
