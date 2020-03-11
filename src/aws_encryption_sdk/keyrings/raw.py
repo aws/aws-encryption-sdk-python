@@ -31,11 +31,8 @@ __all__ = ("RawAESKeyring", "RawRSAKeyring")
 _LOGGER = logging.getLogger(__name__)
 
 
-def _generate_data_key(
-    encryption_materials,  # type: EncryptionMaterials
-    key_provider,  # type: MasterKeyInfo
-):
-    # type: (...) -> bytes
+def _generate_data_key(encryption_materials, key_provider):
+    # type: (EncryptionMaterials, MasterKeyInfo) -> bytes
     """Generates plaintext data key for the keyring.
 
     :param EncryptionMaterials encryption_materials: Encryption materials for the keyring to modify.
@@ -299,6 +296,7 @@ class RawRSAKeyring(Keyring):
         private_encoded_key=None,  # type: bytes
         password=None,  # type: bytes
     ):
+        # type: (...) -> RawRSAKeyring
         """Generate a raw RSA keyring using DER Encoded public and private keys
 
         :param str key_namespace: String defining the keyring ID
