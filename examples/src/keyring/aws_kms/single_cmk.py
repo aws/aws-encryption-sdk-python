@@ -17,37 +17,49 @@ see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
+from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 
-def run(aws_kms_cmk, source_plaintext, botocore_session=None):
-    """Encrypts and then decrypts a string under one KMS customer master key (CMK).
+def run(aws_kms_cmk, source_plaintext):
+    # type: (str, bytes) -> None
+    """Demonstrate an encrypt/decrypt cycle using a KMS keyring.
 
-    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS CMK
-    :param bytes source_plaintext: Data to encrypt
-    :param botocore_session: existing botocore session instance
-    :type botocore_session: botocore.session.Session
+    :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
+    :param bytes source_plaintext: Plaintext to encrypt
     """
-    kwargs = dict(key_ids=[aws_kms_cmk])
+    # Prepare your encryption context.
+    # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
+    encryption_context = {
+        "encryption": "context",
+        "is not": "secret",
+        "but adds": "useful metadata",
+        "that can help you": "be confident that",
+        "the data you are handling": "is what you think it is",
+    }
 
-    if botocore_session is not None:
-        kwargs["botocore_session"] = botocore_session
+    # Create the keyring that determines how your data keys are protected.
+    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
-    # Create master key provider using the ARN of the key and the session (botocore_session)
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
-
-    # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
-    ciphertext, encrypted_message_header = aws_encryption_sdk.encrypt(
-        source=source_plaintext, key_provider=kms_key_provider
+    # Encrypt your plaintext data.
+    ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+        source=source_plaintext, encryption_context=encryption_context, keyring=keyring
     )
 
-    # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
-    plaintext, decrypted_message_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=kms_key_provider)
+    # Verify that the ciphertext and plaintext are different.
+    assert ciphertext != source_plaintext
 
-    # Check if the original message and the decrypted message are the same
-    assert source_plaintext == plaintext
+    # Decrypt your encrypted data using the same keyring you used on encrypt.
+    #
+    # We do not need to specify the encryption context on decrypt
+    # because the header message includes the encryption context.
+    decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 
-    # Check if the headers of the encrypted message and decrypted message match
-    assert all(
-        pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header.encryption_context.items()
-    )
+    # Verify that the decrypted plaintext is identical to the original plaintext.
+    assert decrypted == source_plaintext
+
+    # Verify that the encryption context used in the decrypt operation includes
+    # the encryption context that you specified when encrypting.
+    # The AWS Encryption SDK can add pairs, so don't require an exact match.
+    #
+    # In production, always use a meaningful encryption context.
+    assert set(encryption_context.items()) <= set(decrypt_header.encryption_context.items())
