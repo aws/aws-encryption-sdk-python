@@ -1,6 +1,21 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing basic encryption and decryption of a value already in memory using one KMS CMK."""
+"""
+This example shows how to configure and use a KMS keyring with a single KMS CMK.
+
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
+
+For an example of how to use the KMS keyring with CMKs in multiple regions,
+see the ``keyring/aws_kms/multiple_regions`` example.
+
+For examples of how to use the KMS keyring with custom client configurations,
+see the ``keyring/aws_kms/custom_client_supplier``
+and ``keyring/aws_kms/custom_kms_client_config`` examples.
+
+For examples of how to use the KMS keyring in discovery mode on decrypt,
+see the ``keyring/aws_kms/discovery_decrypt``
+and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
+"""
 import aws_encryption_sdk
 
 
