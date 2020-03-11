@@ -16,7 +16,7 @@ from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 
 def run(source_plaintext):
     # type: (bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a raw RSA keyring.
+    """Demonstrate an encrypt/decrypt cycle using a raw AES keyring.
 
     :param bytes source_plaintext: Plaintext to encrypt
     """
