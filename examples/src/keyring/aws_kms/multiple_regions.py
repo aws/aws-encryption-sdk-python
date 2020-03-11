@@ -1,65 +1,92 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-Example showing basic encryption and decryption of a value already in memory
-using multiple KMS CMKs in multiple regions.
+This example shows how to configure and use a KMS keyring with a single KMS CMK.
+
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
+
+For an example of how to use the KMS keyring with a single CMK,
+see the ``keyring/aws_kms/single_cmk`` example.
+
+For examples of how to use the KMS keyring with custom client configurations,
+see the ``keyring/aws_kms/custom_client_supplier``
+and ``keyring/aws_kms/custom_kms_client_config`` examples.
+
+For examples of how to use the KMS keyring in discovery mode on decrypt,
+see the ``keyring/aws_kms/discovery_decrypt``
+and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider
+from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Sequence  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
 
 
-def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext, botocore_session=None):
-    """Encrypts and then decrypts a string under multiple KMS customer master keys (CMKs) in multiple regions.
+def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
+    # type: (str, Sequence[str], bytes) -> None
+    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with CMKs in multiple regions.
 
-    :param str aws_kms_generator_cmk: Amazon Resource Name (ARN) of the primary KMS CMK
-    :param List[str] aws_kms_additional_cmks: Additional Amazon Resource Names (ARNs) of secondary KMS CMKs
-    :param bytes source_plaintext: Data to encrypt
-    :param botocore_session: existing botocore session instance
-    :type botocore_session: botocore.session.Session
+    :param str aws_kms_generator_cmk: The ARN of the primary AWS KMS CMK
+    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary KMS CMKs
+    :param bytes source_plaintext: Plaintext to encrypt
     """
-    encrypt_cmk = aws_kms_additional_cmks[0]
+    # Prepare your encryption context.
+    # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
+    encryption_context = {
+        "encryption": "context",
+        "is not": "secret",
+        "but adds": "useful metadata",
+        "that can help you": "be confident that",
+        "the data you are handling": "is what you think it is",
+    }
 
-    # Check that these keys are in different regions
-    assert not aws_kms_generator_cmk.split(":")[3] == encrypt_cmk.split(":")[3]
+    # Create the keyring that will encrypt your data keys under all requested CMKs.
+    many_cmks_keyring = KmsKeyring(generator_key_id=aws_kms_generator_cmk, child_key_ids=aws_kms_additional_cmks)
 
-    kwargs = dict(key_ids=[aws_kms_generator_cmk, encrypt_cmk])
+    # Create keyrings that each only use one of the CMKs.
+    # We will use these later to demonstrate that any of the CMKs can be used to decrypt the message.
+    #
+    # We provide these in "child_key_ids" rather than "generator_key_id"
+    # so that these keyrings cannot be used to generate a new data key.
+    # We will only be using them on decrypt.
+    single_cmk_keyring_that_generated = KmsKeyring(child_key_ids=[aws_kms_generator_cmk])
+    single_cmk_keyring_that_encrypted = KmsKeyring(child_key_ids=[aws_kms_additional_cmks[0]])
 
-    if botocore_session is not None:
-        kwargs["botocore_session"] = botocore_session
-
-    # Create master key provider using the ARNs of the keys and the session (botocore_session)
-    kms_key_provider = KMSMasterKeyProvider(**kwargs)
-
-    # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
-    ciphertext, encrypted_message_header = aws_encryption_sdk.encrypt(
-        key_provider=kms_key_provider, source=source_plaintext
+    # Encrypt your plaintext data using the keyring that uses all requests CMKs.
+    ciphertext, encrypt_header = aws_encryption_sdk.encrypt(
+        source=source_plaintext, encryption_context=encryption_context, keyring=many_cmks_keyring
     )
 
-    # Check that both key ARNs are in the message headers
-    assert len(encrypted_message_header.encrypted_data_keys) == 2
+    # Verify that the header contains the expected number of encrypted data keys (EDKs).
+    # It should contain one EDK for each CMK.
+    assert len(encrypt_header.encrypted_data_keys) == len(aws_kms_additional_cmks) + 1
 
-    # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
-    # Either of our keys can be used to decrypt the message
-    plaintext_1, decrypted_message_header_1 = aws_encryption_sdk.decrypt(
-        key_provider=KMSMasterKey(key_id=aws_kms_generator_cmk), source=ciphertext
+    # Verify that the ciphertext and plaintext are different.
+    assert ciphertext != source_plaintext
+
+    # Decrypt your encrypted data separately using the single-CMK keyrings.
+    #
+    # We do not need to specify the encryption context on decrypt
+    # because the header message includes the encryption context.
+    decrypted_1, decrypt_header_1 = aws_encryption_sdk.decrypt(
+        source=ciphertext, keyring=single_cmk_keyring_that_generated
     )
-    plaintext_2, decrypted_message_header_2 = aws_encryption_sdk.decrypt(
-        key_provider=KMSMasterKey(key_id=encrypt_cmk), source=ciphertext
+    decrypted_2, decrypt_header_2 = aws_encryption_sdk.decrypt(
+        source=ciphertext, keyring=single_cmk_keyring_that_encrypted
     )
 
-    # Check that the original message and the decrypted message are the same
-    if not isinstance(source_plaintext, bytes):
-        plaintext_1 = plaintext_1.decode("utf-8")
-        plaintext_2 = plaintext_2.decode("utf-8")
-    assert source_plaintext == plaintext_1
-    assert source_plaintext == plaintext_2
+    # Verify that the decrypted plaintext is identical to the original plaintext.
+    assert decrypted_1 == source_plaintext
+    assert decrypted_2 == source_plaintext
 
-    # Check that the headers of the encrypted message and decrypted message match
-    assert all(
-        pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header_1.encryption_context.items()
-    )
-    assert all(
-        pair in encrypted_message_header.encryption_context.items()
-        for pair in decrypted_message_header_2.encryption_context.items()
-    )
+    # Verify that the encryption context used in the decrypt operation includes
+    # the encryption context that you specified when encrypting.
+    # The AWS Encryption SDK can add pairs, so don't require an exact match.
+    #
+    # In production, always use a meaningful encryption context.
+    assert set(encryption_context.items()) <= set(decrypt_header_1.encryption_context.items())
+    assert set(encryption_context.items()) <= set(decrypt_header_2.encryption_context.items())
