@@ -29,7 +29,8 @@ For another example of how to use the KMS keyring with custom client configurati
 see the ``keyring/aws_kms/custom_kms_client_config`` example.
 
 For examples of how to use the KMS keyring in discovery mode on decrypt,
-see the ``keyring/aws_kms/discovery_decrypt``
+see the ``keyring/aws_kms/discovery_decrypt``,
+``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 # TODO: Add explanation of partitions

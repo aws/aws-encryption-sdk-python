@@ -17,7 +17,8 @@ For another example of how to use the KMS keyring with custom client configurati
 see the ``keyring/aws_kms/custom_client_supplier`` example.
 
 For examples of how to use the KMS keyring in discovery mode on decrypt,
-see the ``keyring/aws_kms/discovery_decrypt``
+see the ``keyring/aws_kms/discovery_decrypt``,
+``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 from botocore.config import Config
