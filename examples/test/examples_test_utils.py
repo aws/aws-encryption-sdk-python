@@ -27,6 +27,7 @@ PLAINTEXT_FILE_ARG = "source_plaintext_filename"
 
 os.environ["AWS_ENCRYPTION_SDK_EXAMPLES_TESTING"] = "yes"
 sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"])])
+from integration_test_utils import get_all_cmk_arns  # noqa pylint: disable=unused-import,import-error
 
 static_plaintext = (
     b"Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
@@ -56,9 +57,6 @@ static_plaintext = (
     b"Nullam id enim vestibulum nibh ultricies auctor. Morbi neque lacus, faucibus vitae commodo quis, "
     b"malesuada sed velit."
 )
-
-
-from integration_test_utils import get_all_cmk_arns  # noqa pylint: disable=unused-import,import-error
 
 
 def all_examples():
@@ -114,3 +112,9 @@ def build_kwargs(function, temp_dir):
         except KeyError:
             pass
     return kwargs
+
+
+def default_region():
+    # type: () -> str
+    primary_cmk = get_all_cmk_arns()[0]
+    return primary_cmk.split(":", 4)[3]
