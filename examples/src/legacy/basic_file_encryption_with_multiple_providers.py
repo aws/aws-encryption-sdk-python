@@ -1,15 +1,5 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Example showing creation of a RawMasterKeyProvider, how to use multiple
 master key providers to encrypt, and demonstrating that each master key
 provider can then be used independently to decrypt the same encrypted message.
@@ -60,12 +50,12 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         )
 
 
-def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
+def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
     """Encrypts and then decrypts a file using a KMS master key provider and a custom static master
     key provider. Both master key providers are used to encrypt the plaintext file, so either one alone
     can decrypt it.
 
-    :param str key_arn: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK)
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK)
     (http://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html)
     :param str source_plaintext_filename: Filename of file to encrypt
     :param botocore_session: existing botocore session instance
@@ -77,7 +67,7 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
     cycled_static_plaintext_filename = source_plaintext_filename + ".static.decrypted"
 
     # Create a KMS master key provider
-    kms_kwargs = dict(key_ids=[key_arn])
+    kms_kwargs = dict(key_ids=[aws_kms_cmk])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
     kms_master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)

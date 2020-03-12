@@ -1,29 +1,19 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
-"""Example showing basic encryption and decryption of a value already in memory."""
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+"""Example showing how to encrypt and decrypt a value in memory."""
 import aws_encryption_sdk
 
 
-def cycle_string(key_arn, source_plaintext, botocore_session=None):
+def run(aws_kms_cmk, source_plaintext, botocore_session=None):
     """Encrypts and then decrypts a string under a KMS customer master key (CMK).
 
-    :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the AWS KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
     # Create a KMS master key provider
-    kms_kwargs = dict(key_ids=[key_arn])
+    kms_kwargs = dict(key_ids=[aws_kms_cmk])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
     master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
