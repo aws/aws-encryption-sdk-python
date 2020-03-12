@@ -33,7 +33,6 @@ see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
-# TODO: Add explanation of partitions
 from botocore.client import BaseClient
 from botocore.session import Session
 
