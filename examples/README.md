@@ -14,6 +14,11 @@ and streaming APIs.
 You can find examples that demonstrate these APIs
 in the [`examples/src/`](./src) directory.
 
+* [How to use the one-step APIs](./src/onestep_defaults.py)
+* [How to change the algorithm suite](./src/onestep_unsigned.py)
+* [How to stream data in memory](./src/in_memory_streaming_defaults.py)
+* [How to stream data between files](./src/file_streaming_defaults.py)
+
 ## Configuration
 
 To use the library APIs,
@@ -23,25 +28,35 @@ You can do this using
 or using [master key providers](#master-key-providers).
 These examples will show you how.
 
+* AWS KMS
+    * How to use a single AWS KMS CMK
+        * [with keyrings](./src/keyring/aws_kms/single_cmk.py)
+    * How to use multiple AWS KMS CMKs in different regions
+        * [with keyrings](./src/keyring/aws_kms/multiple_regions.py)
+    * How to decrypt when you don't know the CMK beforehand
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt.py)
+    * How to decrypt only within a region
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_in_region_only.py)
+    * How to decrypt with a preferred region but fail other to others
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_with_preferred_regions.py)
+* Raw wrapping keys
+    * How to use a raw AES wrapping key
+        * [with keyrings](./src/keyring/raw_aes/raw_aes.py)
+    * How to use a raw RSA wrapping key
+        * [with keyrings](./src/keyring/raw_rsa/private_key_only.py)
+    * How to use a raw RSA wrapping key when the key is PEM or DER encoded
+        * [with keyrings](./src/keyring/raw_rsa/private_key_only_from_pem.py)
+    * How to encrypt with a raw RSA public key wrapping key without access to the private key
+        * [with keyrings](./src/keyring/raw_rsa/public_private_key_separate.py)
+* Combining wrapping keys
+    * How to combine AWS KMS with an offline escrow key
+        * [with keyrings](./src/keyring/multi/aws_kms_with_escrow.py)
+
 ### Keyrings
 
 Keyrings are the most common way for you to configure the AWS Encryption SDK.
 They determine how the AWS Encryption SDK protects your data.
 You can find these examples in [`examples/src/keyring`](./src/keyring).
-
-* AWS KMS keyring
-    * [How to use the KMS keyring with a single CMK](./src/keyring/aws_kms/single_cmk.py)
-    * [How to use the KMS keyring with multiple CMKs in different regions](./src/keyring/aws_kms/multiple_regions.py)
-    * [How to use the KMS keyring in discovery mode](./src/keyring/aws_kms/discovery_decrypt.py)
-    * [How to restrict the KMS discovery keyring to a single region](./src/keyring/aws_kms/discovery_decrypt_in_region_only.py)
-    * [How to prefer the local AWS region but fail over to others with the KMS discovery keyring](./src/keyring/aws_kms/discovery_decrypt_with_preferred_regions.py)
-* Multi-keyring
-    * [How to combine AWS KMS with an offline escrow key](./src/keyring/multi/aws_kms_with_escrow.py)
-* Raw keyrings
-    * [How to use the Raw AES keyring](./src/keyring/raw_aes/raw_aes.py)
-    * [How to use the Raw RSA keyring](./src/keyring/raw_rsa/private_key_only.py)
-    * [How to use the Raw RSA keyring with PEM or DER encoded keys](./src/keyring/raw_rsa/private_key_only_from_pem.py)
-    * [How to use the Raw RSA keyring to encrypt with only the public key](./src/keyring/raw_rsa/public_private_key_separate.py)
 
 ### Cryptographic Materials Managers
 
