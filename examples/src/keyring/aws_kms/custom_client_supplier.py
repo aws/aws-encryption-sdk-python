@@ -8,6 +8,10 @@ If you need different behavior, you can write your own client supplier.
 One use-case where you might need this is if you need to interact with AWS KMS across partitions.
 AWS regions are organized into different "partitions" (ex: ``aws`` and ``aws-cn``)
 and credentials only work within a single partition.
+There are also some regions,
+such as Asia Pacific (Hong Kong) and Middle East (Bahrain)
+that are in the same partition (``aws``) as other regions
+but can still require different credentials.
 If you need to work with AWS KMS CMKs in multiple partitions
 then you need to always get credentials that are valid
 for the partition that you are talking to.
