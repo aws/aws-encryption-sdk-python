@@ -4,7 +4,7 @@
 One use-case that we have seen customers need is
 the ability to enjoy the benefits of AWS KMS during normal operation
 but retain the ability to decrypt encrypted messages offline.
-This examples shows how you can use the multi-keyring to achieve this
+This example shows how you can use the multi-keyring to achieve this
 by combining a KMS keyring with a raw RSA keyring.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-multi-keyring
@@ -13,9 +13,12 @@ For more examples of how to use the KMS keyring, see the ``keyring/aws_kms`` exa
 
 For more examples of how to use the raw RSA keyring, see the ``keyring/raw_rsa`` examples.
 
+In this example we generate a RSA keypair
+but in practice you would want to keep your private key in an HSM
+or other key management system.
+
 In this example, we use the one-step encrypt and decrypt APIs.
 """
-# TODO: Expand this description
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
