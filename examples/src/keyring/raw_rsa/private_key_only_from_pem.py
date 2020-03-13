@@ -3,7 +3,7 @@
 """
 When you store RSA keys, you have to serialize them somehow.
 
-This examples shows how to configure and use a raw RSA keyring using a PEM-encoded RSA private key.
+This example shows how to configure and use a raw RSA keyring using a PEM-encoded RSA private key.
 
 The most commonly used encodings for RSA keys tend to be PEM and DER.
 The raw RSA keyring supports loading both public and private keys from these encodings.
@@ -45,7 +45,7 @@ def run(source_plaintext):
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 
     # Serialize the RSA private key to PEM encoding.
-    # This or DER encoding likely to be what you get from your key management system in practice.
+    # This or DER encoding is likely to be what you get from your key management system in practice.
     private_key_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,

@@ -25,7 +25,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring
 For an example of how to use the KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For another example of how to use the KMS keyring with custom client configuration,
+For another example of how to use the KMS keyring with a custom client configuration,
 see the ``keyring/aws_kms/custom_kms_client_config`` example.
 
 For examples of how to use the KMS keyring in discovery mode on decrypt,

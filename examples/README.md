@@ -14,10 +14,10 @@ and streaming APIs.
 You can find examples that demonstrate these APIs
 in the [`examples/src/`](./src) directory.
 
-* [How to use the one-step APIs](./src/onestep_defaults.py)
+* [How to encrypt and decrypt](./src/onestep_defaults.py)
 * [How to change the algorithm suite](./src/onestep_unsigned.py)
-* [How to stream data in memory](./src/in_memory_streaming_defaults.py)
-* [How to stream data between files](./src/file_streaming_defaults.py)
+* [How to encrypt and decrypt data streams in memory](./src/in_memory_streaming_defaults.py)
+* [How to encrypt and decrypt data streamed between files](./src/file_streaming_defaults.py)
 
 ## Configuration
 
@@ -28,18 +28,18 @@ You can do this using
 or using [master key providers](#master-key-providers).
 These examples will show you how.
 
-* AWS KMS
+* Use AWS Key Management Service (AWS KMS)
     * How to use a single AWS KMS CMK
         * [with keyrings](./src/keyring/aws_kms/single_cmk.py)
     * How to use multiple AWS KMS CMKs in different regions
         * [with keyrings](./src/keyring/aws_kms/multiple_regions.py)
-    * How to decrypt when you don't know the CMK beforehand
+    * How to decrypt when you don't know the CMK
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt.py)
-    * How to decrypt only within a region
+    * How to decrypt within a region
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_in_region_only.py)
-    * How to decrypt with a preferred region but fail other to others
+    * How to decrypt with a preferred region but failover to others
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_with_preferred_regions.py)
-* Raw wrapping keys
+* Using raw wrapping keys
     * How to use a raw AES wrapping key
         * [with keyrings](./src/keyring/raw_aes/raw_aes.py)
     * How to use a raw RSA wrapping key

@@ -53,7 +53,7 @@ def run(aws_kms_cmk, source_plaintext):
     # https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
     custom_client_config = Config(connect_timeout=10.0, user_agent_extra=USER_AGENT_SUFFIX)
     # For this example we will just use the default botocore session configuration
-    # but if you need to you can set custom credentials in the botocore session.
+    # but if you need to, you can set custom credentials in the botocore session.
     custom_session = Session()
 
     # Use your custom configuration values to configure your client supplier.

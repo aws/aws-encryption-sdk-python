@@ -10,7 +10,7 @@ The raw RSA keyring supports encrypt-only operations
 when it only has access to a public key.
 
 This example shows how to construct and use the raw RSA keyring
-to encrypt with only public key and decrypt with the private key.
+to encrypt with only the public key and decrypt with the private key.
 
 If your RSA key is in PEM or DER format,
 see the ``keyring/raw_rsa/private_key_only_from_pem`` example.
