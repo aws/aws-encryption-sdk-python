@@ -68,7 +68,7 @@ def all_examples():
                 continue
             stem, suffix = split_path
             if suffix == "py" and stem != "__init__":
-                module_parent = dirpath[len(EXAMPLES_SOURCE) + 1 :].replace("/", ".")
+                module_parent = dirpath[len(EXAMPLES_SOURCE) + 1 :].replace(os.path.sep, ".")
                 module_name = stem
                 if module_parent:
                     import_path = "..src.{base}.{name}".format(base=module_parent, name=module_name)
