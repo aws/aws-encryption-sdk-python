@@ -113,8 +113,7 @@ class KeyringTrace(object):
     .. versionadded:: 1.5.0
 
     :param MasterKeyInfo wrapping_key: Wrapping key used
-    :param flags: Actions performed
-    :type flags: set of :class:`KeyringTraceFlag`
+    :param Set[KeyringTraceFlag] flags: Actions performed
     """
 
     wrapping_key = attr.ib(validator=instance_of(MasterKeyInfo))
@@ -126,19 +125,14 @@ class MessageHeader(object):
     # pylint: disable=too-many-instance-attributes
     """Deserialized message header object.
 
-    :param version: Message format version, per spec
-    :type version: SerializationVersion
-    :param type: Message content type, per spec
-    :type type: ObjectType
-    :param algorithm: Algorithm to use for encryption
-    :type algorithm: Algorithm
+    :param SerializationVersion version: Message format version, per spec
+    :param ObjectType type: Message content type, per spec
+    :param AlgorithmSuite algorithm: Algorithm to use for encryption
     :param bytes message_id: Message ID
-    :param dict encryption_context: Dictionary defining encryption context
-    :param encrypted_data_keys: Encrypted data keys
-    :type encrypted_data_keys: set of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
-    :param content_type: Message content framing type (framed/non-framed)
-    :type content_type: ContentType
-    :param bytes content_aad_length: empty
+    :param Dict[str,str] encryption_context: Dictionary defining encryption context
+    :param Sequence[EncryptedDataKey] encrypted_data_keys: Encrypted data keys
+    :param ContentType content_type: Message content framing type (framed/non-framed)
+    :param int content_aad_length: empty
     :param int header_iv_length: Bytes in Initialization Vector value found in header
     :param int frame_length: Length of message frame in bytes
     """
