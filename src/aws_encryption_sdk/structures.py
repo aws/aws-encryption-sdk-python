@@ -20,6 +20,12 @@ from attr.validators import deep_iterable, deep_mapping, instance_of
 from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Tuple  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
 
 @attr.s(hash=True)
 class MasterKeyInfo(object):
@@ -152,3 +158,41 @@ class MessageHeader(object):
     content_aad_length = attr.ib(hash=True, validator=instance_of(six.integer_types))
     header_iv_length = attr.ib(hash=True, validator=instance_of(six.integer_types))
     frame_length = attr.ib(hash=True, validator=instance_of(six.integer_types))
+
+
+@attr.s
+class CryptoResult(object):
+    """Result container for one-shot cryptographic API results.
+
+    .. versionadded:: 1.5.0
+
+    .. note::
+
+        For backwards compatibility,
+        this container also unpacks like a 2-member tuple.
+        This allows for backwards compatibility with the previous outputs.
+
+    :param bytes result: Binary results of the cryptographic operation
+    :param MessageHeader header: Encrypted message metadata
+    :param Tuple[KeyringTrace] keyring_trace: Keyring trace entries
+    """
+
+    result = attr.ib(validator=instance_of(bytes))
+    header = attr.ib(validator=instance_of(MessageHeader))
+    keyring_trace = attr.ib(validator=deep_iterable(member_validator=instance_of(KeyringTrace)))
+
+    def __attrs_post_init__(self):
+        """Construct the inner tuple for backwards compatibility."""
+        self._legacy_container = (self.result, self.header)
+
+    def __len__(self):
+        """Emulate the inner tuple."""
+        return self._legacy_container.__len__()
+
+    def __iter__(self):
+        """Emulate the inner tuple."""
+        return self._legacy_container.__iter__()
+
+    def __getitem__(self, key):
+        """Emulate the inner tuple."""
+        return self._legacy_container.__getitem__(key)

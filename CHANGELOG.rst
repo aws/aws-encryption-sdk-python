@@ -2,6 +2,24 @@
 Changelog
 *********
 
+1.5.0 -- 2020-xx-xx
+===================
+
+Major Features
+--------------
+
+* Add Keyrings
+* Change one-step APIs to return a :class:`CryptoResult` rather than a tuple.
+    * Changed APIs: ``aws_encryption_sdk.encrypt`` and ``aws_encryption_sdk.decrypt``.
+
+.. note::
+
+    For backwards compatibility,
+    :class:`CryptoResult` also unpacks like a 2-member tuple.
+    This allows for backwards compatibility with the previous outputs
+    so this change should not break any existing consumers.
+
+
 1.4.1 -- 2019-09-20
 ===================
 
