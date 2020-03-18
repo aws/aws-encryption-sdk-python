@@ -3,7 +3,7 @@
 """
 One use-case that we have seen customers need is
 the ability to enjoy the benefits of AWS KMS during normal operation
-but retain the ability to decrypt encrypted messages offline.
+but retain the ability to decrypt encrypted messages without access to AWS KMS.
 This example shows how you can use the multi-keyring to achieve this
 by combining a KMS keyring with a raw RSA keyring.
 
@@ -31,7 +31,7 @@ from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with a single CMK.
+    """Demonstrate configuring a keyring to use an AWS KMS CMK and a RSA wrapping key.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -47,10 +47,10 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Generate an RSA private key to use with your keyring.
-    # In practice, you should get this key from a secure key management system.
+    # In practice, you should get this key from a secure key management system such as an HSM.
     #
     # Why did we use this public exponent?
-    # https://latacora.singles/2018/04/03/cryptographic-right-answers.html
+    # https://crypto.stanford.edu/~dabo/pubs/papers/RSA-survey.pdf
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 
     # Collect the public key from the private key.
@@ -70,8 +70,8 @@ def run(aws_kms_cmk, source_plaintext):
         # The wrapping algorithm tells the raw RSA keyring
         # how to use your wrapping key to encrypt data keys.
         #
-        # Why did we use this wrapping algorithm?
-        # https://latacora.singles/2018/04/03/cryptographic-right-answers.html
+        # We recommend using RSA_OAEP_SHA256_MGF1.
+        # You should not use RSA_PKCS1 unless you require it for backwards compatibility.
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
     )
 

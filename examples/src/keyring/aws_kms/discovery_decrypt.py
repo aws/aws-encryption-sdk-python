@@ -30,7 +30,7 @@ from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with a single CMK.
+    """Demonstrate configuring a KMS keyring to use discovery mode for decryption.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt

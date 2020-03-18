@@ -35,6 +35,8 @@ def run(source_plaintext):
 
     # Generate an AES key to use with your keyring.
     # The key size depends on the wrapping algorithm.
+    #
+    # In practice, you should get this key from a secure key management system such as an HSM.
     key = os.urandom(wrapping_algorithm.algorithm.kdf_input_len)
 
     # Create the keyring that determines how your data keys are protected.

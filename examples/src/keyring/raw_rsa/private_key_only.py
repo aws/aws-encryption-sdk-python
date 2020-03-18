@@ -35,10 +35,10 @@ def run(source_plaintext):
     }
 
     # Generate an RSA private key to use with your keyring.
-    # In practice, you should get this key from a secure key management system.
+    # In practice, you should get this key from a secure key management system such as an HSM.
     #
     # Why did we use this public exponent?
-    # https://latacora.singles/2018/04/03/cryptographic-right-answers.html
+    # https://crypto.stanford.edu/~dabo/pubs/papers/RSA-survey.pdf
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 
     # Create the keyring that determines how your data keys are protected.
@@ -55,8 +55,8 @@ def run(source_plaintext):
         # The wrapping algorithm tells the raw RSA keyring
         # how to use your wrapping key to encrypt data keys.
         #
-        # Why did we use this wrapping algorithm?
-        # https://latacora.singles/2018/04/03/cryptographic-right-answers.html
+        # We recommend using RSA_OAEP_SHA256_MGF1.
+        # You should not use RSA_PKCS1 unless you require it for backwards compatibility.
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
     )
 

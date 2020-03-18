@@ -5,20 +5,15 @@ By default, the KMS keyring uses a client supplier that
 supplies a client with the same configuration for every region.
 If you need different behavior, you can write your own client supplier.
 
-One use-case where you might need this is if you need to interact with AWS KMS across partitions.
-AWS regions are organized into different "partitions" (ex: ``aws`` and ``aws-cn``)
-and credentials only work within a single partition.
-There are also some regions,
-such as Asia Pacific (Hong Kong) and Middle East (Bahrain)
-that are in the same partition (``aws``) as other regions
-but can still require different credentials.
-If you need to work with AWS KMS CMKs in multiple partitions
-then you need to always get credentials that are valid
-for the partition that you are talking to.
+One use-case where you might need this is
+if you need different credentials to talk to different AWS regions.
+This might be because you are crossing partitions (ex: ``aws`` and ``aws-cn``)
+or if you are working with regions that have separate authentication silos
+like ``ap-east-1`` and ``me-south-1``.
 
 This example shows how to create a client supplier
 that will supply KMS clients with valid credentials for the target region
-even when working with regions across different partitions.
+even when working with regions that need different credentials.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
