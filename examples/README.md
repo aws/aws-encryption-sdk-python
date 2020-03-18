@@ -26,9 +26,11 @@ you need to describe how you want the library to protect your data keys.
 You can do this using
 [keyrings](#keyrings) or [cryptographic materials managers](#cryptographic-materials-managers),
 or using [master key providers](#master-key-providers).
-These examples will show you how.
+These examples will show you how to use the configuration tools that we include for you
+as well as how to create some of your own.
+We start with AWS KMS examples, then show how to use other wrapping keys.
 
-* Use AWS Key Management Service (AWS KMS)
+* Using AWS Key Management Service (AWS KMS)
     * How to use a single AWS KMS CMK
         * [with keyrings](./src/keyring/aws_kms/single_cmk.py)
     * How to use multiple AWS KMS CMKs in different regions
