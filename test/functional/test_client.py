@@ -27,6 +27,7 @@ from aws_encryption_sdk.internal.defaults import LINE_LENGTH
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
+from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 
@@ -314,22 +315,26 @@ def test_encrypt_ciphertext_message(frame_length, algorithm, encryption_context)
     assert len(ciphertext) == results_length
 
 
-def _raw_aes():
+def _raw_aes(include_mkp=True):
     for symmetric_algorithm in (
         WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
         WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
         WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
     ):
+        keyring = ephemeral_raw_aes_keyring(symmetric_algorithm)
+        yield pytest.param(
+            "keyring", keyring, "keyring", keyring, id="raw AES keyring -- {}".format(symmetric_algorithm.name)
+        )
+
+        if not include_mkp:
+            continue
+
         yield pytest.param(
             "key_provider",
             build_fake_raw_key_provider(symmetric_algorithm, EncryptionKeyType.SYMMETRIC),
             "key_provider",
             build_fake_raw_key_provider(symmetric_algorithm, EncryptionKeyType.SYMMETRIC),
             id="raw AES master key provider -- {}".format(symmetric_algorithm.name),
-        )
-        keyring = ephemeral_raw_aes_keyring(symmetric_algorithm)
-        yield pytest.param(
-            "keyring", keyring, "keyring", keyring, id="raw AES keyring -- {}".format(symmetric_algorithm.name)
         )
 
         mkp = ephemeral_raw_aes_master_key(wrapping_algorithm=symmetric_algorithm, key=keyring._wrapping_key)
@@ -349,7 +354,7 @@ def _raw_aes():
         )
 
 
-def _raw_rsa(include_pre_sha2=True, include_sha2=True):
+def _raw_rsa(include_pre_sha2=True, include_sha2=True, include_mkp=True):
     wrapping_algorithms = []
     if include_pre_sha2:
         wrapping_algorithms.extend([WrappingAlgorithm.RSA_PKCS1, WrappingAlgorithm.RSA_OAEP_SHA1_MGF1])
@@ -362,21 +367,6 @@ def _raw_rsa(include_pre_sha2=True, include_sha2=True):
             ]
         )
     for wrapping_algorithm in wrapping_algorithms:
-        yield pytest.param(
-            "key_provider",
-            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
-            "key_provider",
-            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
-            id="raw RSA master key provider -- private encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
-        )
-        yield pytest.param(
-            "key_provider",
-            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PUBLIC),
-            "key_provider",
-            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
-            id="raw RSA master key provider -- public encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
-        )
-
         private_keyring = ephemeral_raw_rsa_keyring(wrapping_algorithm=wrapping_algorithm)
         public_keyring = RawRSAKeyring(
             key_namespace=private_keyring.key_namespace,
@@ -398,7 +388,26 @@ def _raw_rsa(include_pre_sha2=True, include_sha2=True):
             private_keyring,
             id="raw RSA keyring -- public encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
         )
+
+        if not include_mkp:
+            continue
+
         private_mkp, public_mkp = raw_rsa_mkps_from_keyring(private_keyring)
+
+        yield pytest.param(
+            "key_provider",
+            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
+            "key_provider",
+            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
+            id="raw RSA master key provider -- private encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
+        )
+        yield pytest.param(
+            "key_provider",
+            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PUBLIC),
+            "key_provider",
+            build_fake_raw_key_provider(wrapping_algorithm, EncryptionKeyType.PRIVATE),
+            id="raw RSA master key provider -- public encrypt, private decrypt -- {}".format(wrapping_algorithm.name),
+        )
 
         yield pytest.param(
             "key_provider",
@@ -452,16 +461,38 @@ def run_raw_provider_check(
     encrypt_kwargs = {encrypt_param_name: encrypting_provider}
     decrypt_kwargs = {decrypt_param_name: decrypting_provider}
 
-    ciphertext, _ = aws_encryption_sdk.encrypt(
+    encrypt_result = aws_encryption_sdk.encrypt(
         source=VALUES["plaintext_128"],
         encryption_context=VALUES["encryption_context"],
         frame_length=0,
         **encrypt_kwargs
     )
-    plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, **decrypt_kwargs)
+    decrypt_result = aws_encryption_sdk.decrypt(source=encrypt_result.result, **decrypt_kwargs)
 
-    assert plaintext == VALUES["plaintext_128"]
+    if isinstance(encrypting_provider, Keyring):
+        trace_entries = (
+            entry
+            for entry in encrypt_result.keyring_trace
+            if (
+                entry.wrapping_key.provider_id == encrypting_provider.key_namespace
+                and entry.wrapping_key.key_info == encrypting_provider.key_name
+            )
+        )
+        assert trace_entries
+
+    assert decrypt_result.result == VALUES["plaintext_128"]
     assert_key_not_logged(encrypting_provider, log_capturer.text)
+
+    if isinstance(decrypting_provider, Keyring):
+        trace_entries = (
+            entry
+            for entry in decrypt_result.keyring_trace
+            if (
+                entry.wrapping_key.provider_id == decrypting_provider.key_namespace
+                and entry.wrapping_key.key_info == decrypting_provider.key_name
+            )
+        )
+        assert trace_entries
 
 
 @pytest.mark.parametrize(
