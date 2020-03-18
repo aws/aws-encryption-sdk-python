@@ -486,15 +486,9 @@ def test_encryption_cycle_raw_mkp_openssl_102_plus(
     run_raw_provider_check(caplog, encrypt_param_name, encrypting_provider, decrypt_param_name, decrypting_provider)
 
 
-@pytest.mark.parametrize(
-    "frame_length, algorithm, encryption_context",
-    [
-        [frame_length, algorithm_suite, encryption_context]
-        for frame_length in VALUES["frame_lengths"]
-        for algorithm_suite in Algorithm
-        for encryption_context in [{}, VALUES["encryption_context"]]
-    ],
-)
+@pytest.mark.parametrize("frame_length", VALUES["frame_lengths"])
+@pytest.mark.parametrize("algorithm", Algorithm)
+@pytest.mark.parametrize("encryption_context", [{}, VALUES["encryption_context"]])
 def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_context):
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
 
@@ -511,15 +505,9 @@ def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_contex
     assert plaintext == VALUES["plaintext_128"] * 10
 
 
-@pytest.mark.parametrize(
-    "frame_length, algorithm, encryption_context",
-    [
-        [frame_length, algorithm_suite, encryption_context]
-        for frame_length in VALUES["frame_lengths"]
-        for algorithm_suite in Algorithm
-        for encryption_context in [{}, VALUES["encryption_context"]]
-    ],
-)
+@pytest.mark.parametrize("frame_length", VALUES["frame_lengths"])
+@pytest.mark.parametrize("algorithm", Algorithm)
+@pytest.mark.parametrize("encryption_context", [{}, VALUES["encryption_context"]])
 def test_encryption_cycle_stream_kms(frame_length, algorithm, encryption_context):
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
 
