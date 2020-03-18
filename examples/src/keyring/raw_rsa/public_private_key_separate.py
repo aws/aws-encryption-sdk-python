@@ -93,12 +93,6 @@ def run(source_plaintext):
     # Verify that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
-    # Decrypt your encrypted data using the decrypt keyring.
-    #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
-    decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=private_key_keyring)
-
     # Try to decrypt your encrypted data using the *encrypt* keyring.
     # This demonstrates that you cannot decrypt using the public key.
     try:
@@ -110,6 +104,12 @@ def run(source_plaintext):
     else:
         # Show that the public keyring could not decrypt.
         raise AssertionError("This will never happen!")
+
+    # Decrypt your encrypted data using the decrypt keyring.
+    #
+    # We do not need to specify the encryption context on decrypt
+    # because the header message includes the encryption context.
+    decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=private_key_keyring)
 
     # Verify that the decrypted plaintext is identical to the original plaintext.
     assert decrypted == source_plaintext
