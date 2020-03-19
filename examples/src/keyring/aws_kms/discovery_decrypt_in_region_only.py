@@ -52,6 +52,9 @@ def run(aws_kms_cmk, source_plaintext):
     # Create the keyring that determines how your data keys are protected.
     encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
+    # Extract the region from the CMK ARN.
+    decrypt_region = aws_kms_cmk.split(":", 4)[3]
+
     # Create the KMS discovery keyring that we will use on decrypt.
     #
     # Because we do not specify any key IDs, this keyring is created in discovery mode.
@@ -59,7 +62,7 @@ def run(aws_kms_cmk, source_plaintext):
     # The client supplier that we specify here will only supply clients for the specified region.
     # The keyring only attempts to decrypt data keys if it can get a client for that region,
     # so this keyring will now ignore any data keys that were encrypted under a CMK in another region.
-    decrypt_keyring = KmsKeyring(client_supplier=AllowRegionsClientSupplier(allowed_regions=["us-west-2"]))
+    decrypt_keyring = KmsKeyring(client_supplier=AllowRegionsClientSupplier(allowed_regions=[decrypt_region]))
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
