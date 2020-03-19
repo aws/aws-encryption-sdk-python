@@ -66,7 +66,7 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # It should contain one EDK for each CMK.
     assert len(encrypt_header.encrypted_data_keys) == len(aws_kms_additional_cmks) + 1
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
     # Decrypt your encrypted data separately using the single-CMK keyrings.
@@ -80,7 +80,7 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
         source=ciphertext, keyring=single_cmk_keyring_that_encrypted
     )
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted_1 == source_plaintext
     assert decrypted_2 == source_plaintext
 

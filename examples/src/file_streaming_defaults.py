@@ -54,7 +54,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
             for segment in encryptor:
                 ciphertext.write(segment)
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert not filecmp.cmp(source_plaintext_filename, ciphertext_filename)
 
     # Open the files you want to work with.
@@ -78,5 +78,5 @@ def run(aws_kms_cmk, source_plaintext_filename):
             for segment in decryptor:
                 decrypted.write(segment)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert filecmp.cmp(source_plaintext_filename, decrypted_filename)

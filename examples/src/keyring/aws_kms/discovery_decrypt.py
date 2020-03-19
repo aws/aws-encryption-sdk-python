@@ -58,7 +58,7 @@ def run(aws_kms_cmk, source_plaintext):
         source=source_plaintext, encryption_context=encryption_context, keyring=encrypt_keyring
     )
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
     # Decrypt your encrypted data using the KMS discovery keyring.
@@ -67,7 +67,7 @@ def run(aws_kms_cmk, source_plaintext):
     # because the header message includes the encryption context.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=decrypt_keyring)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted == source_plaintext
 
     # Verify that the encryption context used in the decrypt operation includes

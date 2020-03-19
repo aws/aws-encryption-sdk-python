@@ -100,7 +100,7 @@ def run(aws_kms_cmk, source_plaintext):
     # It should contain one EDK for KMS and one for the escrow key.
     assert len(encrypt_header.encrypted_data_keys) == 2
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
     # Decrypt your encrypted data separately using the KMS keyring and the escrow decrypt keyring.
@@ -112,7 +112,7 @@ def run(aws_kms_cmk, source_plaintext):
         source=ciphertext, keyring=escrow_decrypt_keyring
     )
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted_kms == source_plaintext
     assert decrypted_escrow == source_plaintext
 

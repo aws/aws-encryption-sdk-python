@@ -54,7 +54,7 @@ def run(aws_kms_cmk, source_plaintext):
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
     )
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
     # Decrypt your encrypted data using the same keyring you used on encrypt.
@@ -66,7 +66,7 @@ def run(aws_kms_cmk, source_plaintext):
     # because the header message includes the algorithm suite identifier.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted == source_plaintext
 
     # Verify that the encryption context used in the decrypt operation includes

@@ -49,7 +49,7 @@ def run(aws_kms_cmk, source_plaintext):
         for segment in encryptor:
             ciphertext.write(segment)
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext.getvalue() != source_plaintext
 
     # Reset the ciphertext stream position so that we can read from the beginning.
@@ -75,5 +75,5 @@ def run(aws_kms_cmk, source_plaintext):
         for segment in decryptor:
             decrypted.write(segment)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted.getvalue() == source_plaintext
