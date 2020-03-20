@@ -25,7 +25,7 @@ from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, FrozenSet, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
+    from typing import Any, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -238,10 +238,10 @@ class EncryptionMaterials(CryptographicMaterials):
 
     @property
     def encrypted_data_keys(self):
-        # type: () -> FrozenSet[EncryptedDataKey]
+        # type: () -> Tuple[EncryptedDataKey]
         """Return a read-only version of the encrypted data keys.
 
-        :rtype: frozenset
+        :rtype: Tuple[EncryptedDataKey]
         """
         return tuple(self._encrypted_data_keys)
 

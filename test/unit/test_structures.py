@@ -13,8 +13,16 @@
 """Unit test suite for aws_encryption_sdk.structures"""
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, ContentType, ObjectType, SerializationVersion
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, MessageHeader, RawDataKey
+from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
+from aws_encryption_sdk.structures import (
+    CryptoResult,
+    DataKey,
+    EncryptedDataKey,
+    KeyringTrace,
+    MasterKeyInfo,
+    MessageHeader,
+    RawDataKey,
+)
 
 from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
@@ -55,6 +63,35 @@ VALID_KWARGS = {
     EncryptedDataKey: [
         dict(
             key_provider=MasterKeyInfo(provider_id="asjnoa", key_info=b"aosjfoaiwej"), encrypted_data_key=b"aisofiawjef"
+        )
+    ],
+    KeyringTrace: [
+        dict(
+            wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"),
+            flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+        )
+    ],
+    CryptoResult: [
+        dict(
+            result=b"super secret stuff",
+            header=MessageHeader(
+                version=SerializationVersion.V1,
+                type=ObjectType.CUSTOMER_AE_DATA,
+                algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+                message_id=b"aosiejfoaiwej",
+                encryption_context={},
+                encrypted_data_keys=set([]),
+                content_type=ContentType.FRAMED_DATA,
+                content_aad_length=32456,
+                header_iv_length=32456,
+                frame_length=234567,
+            ),
+            keyring_trace=(
+                KeyringTrace(
+                    wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"),
+                    flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+                ),
+            ),
         )
     ],
 }
@@ -134,3 +171,33 @@ def test_raw_and_encrypted_data_key_from_data_key_fail(data_key_class):
         data_key_class.from_data_key(b"ahjseofij")
 
     excinfo.match(r"data_key must be type DataKey not *")
+
+
+@pytest.fixture
+def ex_result():
+    return CryptoResult(**VALID_KWARGS[CryptoResult][0])
+
+
+def test_cryptoresult_len(ex_result):
+    assert len(ex_result) == 2
+
+
+def test_cryptoresult_unpack(ex_result):
+    data, header = ex_result
+
+    assert data is ex_result.result
+    assert header is ex_result.header
+
+
+def test_cryptoresult_getitem(ex_result):
+    data = ex_result[0]
+    header = ex_result[1]
+
+    assert data is ex_result.result
+    assert header is ex_result.header
+
+
+def test_cryptoresult_to_tuple(ex_result):
+    test = tuple(ex_result)
+
+    assert test == ex_result._legacy_container

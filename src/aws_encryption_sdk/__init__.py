@@ -14,6 +14,9 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamDecryptor,
     StreamEncryptor,
 )
+from aws_encryption_sdk.structures import CryptoResult
+
+__all__ = ("encrypt", "decrypt", "stream")
 
 
 def encrypt(**kwargs):
@@ -25,6 +28,13 @@ def encrypt(**kwargs):
 
     .. versionadded:: 1.5.0
        The *keyring* parameter.
+
+    .. versionadded:: 1.5.0
+
+        For backwards compatibility,
+        the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
+        This allows for backwards compatibility with the previous outputs
+        so this change should not break any existing consumers.
 
     .. code:: python
 
@@ -67,12 +77,13 @@ def encrypt(**kwargs):
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
-    :returns: Tuple containing the encrypted ciphertext and the message header object
-    :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
+    :returns: Encrypted message, message metadata (header), and keyring trace
+    :rtype: CryptoResult
     """
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
-    return ciphertext, encryptor.header
+
+    return CryptoResult(result=ciphertext, header=encryptor.header, keyring_trace=encryptor.keyring_trace)
 
 
 def decrypt(**kwargs):
@@ -84,6 +95,13 @@ def decrypt(**kwargs):
 
     .. versionadded:: 1.5.0
        The *keyring* parameter.
+
+    .. versionadded:: 1.5.0
+
+        For backwards compatibility,
+        the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
+        This allows for backwards compatibility with the previous outputs
+        so this change should not break any existing consumers.
 
     .. code:: python
 
@@ -117,12 +135,13 @@ def decrypt(**kwargs):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
-    :returns: Tuple containing the decrypted plaintext and the message header object
-    :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
+    :returns: Decrypted plaintext, message metadata (header), and keyring trace
+    :rtype: CryptoResult
     """
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()
-    return plaintext, decryptor.header
+
+    return CryptoResult(result=plaintext, header=decryptor.header, keyring_trace=decryptor.keyring_trace)
 
 
 def stream(**kwargs):
@@ -182,6 +201,3 @@ def stream(**kwargs):
         return _stream_map[mode.lower()](**kwargs)
     except KeyError:
         raise ValueError("Unsupported mode: {}".format(mode))
-
-
-__all__ = ("encrypt", "decrypt", "stream")

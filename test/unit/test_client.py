@@ -17,7 +17,12 @@ from mock import MagicMock, patch, sentinel
 import aws_encryption_sdk
 import aws_encryption_sdk.internal.defaults
 
+from .vectors import VALUES
+
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+_CIPHERTEXT = b"CIPHERTEXT"
+_PLAINTEXT = b"PLAINTEXT"
+_HEADER = VALUES["deserialized_header_frame"]
 
 
 class TestAwsEncryptionSdk(object):
@@ -27,16 +32,16 @@ class TestAwsEncryptionSdk(object):
         self.mock_stream_encryptor_patcher = patch("aws_encryption_sdk.StreamEncryptor")
         self.mock_stream_encryptor = self.mock_stream_encryptor_patcher.start()
         self.mock_stream_encryptor_instance = MagicMock()
-        self.mock_stream_encryptor_instance.read.return_value = sentinel.ciphertext
-        self.mock_stream_encryptor_instance.header = sentinel.header
+        self.mock_stream_encryptor_instance.read.return_value = _CIPHERTEXT
+        self.mock_stream_encryptor_instance.header = _HEADER
         self.mock_stream_encryptor.return_value = self.mock_stream_encryptor_instance
         self.mock_stream_encryptor_instance.__enter__.return_value = self.mock_stream_encryptor_instance
         # Set up StreamDecryptor patch
         self.mock_stream_decryptor_patcher = patch("aws_encryption_sdk.StreamDecryptor")
         self.mock_stream_decryptor = self.mock_stream_decryptor_patcher.start()
         self.mock_stream_decryptor_instance = MagicMock()
-        self.mock_stream_decryptor_instance.read.return_value = sentinel.plaintext
-        self.mock_stream_decryptor_instance.header = sentinel.header
+        self.mock_stream_decryptor_instance.read.return_value = _PLAINTEXT
+        self.mock_stream_decryptor_instance.header = _HEADER
         self.mock_stream_decryptor.return_value = self.mock_stream_decryptor_instance
         self.mock_stream_decryptor_instance.__enter__.return_value = self.mock_stream_decryptor_instance
         yield
@@ -47,14 +52,14 @@ class TestAwsEncryptionSdk(object):
     def test_encrypt(self):
         test_ciphertext, test_header = aws_encryption_sdk.encrypt(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         self.mock_stream_encryptor.called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
-        assert test_ciphertext is sentinel.ciphertext
-        assert test_header is sentinel.header
+        assert test_ciphertext is _CIPHERTEXT
+        assert test_header is _HEADER
 
     def test_decrypt(self):
         test_plaintext, test_header = aws_encryption_sdk.decrypt(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         self.mock_stream_encryptor.called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
-        assert test_plaintext is sentinel.plaintext
-        assert test_header is sentinel.header
+        assert test_plaintext is _PLAINTEXT
+        assert test_header is _HEADER
 
     def test_stream_encryptor_e(self):
         test = aws_encryption_sdk.stream(mode="e", a=sentinel.a, b=sentinel.b, c=sentinel.b)
