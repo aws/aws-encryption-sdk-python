@@ -55,7 +55,7 @@ def _generate_data_key(
         raise GenerateKeyError("Unable to generate data encryption key.")
 
     # Create a keyring trace
-    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY})
+    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.GENERATED_DATA_KEY})
 
     # plaintext_data_key to RawDataKey
     data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
@@ -150,7 +150,7 @@ class RawAESKeyring(Keyring):
 
         # Update Keyring Trace
         keyring_trace = KeyringTrace(
-            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
         )
 
         # Add encrypted data key to encryption_materials
@@ -201,9 +201,7 @@ class RawAESKeyring(Keyring):
                 return decryption_materials
 
             # Create a keyring trace
-            keyring_trace = KeyringTrace(
-                wrapping_key=self._key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
-            )
+            keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.DECRYPTED_DATA_KEY})
 
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
@@ -367,7 +365,7 @@ class RawRSAKeyring(Keyring):
 
         # Update Keyring Trace
         keyring_trace = KeyringTrace(
-            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
         )
 
         # Add encrypted data key to encryption_materials
@@ -408,9 +406,7 @@ class RawRSAKeyring(Keyring):
                 continue
 
             # Create a keyring trace
-            keyring_trace = KeyringTrace(
-                wrapping_key=self._key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY}
-            )
+            keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.DECRYPTED_DATA_KEY})
 
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)

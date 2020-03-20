@@ -129,8 +129,8 @@ def test_keyring_trace_on_encrypt_when_data_encryption_key_given(raw_aes_keyring
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
-            # Check keyring trace does not contain KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY
-            assert KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY not in keyring_trace.flags
+            # Check keyring trace does not contain KeyringTraceFlag.GENERATED_DATA_KEY
+            assert KeyringTraceFlag.GENERATED_DATA_KEY not in keyring_trace.flags
 
 
 def test_on_encrypt_when_data_encryption_key_not_given(raw_aes_keyring):
@@ -152,11 +152,11 @@ def test_on_encrypt_when_data_encryption_key_not_given(raw_aes_keyring):
     for keyring_trace in test.keyring_trace:
         if (
             keyring_trace.wrapping_key.key_info == _KEY_ID
-            and KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY in keyring_trace.flags
+            and KeyringTraceFlag.GENERATED_DATA_KEY in keyring_trace.flags
         ):
-            # Check keyring trace contains KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY
+            # Check keyring trace contains KeyringTraceFlag.GENERATED_DATA_KEY
             generated_flag_count += 1
-        if KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY in keyring_trace.flags:
+        if KeyringTraceFlag.ENCRYPTED_DATA_KEY in keyring_trace.flags:
             encrypted_flag_count += 1
 
     assert generated_flag_count == 1
@@ -187,8 +187,8 @@ def test_keyring_trace_on_decrypt_when_data_key_given(raw_aes_keyring):
     )
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
-            # Check keyring trace does not contain KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY
-            assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
+            # Check keyring trace does not contain KeyringTraceFlag.DECRYPTED_DATA_KEY
+            assert KeyringTraceFlag.DECRYPTED_DATA_KEY not in keyring_trace.flags
 
 
 @pytest.mark.parametrize(
@@ -208,7 +208,7 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(
 
     for keyring_trace in test.keyring_trace:
         if keyring_trace.wrapping_key.key_info == _KEY_ID:
-            assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY not in keyring_trace.flags
+            assert KeyringTraceFlag.DECRYPTED_DATA_KEY not in keyring_trace.flags
 
     assert test.data_encryption_key is None
 
@@ -235,7 +235,7 @@ def test_keyring_trace_when_data_key_not_provided_and_edk_provided(raw_aes_keyri
     decrypted_flag_count = 0
 
     for keyring_trace in test.keyring_trace:
-        if KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY in keyring_trace.flags:
+        if KeyringTraceFlag.DECRYPTED_DATA_KEY in keyring_trace.flags:
             decrypted_flag_count += 1
 
     assert decrypted_flag_count == 1
@@ -277,6 +277,6 @@ def test_generate_data_key_keyring_trace():
     generate_flag_count = 0
 
     for keyring_trace in encryption_materials_without_data_key.keyring_trace:
-        if KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY in keyring_trace.flags:
+        if KeyringTraceFlag.GENERATED_DATA_KEY in keyring_trace.flags:
             generate_flag_count += 1
     assert generate_flag_count == 1

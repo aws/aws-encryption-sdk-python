@@ -54,7 +54,7 @@ _VALID_KWARGS = {
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id="Provider", key_info=b"Info"),
-                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
             )
         ],
     ),
@@ -244,8 +244,8 @@ def test_empty_encrypted_data_keys():
 @pytest.mark.parametrize(
     "material_class, flag",
     (
-        (EncryptionMaterials, KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY),
-        (DecryptionMaterials, KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY),
+        (EncryptionMaterials, KeyringTraceFlag.GENERATED_DATA_KEY),
+        (DecryptionMaterials, KeyringTraceFlag.DECRYPTED_DATA_KEY),
     ),
 )
 def test_add_data_encryption_key_success(material_class, flag):
@@ -264,8 +264,8 @@ def test_add_data_encryption_key_success(material_class, flag):
 
 def _add_data_encryption_key_test_cases():
     for material_class, required_flags in (
-        (EncryptionMaterials, KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY),
-        (DecryptionMaterials, KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY),
+        (EncryptionMaterials, KeyringTraceFlag.GENERATED_DATA_KEY),
+        (DecryptionMaterials, KeyringTraceFlag.DECRYPTED_DATA_KEY),
     ):
         yield (
             material_class,
@@ -332,7 +332,7 @@ def test_add_encrypted_data_key_success():
     materials.add_encrypted_data_key(
         _ENCRYPTED_DATA_KEY,
         keyring_trace=KeyringTrace(
-            wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
+            wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
         ),
     )
 
@@ -352,7 +352,7 @@ def test_add_encrypted_data_key_success():
             EncryptedDataKey(key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), encrypted_data_key=b"asdf"),
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id="not a match", key_info=b"really not a match"),
-                flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+                flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
             ),
             InvalidKeyringTraceError,
             "Keyring trace does not match data key encryptor.",
@@ -360,9 +360,7 @@ def test_add_encrypted_data_key_success():
         (
             dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _ENCRYPTED_DATA_KEY,
-            KeyringTrace(
-                wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY}
-            ),
+            KeyringTrace(wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}),
             AttributeError,
             "Data encryption key is not set.",
         ),

@@ -100,9 +100,7 @@ class OnlyGenerateKeyring(Keyring):
             )
             encryption_materials.add_data_encryption_key(
                 data_encryption_key=data_encryption_key,
-                keyring_trace=KeyringTrace(
-                    wrapping_key=key_provider, flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY}
-                ),
+                keyring_trace=KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.GENERATED_DATA_KEY}),
             )
         return encryption_materials
 
@@ -123,7 +121,7 @@ def get_encryption_materials_with_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
             )
         ],
     )
@@ -141,7 +139,7 @@ def get_encryption_materials_with_data_encryption_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
-                flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
             )
         ],
     )
@@ -174,10 +172,7 @@ def get_encryption_materials_with_encrypted_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={
-                    KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
-                    KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
-                },
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY,},
             )
         ],
     )
@@ -196,10 +191,7 @@ def get_encryption_materials_with_encrypted_data_key_aes():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={
-                    KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY,
-                    KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY,
-                },
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY,},
             )
         ],
     )
@@ -233,7 +225,7 @@ def get_decryption_materials_with_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
             )
         ],
     )
@@ -251,7 +243,7 @@ def get_decryption_materials_with_data_encryption_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"5430b043-5843-4629-869c-64794af77ada"),
-                flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
             )
         ],
     )

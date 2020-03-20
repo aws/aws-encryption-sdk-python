@@ -280,7 +280,7 @@ class EncryptionMaterials(CryptographicMaterials):
         self._add_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+            required_flags={KeyringTraceFlag.GENERATED_DATA_KEY},
         )
 
     def add_encrypted_data_key(self, encrypted_data_key, keyring_trace):
@@ -299,7 +299,7 @@ class EncryptionMaterials(CryptographicMaterials):
         if self.data_encryption_key is None:
             raise AttributeError("Data encryption key is not set.")
 
-        if KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY not in keyring_trace.flags:
+        if KeyringTraceFlag.ENCRYPTED_DATA_KEY not in keyring_trace.flags:
             raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
         if keyring_trace.wrapping_key != encrypted_data_key.key_provider:
@@ -445,7 +445,7 @@ class DecryptionMaterials(CryptographicMaterials):
         self._add_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+            required_flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
         )
 
     def add_verification_key(self, verification_key):
