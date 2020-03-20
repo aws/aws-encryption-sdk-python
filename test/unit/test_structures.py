@@ -195,3 +195,9 @@ def test_cryptoresult_getitem(ex_result):
 
     assert data is ex_result.result
     assert header is ex_result.header
+
+
+def test_cryptoresult_to_tuple(ex_result):
+    test = tuple(ex_result)
+
+    assert test == ex_result._legacy_container
