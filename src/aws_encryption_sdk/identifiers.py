@@ -337,6 +337,7 @@ class KeyringTraceFlag(Enum):
     @attr.s
     class KeyringTraceFlagValue(object):
         """Keyring trace flags do not have defined serializable values."""
+
         name = attr.ib()
 
     WRAPPING_KEY_GENERATED_DATA_KEY = KeyringTraceFlagValue("WRAPPING_KEY_GENERATED_DATA_KEY")
