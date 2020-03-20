@@ -14,6 +14,7 @@
 import struct
 from enum import Enum
 
+import attr
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.hazmat.primitives.ciphers import algorithms, modes
@@ -333,8 +334,13 @@ class ContentAADString(Enum):
 class KeyringTraceFlag(Enum):
     """KeyRing Trace actions."""
 
-    WRAPPING_KEY_GENERATED_DATA_KEY = 1
-    WRAPPING_KEY_ENCRYPTED_DATA_KEY = 1 << 1
-    WRAPPING_KEY_DECRYPTED_DATA_KEY = 1 << 2
-    WRAPPING_KEY_SIGNED_ENC_CTX = 1 << 3
-    WRAPPING_KEY_VERIFIED_ENC_CTX = 1 << 4
+    @attr.s
+    class KeyringTraceFlagValue(object):
+        """Keyring trace flags do not have defined serializable values."""
+        name = attr.ib()
+
+    WRAPPING_KEY_GENERATED_DATA_KEY = KeyringTraceFlagValue("WRAPPING_KEY_GENERATED_DATA_KEY")
+    WRAPPING_KEY_ENCRYPTED_DATA_KEY = KeyringTraceFlagValue("WRAPPING_KEY_ENCRYPTED_DATA_KEY")
+    WRAPPING_KEY_DECRYPTED_DATA_KEY = KeyringTraceFlagValue("WRAPPING_KEY_DECRYPTED_DATA_KEY")
+    WRAPPING_KEY_SIGNED_ENC_CTX = KeyringTraceFlagValue("WRAPPING_KEY_SIGNED_ENC_CTX")
+    WRAPPING_KEY_VERIFIED_ENC_CTX = KeyringTraceFlagValue("WRAPPING_KEY_VERIFIED_ENC_CTX")
