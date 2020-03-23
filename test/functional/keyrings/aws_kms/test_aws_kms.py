@@ -61,9 +61,9 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_empty_materials(fake_generator):
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_SIGNED_ENC_CTX in generator_flags
+    assert KeyringTraceFlag.GENERATED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.ENCRYPTED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT in generator_flags
 
 
 def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator):
@@ -86,9 +86,9 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator)
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY not in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_SIGNED_ENC_CTX in generator_flags
+    assert KeyringTraceFlag.GENERATED_DATA_KEY not in generator_flags
+    assert KeyringTraceFlag.ENCRYPTED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms
@@ -155,8 +155,8 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in generator_flags
+    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
 
 
 def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_child):
@@ -186,8 +186,8 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_c
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=child), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY in child_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in child_flags
+    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in child_flags
+    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in child_flags
 
 
 def test_aws_kms_single_cmk_keyring_on_decrypt_no_match(fake_generator_and_child):
@@ -274,8 +274,8 @@ def test_aws_kms_discovery_keyring_on_decrypt(encryption_materials_for_discovery
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=generator_key_id), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in generator_flags
+    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms
@@ -380,8 +380,8 @@ def test_try_aws_kms_decrypt_succeed(fake_generator):
         MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
     )
 
-    assert KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.WRAPPING_KEY_VERIFIED_ENC_CTX in generator_flags
+    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
+    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms

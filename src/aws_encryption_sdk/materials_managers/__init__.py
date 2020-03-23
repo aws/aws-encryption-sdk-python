@@ -25,7 +25,7 @@ from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Any, FrozenSet, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
+    from typing import Any, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
@@ -238,10 +238,10 @@ class EncryptionMaterials(CryptographicMaterials):
 
     @property
     def encrypted_data_keys(self):
-        # type: () -> FrozenSet[EncryptedDataKey]
+        # type: () -> Tuple[EncryptedDataKey]
         """Return a read-only version of the encrypted data keys.
 
-        :rtype: frozenset
+        :rtype: Tuple[EncryptedDataKey]
         """
         return tuple(self._encrypted_data_keys)
 
@@ -280,7 +280,7 @@ class EncryptionMaterials(CryptographicMaterials):
         self._add_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+            required_flags={KeyringTraceFlag.GENERATED_DATA_KEY},
         )
 
     def add_encrypted_data_key(self, encrypted_data_key, keyring_trace):
@@ -299,7 +299,7 @@ class EncryptionMaterials(CryptographicMaterials):
         if self.data_encryption_key is None:
             raise AttributeError("Data encryption key is not set.")
 
-        if KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY not in keyring_trace.flags:
+        if KeyringTraceFlag.ENCRYPTED_DATA_KEY not in keyring_trace.flags:
             raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
         if keyring_trace.wrapping_key != encrypted_data_key.key_provider:
@@ -445,7 +445,7 @@ class DecryptionMaterials(CryptographicMaterials):
         self._add_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.WRAPPING_KEY_DECRYPTED_DATA_KEY},
+            required_flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
         )
 
     def add_verification_key(self, verification_key):

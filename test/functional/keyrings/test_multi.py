@@ -44,7 +44,7 @@ _ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
     keyring_trace=[
         KeyringTrace(
             wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-            flags={KeyringTraceFlag.WRAPPING_KEY_GENERATED_DATA_KEY},
+            flags={KeyringTraceFlag.GENERATED_DATA_KEY},
         )
     ],
 )

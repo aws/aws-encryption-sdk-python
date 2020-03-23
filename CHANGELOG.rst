@@ -2,6 +2,25 @@
 Changelog
 *********
 
+1.5.0 -- 2020-xx-xx
+===================
+
+Major Features
+--------------
+
+* Add `keyrings`_.
+* Change one-step APIs to return a :class:`CryptoResult` rather than a tuple.
+    * Modified APIs: ``aws_encryption_sdk.encrypt`` and ``aws_encryption_sdk.decrypt``.
+
+.. note::
+
+    For backwards compatibility,
+    :class:`CryptoResult` also unpacks like a 2-member tuple.
+    This allows for backwards compatibility with the previous outputs
+    so this change should not break any existing consumers
+    unless you are specifically relying on the output being an instance of :class:`tuple`.
+
+
 1.4.1 -- 2019-09-20
 ===================
 
@@ -193,3 +212,4 @@ Minor
 .. _pylint: https://www.pylint.org/
 .. _flake8: http://flake8.pycqa.org/en/latest/
 .. _doc8: https://launchpad.net/doc8
+.. _keyrings: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html
