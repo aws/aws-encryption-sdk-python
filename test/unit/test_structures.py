@@ -67,8 +67,7 @@ VALID_KWARGS = {
     ],
     KeyringTrace: [
         dict(
-            wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"),
-            flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+            wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"), flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
         )
     ],
     CryptoResult: [
@@ -89,7 +88,7 @@ VALID_KWARGS = {
             keyring_trace=(
                 KeyringTrace(
                     wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"),
-                    flags={KeyringTraceFlag.WRAPPING_KEY_ENCRYPTED_DATA_KEY},
+                    flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
                 ),
             ),
         )

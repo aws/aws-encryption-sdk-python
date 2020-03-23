@@ -14,6 +14,7 @@
 import struct
 from enum import Enum
 
+import attr
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.hazmat.primitives.ciphers import algorithms, modes
@@ -333,8 +334,22 @@ class ContentAADString(Enum):
 class KeyringTraceFlag(Enum):
     """KeyRing Trace actions."""
 
-    WRAPPING_KEY_GENERATED_DATA_KEY = 1
-    WRAPPING_KEY_ENCRYPTED_DATA_KEY = 1 << 1
-    WRAPPING_KEY_DECRYPTED_DATA_KEY = 1 << 2
-    WRAPPING_KEY_SIGNED_ENC_CTX = 1 << 3
-    WRAPPING_KEY_VERIFIED_ENC_CTX = 1 << 4
+    @attr.s
+    class KeyringTraceFlagValue(object):
+        """Keyring trace flags do not have defined serializable values."""
+
+        name = attr.ib()
+
+    #: A flag to represent that a keyring has generated a plaintext data key.
+    GENERATED_DATA_KEY = KeyringTraceFlagValue("GENERATED_DATA_KEY")
+    #: A flag to represent that a keyring has created an encrypted data key.
+    ENCRYPTED_DATA_KEY = KeyringTraceFlagValue("ENCRYPTED_DATA_KEY")
+    #: A flag to represent that a keyring has obtained
+    #: the corresponding plaintext data key from an encrypted data key.
+    DECRYPTED_DATA_KEY = KeyringTraceFlagValue("DECRYPTED_DATA_KEY")
+    #: A flag to represent that the keyring has cryptographically
+    #: bound the encryption context to a newly created encrypted data key.
+    SIGNED_ENCRYPTION_CONTEXT = KeyringTraceFlagValue("SIGNED_ENCRYPTION_CONTEXT")
+    #: A flag to represent that the keyring has verified that an encrypted
+    #: data key was originally created with a particular encryption context.
+    VERIFIED_ENCRYPTION_CONTEXT = KeyringTraceFlagValue("VERIFIED_ENCRYPTION_CONTEXT")
