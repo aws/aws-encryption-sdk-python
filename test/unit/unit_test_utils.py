@@ -172,7 +172,7 @@ def get_encryption_materials_with_encrypted_data_key():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY,},
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY},
             )
         ],
     )
@@ -191,7 +191,7 @@ def get_encryption_materials_with_encrypted_data_key_aes():
         keyring_trace=[
             KeyringTrace(
                 wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY,},
+                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY},
             )
         ],
     )
