@@ -5,8 +5,8 @@ When you give the KMS keyring specific key IDs it will use those CMKs and nothin
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
 especially if you might not know beforehand which CMK was used to encrypt a message.
-To address this need, the KMS keyring also supports "discovery" mode.
-In discovery mode, the KMS keyring will do nothing on encrypt
+To address this need, you can use a KMS discovery keyring.
+The KMS discovery keyring will do nothing on encrypt
 but will attempt to decrypt *any* data keys that were encrypted under a KMS CMK.
 
 This example shows how to configure and use a KMS keyring in discovery mode.

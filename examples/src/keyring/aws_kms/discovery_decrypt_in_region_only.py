@@ -5,14 +5,14 @@ When you give the KMS keyring specific key IDs it will use those CMKs and nothin
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
 especially if you might not know beforehand which CMK was used to encrypt a message.
-To address this need, the KMS keyring also supports "discovery" mode.
-In discovery mode, the KMS keyring will do nothing on encrypt
+To address this need, you can use a KMS discovery keyring.
+The KMS discovery keyring will do nothing on encrypt
 but will attempt to decrypt *any* data keys that were encrypted under a KMS CMK.
 
 However, sometimes you need to be a *bit* more restrictive than that.
 To address this need, you can use a client supplier to restrict what regions a KMS keyring can talk to.
 
-This example shows how to configure and use a KMS keyring in discovery mode that is restricted to one region.
+This example shows how to configure and use a KMS regional discovery keyring that is restricted to one region.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
@@ -23,7 +23,7 @@ For examples of how to use the KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the KMS discovery keyring on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """

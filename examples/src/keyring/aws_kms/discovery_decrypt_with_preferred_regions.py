@@ -5,8 +5,8 @@ When you give the KMS keyring specific key IDs it will use those CMKs and nothin
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
 especially if you might not know beforehand which CMK was used to encrypt a message.
-To address this need, the KMS keyring also supports "discovery" mode.
-In discovery mode, the KMS keyring will do nothing on encrypt
+To address this need, you can use a KMS discovery keyring.
+The KMS discovery keyring will do nothing on encrypt
 but will attempt to decrypt *any* data keys that were encrypted under a KMS CMK.
 
 However, sometimes you need to be a *bit* more restrictive than that.
@@ -29,7 +29,7 @@ For examples of how to use the KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the KMS discovery keyring on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_in_region_only`` examples.
 """
@@ -64,8 +64,7 @@ def run(aws_kms_cmk, source_plaintext):
     # To create our decrypt keyring, we need to know our current default AWS region.
     #
     # Create a throw-away boto3 session to discover the default region.
-    boto3_session = Session()
-    local_region = boto3_session.region_name
+    local_region = Session().region_name
 
     # Now, use that region name to create two KMS discovery keyrings:
     #
@@ -78,7 +77,7 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Finally, combine those two keyrings into a multi-keyring.
     #
-    # The multi-keyring steps through its member keyrings in the order that you provider them,
+    # The multi-keyring steps through its member keyrings in the order that you provide them,
     # attempting to decrypt every encrypted data key with each keyring before moving on to the next keyring.
     # Because of this, other_regions_decrypt_keyring will not be called
     # unless local_region_decrypt_keyring fails to decrypt every encrypted data key.
@@ -92,7 +91,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
-    # Decrypt your encrypted data using the KMS discovery keyring.
+    # Decrypt your encrypted data using the multi-keyring.
     #
     # We do not need to specify the encryption context on decrypt
     # because the header message includes the encryption context.
