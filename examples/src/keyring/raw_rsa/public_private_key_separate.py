@@ -3,7 +3,7 @@
 """
 One of the benefits of asymmetric encryption
 is that you can encrypt with just the public key.
-This means that you give someone the ability to encrypt
+This means that you can give someone the ability to encrypt
 without giving them the ability to decrypt.
 
 The raw RSA keyring supports encrypt-only operations
@@ -46,6 +46,9 @@ def run(source_plaintext):
 
     # Generate an RSA private key to use with your keyring.
     # In practice, you should get this key from a secure key management system such as an HSM.
+    #
+    # The National Institute of Standards and Technology (NIST) recommends a minimum of 2048-bit keys for RSA.
+    # https://www.nist.gov/publications/transitioning-use-cryptographic-algorithms-and-key-lengths
     #
     # Why did we use this public exponent?
     # https://crypto.stanford.edu/~dabo/pubs/papers/RSA-survey.pdf
@@ -103,7 +106,7 @@ def run(source_plaintext):
         pass
     else:
         # Show that the public keyring could not decrypt.
-        raise AssertionError("This will never happen!")
+        raise AssertionError("The public key can never decrypt!")
 
     # Decrypt your encrypted data using the decrypt keyring.
     #

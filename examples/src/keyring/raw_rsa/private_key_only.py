@@ -37,6 +37,9 @@ def run(source_plaintext):
     # Generate an RSA private key to use with your keyring.
     # In practice, you should get this key from a secure key management system such as an HSM.
     #
+    # The National Institute of Standards and Technology (NIST) recommends a minimum of 2048-bit keys for RSA.
+    # https://www.nist.gov/publications/transitioning-use-cryptographic-algorithms-and-key-lengths
+    #
     # Why did we use this public exponent?
     # https://crypto.stanford.edu/~dabo/pubs/papers/RSA-survey.pdf
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
