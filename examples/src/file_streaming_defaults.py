@@ -61,8 +61,8 @@ def run(aws_kms_cmk, source_plaintext_filename):
     with open(ciphertext_filename, "rb") as ciphertext, open(decrypted_filename, "wb") as decrypted:
         # Decrypt your encrypted data using the same keyring you used on encrypt.
         #
-        # We do not need to specify the encryption context on decrypt
-        # because the message header includes the encryption context.
+        # You do not need to specify the encryption context on decrypt
+        # because the header of the encrypted message includes the encryption context.
         with aws_encryption_sdk.stream(mode="decrypt", source=ciphertext, keyring=keyring) as decryptor:
             # Check the encryption context in the header before we start decrypting.
             #

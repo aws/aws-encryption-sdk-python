@@ -4,9 +4,9 @@
 When you give the KMS keyring specific key IDs it will use those CMKs and nothing else.
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
-especially if you don't know which CMK was used to encrypt a message.
+especially when you don't know which CMKs were used to encrypt a message.
 To address this need, you can use a KMS discovery keyring.
-The KMS discovery keyring does nothing on encrypt
+The KMS discovery keyring does nothing on encrypt,
 but attempts to decrypt *any* data keys that were encrypted under a KMS CMK.
 
 However, sometimes you need to be a *bit* more restrictive than that.
@@ -34,7 +34,7 @@ from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import AllowRegionsCli
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate configuring a KMS keyring to only work within a single region.
+    """Demonstrate configuring a KMS discovery keyring to only work within a single region.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -74,8 +74,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Decrypt your encrypted data using the KMS discovery keyring.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=decrypt_keyring)
 
     # Demonstrate that the decrypted plaintext is identical to the original plaintext.

@@ -59,10 +59,10 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     #
-    # We do not need to specify the algorithm suite on decrypt
+    # You do not need to specify the algorithm suite on decrypt
     # because the header message includes the algorithm suite identifier.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 

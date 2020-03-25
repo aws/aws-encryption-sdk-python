@@ -71,8 +71,8 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
 
     # Decrypt your encrypted data separately using the single-CMK keyrings.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     decrypted_1, decrypt_header_1 = aws_encryption_sdk.decrypt(
         source=ciphertext, keyring=single_cmk_keyring_that_generated
     )

@@ -110,8 +110,8 @@ def run(source_plaintext):
 
     # Decrypt your encrypted data using the decrypt keyring.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=private_key_keyring)
 
     # Demonstrate that the decrypted plaintext is identical to the original plaintext.
