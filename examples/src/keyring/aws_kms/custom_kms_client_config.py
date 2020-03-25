@@ -1,10 +1,10 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-By default, the KMS keyring will use the default configurations
-for all KMS clients and will use the default discoverable credentials.
-If you need to change these configurations,
-you can do that using the client supplier.
+By default, the KMS keyring uses the default configurations
+for all KMS clients and uses the default discoverable credentials.
+If you need to change this configuration,
+you can configure the client supplier.
 
 This example shows how to use custom-configured clients with the KMS keyring.
 
@@ -73,8 +73,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 
     # Demonstrate that the decrypted plaintext is identical to the original plaintext.

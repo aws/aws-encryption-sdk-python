@@ -5,8 +5,8 @@ By default, the KMS keyring uses a client supplier that
 supplies a client with the same configuration for every region.
 If you need different behavior, you can write your own client supplier.
 
-One use-case where you might need this is
-if you need different credentials to talk to different AWS regions.
+You might use this 
+if you need different credentials in different AWS regions.
 This might be because you are crossing partitions (ex: ``aws`` and ``aws-cn``)
 or if you are working with regions that have separate authentication silos
 like ``ap-east-1`` and ``me-south-1``.
@@ -38,7 +38,7 @@ from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import ClientSupplier,
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Union  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
-    # We only actually need these imports when running the mypy checks
+    # We only need these imports when running the mypy checks
     pass
 
 
