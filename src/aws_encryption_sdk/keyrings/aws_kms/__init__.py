@@ -55,9 +55,12 @@ class KmsKeyring(Keyring):
     but for the keyring to attempt to use them on decrypt
     you MUST specify the CMK ARN.
 
-    If you specify neither ``generator_key_id`` nor ``child_key_ids``
-    then the keyring will operate in `discovery mode`_,
+    If you specify ``is_discovery=True`` the keyring will be a KMS discovery keyring,
     doing nothing on encrypt and attempting to decrypt any AWS KMS-encrypted data key on decrypt.
+
+    .. notice::
+
+        You must either set ``is_discovery=True`` or provide key IDs.
 
     You can use the :class:`ClientSupplier` to customize behavior further,
     such as to provide different credentials for different regions
@@ -75,12 +78,14 @@ class KmsKeyring(Keyring):
     .. versionadded:: 1.5.0
 
     :param ClientSupplier client_supplier: Client supplier that provides AWS KMS clients (optional)
+    :param bool is_discovery: Should this be a discovery keyring (optional)
     :param str generator_key_id: Key ID of AWS KMS CMK to use when generating data keys (optional)
     :param List[str] child_key_ids: Key IDs that will be used to encrypt and decrypt data keys (optional)
     :param List[str] grant_tokens: AWS KMS grant tokens to include in requests (optional)
     """
 
     _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=is_callable())
+    _is_discovery = attr.ib(default=False, validator=instance_of(bool))
     _generator_key_id = attr.ib(default=None, validator=optional(instance_of(six.string_types)))
     _child_key_ids = attr.ib(
         default=attr.Factory(tuple),
@@ -93,6 +98,22 @@ class KmsKeyring(Keyring):
 
     def __attrs_post_init__(self):
         """Configure internal keyring."""
+        key_ids_provided = self._generator_key_id is not None or self._child_key_ids
+        both = key_ids_provided and self._is_discovery
+        neither = not key_ids_provided and not self._is_discovery
+
+        if both:
+            raise TypeError("is_discovery cannot be True if key IDs are provided")
+
+        if neither:
+            raise TypeError("is_discovery cannot be False if no key IDs are provided")
+
+        if self._is_discovery:
+            self._inner_keyring = _AwsKmsDiscoveryKeyring(
+                client_supplier=self._client_supplier, grant_tokens=self._grant_tokens
+            )
+            return
+
         if self._generator_key_id is None:
             generator_keyring = None
         else:
@@ -107,14 +128,7 @@ class KmsKeyring(Keyring):
             for key_id in self._child_key_ids
         ]
 
-        self._is_discovery = generator_keyring is None and not child_keyrings
-
-        if self._is_discovery:
-            self._inner_keyring = _AwsKmsDiscoveryKeyring(
-                client_supplier=self._client_supplier, grant_tokens=self._grant_tokens
-            )
-        else:
-            self._inner_keyring = MultiKeyring(generator=generator_keyring, children=child_keyrings)
+        self._inner_keyring = MultiKeyring(generator=generator_keyring, children=child_keyrings)
 
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
