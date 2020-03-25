@@ -106,7 +106,7 @@ class KmsKeyring(Keyring):
             raise TypeError("is_discovery cannot be True if key IDs are provided")
 
         if neither:
-            raise TypeError("No key IDs provided")
+            raise TypeError("is_discovery cannot be False if no key IDs are provided")
 
         if self._is_discovery:
             self._inner_keyring = _AwsKmsDiscoveryKeyring(
