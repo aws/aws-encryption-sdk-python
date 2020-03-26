@@ -24,6 +24,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
         pytest.param(dict(child_key_ids="some stuff"), id="child_key_ids is a string"),
         pytest.param(dict(grant_tokens=("foo", 5)), id="grant_tokens contains invalid values"),
         pytest.param(dict(grant_tokens="some stuff"), id="grant_tokens is a string"),
+        pytest.param(dict(generator_key_id="foo", is_discovery=True), id="generator and discovery"),
+        pytest.param(dict(child_key_ids=("foo",), is_discovery=True), id="child_key_ids and discovery"),
+        pytest.param(dict(), id="nothing"),
     ),
 )
 def test_kms_keyring_invalid_parameters(kwargs):
@@ -100,7 +103,7 @@ def test_kms_keyring_builds_correct_inner_keyring_discovery():
     grants = ("asdf", "fdas")
     supplier = DefaultClientSupplier()
 
-    test = KmsKeyring(grant_tokens=grants, client_supplier=supplier)
+    test = KmsKeyring(is_discovery=True, grant_tokens=grants, client_supplier=supplier)
 
     # We specified neither a generator nor children, so the inner keyring MUST be a discovery keyring
     assert isinstance(test._inner_keyring, _AwsKmsDiscoveryKeyring)
@@ -110,10 +113,10 @@ def test_kms_keyring_builds_correct_inner_keyring_discovery():
     assert test._inner_keyring._client_supplier is supplier
 
 
-def test_kms_keyring_on_encrypt(mocker):
+def test_kms_keyring_inner_keyring_on_encrypt(mocker):
     mock_keyring = mocker.Mock()
 
-    keyring = KmsKeyring()
+    keyring = KmsKeyring(is_discovery=True)
     keyring._inner_keyring = mock_keyring
 
     test = keyring.on_encrypt(encryption_materials=mocker.sentinel.encryption_materials)
@@ -123,10 +126,10 @@ def test_kms_keyring_on_encrypt(mocker):
     assert test is mock_keyring.on_encrypt.return_value
 
 
-def test_kms_keyring_on_decrypt(mocker):
+def test_kms_keyring_inner_keyring_on_decrypt(mocker):
     mock_keyring = mocker.Mock()
 
-    keyring = KmsKeyring()
+    keyring = KmsKeyring(is_discovery=True)
     keyring._inner_keyring = mock_keyring
 
     test = keyring.on_decrypt(
