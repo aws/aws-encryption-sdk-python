@@ -49,9 +49,7 @@ def run(aws_kms_cmk, source_plaintext):
     encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create a KMS discovery keyring to use on decrypt.
-    #
-    # Because we do not specify any key IDs, this keyring is created in discovery mode.
-    decrypt_keyring = KmsKeyring()
+    decrypt_keyring = KmsKeyring(is_discovery=True)
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

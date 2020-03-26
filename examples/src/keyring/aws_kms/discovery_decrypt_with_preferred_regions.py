@@ -70,10 +70,12 @@ def run(aws_kms_cmk, source_plaintext):
     #
     # One that only works in the local region
     local_region_decrypt_keyring = KmsKeyring(
-        client_supplier=AllowRegionsClientSupplier(allowed_regions=[local_region])
+        is_discovery=True, client_supplier=AllowRegionsClientSupplier(allowed_regions=[local_region])
     )
     # and one that will work in any other region but NOT the local region.
-    other_regions_decrypt_keyring = KmsKeyring(client_supplier=DenyRegionsClientSupplier(denied_regions=[local_region]))
+    other_regions_decrypt_keyring = KmsKeyring(
+        is_discovery=True, client_supplier=DenyRegionsClientSupplier(denied_regions=[local_region])
+    )
 
     # Finally, combine those two keyrings into a multi-keyring.
     #
