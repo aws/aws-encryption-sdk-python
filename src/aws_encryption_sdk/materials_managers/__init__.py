@@ -170,8 +170,10 @@ class CryptographicMaterials(object):
         new_materials = copy.copy(self)
 
         data_key = _data_key_to_raw_data_key(data_key=data_encryption_key)
-        new_materials._setattr("data_encryption_key", data_key)
-        new_materials._keyring_trace.append(keyring_trace)
+        new_materials._setattr(  # simplify access to copies pylint: disable=protected-access
+            "data_encryption_key", data_key
+        )
+        new_materials._keyring_trace.append(keyring_trace)  # simplify access to copies pylint: disable=protected-access
 
         return new_materials
 
@@ -336,8 +338,10 @@ class EncryptionMaterials(CryptographicMaterials):
 
         new_materials = copy.copy(self)
 
-        new_materials._encrypted_data_keys.append(encrypted_data_key)
-        new_materials._keyring_trace.append(keyring_trace)
+        new_materials._encrypted_data_keys.append(  # simplify access to copies pylint: disable=protected-access
+            encrypted_data_key
+        )
+        new_materials._keyring_trace.append(keyring_trace)  # simplify access to copies pylint: disable=protected-access
         return new_materials
 
     def with_signing_key(self, signing_key):
@@ -362,7 +366,7 @@ class EncryptionMaterials(CryptographicMaterials):
         # Verify that the signing key matches the algorithm
         Signer.from_key_bytes(algorithm=new_materials.algorithm, key_bytes=signing_key)
 
-        new_materials._setattr("signing_key", signing_key)
+        new_materials._setattr("signing_key", signing_key)  # simplify access to copies pylint: disable=protected-access
 
         return new_materials
 
@@ -517,6 +521,8 @@ class DecryptionMaterials(CryptographicMaterials):
         # Verify that the verification key matches the algorithm
         Verifier.from_key_bytes(algorithm=new_materials.algorithm, key_bytes=verification_key)
 
-        new_materials._setattr("verification_key", verification_key)
+        new_materials._setattr(  # simplify access to copies pylint: disable=protected-access
+            "verification_key", verification_key
+        )
 
         return new_materials
