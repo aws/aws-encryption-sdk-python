@@ -215,7 +215,7 @@ def test_on_decrypt_when_data_encryption_key_given(mock_generator, mock_child_1,
     initial_materials = get_decryption_materials_with_data_key()
     new_materials = test_multi_keyring.on_decrypt(decryption_materials=initial_materials, encrypted_data_keys=[])
 
-    assert new_materials is not initial_materials
+    assert new_materials is initial_materials
 
     for keyring in test_multi_keyring._decryption_keyrings:
         assert not keyring.on_decrypt.called
@@ -246,9 +246,10 @@ def test_no_keyring_called_after_data_encryption_key_added_when_data_encryption_
     )
 
     test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_3, mock_child_1, mock_child_2])
-    test_multi_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_without_data_key(), encrypted_data_keys=[]
-    )
+    initial_materials = get_decryption_materials_without_data_key()
+    new_materials = test_multi_keyring.on_decrypt(decryption_materials=initial_materials, encrypted_data_keys=[])
+
+    assert new_materials is not initial_materials
     assert mock_generator.on_decrypt.called
     assert mock_child_3.on_decrypt.called
     assert not mock_child_1.called
