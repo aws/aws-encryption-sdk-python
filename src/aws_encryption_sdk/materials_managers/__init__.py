@@ -14,6 +14,8 @@
 
 .. versionadded:: 1.3.0
 """
+import copy
+
 import attr
 import six
 from attr.validators import deep_iterable, deep_mapping, instance_of, optional
@@ -117,6 +119,8 @@ class CryptographicMaterials(object):
         # type: (Union[DataKey, RawDataKey], KeyringTrace, Iterable[KeyringTraceFlag]) -> None
         """Validate that the provided data encryption key and keyring trace match for each other and the materials.
 
+        .. versionadded:: 1.5.0
+
         :param RawDataKey data_encryption_key: Data encryption key
         :param KeyringTrace keyring_trace: Keyring trace corresponding to data_encryption_key
         :param required_flags: Iterable of required flags
@@ -143,9 +147,11 @@ class CryptographicMaterials(object):
                 )
             )
 
-    def _add_data_encryption_key(self, data_encryption_key, keyring_trace, required_flags):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace, Iterable[KeyringTraceFlag]) -> None
-        """Add a plaintext data encryption key.
+    def _with_data_encryption_key(self, data_encryption_key, keyring_trace, required_flags):
+        # type: (Union[DataKey, RawDataKey], KeyringTrace, Iterable[KeyringTraceFlag]) -> CryptographicMaterials
+        """Get new cryptographic materials that include this data encryption key.
+
+        .. versionadded:: 1.5.0
 
         :param RawDataKey data_encryption_key: Data encryption key
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
@@ -161,10 +167,13 @@ class CryptographicMaterials(object):
             data_encryption_key=data_encryption_key, keyring_trace=keyring_trace, required_flags=required_flags
         )
 
-        data_key = _data_key_to_raw_data_key(data_key=data_encryption_key)
+        new_materials = copy.copy(self)
 
-        super(CryptographicMaterials, self).__setattr__("data_encryption_key", data_key)
-        self._keyring_trace.append(keyring_trace)
+        data_key = _data_key_to_raw_data_key(data_key=data_encryption_key)
+        new_materials._setattr("data_encryption_key", data_key)
+        new_materials._keyring_trace.append(keyring_trace)
+
+        return new_materials
 
     @property
     def keyring_trace(self):
@@ -220,7 +229,8 @@ class EncryptionMaterials(CryptographicMaterials):
         if encryption_context is None:
             raise TypeError("encryption_context must not be None")
 
-        if data_encryption_key is None and encrypted_data_keys is not None:
+        if data_encryption_key is None and encrypted_data_keys:
+            # If data_encryption_key is not set, encrypted_data_keys MUST be either None or empty
             raise TypeError("encrypted_data_keys cannot be provided without data_encryption_key")
 
         if encrypted_data_keys is None:
@@ -235,6 +245,18 @@ class EncryptionMaterials(CryptographicMaterials):
         self._setattr("signing_key", signing_key)
         self._setattr("_encrypted_data_keys", encrypted_data_keys)
         attr.validate(self)
+
+    def __copy__(self):
+        # type: () -> EncryptionMaterials
+        """Do a shallow copy of this instance."""
+        return EncryptionMaterials(
+            algorithm=self.algorithm,
+            data_encryption_key=self.data_encryption_key,
+            encrypted_data_keys=copy.copy(self._encrypted_data_keys),
+            encryption_context=self.encryption_context.copy(),
+            signing_key=self.signing_key,
+            keyring_trace=copy.copy(self._keyring_trace),
+        )
 
     @property
     def encrypted_data_keys(self):
@@ -263,35 +285,37 @@ class EncryptionMaterials(CryptographicMaterials):
 
         return True
 
-    def add_data_encryption_key(self, data_encryption_key, keyring_trace):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> None
-        """Add a plaintext data encryption key.
+    def with_data_encryption_key(self, data_encryption_key, keyring_trace):
+        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> EncryptionMaterials
+        """Get new encryption materials that also include this data encryption key.
 
         .. versionadded:: 1.5.0
 
         :param RawDataKey data_encryption_key: Data encryption key
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
           while getting this data encryption key
+        :rtype: EncryptionMaterials
         :raises AttributeError: if data encryption key is already set
         :raises InvalidKeyringTraceError: if keyring trace does not match generate action
         :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
-        self._add_data_encryption_key(
+        return self._with_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
             required_flags={KeyringTraceFlag.GENERATED_DATA_KEY},
         )
 
-    def add_encrypted_data_key(self, encrypted_data_key, keyring_trace):
-        # type: (EncryptedDataKey, KeyringTrace) -> None
-        """Add an encrypted data key with corresponding keyring trace.
+    def with_encrypted_data_key(self, encrypted_data_key, keyring_trace):
+        # type: (EncryptedDataKey, KeyringTrace) -> EncryptionMaterials
+        """Get new encryption materials that also include this encrypted data key with corresponding keyring trace.
 
         .. versionadded:: 1.5.0
 
         :param EncryptedDataKey encrypted_data_key: Encrypted data key to add
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
           while getting this encrypted data key
+        :rtype: EncryptionMaterials
         :raises AttributeError: if data encryption key is not set
         :raises InvalidKeyringTraceError: if keyring trace does not match generate action
         :raises InvalidKeyringTraceError: if keyring trace does not match data key encryptor
@@ -302,19 +326,28 @@ class EncryptionMaterials(CryptographicMaterials):
         if KeyringTraceFlag.ENCRYPTED_DATA_KEY not in keyring_trace.flags:
             raise InvalidKeyringTraceError("Keyring flags do not match action.")
 
-        if keyring_trace.wrapping_key != encrypted_data_key.key_provider:
+        if not all(
+            (
+                keyring_trace.wrapping_key.provider_id == encrypted_data_key.key_provider.provider_id,
+                keyring_trace.wrapping_key.key_name == encrypted_data_key.key_provider.key_name,
+            )
+        ):
             raise InvalidKeyringTraceError("Keyring trace does not match data key encryptor.")
 
-        self._encrypted_data_keys.append(encrypted_data_key)
-        self._keyring_trace.append(keyring_trace)
+        new_materials = copy.copy(self)
 
-    def add_signing_key(self, signing_key):
-        # type: (bytes) -> None
-        """Add a signing key.
+        new_materials._encrypted_data_keys.append(encrypted_data_key)
+        new_materials._keyring_trace.append(keyring_trace)
+        return new_materials
+
+    def with_signing_key(self, signing_key):
+        # type: (bytes) -> EncryptionMaterials
+        """Get new encryption materials that also include this signing key.
 
         .. versionadded:: 1.5.0
 
         :param bytes signing_key: Signing key
+        :rtype: EncryptionMaterials
         :raises AttributeError: if signing key is already set
         :raises SignatureKeyError: if algorithm suite does not support signing keys
         """
@@ -324,10 +357,14 @@ class EncryptionMaterials(CryptographicMaterials):
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
 
-        # Verify that the signing key matches the algorithm
-        Signer.from_key_bytes(algorithm=self.algorithm, key_bytes=signing_key)
+        new_materials = copy.copy(self)
 
-        self._setattr("signing_key", signing_key)
+        # Verify that the signing key matches the algorithm
+        Signer.from_key_bytes(algorithm=new_materials.algorithm, key_bytes=signing_key)
+
+        new_materials._setattr("signing_key", signing_key)
+
+        return new_materials
 
 
 @attr.s(hash=False)
@@ -401,6 +438,17 @@ class DecryptionMaterials(CryptographicMaterials):
         self._setattr("verification_key", verification_key)
         attr.validate(self)
 
+    def __copy__(self):
+        # type: () -> DecryptionMaterials
+        """Do a shallow copy of this instance."""
+        return DecryptionMaterials(
+            algorithm=self.algorithm,
+            data_encryption_key=self.data_encryption_key,
+            encryption_context=copy.copy(self.encryption_context),
+            verification_key=self.verification_key,
+            keyring_trace=copy.copy(self._keyring_trace),
+        )
+
     @property
     def is_complete(self):
         # type: () -> bool
@@ -425,15 +473,16 @@ class DecryptionMaterials(CryptographicMaterials):
         """Backwards-compatible shim for access to data key."""
         return self.data_encryption_key
 
-    def add_data_encryption_key(self, data_encryption_key, keyring_trace):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> None
-        """Add a plaintext data encryption key.
+    def with_data_encryption_key(self, data_encryption_key, keyring_trace):
+        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> DecryptionMaterials
+        """Get new decryption materials that also include this data encryption key.
 
         .. versionadded:: 1.5.0
 
         :param RawDataKey data_encryption_key: Data encryption key
         :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
           while getting this data encryption key
+        :rtype: DecryptionMaterials
         :raises AttributeError: if data encryption key is already set
         :raises InvalidKeyringTraceError: if keyring trace does not match decrypt action
         :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
@@ -442,19 +491,20 @@ class DecryptionMaterials(CryptographicMaterials):
         if self.algorithm is None:
             raise AttributeError("Algorithm is not set")
 
-        self._add_data_encryption_key(
+        return self._with_data_encryption_key(
             data_encryption_key=data_encryption_key,
             keyring_trace=keyring_trace,
             required_flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
         )
 
-    def add_verification_key(self, verification_key):
-        # type: (bytes) -> None
-        """Add a verification key.
+    def with_verification_key(self, verification_key):
+        # type: (bytes) -> DecryptionMaterials
+        """Get new decryption materials that also include this verification key.
 
         .. versionadded:: 1.5.0
 
         :param bytes verification_key: Verification key
+        :rtype: DecryptionMaterials
         """
         if self.verification_key is not None:
             raise AttributeError("Verification key is already set.")
@@ -462,7 +512,11 @@ class DecryptionMaterials(CryptographicMaterials):
         if self.algorithm.signing_algorithm_info is None:
             raise SignatureKeyError("Algorithm suite does not support signing keys.")
 
-        # Verify that the verification key matches the algorithm
-        Verifier.from_key_bytes(algorithm=self.algorithm, key_bytes=verification_key)
+        new_materials = copy.copy(self)
 
-        self._setattr("verification_key", verification_key)
+        # Verify that the verification key matches the algorithm
+        Verifier.from_key_bytes(algorithm=new_materials.algorithm, key_bytes=verification_key)
+
+        new_materials._setattr("verification_key", verification_key)
+
+        return new_materials

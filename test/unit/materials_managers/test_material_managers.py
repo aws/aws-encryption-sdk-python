@@ -16,7 +16,6 @@ import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock
-from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, InvalidKeyringTraceError, SignatureKeyError
 from aws_encryption_sdk.identifiers import AlgorithmSuite, KeyringTraceFlag
@@ -104,7 +103,6 @@ def _copy_and_update_kwargs(class_name, mod_kwargs):
         (EncryptionMaterials, dict(algorithm=None)),
         (EncryptionMaterials, dict(encryption_context=None)),
         (EncryptionMaterials, dict(signing_key=u"not bytes or None")),
-        (EncryptionMaterials, dict(data_encryption_key=_REMOVE)),
         (DecryptionMaterialsRequest, dict(algorithm=None)),
         (DecryptionMaterialsRequest, dict(encrypted_data_keys=None)),
         (DecryptionMaterialsRequest, dict(encryption_context=None)),
@@ -123,6 +121,8 @@ def test_attributes_fails(attr_class, invalid_kwargs):
     (
         (CryptographicMaterials, {}),
         (EncryptionMaterials, {}),
+        (EncryptionMaterials, dict(data_encryption_key=_REMOVE, encrypted_data_keys=[])),
+        (EncryptionMaterials, dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE)),
         (DecryptionMaterials, {}),
         (DecryptionMaterials, dict(data_key=_REMOVE, data_encryption_key=_REMOVE)),
         (DecryptionMaterials, dict(data_key=_REMOVE, data_encryption_key=_RAW_DATA_KEY)),
@@ -248,18 +248,19 @@ def test_empty_encrypted_data_keys():
         (DecryptionMaterials, KeyringTraceFlag.DECRYPTED_DATA_KEY),
     ),
 )
-def test_add_data_encryption_key_success(material_class, flag):
+def test_with_data_encryption_key_success(material_class, flag):
     kwargs = _copy_and_update_kwargs(
         material_class.__name__, dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE)
     )
     materials = material_class(**kwargs)
 
-    materials.add_data_encryption_key(
+    new_materials = materials.with_data_encryption_key(
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), data_key=b"1" * ALGORITHM.kdf_input_len
         ),
         keyring_trace=KeyringTrace(wrapping_key=MasterKeyInfo(provider_id="a", key_info=b"b"), flags={flag}),
     )
+    assert new_materials is not materials
 
 
 def _add_data_encryption_key_test_cases():
@@ -313,28 +314,29 @@ def _add_data_encryption_key_test_cases():
     "material_class, mod_kwargs, data_encryption_key, keyring_trace, exception_type, exception_message",
     _add_data_encryption_key_test_cases(),
 )
-def test_add_data_encryption_key_fail(
+def test_with_data_encryption_key_fail(
     material_class, mod_kwargs, data_encryption_key, keyring_trace, exception_type, exception_message
 ):
     kwargs = _copy_and_update_kwargs(material_class.__name__, mod_kwargs)
     materials = material_class(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.add_data_encryption_key(data_encryption_key=data_encryption_key, keyring_trace=keyring_trace)
+        materials.with_data_encryption_key(data_encryption_key=data_encryption_key, keyring_trace=keyring_trace)
 
     excinfo.match(exception_message)
 
 
-def test_add_encrypted_data_key_success():
+def test_with_encrypted_data_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", {})
     materials = EncryptionMaterials(**kwargs)
 
-    materials.add_encrypted_data_key(
+    new_materials = materials.with_encrypted_data_key(
         _ENCRYPTED_DATA_KEY,
         keyring_trace=KeyringTrace(
             wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
         ),
     )
+    assert new_materials is not materials
 
 
 @pytest.mark.parametrize(
@@ -366,21 +368,22 @@ def test_add_encrypted_data_key_success():
         ),
     ),
 )
-def test_add_encrypted_data_key_fail(mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message):
+def test_with_encrypted_data_key_fail(mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message):
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", mod_kwargs)
     materials = EncryptionMaterials(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
+        materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
 
     excinfo.match(exception_message)
 
 
-def test_add_signing_key_success():
+def test_with_signing_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", dict(signing_key=_REMOVE))
     materials = EncryptionMaterials(**kwargs)
 
-    materials.add_signing_key(signing_key=_SIGNING_KEY.key_bytes())
+    new_materials = materials.with_signing_key(signing_key=_SIGNING_KEY.key_bytes())
+    assert new_materials is not materials
 
 
 @pytest.mark.parametrize(
@@ -395,21 +398,22 @@ def test_add_signing_key_success():
         ),
     ),
 )
-def test_add_signing_key_fail(mod_kwargs, signing_key, exception_type, exception_message):
+def test_with_signing_key_fail(mod_kwargs, signing_key, exception_type, exception_message):
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", mod_kwargs)
     materials = EncryptionMaterials(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.add_signing_key(signing_key=signing_key)
+        materials.with_signing_key(signing_key=signing_key)
 
     excinfo.match(exception_message)
 
 
-def test_add_verification_key_success():
+def test_with_verification_key_success():
     kwargs = _copy_and_update_kwargs("DecryptionMaterials", dict(verification_key=_REMOVE))
     materials = DecryptionMaterials(**kwargs)
 
-    materials.add_verification_key(verification_key=_VERIFICATION_KEY.key_bytes())
+    new_materials = materials.with_verification_key(verification_key=_VERIFICATION_KEY.key_bytes())
+    assert new_materials is not materials
 
 
 @pytest.mark.parametrize(
@@ -424,12 +428,12 @@ def test_add_verification_key_success():
         ),
     ),
 )
-def test_add_verification_key_fail(mod_kwargs, verification_key, exception_type, exception_message):
+def test_with_verification_key_fail(mod_kwargs, verification_key, exception_type, exception_message):
     kwargs = _copy_and_update_kwargs("DecryptionMaterials", mod_kwargs)
     materials = DecryptionMaterials(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.add_verification_key(verification_key=verification_key)
+        materials.with_verification_key(verification_key=verification_key)
 
     excinfo.match(exception_message)
 
@@ -457,7 +461,9 @@ def test_decryption_materials_is_not_complete(mod_kwargs):
 
 
 def test_encryption_materials_is_complete():
-    materials = EncryptionMaterials(**_copy_and_update_kwargs("EncryptionMaterials", {}))
+    materials = EncryptionMaterials(
+        **_copy_and_update_kwargs("EncryptionMaterials", dict(encrypted_data_keys=[_ENCRYPTED_DATA_KEY]))
+    )
 
     assert materials.is_complete
 
@@ -466,6 +472,7 @@ def test_encryption_materials_is_complete():
     "mod_kwargs",
     (
         dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE),
+        dict(encrypted_data_keys=[]),
         dict(encrypted_data_keys=_REMOVE),
         dict(signing_key=_REMOVE),
     ),
