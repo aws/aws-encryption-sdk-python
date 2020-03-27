@@ -42,7 +42,7 @@ def _generate_data_key(
     :param EncryptionMaterials encryption_materials: Encryption materials for the keyring to modify.
     :param MasterKeyInfo key_provider: Information about the key in the keyring.
     :rtype: EncryptionMaterials
-    :returns: Encryption materials containins data encryption key
+    :returns: Encryption materials containing a data encryption key
     """
     # Check if encryption materials contain data encryption key
     if encryption_materials.data_encryption_key is not None:
