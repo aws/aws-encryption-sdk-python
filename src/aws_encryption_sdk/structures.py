@@ -15,7 +15,7 @@ import copy
 
 import attr
 import six
-from attr.validators import deep_iterable, deep_mapping, instance_of
+from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
 from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
@@ -31,12 +31,39 @@ except ImportError:  # pragma: no cover
 class MasterKeyInfo(object):
     """Contains information necessary to identify a Master Key.
 
+    .. notice::
+
+        The only keyring or master key that should need to set ``key_name`` is the Raw AES keyring/master key.
+        For all other keyrings and master keys, ``key_info`` and ``key_name`` should always be the same.
+
+
+    .. versionadded:: 1.5.0
+        ``key_name``
+
     :param str provider_id: MasterKey provider_id value
     :param bytes key_info: MasterKey key_info value
+    :param bytes key_name: Key name if different than key_info (optional)
     """
 
     provider_id = attr.ib(hash=True, validator=instance_of((six.string_types, bytes)), converter=to_str)
     key_info = attr.ib(hash=True, validator=instance_of((six.string_types, bytes)), converter=to_bytes)
+    key_name = attr.ib(
+        hash=True, default=None, validator=optional(instance_of((six.string_types, bytes))), converter=to_bytes
+    )
+
+    def __attrs_post_init__(self):
+        """Set ``key_name`` if not already set."""
+        if self.key_name is None:
+            self.key_name = self.key_info
+
+    @property
+    def key_namespace(self):
+        """Access the key namespace value (previously, provider ID).
+
+        .. versionadded:: 1.5.0
+
+        """
+        return self.provider_id
 
 
 @attr.s(hash=True)
