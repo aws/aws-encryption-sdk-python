@@ -187,7 +187,11 @@ def test_number_of_encrypted_data_keys_with_generator_and_children():
 
 def test_on_encrypt_when_data_encryption_key_given(mock_generator, mock_child_1, mock_child_2):
     test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_1, mock_child_2])
-    test_multi_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_key())
+    initial_materials = get_encryption_materials_with_data_key()
+    new_materials = test_multi_keyring.on_encrypt(encryption_materials=initial_materials)
+
+    assert new_materials is not initial_materials
+
     for keyring in test_multi_keyring._decryption_keyrings:
         keyring.on_encrypt.assert_called_once()
 
@@ -208,7 +212,11 @@ def test_on_encrypt_edk_length_when_keyring_generates_but_does_not_encrypt_encry
 
 def test_on_decrypt_when_data_encryption_key_given(mock_generator, mock_child_1, mock_child_2):
     test_multi_keyring = MultiKeyring(generator=mock_generator, children=[mock_child_1, mock_child_2])
-    test_multi_keyring.on_decrypt(decryption_materials=get_decryption_materials_with_data_key(), encrypted_data_keys=[])
+    initial_materials = get_decryption_materials_with_data_key()
+    new_materials = test_multi_keyring.on_decrypt(decryption_materials=initial_materials, encrypted_data_keys=[])
+
+    assert new_materials is not initial_materials
+
     for keyring in test_multi_keyring._decryption_keyrings:
         assert not keyring.on_decrypt.called
 

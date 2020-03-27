@@ -1,6 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Resources required for Multi Keyrings."""
+import copy
 import itertools
 
 import attr
@@ -67,20 +68,21 @@ class MultiKeyring(Keyring):
                 "and encryption materials do not already contain a plaintext data key."
             )
 
+        new_materials = copy.copy(encryption_materials)
+
         # Call on_encrypt on the generator keyring if it is provided
         if self.generator is not None:
-
-            encryption_materials = self.generator.on_encrypt(encryption_materials=encryption_materials)
+            new_materials = self.generator.on_encrypt(encryption_materials=new_materials)
 
         # Check if data key is generated
-        if encryption_materials.data_encryption_key is None:
+        if new_materials.data_encryption_key is None:
             raise GenerateKeyError("Unable to generate data encryption key.")
 
         # Call on_encrypt on all other keyrings
         for keyring in self.children:
-            encryption_materials = keyring.on_encrypt(encryption_materials=encryption_materials)
+            new_materials = keyring.on_encrypt(encryption_materials=new_materials)
 
-        return encryption_materials
+        return new_materials
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -95,7 +97,9 @@ class MultiKeyring(Keyring):
         for keyring in self._decryption_keyrings:
             if decryption_materials.data_encryption_key is not None:
                 return decryption_materials
+
             decryption_materials = keyring.on_decrypt(
                 decryption_materials=decryption_materials, encrypted_data_keys=encrypted_data_keys
             )
+
         return decryption_materials
