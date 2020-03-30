@@ -5,7 +5,6 @@
 .. versionadded:: 1.5.0
 
 """
-import copy
 import logging
 
 import attr

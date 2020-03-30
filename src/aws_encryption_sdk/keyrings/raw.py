@@ -1,7 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Resources required for Raw Keyrings."""
-import copy
 import logging
 import os
 
@@ -345,7 +344,7 @@ class RawRSAKeyring(Keyring):
         :returns: Encryption materials containing data key and encrypted data key
         :rtype: EncryptionMaterials
         """
-        new_materials = copy.copy(encryption_materials)
+        new_materials = encryption_materials
 
         if new_materials.data_encryption_key is None:
             new_materials = _generate_data_key(encryption_materials=new_materials, key_provider=self._key_provider)

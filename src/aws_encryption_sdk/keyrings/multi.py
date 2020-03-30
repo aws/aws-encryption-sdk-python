@@ -1,7 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Resources required for Multi Keyrings."""
-import copy
 import itertools
 
 import attr
