@@ -181,7 +181,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         trace_info = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=self._key_id)
-        new_materials = copy.copy(encryption_materials)
+        new_materials = encryption_materials
         try:
             if new_materials.data_encryption_key is None:
                 plaintext_key, encrypted_key = _do_aws_kms_generate_data_key(
@@ -215,22 +215,24 @@ class _AwsKmsSingleCmkKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        new_materials = decryption_materials
+
         for edk in encrypted_data_keys:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
+            if new_materials.data_encryption_key is not None:
+                return new_materials
 
             if (
                 edk.key_provider.provider_id == _PROVIDER_ID
                 and edk.key_provider.key_info.decode("utf-8") == self._key_id
             ):
-                decryption_materials = _try_aws_kms_decrypt(
+                new_materials = _try_aws_kms_decrypt(
                     client_supplier=self._client_supplier,
-                    decryption_materials=decryption_materials,
+                    decryption_materials=new_materials,
                     grant_tokens=self._grant_tokens,
                     encrypted_data_key=edk,
                 )
 
-        return decryption_materials
+        return new_materials
 
 
 @attr.s
@@ -258,19 +260,21 @@ class _AwsKmsDiscoveryKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        new_materials = decryption_materials
+
         for edk in encrypted_data_keys:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
+            if new_materials.data_encryption_key is not None:
+                return new_materials
 
             if edk.key_provider.provider_id == _PROVIDER_ID:
-                decryption_materials = _try_aws_kms_decrypt(
+                new_materials = _try_aws_kms_decrypt(
                     client_supplier=self._client_supplier,
-                    decryption_materials=decryption_materials,
+                    decryption_materials=new_materials,
                     grant_tokens=self._grant_tokens,
                     encrypted_data_key=edk,
                 )
 
-        return decryption_materials
+        return new_materials
 
 
 def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, encrypted_data_key):

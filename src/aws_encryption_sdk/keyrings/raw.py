@@ -127,7 +127,7 @@ class RawAESKeyring(Keyring):
         :returns: Encryption materials containing data key and encrypted data key
         :rtype: EncryptionMaterials
         """
-        new_materials = copy.copy(encryption_materials)
+        new_materials = encryption_materials
 
         if new_materials.data_encryption_key is None:
             # Get encryption materials with a new data key.
@@ -169,8 +169,10 @@ class RawAESKeyring(Keyring):
         :returns: Decryption materials that MAY include a plaintext data key
         :rtype: DecryptionMaterials
         """
-        if decryption_materials.data_encryption_key is not None:
-            return decryption_materials
+        new_materials = decryption_materials
+
+        if new_materials.data_encryption_key is not None:
+            return new_materials
 
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
@@ -192,7 +194,7 @@ class RawAESKeyring(Keyring):
             try:
                 plaintext_data_key = self._wrapping_key_structure.decrypt(
                     encrypted_wrapped_data_key=encrypted_wrapped_key,
-                    encryption_context=decryption_materials.encryption_context,
+                    encryption_context=new_materials.encryption_context,
                 )
 
             except Exception:  # pylint: disable=broad-except
@@ -212,11 +214,11 @@ class RawAESKeyring(Keyring):
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
 
-            return decryption_materials.with_data_encryption_key(
+            return new_materials.with_data_encryption_key(
                 data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
             )
 
-        return decryption_materials
+        return new_materials
 
 
 @attr.s
@@ -390,11 +392,13 @@ class RawRSAKeyring(Keyring):
         :returns: Decryption materials that MAY include a plaintext data key
         :rtype: DecryptionMaterials
         """
-        if decryption_materials.data_encryption_key is not None:
-            return decryption_materials
+        new_materials = decryption_materials
+
+        if new_materials.data_encryption_key is not None:
+            return new_materials
 
         if self._private_wrapping_key is None:
-            return decryption_materials
+            return new_materials
 
         # Decrypt data key
         for key in encrypted_data_keys:
@@ -422,8 +426,8 @@ class RawRSAKeyring(Keyring):
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
 
-            return decryption_materials.with_data_encryption_key(
+            return new_materials.with_data_encryption_key(
                 data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
             )
 
-        return decryption_materials
+        return new_materials

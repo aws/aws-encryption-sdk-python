@@ -68,7 +68,7 @@ class MultiKeyring(Keyring):
                 "and encryption materials do not already contain a plaintext data key."
             )
 
-        new_materials = copy.copy(encryption_materials)
+        new_materials = encryption_materials
 
         # Call on_encrypt on the generator keyring if it is provided
         if self.generator is not None:
@@ -94,12 +94,13 @@ class MultiKeyring(Keyring):
         :rtype: DecryptionMaterials
         """
         # Call on_decrypt on all keyrings till decryption is successful
+        new_materials = decryption_materials
         for keyring in self._decryption_keyrings:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
+            if new_materials.data_encryption_key is not None:
+                return new_materials
 
-            decryption_materials = keyring.on_decrypt(
-                decryption_materials=decryption_materials, encrypted_data_keys=encrypted_data_keys
+            new_materials = keyring.on_decrypt(
+                decryption_materials=new_materials, encrypted_data_keys=encrypted_data_keys
             )
 
-        return decryption_materials
+        return new_materials
