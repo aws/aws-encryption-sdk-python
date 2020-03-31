@@ -6,7 +6,7 @@ This example shows how to use the one-step encrypt and decrypt APIs.
 In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
-see the ``keyring`` and ``mater_key_provider`` directories.
+see the ``keyring`` and ``master_key_provider`` directories.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
