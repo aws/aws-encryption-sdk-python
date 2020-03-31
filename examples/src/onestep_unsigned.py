@@ -7,7 +7,7 @@ when using the one-step encrypt and decrypt APIs.
 In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
-see the ``keyring`` and ``mater_key_provider`` directories.
+see the ``keyring`` and ``master_key_provider`` directories.
 
 The default algorithm suite includes a message-level signature
 that protects you from an attacker who has *decrypt* but not *encrypt* capability
@@ -54,19 +54,19 @@ def run(aws_kms_cmk, source_plaintext):
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
     )
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
     # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     #
-    # We do not need to specify the algorithm suite on decrypt
+    # You do not need to specify the algorithm suite on decrypt
     # because the header message includes the algorithm suite identifier.
     decrypted, decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, keyring=keyring)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted == source_plaintext
 
     # Verify that the encryption context used in the decrypt operation includes

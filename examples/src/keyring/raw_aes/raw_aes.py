@@ -1,22 +1,23 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to use the one-step encrypt and decrypt APIs.
+This examples shows how to configure and use a raw AES keyring.
 
-In this example, we use an AWS KMS customer master key (CMK),
-but you can use other key management options with the AWS Encryption SDK.
-For examples that demonstrate how to use other key management configurations,
-see the ``keyring`` and ``master_key_provider`` directories.
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-aes-keyring
+
+In this example, we use the one-step encrypt and decrypt APIs.
 """
+import os
+
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.identifiers import WrappingAlgorithm
+from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 
 
-def run(aws_kms_cmk, source_plaintext):
-    # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using the one-step encrypt/decrypt APIs.
+def run(source_plaintext):
+    # type: (bytes) -> None
+    """Demonstrate an encrypt/decrypt cycle using a raw AES keyring.
 
-    :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
@@ -29,8 +30,28 @@ def run(aws_kms_cmk, source_plaintext):
         "the data you are handling": "is what you think it is",
     }
 
+    # Choose the wrapping algorithm for the keyring to use.
+    wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
+
+    # Generate an AES key to use with your keyring.
+    # The key size depends on the wrapping algorithm.
+    #
+    # In practice, you should get this key from a secure key management system such as an HSM.
+    key = os.urandom(wrapping_algorithm.algorithm.kdf_input_len)
+
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = RawAESKeyring(
+        # The key namespace and key name are defined by you
+        # and are used by the raw RSA keyring
+        # to determine whether it should attempt to decrypt
+        # an encrypted data key.
+        #
+        # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-aes-keyring
+        key_namespace="some managed raw keys",
+        key_name=b"my AES wrapping key",
+        wrapping_key=key,
+        wrapping_algorithm=wrapping_algorithm,
+    )
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

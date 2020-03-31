@@ -9,7 +9,7 @@ we can check the encryption context in the header before we start decrypting.
 In this example, we use an AWS KMS customer master key (CMK),
 but you can use other key management options with the AWS Encryption SDK.
 For examples that demonstrate how to use other key management configurations,
-see the ``keyring`` and ``mater_key_provider`` directories.
+see the ``keyring`` and ``master_key_provider`` directories.
 """
 import io
 
@@ -49,7 +49,7 @@ def run(aws_kms_cmk, source_plaintext):
         for segment in encryptor:
             ciphertext.write(segment)
 
-    # Verify that the ciphertext and plaintext are different.
+    # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext.getvalue() != source_plaintext
 
     # Reset the ciphertext stream position so that we can read from the beginning.
@@ -57,8 +57,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Decrypt your encrypted data using the same keyring you used on encrypt.
     #
-    # We do not need to specify the encryption context on decrypt
-    # because the header message includes the encryption context.
+    # You do not need to specify the encryption context on decrypt
+    # because the header of the encrypted message includes the encryption context.
     decrypted = io.BytesIO()
     with aws_encryption_sdk.stream(mode="decrypt", source=ciphertext, keyring=keyring) as decryptor:
         # Check the encryption context in the header before we start decrypting.
@@ -75,5 +75,5 @@ def run(aws_kms_cmk, source_plaintext):
         for segment in decryptor:
             decrypted.write(segment)
 
-    # Verify that the decrypted plaintext is identical to the original plaintext.
+    # Demonstrate that the decrypted plaintext is identical to the original plaintext.
     assert decrypted.getvalue() == source_plaintext

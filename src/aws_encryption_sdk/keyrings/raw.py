@@ -307,6 +307,7 @@ class RawRSAKeyring(Keyring):
         private_encoded_key=None,  # type: bytes
         password=None,  # type: bytes
     ):
+        # type: (...) -> RawRSAKeyring
         """Generate a raw RSA keyring using DER Encoded public and private keys
 
         :param str key_namespace: String defining the keyring ID

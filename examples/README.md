@@ -14,14 +14,45 @@ and streaming APIs.
 You can find examples that demonstrate these APIs
 in the [`examples/src/`](./src) directory.
 
+* [How to encrypt and decrypt](./src/onestep_defaults.py)
+* [How to change the algorithm suite](./src/onestep_unsigned.py)
+* [How to encrypt and decrypt data streams in memory](./src/in_memory_streaming_defaults.py)
+* [How to encrypt and decrypt data streamed between files](./src/file_streaming_defaults.py)
+
 ## Configuration
 
-To use the library APIs,
+To use the encryption and decryption APIs,
 you need to describe how you want the library to protect your data keys.
-You can do this using
-[keyrings][#keyrings] or [cryptographic materials managers][#cryptographic-materials-managers],
-or using [master key providers][#master-key-providers].
-These examples will show you how.
+You can do this by configuring
+[keyrings](#keyrings) or [cryptographic materials managers](#cryptographic-materials-managers),
+or by configuring [master key providers](#master-key-providers).
+These examples will show you how to use the configuration tools that we include for you
+and how to create some of your own.
+We start with AWS KMS examples, then show how to use other wrapping keys.
+
+* Using AWS Key Management Service (AWS KMS)
+    * How to use one AWS KMS CMK
+        * [with keyrings](./src/keyring/aws_kms/single_cmk.py)
+    * How to use multiple AWS KMS CMKs in different regions
+        * [with keyrings](./src/keyring/aws_kms/multiple_regions.py)
+    * How to decrypt when you don't know the CMK
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt.py)
+    * How to decrypt within a region
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_in_region_only.py)
+    * How to decrypt with a preferred region but failover to others
+        * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_with_preferred_regions.py)
+* Using raw wrapping keys
+    * How to use a raw AES wrapping key
+        * [with keyrings](./src/keyring/raw_aes/raw_aes.py)
+    * How to use a raw RSA wrapping key
+        * [with keyrings](./src/keyring/raw_rsa/private_key_only.py)
+    * How to use a raw RSA wrapping key when the key is PEM or DER encoded
+        * [with keyrings](./src/keyring/raw_rsa/private_key_only_from_pem.py)
+    * How to encrypt with a raw RSA public key wrapping key without access to the private key
+        * [with keyrings](./src/keyring/raw_rsa/public_private_key_separate.py)
+* Combining wrapping keys
+    * How to combine AWS KMS with an offline escrow key
+        * [with keyrings](./src/keyring/multi/aws_kms_with_escrow.py)
 
 ### Keyrings
 
@@ -56,7 +87,8 @@ you can find these examples in [`examples/src/master_key_provider`](./src/master
 
 ## Legacy
 
-This section includes older examples, including examples of using master keys and master key providers in Java and Python.
+This section includes older examples,
+including examples of using master keys and master key providers.
 You can use them as a reference,
 but we recommend looking at the newer examples, which explain the preferred ways of using this library.
 You can find these examples in [`examples/src/legacy`](./src/legacy).
