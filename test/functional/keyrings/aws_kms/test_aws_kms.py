@@ -79,6 +79,7 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator)
 
     result_materials = keyring.on_encrypt(initial_materials)
 
+    assert result_materials is not initial_materials
     assert result_materials.data_encryption_key is not None
     assert len(result_materials.encrypted_data_keys) == 1
 
@@ -149,6 +150,7 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
         decryption_materials=initial_decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
+    assert result_materials is not initial_decryption_materials
     assert result_materials.data_encryption_key is not None
 
     generator_flags = _matching_flags(
@@ -243,6 +245,7 @@ def test_aws_kms_discovery_keyring_on_encrypt():
 
     result_materials = keyring.on_encrypt(initial_materials)
 
+    assert result_materials is initial_materials
     assert len(result_materials.encrypted_data_keys) == 0
 
 
@@ -268,6 +271,7 @@ def test_aws_kms_discovery_keyring_on_decrypt(encryption_materials_for_discovery
         decryption_materials=initial_decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
 
+    assert result_materials is not initial_decryption_materials
     assert result_materials.data_encryption_key is not None
 
     generator_flags = _matching_flags(

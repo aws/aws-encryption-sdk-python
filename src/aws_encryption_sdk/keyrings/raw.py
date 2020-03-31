@@ -11,7 +11,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from aws_encryption_sdk.exceptions import GenerateKeyError
+from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
@@ -31,13 +31,17 @@ __all__ = ("RawAESKeyring", "RawRSAKeyring")
 _LOGGER = logging.getLogger(__name__)
 
 
-def _generate_data_key(encryption_materials, key_provider):
-    # type: (EncryptionMaterials, MasterKeyInfo) -> bytes
+def _generate_data_key(
+    encryption_materials,  # type: EncryptionMaterials
+    key_provider,  # type: MasterKeyInfo
+):
+    # type: (...) -> EncryptionMaterials
     """Generates plaintext data key for the keyring.
 
     :param EncryptionMaterials encryption_materials: Encryption materials for the keyring to modify.
     :param MasterKeyInfo key_provider: Information about the key in the keyring.
-    :return bytes: Plaintext data key
+    :rtype: EncryptionMaterials
+    :returns: Encryption materials containing a data encryption key
     """
     # Check if encryption materials contain data encryption key
     if encryption_materials.data_encryption_key is not None:
@@ -57,10 +61,9 @@ def _generate_data_key(encryption_materials, key_provider):
     # plaintext_data_key to RawDataKey
     data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
 
-    # Add generated data key to encryption_materials
-    encryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
-
-    return plaintext_data_key
+    return encryption_materials.with_data_encryption_key(
+        data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
+    )
 
 
 @attr.s
@@ -120,17 +123,20 @@ class RawAESKeyring(Keyring):
         """Generate a data key if not present and encrypt it using any available wrapping key
 
         :param EncryptionMaterials encryption_materials: Encryption materials for the keyring to modify
-        :returns: Optionally modified encryption materials
+        :returns: Encryption materials containing data key and encrypted data key
         :rtype: EncryptionMaterials
         """
-        if encryption_materials.data_encryption_key is None:
-            _generate_data_key(encryption_materials=encryption_materials, key_provider=self._key_provider)
+        new_materials = encryption_materials
+
+        if new_materials.data_encryption_key is None:
+            # Get encryption materials with a new data key.
+            new_materials = _generate_data_key(encryption_materials=new_materials, key_provider=self._key_provider)
 
         try:
             # Encrypt data key
             encrypted_wrapped_key = self._wrapping_key_structure.encrypt(
-                plaintext_data_key=encryption_materials.data_encryption_key.data_key,
-                encryption_context=encryption_materials.encryption_context,
+                plaintext_data_key=new_materials.data_encryption_key.data_key,
+                encryption_context=new_materials.encryption_context,
             )
 
             # EncryptedData to EncryptedDataKey
@@ -141,18 +147,17 @@ class RawAESKeyring(Keyring):
                 encrypted_wrapped_key=encrypted_wrapped_key,
             )
         except Exception:  # pylint: disable=broad-except
-            error_message = "Raw AES Keyring unable to encrypt data key"
+            error_message = "Raw AES keyring unable to encrypt data key"
             _LOGGER.exception(error_message)
-            return encryption_materials
+            raise EncryptKeyError(error_message)
 
         # Update Keyring Trace
         keyring_trace = KeyringTrace(
-            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
+            wrapping_key=self._key_provider,
+            flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT},
         )
 
-        # Add encrypted data key to encryption_materials
-        encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
-        return encryption_materials
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -160,18 +165,17 @@ class RawAESKeyring(Keyring):
 
         :param DecryptionMaterials decryption_materials: Decryption materials for the keyring to modify
         :param List[EncryptedDataKey] encrypted_data_keys: List of encrypted data keys
-        :returns: Optionally modified decryption materials
+        :returns: Decryption materials that MAY include a plaintext data key
         :rtype: DecryptionMaterials
         """
-        if decryption_materials.data_encryption_key is not None:
-            return decryption_materials
+        new_materials = decryption_materials
+
+        if new_materials.data_encryption_key is not None:
+            return new_materials
 
         # Decrypt data key
         expected_key_info_len = len(self._key_info_prefix) + self._wrapping_algorithm.algorithm.iv_len
         for key in encrypted_data_keys:
-
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
 
             if (
                 key.key_provider.provider_id != self._key_provider.provider_id
@@ -189,22 +193,31 @@ class RawAESKeyring(Keyring):
             try:
                 plaintext_data_key = self._wrapping_key_structure.decrypt(
                     encrypted_wrapped_data_key=encrypted_wrapped_key,
-                    encryption_context=decryption_materials.encryption_context,
+                    encryption_context=new_materials.encryption_context,
                 )
 
             except Exception:  # pylint: disable=broad-except
+                # We intentionally WANT to catch all exceptions here
                 error_message = "Raw AES Keyring unable to decrypt data key"
                 _LOGGER.exception(error_message)
-                return decryption_materials
+                # The Raw AES keyring MUST evaluate every encrypted data key
+                # until it either succeeds or runs out of encrypted data keys.
+                continue
 
             # Create a keyring trace
-            keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.DECRYPTED_DATA_KEY})
+            keyring_trace = KeyringTrace(
+                wrapping_key=self._key_provider,
+                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY, KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT},
+            )
 
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
-            decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
-        return decryption_materials
+            return new_materials.with_data_encryption_key(
+                data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
+            )
+
+        return new_materials
 
 
 @attr.s
@@ -329,22 +342,24 @@ class RawRSAKeyring(Keyring):
         and encrypt it using any available wrapping key in any child keyring.
 
         :param EncryptionMaterials encryption_materials: Encryption materials for keyring to modify.
-        :returns: Optionally modified encryption materials.
+        :returns: Encryption materials containing data key and encrypted data key
         :rtype: EncryptionMaterials
         """
-        if encryption_materials.data_encryption_key is None:
-            _generate_data_key(encryption_materials=encryption_materials, key_provider=self._key_provider)
+        new_materials = encryption_materials
+
+        if new_materials.data_encryption_key is None:
+            new_materials = _generate_data_key(encryption_materials=new_materials, key_provider=self._key_provider)
 
         if self._public_wrapping_key is None:
-            return encryption_materials
+            # This should be impossible, but just in case, give a useful error message.
+            raise EncryptKeyError("Raw RSA keyring unable to encrypt data key: no public key available")
 
         try:
             # Encrypt data key
             encrypted_wrapped_key = EncryptedData(
                 iv=None,
                 ciphertext=self._public_wrapping_key.encrypt(
-                    plaintext=encryption_materials.data_encryption_key.data_key,
-                    padding=self._wrapping_algorithm.padding,
+                    plaintext=new_materials.data_encryption_key.data_key, padding=self._wrapping_algorithm.padding,
                 ),
                 tag=None,
             )
@@ -357,19 +372,15 @@ class RawRSAKeyring(Keyring):
                 encrypted_wrapped_key=encrypted_wrapped_key,
             )
         except Exception:  # pylint: disable=broad-except
-            error_message = "Raw RSA Keyring unable to encrypt data key"
+            error_message = "Raw RSA keyring unable to encrypt data key"
             _LOGGER.exception(error_message)
-            return encryption_materials
+            raise EncryptKeyError(error_message)
 
         # Update Keyring Trace
-        keyring_trace = KeyringTrace(
-            wrapping_key=encrypted_data_key.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
-        )
+        keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY})
 
         # Add encrypted data key to encryption_materials
-        encryption_materials.add_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
-
-        return encryption_materials
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -378,18 +389,22 @@ class RawRSAKeyring(Keyring):
         :param DecryptionMaterials decryption_materials: Decryption materials for keyring to modify.
         :param encrypted_data_keys: List of encrypted data keys.
         :type: List[EncryptedDataKey]
-        :returns: Optionally modified decryption materials.
+        :returns: Decryption materials that MAY include a plaintext data key
         :rtype: DecryptionMaterials
         """
+        new_materials = decryption_materials
+
+        if new_materials.data_encryption_key is not None:
+            return new_materials
+
         if self._private_wrapping_key is None:
-            return decryption_materials
+            return new_materials
 
         # Decrypt data key
         for key in encrypted_data_keys:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
             if key.key_provider != self._key_provider:
                 continue
+
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
                 wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=self.key_name, wrapped_encrypted_key=key
@@ -401,6 +416,8 @@ class RawRSAKeyring(Keyring):
             except Exception:  # pylint: disable=broad-except
                 error_message = "Raw RSA Keyring unable to decrypt data key"
                 _LOGGER.exception(error_message)
+                # The Raw RSA keyring MUST evaluate every encrypted data key
+                # until it either succeeds or runs out of encrypted data keys.
                 continue
 
             # Create a keyring trace
@@ -408,6 +425,9 @@ class RawRSAKeyring(Keyring):
 
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
-            decryption_materials.add_data_encryption_key(data_encryption_key, keyring_trace)
 
-        return decryption_materials
+            return new_materials.with_data_encryption_key(
+                data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
+            )
+
+        return new_materials

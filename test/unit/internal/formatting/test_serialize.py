@@ -325,7 +325,9 @@ class TestSerialize(object):
         )
         assert test == EncryptedDataKey(
             key_provider=MasterKeyInfo(
-                provider_id=VALUES["provider_id"], key_info=VALUES["wrapped_keys"]["serialized"]["key_info"]
+                provider_id=self.mock_key_provider.provider_id,
+                key_info=VALUES["wrapped_keys"]["serialized"]["key_info"],
+                key_name=VALUES["wrapped_keys"]["raw"]["key_info"],
             ),
             encrypted_data_key=VALUES["wrapped_keys"]["serialized"]["key_ciphertext"],
         )
