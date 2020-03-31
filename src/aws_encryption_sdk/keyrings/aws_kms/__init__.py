@@ -180,16 +180,17 @@ class _AwsKmsSingleCmkKeyring(Keyring):
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         trace_info = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=self._key_id)
+        new_materials = encryption_materials
         try:
-            if encryption_materials.data_encryption_key is None:
+            if new_materials.data_encryption_key is None:
                 plaintext_key, encrypted_key = _do_aws_kms_generate_data_key(
                     client_supplier=self._client_supplier,
                     key_name=self._key_id,
-                    encryption_context=encryption_materials.encryption_context,
-                    algorithm=encryption_materials.algorithm,
+                    encryption_context=new_materials.encryption_context,
+                    algorithm=new_materials.algorithm,
                     grant_tokens=self._grant_tokens,
                 )
-                encryption_materials.add_data_encryption_key(
+                new_materials = new_materials.with_data_encryption_key(
                     data_encryption_key=plaintext_key,
                     keyring_trace=KeyringTrace(wrapping_key=trace_info, flags=_GENERATE_FLAGS),
                 )
@@ -197,8 +198,8 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                 encrypted_key = _do_aws_kms_encrypt(
                     client_supplier=self._client_supplier,
                     key_name=self._key_id,
-                    plaintext_data_key=encryption_materials.data_encryption_key,
-                    encryption_context=encryption_materials.encryption_context,
+                    plaintext_data_key=new_materials.data_encryption_key,
+                    encryption_context=new_materials.encryption_context,
                     grant_tokens=self._grant_tokens,
                 )
         except Exception:  # pylint: disable=broad-except
@@ -207,30 +208,30 @@ class _AwsKmsSingleCmkKeyring(Keyring):
             _LOGGER.exception(message)
             raise EncryptKeyError(message)
 
-        encryption_materials.add_encrypted_data_key(
+        return new_materials.with_encrypted_data_key(
             encrypted_data_key=encrypted_key, keyring_trace=KeyringTrace(wrapping_key=trace_info, flags=_ENCRYPT_FLAGS)
         )
 
-        return encryption_materials
-
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        new_materials = decryption_materials
+
         for edk in encrypted_data_keys:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
+            if new_materials.data_encryption_key is not None:
+                return new_materials
 
             if (
                 edk.key_provider.provider_id == _PROVIDER_ID
                 and edk.key_provider.key_info.decode("utf-8") == self._key_id
             ):
-                decryption_materials = _try_aws_kms_decrypt(
+                new_materials = _try_aws_kms_decrypt(
                     client_supplier=self._client_supplier,
-                    decryption_materials=decryption_materials,
+                    decryption_materials=new_materials,
                     grant_tokens=self._grant_tokens,
                     encrypted_data_key=edk,
                 )
 
-        return decryption_materials
+        return new_materials
 
 
 @attr.s
@@ -258,19 +259,21 @@ class _AwsKmsDiscoveryKeyring(Keyring):
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
+        new_materials = decryption_materials
+
         for edk in encrypted_data_keys:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
+            if new_materials.data_encryption_key is not None:
+                return new_materials
 
             if edk.key_provider.provider_id == _PROVIDER_ID:
-                decryption_materials = _try_aws_kms_decrypt(
+                new_materials = _try_aws_kms_decrypt(
                     client_supplier=self._client_supplier,
-                    decryption_materials=decryption_materials,
+                    decryption_materials=new_materials,
                     grant_tokens=self._grant_tokens,
                     encrypted_data_key=edk,
                 )
 
-        return decryption_materials
+        return new_materials
 
 
 def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, encrypted_data_key):
@@ -293,14 +296,12 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
     except Exception:  # pylint: disable=broad-except
         # We intentionally WANT to catch all exceptions here
         _LOGGER.exception("Unable to decrypt encrypted data key from %s", encrypted_data_key.key_provider)
-    else:
-        decryption_materials.add_data_encryption_key(
-            data_encryption_key=plaintext_key,
-            keyring_trace=KeyringTrace(wrapping_key=encrypted_data_key.key_provider, flags=_DECRYPT_FLAGS),
-        )
         return decryption_materials
 
-    return decryption_materials
+    return decryption_materials.with_data_encryption_key(
+        data_encryption_key=plaintext_key,
+        keyring_trace=KeyringTrace(wrapping_key=encrypted_data_key.key_provider, flags=_DECRYPT_FLAGS),
+    )
 
 
 def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryption_context, grant_tokens):

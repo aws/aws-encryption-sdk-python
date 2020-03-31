@@ -67,20 +67,21 @@ class MultiKeyring(Keyring):
                 "and encryption materials do not already contain a plaintext data key."
             )
 
+        new_materials = encryption_materials
+
         # Call on_encrypt on the generator keyring if it is provided
         if self.generator is not None:
-
-            encryption_materials = self.generator.on_encrypt(encryption_materials=encryption_materials)
+            new_materials = self.generator.on_encrypt(encryption_materials=new_materials)
 
         # Check if data key is generated
-        if encryption_materials.data_encryption_key is None:
+        if new_materials.data_encryption_key is None:
             raise GenerateKeyError("Unable to generate data encryption key.")
 
         # Call on_encrypt on all other keyrings
         for keyring in self.children:
-            encryption_materials = keyring.on_encrypt(encryption_materials=encryption_materials)
+            new_materials = keyring.on_encrypt(encryption_materials=new_materials)
 
-        return encryption_materials
+        return new_materials
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -92,10 +93,13 @@ class MultiKeyring(Keyring):
         :rtype: DecryptionMaterials
         """
         # Call on_decrypt on all keyrings till decryption is successful
+        new_materials = decryption_materials
         for keyring in self._decryption_keyrings:
-            if decryption_materials.data_encryption_key is not None:
-                return decryption_materials
-            decryption_materials = keyring.on_decrypt(
-                decryption_materials=decryption_materials, encrypted_data_keys=encrypted_data_keys
+            if new_materials.data_encryption_key is not None:
+                return new_materials
+
+            new_materials = keyring.on_decrypt(
+                decryption_materials=new_materials, encrypted_data_keys=encrypted_data_keys
             )
-        return decryption_materials
+
+        return new_materials
