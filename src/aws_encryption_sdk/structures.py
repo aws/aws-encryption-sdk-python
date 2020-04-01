@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 class MasterKeyInfo(object):
     """Contains information necessary to identify a Master Key.
 
-    .. notice::
+    .. note::
 
         The only keyring or master key that should need to set ``key_name`` is the Raw AES keyring/master key.
         For all other keyrings and master keys, ``key_info`` and ``key_name`` should always be the same.

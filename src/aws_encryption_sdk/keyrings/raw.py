@@ -79,7 +79,8 @@ class RawAESKeyring(Keyring):
     :param WrappingAlgorithm wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key.
 
     .. note::
-    Only one wrapping key can be specified in a Raw AES Keyring
+
+        Only one wrapping key can be specified in a Raw AES Keyring
     """
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))

@@ -60,7 +60,7 @@ class KmsKeyring(Keyring):
     If you specify ``is_discovery=True`` the keyring will be a KMS discovery keyring,
     doing nothing on encrypt and attempting to decrypt any AWS KMS-encrypted data key on decrypt.
 
-    .. notice::
+    .. note::
 
         You must either set ``is_discovery=True`` or provide key IDs.
 
