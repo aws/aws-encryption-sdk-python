@@ -13,7 +13,7 @@ from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError
 from aws_encryption_sdk.identifiers import KeyringTraceFlag
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.keyrings.aws_kms import (
-    _PROVIDER_ID,
+    KEY_NAMESPACE,
     KmsKeyring,
     _AwsKmsDiscoveryKeyring,
     _AwsKmsSingleCmkKeyring,
@@ -58,7 +58,7 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_empty_materials(fake_generator):
     assert len(result_materials.encrypted_data_keys) == 1
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.GENERATED_DATA_KEY in generator_flags
@@ -84,7 +84,7 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator)
     assert len(result_materials.encrypted_data_keys) == 1
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.GENERATED_DATA_KEY not in generator_flags
@@ -123,7 +123,7 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_existing_datakey(caplog):
         decryption_materials=initial_materials,
         encrypted_data_keys=(
             EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"foo"), encrypted_data_key=b"bar"
+                key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=b"foo"), encrypted_data_key=b"bar"
             ),
         ),
     )
@@ -154,7 +154,7 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
     assert result_materials.data_encryption_key is not None
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
@@ -180,12 +180,12 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_c
     )
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=generator), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=generator), result_materials.keyring_trace
     )
     assert len(generator_flags) == 0
 
     child_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=child), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=child), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.DECRYPTED_DATA_KEY in child_flags
@@ -225,7 +225,7 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_fail(caplog):
         decryption_materials=initial_materials,
         encrypted_data_keys=(
             EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"foo"), encrypted_data_key=b"bar"
+                key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=b"foo"), encrypted_data_key=b"bar"
             ),
         ),
     )
@@ -275,7 +275,7 @@ def test_aws_kms_discovery_keyring_on_decrypt(encryption_materials_for_discovery
     assert result_materials.data_encryption_key is not None
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=generator_key_id), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=generator_key_id), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
@@ -300,7 +300,7 @@ def test_aws_kms_discovery_keyring_on_decrypt_existing_data_key(caplog):
         decryption_materials=initial_materials,
         encrypted_data_keys=(
             EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"foo"), encrypted_data_key=b"bar"
+                key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=b"foo"), encrypted_data_key=b"bar"
             ),
         ),
     )
@@ -346,7 +346,7 @@ def test_aws_kms_discovery_keyring_on_decrypt_fail(caplog):
         decryption_materials=initial_materials,
         encrypted_data_keys=(
             EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"bar"), encrypted_data_key=b"bar"
+                key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=b"bar"), encrypted_data_key=b"bar"
             ),
         ),
     )
@@ -365,7 +365,7 @@ def test_try_aws_kms_decrypt_succeed(fake_generator):
     response = kms.encrypt(KeyId=fake_generator, Plaintext=plaintext, EncryptionContext=encryption_context)
 
     encrypted_data_key = EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response["KeyId"]),
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response["KeyId"]),
         encrypted_data_key=response["CiphertextBlob"],
     )
 
@@ -381,7 +381,7 @@ def test_try_aws_kms_decrypt_succeed(fake_generator):
     assert result_materials.data_encryption_key.data_key == plaintext
 
     generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), result_materials.keyring_trace
+        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
     )
 
     assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
@@ -394,7 +394,7 @@ def test_try_aws_kms_decrypt_error(caplog):
     caplog.set_level(logging.DEBUG)
 
     encrypted_data_key = EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=b"foo"), encrypted_data_key=b"bar"
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=b"foo"), encrypted_data_key=b"bar"
     )
 
     initial_decryption_materials = DecryptionMaterials(algorithm=ALGORITHM, encryption_context={},)
@@ -420,7 +420,7 @@ def test_do_aws_kms_decrypt(fake_generator):
     response = kms.encrypt(KeyId=fake_generator, Plaintext=plaintext, EncryptionContext=encryption_context)
 
     encrypted_data_key = EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response["KeyId"]),
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response["KeyId"]),
         encrypted_data_key=response["CiphertextBlob"],
     )
 
@@ -442,7 +442,7 @@ def test_do_aws_kms_decrypt_unexpected_key_id(fake_generator_and_child):
     response = kms.encrypt(KeyId=encryptor, Plaintext=plaintext, EncryptionContext=encryption_context)
 
     encrypted_data_key = EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response["KeyId"]),
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response["KeyId"]),
         encrypted_data_key=response["CiphertextBlob"],
     )
 
@@ -466,7 +466,7 @@ def test_do_aws_kms_encrypt(fake_generator):
         client_supplier=DefaultClientSupplier(),
         key_name=fake_generator,
         plaintext_data_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=fake_generator), data_key=plaintext
+            key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), data_key=plaintext
         ),
         encryption_context=encryption_context,
         grant_tokens=[],

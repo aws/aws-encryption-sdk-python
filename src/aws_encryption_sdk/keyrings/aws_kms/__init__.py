@@ -30,13 +30,15 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__all__ = ("KmsKeyring",)
+__all__ = ("KmsKeyring", "KEY_NAMESPACE")
 
 _LOGGER = logging.getLogger(__name__)
-_PROVIDER_ID = "aws-kms"
 _GENERATE_FLAGS = {KeyringTraceFlag.GENERATED_DATA_KEY}
 _ENCRYPT_FLAGS = {KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT}
 _DECRYPT_FLAGS = {KeyringTraceFlag.DECRYPTED_DATA_KEY, KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT}
+
+#: Key namespace used for all encrypted data keys created by the KMS keyring.
+KEY_NAMESPACE = "aws-kms"
 
 
 @attr.s
@@ -179,7 +181,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
 
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
-        trace_info = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=self._key_id)
+        trace_info = MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=self._key_id)
         new_materials = encryption_materials
         try:
             if new_materials.data_encryption_key is None:
@@ -221,7 +223,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                 return new_materials
 
             if (
-                edk.key_provider.provider_id == _PROVIDER_ID
+                edk.key_provider.provider_id == KEY_NAMESPACE
                 and edk.key_provider.key_info.decode("utf-8") == self._key_id
             ):
                 new_materials = _try_aws_kms_decrypt(
@@ -265,7 +267,7 @@ class _AwsKmsDiscoveryKeyring(Keyring):
             if new_materials.data_encryption_key is not None:
                 return new_materials
 
-            if edk.key_provider.provider_id == _PROVIDER_ID:
+            if edk.key_provider.provider_id == KEY_NAMESPACE:
                 new_materials = _try_aws_kms_decrypt(
                     client_supplier=self._client_supplier,
                     decryption_materials=new_materials,
@@ -327,7 +329,7 @@ def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryptio
             " actual '{actual}' != expected '{expected}'".format(actual=response_key_id, expected=key_name)
         )
     return RawDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response_key_id), data_key=response["Plaintext"]
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response_key_id), data_key=response["Plaintext"]
     )
 
 
@@ -346,7 +348,7 @@ def _do_aws_kms_encrypt(client_supplier, key_name, plaintext_data_key, encryptio
         GrantTokens=grant_tokens,
     )
     return EncryptedDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response["KeyId"]),
+        key_provider=MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response["KeyId"]),
         encrypted_data_key=response["CiphertextBlob"],
     )
 
@@ -368,7 +370,7 @@ def _do_aws_kms_generate_data_key(client_supplier, key_name, encryption_context,
         EncryptionContext=encryption_context,
         GrantTokens=grant_tokens,
     )
-    provider = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=response["KeyId"])
+    provider = MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=response["KeyId"])
     plaintext_key = RawDataKey(key_provider=provider, data_key=response["Plaintext"])
     encrypted_key = EncryptedDataKey(key_provider=provider, encrypted_data_key=response["CiphertextBlob"])
     return plaintext_key, encrypted_key
