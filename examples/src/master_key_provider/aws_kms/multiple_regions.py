@@ -12,8 +12,8 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#
 For an example of how to use the KMS master key with a single CMK,
 see the ``master_key_provider/aws_kms/single_cmk`` example.
 
-For examples of how to use the KMS master key provider in discovery mode on decrypt,
-see the ``master_key_provider/aws_kms/discovery_decrypt``.
+For an example of how to use the KMS master key provider in discovery mode on decrypt,
+see the ``master_key_provider/aws_kms/discovery_decrypt`` example.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey, KMSMasterKeyProvider

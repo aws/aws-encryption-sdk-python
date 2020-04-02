@@ -13,6 +13,9 @@ This example shows how to configure and use a KMS master key provider to decrypt
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#master-key-provider
 
+For an example of how to use the KMS master key with a single CMK,
+see the ``master_key_provider/aws_kms/single_cmk`` example.
+
 For an example of how to use the KMS master key provider with CMKs in multiple regions,
 see the ``master_key_provider/aws_kms/multiple_regions`` example.
 """
