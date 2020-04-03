@@ -1,8 +1,8 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example is provided as a reference for users migrating away from master key providers.
-We recommend that all new use should use keyrings.
+This example is intended to serve as reference material for users migrating away from master key providers.
+We recommend using keyrings rather than master key providers.
 For examples using keyrings, see the ``examples/src/keyrings`` directory.
 
 The KMS master key provider uses any key IDs that you specify on encrypt,
