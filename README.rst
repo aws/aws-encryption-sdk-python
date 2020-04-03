@@ -30,6 +30,8 @@ The latest full documentation can be found at `Read the Docs`_.
 
 Find us on `GitHub`_.
 
+`Security issue notifications`_
+
 ***************
 Getting Started
 ***************
@@ -259,3 +261,4 @@ to your use-case in order to obtain peak performance.
 .. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
+.. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
