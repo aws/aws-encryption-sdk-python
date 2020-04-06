@@ -33,10 +33,13 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
 * Using AWS Key Management Service (AWS KMS)
     * How to use one AWS KMS CMK
         * [with keyrings](./src/keyring/aws_kms/single_cmk.py)
+        * [with master key providers](./src/master_key_provider/aws_kms/single_cmk.py)
     * How to use multiple AWS KMS CMKs in different regions
         * [with keyrings](./src/keyring/aws_kms/multiple_regions.py)
+        * [with master key providers](./src/master_key_provider/aws_kms/multiple_regions.py)
     * How to decrypt when you don't know the CMK
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt.py)
+        * [with master key providers](./src/master_key_provider/aws_kms/discovery_decrypt.py)
     * How to decrypt within a region
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_in_region_only.py)
     * How to decrypt with a preferred region but failover to others
@@ -44,15 +47,18 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
 * Using raw wrapping keys
     * How to use a raw AES wrapping key
         * [with keyrings](./src/keyring/raw_aes/raw_aes.py)
+        * [with master key providers](./src/master_key_provider/raw_aes/raw_aes.py)
     * How to use a raw RSA wrapping key
         * [with keyrings](./src/keyring/raw_rsa/private_key_only.py)
     * How to use a raw RSA wrapping key when the key is PEM or DER encoded
         * [with keyrings](./src/keyring/raw_rsa/private_key_only_from_pem.py)
+        * [with master key providers](./src/master_key_provider/raw_rsa/private_key_only_from_pem.py)
     * How to encrypt with a raw RSA public key wrapping key without access to the private key
         * [with keyrings](./src/keyring/raw_rsa/public_private_key_separate.py)
 * Combining wrapping keys
     * How to combine AWS KMS with an offline escrow key
         * [with keyrings](./src/keyring/multi/aws_kms_with_escrow.py)
+        * [with master key providers](./src/master_key_provider/multi/aws_kms_with_escrow.py)
 
 ### Keyrings
 
