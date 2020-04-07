@@ -20,12 +20,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
     (
         pytest.param(dict(client_supplier=None), id="client_supplier is invalid"),
         pytest.param(dict(generator_key_id=5), id="generator_id is invalid"),
-        pytest.param(dict(additional_key_ids=("foo", 5)), id="additional_key_ids contains invalid values"),
-        pytest.param(dict(additional_key_ids="some stuff"), id="additional_key_ids is a string"),
+        pytest.param(dict(key_ids=("foo", 5)), id="key_ids contains invalid values"),
+        pytest.param(dict(key_ids="some stuff"), id="key_ids is a string"),
         pytest.param(dict(grant_tokens=("foo", 5)), id="grant_tokens contains invalid values"),
         pytest.param(dict(grant_tokens="some stuff"), id="grant_tokens is a string"),
         pytest.param(dict(generator_key_id="foo", is_discovery=True), id="generator and discovery"),
-        pytest.param(dict(additional_key_ids=("foo",), is_discovery=True), id="additional_key_ids and discovery"),
+        pytest.param(dict(key_ids=("foo",), is_discovery=True), id="key_ids and discovery"),
         pytest.param(dict(), id="nothing"),
     ),
 )
@@ -43,7 +43,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
 
     test = KmsKeyring(
         generator_key_id=generator_id,
-        additional_key_ids=(child_id_1, child_id_2),
+        key_ids=(child_id_1, child_id_2),
         grant_tokens=grants,
         client_supplier=supplier,
     )
@@ -74,7 +74,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
 
 
 def test_kms_keyring_builds_correct_inner_keyring_multikeyring_no_generator():
-    test = KmsKeyring(additional_key_ids=("bar", "baz"))
+    test = KmsKeyring(key_ids=("bar", "baz"))
 
     # We specified child IDs, so the inner keyring MUST be a multikeyring
     assert isinstance(test._inner_keyring, MultiKeyring)
