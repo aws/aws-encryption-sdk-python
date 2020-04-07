@@ -59,6 +59,13 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
     * How to combine AWS KMS with an offline escrow key
         * [with keyrings](./src/keyring/multi/aws_kms_with_escrow.py)
         * [with master key providers](./src/master_key_provider/multi/aws_kms_with_escrow.py)
+* How to reuse data keys across multiple messages
+    * [with the caching cryptographic materials manager](./src/crypto_materials_manager/caching/simple_cache.py)
+* How to restrict algorithm suites
+    * [with a custom cryptographic materials manager](src/crypto_materials_manager/custom/algorithm_suite_enforcement.py)
+* How to require encryption context fields
+    * [with a custom cryptographic materials manager](src/crypto_materials_manager/custom/requiring_encryption_context_fields.py)
+* [How to explicitly use the default cryptographic materials manager](./src/crypto_materials_manager/explicit_default.py)
 
 ### Keyrings
 

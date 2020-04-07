@@ -10,6 +10,9 @@ If you supply a keyring or master key provider
 those components will automatically wrap it in a default CMM.
 
 This example shows how you could do this manually if you wanted to.
+This can be useful when constructing custom CMMs.
+For examples showing how to create custom CMMs,
+see the ``crypto_materials_manager/custom`` directory.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#crypt-materials-manager
 
