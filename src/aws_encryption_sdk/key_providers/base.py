@@ -13,6 +13,7 @@
 """Base class interface for Master Key Providers."""
 import abc
 import logging
+import warnings
 
 import attr
 import six
@@ -78,6 +79,14 @@ class MasterKeyProvider(object):
         """Set key index and member set for all new instances here
         to avoid requiring child classes to call super init.
         """
+        # DeprecationWarning are ignored by default,
+        # but because we do not have a plan to remove master key providers,
+        # I think this is the correct level of visibility.
+        warnings.warn(
+            "Master key providers are deprecated as of 1.5.0. You should migrate to keyrings.",
+            DeprecationWarning
+        )
+
         instance = super(MasterKeyProvider, cls).__new__(cls)
         config = kwargs.pop("config", None)
         if not isinstance(config, instance._config_class):  # pylint: disable=protected-access

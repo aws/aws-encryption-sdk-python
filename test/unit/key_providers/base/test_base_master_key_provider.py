@@ -60,6 +60,12 @@ def test_repr():
     )
 
 
+def test_deprecated():
+
+    with pytest.warns(DeprecationWarning):
+        MockMasterKeyProvider(provider_id="ex_provider_id", mock_new_master_key="ex_new_master_key")
+
+
 class TestBaseMasterKeyProvider(object):
     def test_provider_id_enforcement(self):
         class TestProvider(MasterKeyProvider):
