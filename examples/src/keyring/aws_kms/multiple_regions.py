@@ -46,16 +46,16 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     }
 
     # Create the keyring that will encrypt your data keys under all requested CMKs.
-    many_cmks_keyring = KmsKeyring(generator_key_id=aws_kms_generator_cmk, child_key_ids=aws_kms_additional_cmks)
+    many_cmks_keyring = KmsKeyring(generator_key_id=aws_kms_generator_cmk, additional_key_ids=aws_kms_additional_cmks)
 
     # Create keyrings that each only use one of the CMKs.
     # We will use these later to demonstrate that any of the CMKs can be used to decrypt the message.
     #
-    # We provide these in "child_key_ids" rather than "generator_key_id"
+    # We provide these in "additional_key_ids" rather than "generator_key_id"
     # so that these keyrings cannot be used to generate a new data key.
     # We will only be using them on decrypt.
-    single_cmk_keyring_that_generated = KmsKeyring(child_key_ids=[aws_kms_generator_cmk])
-    single_cmk_keyring_that_encrypted = KmsKeyring(child_key_ids=[aws_kms_additional_cmks[0]])
+    single_cmk_keyring_that_generated = KmsKeyring(additional_key_ids=[aws_kms_generator_cmk])
+    single_cmk_keyring_that_encrypted = KmsKeyring(additional_key_ids=[aws_kms_additional_cmks[0]])
 
     # Encrypt your plaintext data using the keyring that uses all requests CMKs.
     ciphertext, encrypt_header = aws_encryption_sdk.encrypt(

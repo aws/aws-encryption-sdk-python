@@ -164,7 +164,7 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
 def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_child):
     generator, child = fake_generator_and_child
 
-    encrypting_keyring = KmsKeyring(generator_key_id=generator, child_key_ids=(child,))
+    encrypting_keyring = KmsKeyring(generator_key_id=generator, additional_key_ids=(child,))
     decrypting_keyring = _AwsKmsSingleCmkKeyring(key_id=child, client_supplier=DefaultClientSupplier())
 
     initial_encryption_materials = EncryptionMaterials(algorithm=ALGORITHM, encryption_context={})

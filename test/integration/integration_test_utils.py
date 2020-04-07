@@ -92,7 +92,7 @@ def build_aws_kms_keyring(generate=True, cache=True):
     if generate:
         kwargs = dict(generator_key_id=cmk_arn)
     else:
-        kwargs = dict(child_key_ids=[cmk_arn])
+        kwargs = dict(additional_key_ids=[cmk_arn])
 
     keyring = KmsKeyring(**kwargs)
 
