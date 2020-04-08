@@ -48,10 +48,10 @@ class KmsKeyring(Keyring):
     Set ``generator_key_id`` to require that the keyring use that CMK to generate the data key.
     If you do not set ``generator_key_id``, the keyring will not generate a data key.
 
-    Set ``child_key_ids`` to specify additional CMKs that the keyring will use to encrypt the data key.
+    Set ``key_ids`` to specify additional CMKs that the keyring will use to encrypt the data key.
 
     The keyring will attempt to use any CMKs
-    identified by CMK ARN in either ``generator_key_id`` or ``child_key_ids`` on decrypt.
+    identified by CMK ARN in either ``generator_key_id`` or ``key_ids`` on decrypt.
 
     You can identify CMKs by any `valid key ID`_ for the keyring to use on encrypt,
     but for the keyring to attempt to use them on decrypt
@@ -82,14 +82,14 @@ class KmsKeyring(Keyring):
     :param ClientSupplier client_supplier: Client supplier that provides AWS KMS clients (optional)
     :param bool is_discovery: Should this be a discovery keyring (optional)
     :param str generator_key_id: Key ID of AWS KMS CMK to use when generating data keys (optional)
-    :param List[str] child_key_ids: Key IDs that will be used to encrypt and decrypt data keys (optional)
+    :param List[str] key_ids: Key IDs that will be used to encrypt and decrypt data keys (optional)
     :param List[str] grant_tokens: AWS KMS grant tokens to include in requests (optional)
     """
 
     _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=is_callable())
     _is_discovery = attr.ib(default=False, validator=instance_of(bool))
     _generator_key_id = attr.ib(default=None, validator=optional(instance_of(six.string_types)))
-    _child_key_ids = attr.ib(
+    _key_ids = attr.ib(
         default=attr.Factory(tuple),
         validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string),
     )
@@ -100,7 +100,7 @@ class KmsKeyring(Keyring):
 
     def __attrs_post_init__(self):
         """Configure internal keyring."""
-        key_ids_provided = self._generator_key_id is not None or self._child_key_ids
+        key_ids_provided = self._generator_key_id is not None or self._key_ids
         both = key_ids_provided and self._is_discovery
         neither = not key_ids_provided and not self._is_discovery
 
@@ -127,7 +127,7 @@ class KmsKeyring(Keyring):
             _AwsKmsSingleCmkKeyring(
                 key_id=key_id, client_supplier=self._client_supplier, grant_tokens=self._grant_tokens
             )
-            for key_id in self._child_key_ids
+            for key_id in self._key_ids
         ]
 
         self._inner_keyring = MultiKeyring(generator=generator_keyring, children=child_keyrings)
