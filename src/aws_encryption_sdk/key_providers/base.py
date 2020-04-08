@@ -86,6 +86,9 @@ class MasterKeyProvider(object):
         # DeprecationWarning are ignored by default,
         # but because we do not have a plan to remove master key providers,
         # I think this is the correct level of visibility.
+        #
+        # Once we decide that we are one X or Y version away from removing master key providers,
+        # we should upgrade this to a UserWarning.
         warnings.warn(
             "Master key providers are deprecated as of 1.5.0. You should migrate to keyrings.", DeprecationWarning
         )
