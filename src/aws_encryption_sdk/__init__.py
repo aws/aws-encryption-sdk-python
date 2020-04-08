@@ -39,14 +39,15 @@ def encrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-        ... ])
+        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+        >>> keyring = KmsKeyring(
+        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
+        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
+        ... )
         >>> my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
         ...     source=my_plaintext,
-        ...     key_provider=kms_key_provider
-        ... )
+        ...     keyring=keyring,
+        >>> )
 
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
@@ -106,13 +107,14 @@ def decrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-        ... ])
-        >>> my_ciphertext, encryptor_header = aws_encryption_sdk.decrypt(
+        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+        >>> keyring = KmsKeyring(
+        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
+        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
+        ... )
+        >>> my_ciphertext, decryptor_header = aws_encryption_sdk.decrypt(
         ...     source=my_ciphertext,
-        ...     key_provider=kms_key_provider
+        ...     keyring=keyring,
         ... )
 
     :param config: Client configuration object (config or individual parameters required)
@@ -164,17 +166,18 @@ def stream(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-        ...  ])
+        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+        >>> keyring = KmsKeyring(
+        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
+        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
+        ... )
         >>> plaintext_filename = 'my-secret-data.dat'
         >>> ciphertext_filename = 'my-encrypted-data.ct'
         >>> with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
         ...      with aws_encryption_sdk.stream(
         ...         mode='e',
         ...         source=pt_file,
-        ...         key_provider=kms_key_provider
+        ...         keyring=keyring,
         ...     ) as encryptor:
         ...         for chunk in encryptor:
         ...              ct_file.write(chunk)
@@ -183,7 +186,7 @@ def stream(**kwargs):
         ...     with aws_encryption_sdk.stream(
         ...         mode='d',
         ...         source=ct_file,
-        ...         key_provider=kms_key_provider
+        ...         keyring=keyring,
         ...     ) as decryptor:
         ...         for chunk in decryptor:
         ...             pt_file.write(chunk)
