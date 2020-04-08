@@ -49,6 +49,11 @@ class RawMasterKeyConfig(MasterKeyConfig):
 class RawMasterKey(MasterKey):
     """Raw Master Key.
 
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.raw.RawAESKeyring`
+        or :class:`aws_encryption_sdk.keyrings.raw.RawRSAKeyring` instead.
+
     :param config: Configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.key_providers.raw.RawMasterKeyConfig
     :param bytes key_id: Key ID for Master Key
@@ -191,6 +196,11 @@ class RawMasterKey(MasterKey):
 @six.add_metaclass(abc.ABCMeta)
 class RawMasterKeyProvider(MasterKeyProvider):
     """Raw Master Key Provider.
+
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.raw.RawAESKeyring`
+        or :class:`aws_encryption_sdk.keyrings.raw.RawRSAKeyring` instead.
 
     :param config: Configuration object (optional)
     :type config: aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig

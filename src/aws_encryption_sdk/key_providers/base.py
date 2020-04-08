@@ -52,6 +52,10 @@ class MasterKeyProviderConfig(object):
 class MasterKeyProvider(object):
     """Parent interface for Master Key Provider classes.
 
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.base.Keyring` instead.
+
     :param config: Configuration object
     :type config: aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig
     """
@@ -83,8 +87,7 @@ class MasterKeyProvider(object):
         # but because we do not have a plan to remove master key providers,
         # I think this is the correct level of visibility.
         warnings.warn(
-            "Master key providers are deprecated as of 1.5.0. You should migrate to keyrings.",
-            DeprecationWarning
+            "Master key providers are deprecated as of 1.5.0. You should migrate to keyrings.", DeprecationWarning
         )
 
         instance = super(MasterKeyProvider, cls).__new__(cls)
@@ -337,6 +340,10 @@ class MasterKeyConfig(object):
 @six.add_metaclass(abc.ABCMeta)
 class MasterKey(MasterKeyProvider):
     """Parent interface for Master Key classes.
+
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.base.Keyring` instead.
 
     :param bytes key_id: Key ID for Master Key
     :param config: Configuration object
