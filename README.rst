@@ -36,7 +36,7 @@ Getting Started
 Required Prerequisites
 ======================
 
-* Python 2.7+ or 3.5+
+* Python 2.7 or 3.5+
 * cryptography >= 1.8.1
 * boto3
 * attrs
@@ -55,189 +55,43 @@ Installation
 
 Concepts
 ========
-There are four main concepts that you need to understand to use this library:
+There are three main concepts that are helpful to understand when using the AWS Encryption SDK:
 
 Cryptographic Materials Managers
 --------------------------------
-Cryptographic materials managers (CMMs) are resources that collect cryptographic materials and prepare them for
-use by the Encryption SDK core logic.
+The cryptographic materials manager (CMM) assembles the cryptographic materials
+that are used to encrypt and decrypt data.
+The cryptographic materials include plaintext and encrypted data keys, and an optional message signing key.
+You can use the default CMM that the AWS Encryption SDK provides or write a custom CMM.
+You can specify a CMM, but you never interact with it directly.
+The encryption and decryption methods handle it for you.
 
-An example of a CMM is the default CMM, which is automatically generated anywhere a caller provides a master
-key provider. The default CMM collects encrypted data keys from all master keys referenced by the master key
-provider.
+The default CMM gets the encryption or decryption materials from
+the keyring or master key provider that you specify.
+This might involve a call to a cryptographic service, such as AWS Key Management Service (AWS KMS).
 
-An example of a more advanced CMM is the caching CMM, which caches cryptographic materials provided by another CMM.
+You can specify a CMM and master key provider or keyring, but it's not required.
+If you specify a master key provider or keyring, the AWS Encryption SDK creates a Default CMM for you.
 
-Master Key Providers
---------------------
-Master key providers are resources that provide master keys.
-An example of a master key provider is `AWS KMS`_.
+Keyrings
+--------
 
-To encrypt data in this client, a ``MasterKeyProvider`` object must contain at least one ``MasterKey`` object.
-
-``MasterKeyProvider`` objects can also contain other ``MasterKeyProvider`` objects.
-
-Master Keys
------------
-Master keys generate, encrypt, and decrypt data keys.
-An example of a master key is a `KMS customer master key (CMK)`_.
+A keyring generates, encrypts, and decrypts data keys.
+Each keyring is typically associated with a wrapping key or a service that provides and protects wrapping keys.
+You can use the keyrings that the AWS Encryption SDK provides or write your own compatible custom keyrings.
 
 Data Keys
 ---------
-Data keys are the encryption keys that are used to encrypt your data. If your algorithm suite
-uses a key derivation function, the data key is used to generate the key that directly encrypts the data.
+
+A data key is an encryption key that the AWS Encryption SDK uses to encrypt your data.
+Each data key is a byte array that conforms to the requirements for cryptographic keys.
+Unless you're using data key caching, the AWS Encryption SDK uses a unique data key to encrypt each message.
 
 *****
 Usage
 *****
-To use this client, you (the caller) must provide an instance of either a master key provider
-or a CMM. The examples in this readme use the ``KMSMasterKeyProvider`` class.
 
-KMSMasterKeyProvider
-====================
-Because the ``KMSMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_, it requires AWS Credentials.
-To provide these credentials, use the `standard means by which boto3 locates credentials`_ or provide a
-pre-existing instance of a ``botocore session`` to the ``KMSMasterKeyProvider``.
-This latter option can be useful if you have an alternate way to store your AWS credentials or
-you want to reuse an existing instance of a botocore session in order to decrease startup costs.
-
-.. code:: python
-
-    import aws_encryption_sdk
-    import botocore.session
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider()
-
-    existing_botocore_session = botocore.session.Session()
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(botocore_session=existing_botocore_session)
-
-
-You can pre-load the ``KMSMasterKeyProvider`` with one or more CMKs.
-To encrypt data, you must configure the ``KMSMasterKeyProvider`` with as least one CMK.
-If you configure the the ``KMSMasterKeyProvider`` with multiple CMKs, the `final message`_
-will include a copy of the data key encrypted by each configured CMK.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-
-You can add CMKs from multiple regions to the ``KMSMasterKeyProvider``.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333',
-        'arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444'
-    ])
-
-
-Encryption and Decryption
-=========================
-After you create an instance of a ``MasterKeyProvider``, you can use either of the two
-high-level ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-    my_plaintext = b'This is some super secret data!  Yup, sure is!'
-
-    my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
-        source=my_plaintext,
-        key_provider=kms_key_provider
-    )
-
-    decrypted_plaintext, decryptor_header = aws_encryption_sdk.decrypt(
-        source=my_ciphertext,
-        key_provider=kms_key_provider
-    )
-
-    assert my_plaintext == decrypted_plaintext
-    assert encryptor_header.encryption_context == decryptor_header.encryption_context
-
-You can provide an `encryption context`_: a form of additional authenticating information.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-    my_plaintext = b'This is some super secret data!  Yup, sure is!'
-
-    my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
-        source=my_plaintext,
-        key_provider=kms_key_provider,
-        encryption_context={
-            'not really': 'a secret',
-            'but adds': 'some authentication'
-        }
-    )
-
-    decrypted_plaintext, decryptor_header = aws_encryption_sdk.decrypt(
-        source=my_ciphertext,
-        key_provider=kms_key_provider
-    )
-
-    assert my_plaintext == decrypted_plaintext
-    assert encryptor_header.encryption_context == decryptor_header.encryption_context
-
-
-Streaming
-=========
-If you are handling large files or simply do not want to put the entire plaintext or ciphertext in
-memory at once, you can use this library's streaming clients directly. The streaming clients are
-file-like objects, and behave exactly as you would expect a Python file object to behave,
-offering context manager and iteration support.
-
-.. code:: python
-
-    import aws_encryption_sdk
-    import filecmp
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-    plaintext_filename = 'my-secret-data.dat'
-    ciphertext_filename = 'my-encrypted-data.ct'
-
-    with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
-        with aws_encryption_sdk.stream(
-            mode='e',
-            source=pt_file,
-            key_provider=kms_key_provider
-        ) as encryptor:
-            for chunk in encryptor:
-                ct_file.write(chunk)
-
-    new_plaintext_filename = 'my-decrypted-data.dat'
-
-    with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
-        with aws_encryption_sdk.stream(
-            mode='d',
-            source=ct_file,
-            key_provider=kms_key_provider
-        ) as decryptor:
-            for chunk in decryptor:
-                pt_file.write(chunk)
-
-    assert filecmp.cmp(plaintext_filename, new_plaintext_filename)
-    assert encryptor.header.encryption_context == decryptor.header.encryption_context
+For examples of how to use these concepts to accomplish different tasks, see our `examples`_.
 
 Performance Considerations
 ==========================
@@ -259,3 +113,4 @@ to your use-case in order to obtain peak performance.
 .. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
+.. _examples: https://github.com/aws/aws-encryption-sdk-python/tree/master/examples
