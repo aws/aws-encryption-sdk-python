@@ -55,7 +55,9 @@ Installation
 
 Concepts
 ========
-There are three main concepts that are helpful to understand when using the AWS Encryption SDK:
+There are three main concepts that are helpful to understand when using the AWS Encryption SDK.
+
+For further information, see the `AWS Encryption SDK developer guide concepts`_.
 
 Cryptographic Materials Managers
 --------------------------------
@@ -103,6 +105,8 @@ to your use-case in order to obtain peak performance.
 
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
+.. _AWS Encryption SDK developer guide concepts:
+    https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html
 .. _cryptography: https://cryptography.io/en/latest/
 .. _cryptography installation guide: https://cryptography.io/en/latest/installation/
 .. _Read the Docs: http://aws-encryption-sdk-python.readthedocs.io/en/latest/
