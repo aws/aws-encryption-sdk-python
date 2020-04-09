@@ -8,12 +8,22 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algo
 
 By default, the AWS Encryption SDK will let you use any of these,
 but you might want to restrict that further.
-We do not recommend using the algorithm suites without key derivation,
-so for this example we will show how to make a custom CMM
-that will not allow you to use those algorithm suites.
+
+We recommend that you use the default algorithm suite,
+which uses AES-GCM with 256-bit keys, HKDF, and ECDSA message signing.
+If your readers and writers have the same permissions,
+you might want to omit the message signature for faster operation.
+For more information about choosing a signed or unsigned algorithm suite,
+see the AWS Encryption SDK developer guide:
+
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algorithms.html#other-algorithms
+
+This example shows how you can make a custom cryptographic materials manager (CMM)
+that only allows encrypt requests that either specify one of these two algorithm suites
+or do not specify an algorithm suite, in which case the default CMM uses the default algorithm suite,
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import AlgorithmSuite, KDFSuite
+from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import (
@@ -26,12 +36,12 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
 
-class UnsupportedAlgorithmSuite(Exception):
+class UnapprovedAlgorithmSuite(Exception):
     """Indicate that an unsupported algorithm suite was requested."""
 
 
-class OnlyKdfAlgorithmSuitesCryptoMaterialsManager(CryptoMaterialsManager):
-    """Only allow encryption requests for algorithm suites with a KDF."""
+class RequireApprovedAlgorithmSuitesCryptoMaterialsManager(CryptoMaterialsManager):
+    """Only allow encryption requests for approved algorithm suites."""
 
     def __init__(self, keyring):
         # type: (Keyring) -> None
@@ -39,6 +49,11 @@ class OnlyKdfAlgorithmSuitesCryptoMaterialsManager(CryptoMaterialsManager):
 
         :param Keyring keyring: Keyring to use in the inner cryptographic materials manager
         """
+        self._allowed_algorithm_suites = {
+            None,  # no algorithm suite in the request
+            AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,  # the default algorithm suite
+            AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256,  # the recommended unsigned algorithm suite
+        }
         # Wrap the provided keyring in the default cryptographic materials manager (CMM).
         #
         # This is the same thing that the encrypt and decrypt APIs, as well as the caching CMM,
@@ -47,9 +62,9 @@ class OnlyKdfAlgorithmSuitesCryptoMaterialsManager(CryptoMaterialsManager):
 
     def get_encryption_materials(self, request):
         # type: (EncryptionMaterialsRequest) -> EncryptionMaterials
-        """Block any requests that include an algorithm suite without a KDF."""
-        if request.algorithm is not None and request.algorithm.kdf is KDFSuite.NONE:
-            raise UnsupportedAlgorithmSuite("Non-KDF algorithm suites are not allowed!")
+        """Block any requests that include an approved algorithm suite."""
+        if request.algorithm not in self._allowed_algorithm_suites:
+            raise UnapprovedAlgorithmSuite("Unapproved algorithm suite requested!")
 
         return self._cmm.get_encryption_materials(request)
 
@@ -80,9 +95,9 @@ def run(aws_kms_cmk, source_plaintext):
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create the algorithm suite restricting cryptographic materials manager using your keyring.
-    cmm = OnlyKdfAlgorithmSuitesCryptoMaterialsManager(keyring=keyring)
+    cmm = RequireApprovedAlgorithmSuitesCryptoMaterialsManager(keyring=keyring)
 
-    # Demonstrate that the algorithm suite restricting CMM will not let you use non-KDF algorithm suites.
+    # Demonstrate that the algorithm suite restricting CMM will not let you use an unapproved algorithm suite.
     try:
         aws_encryption_sdk.encrypt(
             source=source_plaintext,
@@ -90,8 +105,8 @@ def run(aws_kms_cmk, source_plaintext):
             materials_manager=cmm,
             algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16,
         )
-    except UnsupportedAlgorithmSuite:
-        # You asked for a non-KDF algorithm suite.
+    except UnapprovedAlgorithmSuite:
+        # You asked for an unapproved algorithm suite.
         # Reaching this point means everything is working as expected.
         pass
     else:
