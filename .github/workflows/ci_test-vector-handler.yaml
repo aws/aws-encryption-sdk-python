@@ -9,9 +9,9 @@ on:
 
 jobs:
   tests:
-    # Until we address the credentials problem,
-    # do not run for pull requests.
-    if: github.event != 'pull_request'
+    # Leaving this defined but disabled
+    # until we address the credentials problem.
+    if: 1 == 0
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
