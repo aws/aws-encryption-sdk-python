@@ -3,12 +3,16 @@
 """
 Encryption context is a powerful tool for access and audit controls
 because it lets you tie *non-secret* metadata about a plaintext value to the encrypted message.
-This is especially powerful when you use the AWS Encryption SDK with AWS KMS,
-but within the context of the AWS Encryption SDK alone
+Within the AWS Encryption SDK,
 you can use cryptographic materials managers to analyse the encryption context
 to provide logical controls and additional metadata.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
+
+If you are using the AWS Encryption SDK with AWS KMS,
+you can use AWS KMS to provide additional powerful controls using the encryption context.
+For more information on that, see the KMS developer guide:
+
 https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 
 This example shows how to create a custom cryptographic materials manager (CMM)
