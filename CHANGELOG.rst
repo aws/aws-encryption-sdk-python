@@ -10,6 +10,7 @@ Major Features
 
 * Add `keyrings`_.
 * Change one-step APIs to return a :class:`CryptoResult` rather than a tuple.
+
     * Modified APIs: ``aws_encryption_sdk.encrypt`` and ``aws_encryption_sdk.decrypt``.
 
 .. note::
@@ -20,6 +21,19 @@ Major Features
     so this change should not break any existing consumers
     unless you are specifically relying on the output being an instance of :class:`tuple`.
 
+Deprecations
+------------
+
+* Deprecate master key providers in favor of keyrings.
+
+    * We still support using master key providers and are not removing them yet.
+      When we decide to remove them,
+      we will communicate that as defined in our versioning policy.
+
+* Deprecate support for Python 3.4.
+
+    * This does not mean that this library will no longer work or install with 3.4,
+      but we are no longer testing against or advertising support for 3.4.
 
 1.4.1 -- 2019-09-20
 ===================

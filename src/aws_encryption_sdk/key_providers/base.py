@@ -13,6 +13,7 @@
 """Base class interface for Master Key Providers."""
 import abc
 import logging
+import warnings
 
 import attr
 import six
@@ -51,6 +52,10 @@ class MasterKeyProviderConfig(object):
 class MasterKeyProvider(object):
     """Parent interface for Master Key Provider classes.
 
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.base.Keyring` instead.
+
     :param config: Configuration object
     :type config: aws_encryption_sdk.key_providers.base.MasterKeyProviderConfig
     """
@@ -78,6 +83,16 @@ class MasterKeyProvider(object):
         """Set key index and member set for all new instances here
         to avoid requiring child classes to call super init.
         """
+        # DeprecationWarning are ignored by default,
+        # but because we are not yet removing master key providers,
+        # I think this is the correct level of visibility.
+        #
+        # Once we decide that we are one X or Y version away from removing master key providers,
+        # we should upgrade this to a UserWarning.
+        warnings.warn(
+            "Master key providers are deprecated as of 1.5.0. You should migrate to keyrings.", DeprecationWarning
+        )
+
         instance = super(MasterKeyProvider, cls).__new__(cls)
         config = kwargs.pop("config", None)
         if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
@@ -328,6 +343,10 @@ class MasterKeyConfig(object):
 @six.add_metaclass(abc.ABCMeta)
 class MasterKey(MasterKeyProvider):
     """Parent interface for Master Key classes.
+
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.base.Keyring` instead.
 
     :param bytes key_id: Key ID for Master Key
     :param config: Configuration object
