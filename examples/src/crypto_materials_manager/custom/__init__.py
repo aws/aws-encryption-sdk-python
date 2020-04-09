@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-Cuystom cryptographic materials manager (CMM) examples.
+Custom cryptographic materials manager (CMM) examples.
 
 The AWS Encryption SDK includes CMMs for common use cases,
 but you might need to do something else.

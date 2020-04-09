@@ -12,7 +12,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#
 https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 
 This example shows how to create a custom cryptographic materials manager (CMM)
-that requires a particular field in any encryption context.
+that requires a particular field in the encryption context.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring

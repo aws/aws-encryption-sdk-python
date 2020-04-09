@@ -48,7 +48,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Create the keyring that determines how your data keys are protected.
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
-    # Wrap that keyring in a default cryptographic materials manager.
+    # Wrap that keyring in the default cryptographic materials manager.
     cmm = DefaultCryptoMaterialsManager(keyring=keyring)
 
     # Encrypt your plaintext data.

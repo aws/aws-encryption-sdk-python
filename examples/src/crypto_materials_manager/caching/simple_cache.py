@@ -12,7 +12,7 @@ you might benefit from data key caching.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/data-key-caching.html
 
-This examples shows how to configure the caching CMM
+This example shows how to configure the caching CMM
 to reuse data keys across multiple encrypted messages.
 
 In this example, we use an AWS KMS customer master key (CMK),
