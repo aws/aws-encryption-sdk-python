@@ -20,7 +20,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algo
 
 This example shows how you can make a custom cryptographic materials manager (CMM)
 that only allows encrypt requests that either specify one of these two algorithm suites
-or do not specify an algorithm suite, in which case the default CMM uses the default algorithm suite,
+or do not specify an algorithm suite, in which case the default CMM uses the default algorithm suite.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import AlgorithmSuite
@@ -62,7 +62,7 @@ class RequireApprovedAlgorithmSuitesCryptoMaterialsManager(CryptoMaterialsManage
 
     def get_encryption_materials(self, request):
         # type: (EncryptionMaterialsRequest) -> EncryptionMaterials
-        """Block any requests that include an approved algorithm suite."""
+        """Block any requests that include an unapproved algorithm suite."""
         if request.algorithm not in self._allowed_algorithm_suites:
             raise UnapprovedAlgorithmSuite("Unapproved algorithm suite requested!")
 
