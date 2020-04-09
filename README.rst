@@ -63,31 +63,28 @@ Cryptographic Materials Managers
 --------------------------------
 The cryptographic materials manager (CMM) assembles the cryptographic materials
 that are used to encrypt and decrypt data.
-The cryptographic materials include plaintext and encrypted data keys, and an optional message signing key.
-You can use the default CMM that the AWS Encryption SDK provides or write a custom CMM.
-You can specify a CMM, but you never interact with it directly.
-The encryption and decryption methods handle it for you.
 
-The default CMM gets the encryption or decryption materials from
-the keyring or master key provider that you specify.
-This might involve a call to a cryptographic service, such as AWS Key Management Service (AWS KMS).
-
-You can specify a CMM and master key provider or keyring, but it's not required.
-If you specify a master key provider or keyring, the AWS Encryption SDK creates a Default CMM for you.
+`For more details,
+see the AWS Encryption SDK developer guide cryptographic materials manager concept.
+<https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#crypt-materials-manager>`_
 
 Keyrings
 --------
 
 A keyring generates, encrypts, and decrypts data keys.
-Each keyring is typically associated with a wrapping key or a service that provides and protects wrapping keys.
-You can use the keyrings that the AWS Encryption SDK provides or write your own compatible custom keyrings.
+
+`For more details,
+see the AWS Encryption SDK developer guide keyring concept.
+<https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#keyring>`_
 
 Data Keys
 ---------
 
 A data key is an encryption key that the AWS Encryption SDK uses to encrypt your data.
-Each data key is a byte array that conforms to the requirements for cryptographic keys.
-Unless you're using data key caching, the AWS Encryption SDK uses a unique data key to encrypt each message.
+
+`For more details,
+see the AWS Encryption SDK developer guide data key concept.
+<https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#DEK>`_
 
 *****
 Usage
