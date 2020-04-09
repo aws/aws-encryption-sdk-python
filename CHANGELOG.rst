@@ -32,7 +32,7 @@ Deprecations
 * Deprecate support for Python 3.4.
 
     * This does not mean that this library will no longer work or install with 3.4,
-      but we are no longer testing against or advertising support 3.4.
+      but we are no longer testing against or advertising support for 3.4.
 
 1.4.1 -- 2019-09-20
 ===================
