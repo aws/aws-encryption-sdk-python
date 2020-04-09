@@ -26,8 +26,9 @@ Deprecations
 
 * Deprecate master key providers in favor of keyrings.
 
-    * We do not have a planned version for when we will remove master key providers.
-      If that changes, we will communicate that as defined in our versioning policy.
+    * We still support using master key providers and are not removing them yet.
+      When we decide to remove them,
+      we will communicate that as defined in our versioning policy.
 
 * Deprecate support for Python 3.4.
 

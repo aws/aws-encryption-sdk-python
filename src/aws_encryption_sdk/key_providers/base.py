@@ -84,7 +84,7 @@ class MasterKeyProvider(object):
         to avoid requiring child classes to call super init.
         """
         # DeprecationWarning are ignored by default,
-        # but because we do not have a plan to remove master key providers,
+        # but because we are not yet removing master key providers,
         # I think this is the correct level of visibility.
         #
         # Once we decide that we are one X or Y version away from removing master key providers,
