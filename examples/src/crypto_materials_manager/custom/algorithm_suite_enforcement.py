@@ -79,10 +79,10 @@ def run(aws_kms_cmk, source_plaintext):
     # Create the keyring that determines how your data keys are protected.
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
-    # Create the filtering cryptographic materials manager using your keyring.
+    # Create the algorithm suite restricting cryptographic materials manager using your keyring.
     cmm = OnlyKdfAlgorithmSuitesCryptoMaterialsManager(keyring=keyring)
 
-    # Demonstrate that the filtering CMM will not let you use non-KDF algorithm suites.
+    # Demonstrate that the algorithm suite restricting CMM will not let you use non-KDF algorithm suites.
     try:
         aws_encryption_sdk.encrypt(
             source=source_plaintext,
@@ -95,8 +95,8 @@ def run(aws_kms_cmk, source_plaintext):
         # Reaching this point means everything is working as expected.
         pass
     else:
-        # The filtering CMM keeps this from happening.
-        raise AssertionError("The filtering CMM does not let this happen!")
+        # The algorithm suite restricting CMM keeps this from happening.
+        raise AssertionError("The algorithm suite restricting CMM does not let this happen!")
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

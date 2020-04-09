@@ -85,10 +85,10 @@ def run(aws_kms_cmk, source_plaintext):
     # Create the keyring that determines how your data keys are protected.
     keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
 
-    # Create the filtering cryptographic materials manager using your keyring.
+    # Create the classification requiring cryptographic materials manager using your keyring.
     cmm = ClassificationRequiringCryptoMaterialsManager(keyring=keyring)
 
-    # Demonstrate that the filtering CMM will not let you encrypt without a classification identifier.
+    # Demonstrate that the classification requiring CMM will not let you encrypt without a classification identifier.
     try:
         aws_encryption_sdk.encrypt(
             source=source_plaintext, encryption_context=encryption_context, materials_manager=cmm,
@@ -98,8 +98,8 @@ def run(aws_kms_cmk, source_plaintext):
         # Reaching this point means everything is working as expected.
         pass
     else:
-        # The filtering CMM keeps this from happening.
-        raise AssertionError("The filtering CMM does not let this happen!")
+        # The classification requiring CMM keeps this from happening.
+        raise AssertionError("The classification requiring CMM does not let this happen!")
 
     # Encrypt your plaintext data.
     classified_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
@@ -127,7 +127,7 @@ def run(aws_kms_cmk, source_plaintext):
     # In production, always use a meaningful encryption context.
     assert set(encryption_context.items()) <= set(decrypt_header.encryption_context.items())
 
-    # Now demonstrate the decrypt path of the filtering cryptographic materials manager.
+    # Now demonstrate the decrypt path of the classification requiring cryptographic materials manager.
 
     # Encrypt your plaintext using the keyring and do not include a classification identifier.
     unclassified_ciphertext, encrypt_header = aws_encryption_sdk.encrypt(
@@ -136,7 +136,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     assert "classification" not in encrypt_header.encryption_context
 
-    # Demonstrate that the filtering CMM will not let you decrypt messages without classification identifiers.
+    # Demonstrate that the classification requiring CMM
+    # will not let you decrypt messages without classification identifiers.
     try:
         aws_encryption_sdk.decrypt(source=unclassified_ciphertext, materials_manager=cmm)
     except MissingClassificationError:
@@ -144,5 +145,5 @@ def run(aws_kms_cmk, source_plaintext):
         # Reaching this point means everything is working as expected.
         pass
     else:
-        # The filtering CMM keeps this from happening.
-        raise AssertionError("The filtering CMM does not let this happen!")
+        # The classification requiring CMM keeps this from happening.
+        raise AssertionError("The classification requiring CMM does not let this happen!")
