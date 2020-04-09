@@ -42,10 +42,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
     supplier = DefaultClientSupplier()
 
     test = KmsKeyring(
-        generator_key_id=generator_id,
-        key_ids=(child_id_1, child_id_2),
-        grant_tokens=grants,
-        client_supplier=supplier,
+        generator_key_id=generator_id, key_ids=(child_id_1, child_id_2), grant_tokens=grants, client_supplier=supplier,
     )
 
     # We specified a generator and child IDs, so the inner keyring MUST be a multikeyring
