@@ -30,6 +30,8 @@ The latest full documentation can be found at `Read the Docs`_.
 
 Find us on `GitHub`_.
 
+`Security issue notifications`_
+
 ***************
 Getting Started
 ***************
@@ -115,3 +117,4 @@ to your use-case in order to obtain peak performance.
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _examples: https://github.com/aws/aws-encryption-sdk-python/tree/master/examples
+.. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
