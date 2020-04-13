@@ -108,6 +108,24 @@ def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, private
         )
 
 
+@pytest.mark.parametrize(
+    "wrapping_algorithm",
+    (
+        WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
+        WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
+        WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+    ),
+)
+def test_invalid_wrapping_algorithm_suite(wrapping_algorithm):
+    with pytest.raises(ValueError):
+        RawRSAKeyring(
+            key_namespace=_PROVIDER_ID,
+            key_name=_KEY_ID,
+            wrapping_algorithm=wrapping_algorithm,
+            private_wrapping_key=raw_rsa_private_key(),
+        )
+
+
 def test_public_and_private_key_not_provided():
     with pytest.raises(TypeError) as exc_info:
         RawRSAKeyring(

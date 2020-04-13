@@ -6,7 +6,7 @@ import os
 
 import attr
 import six
-from attr.validators import instance_of, optional
+from attr.validators import in_, instance_of, optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
@@ -76,7 +76,6 @@ class RawAESKeyring(Keyring):
     :param str key_namespace: String defining the keyring.
     :param bytes key_name: Key ID
     :param bytes wrapping_key: Encryption key with which to wrap plaintext data key.
-    :param WrappingAlgorithm wrapping_algorithm: Wrapping Algorithm with which to wrap plaintext data key.
 
     .. note::
 
@@ -86,11 +85,26 @@ class RawAESKeyring(Keyring):
     key_namespace = attr.ib(validator=instance_of(six.string_types))
     key_name = attr.ib(validator=instance_of(six.binary_type))
     _wrapping_key = attr.ib(repr=False, validator=instance_of(six.binary_type))
-    _wrapping_algorithm = attr.ib(repr=False, validator=instance_of(WrappingAlgorithm))
 
     def __attrs_post_init__(self):
         # type: () -> None
         """Prepares initial values not handled by attrs."""
+        key_size_to_wrapping_algorithm = {
+            wrapper.algorithm.kdf_input_len: wrapper
+            for wrapper in (
+                WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
+                WrappingAlgorithm.AES_192_GCM_IV12_TAG16_NO_PADDING,
+                WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+            )
+        }
+
+        try:
+            self._wrapping_algorithm = key_size_to_wrapping_algorithm[len(self._wrapping_key)]
+        except KeyError:
+            raise ValueError(
+                "Invalid wrapping key length. Must be one of {}".format(key_size_to_wrapping_algorithm.keys())
+            )
+
         self._key_provider = MasterKeyInfo(provider_id=self.key_namespace, key_info=self.key_name)
 
         self._wrapping_key_structure = WrappingKey(
@@ -244,7 +258,18 @@ class RawRSAKeyring(Keyring):
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))
     key_name = attr.ib(validator=instance_of(six.binary_type))
-    _wrapping_algorithm = attr.ib(repr=False, validator=instance_of(WrappingAlgorithm))
+    _wrapping_algorithm = attr.ib(
+        repr=False,
+        validator=in_(
+            (
+                WrappingAlgorithm.RSA_PKCS1,
+                WrappingAlgorithm.RSA_OAEP_SHA1_MGF1,
+                WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+                WrappingAlgorithm.RSA_OAEP_SHA384_MGF1,
+                WrappingAlgorithm.RSA_OAEP_SHA512_MGF1,
+            )
+        ),
+    )
     _private_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(RSAPrivateKey)))
     _public_wrapping_key = attr.ib(default=None, repr=False, validator=optional(instance_of(RSAPublicKey)))
 

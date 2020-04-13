@@ -256,12 +256,7 @@ def get_decryption_materials_without_data_key():
 
 def get_multi_keyring_with_generator_and_children():
     return MultiKeyring(
-        generator=RawAESKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-            wrapping_key=_WRAPPING_KEY_AES,
-        ),
+        generator=RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
         children=[
             RawRSAKeyring(
                 key_namespace=_PROVIDER_ID,
@@ -307,12 +302,7 @@ def get_multi_keyring_with_no_generator():
                     public_exponent=65537, key_size=2048, backend=default_backend()
                 ),
             ),
-            RawAESKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
-                wrapping_algorithm=WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-                wrapping_key=_WRAPPING_KEY_AES,
-            ),
+            RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
         ]
     )
 
@@ -482,10 +472,7 @@ def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_I
     if key is None:
         key = os.urandom(key_length)
     return RawAESKeyring(
-        key_namespace="fake",
-        key_name="aes-{}".format(key_length * 8).encode("utf-8"),
-        wrapping_algorithm=wrapping_algorithm,
-        wrapping_key=key,
+        key_namespace="fake", key_name="aes-{}".format(key_length * 8).encode("utf-8"), wrapping_key=key,
     )
 
 

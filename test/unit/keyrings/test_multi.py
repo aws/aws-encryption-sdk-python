@@ -96,26 +96,14 @@ def test_parent():
 
 
 def test_keyring_with_generator_but_no_children():
-    generator_keyring = RawAESKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_key=_WRAPPING_KEY_AES,
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-    )
+    generator_keyring = RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,)
     test_multi_keyring = MultiKeyring(generator=generator_keyring)
     assert test_multi_keyring.generator is generator_keyring
     assert not test_multi_keyring.children
 
 
 def test_keyring_with_children_but_no_generator():
-    children_keyring = [
-        RawAESKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
-            wrapping_key=_WRAPPING_KEY_AES,
-            wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-        )
-    ]
+    children_keyring = [RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,)]
     test_multi_keyring = MultiKeyring(children=children_keyring)
     assert test_multi_keyring.children is children_keyring
     assert test_multi_keyring.generator is None
