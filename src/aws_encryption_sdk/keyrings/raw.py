@@ -102,7 +102,9 @@ class RawAESKeyring(Keyring):
             self._wrapping_algorithm = key_size_to_wrapping_algorithm[len(self._wrapping_key)]
         except KeyError:
             raise ValueError(
-                "Invalid wrapping key length. Must be one of {}".format(key_size_to_wrapping_algorithm.keys())
+                "Invalid wrapping key length. Must be one of {} bytes.".format(
+                    sorted(key_size_to_wrapping_algorithm.keys())
+                )
             )
 
         self._key_provider = MasterKeyInfo(provider_id=self.key_namespace, key_info=self.key_name)

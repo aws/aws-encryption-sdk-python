@@ -118,7 +118,7 @@ def test_invalid_key_length():
             key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=b"012345",
         )
 
-    excinfo.match(r"Invalid wrapping key length. *")
+    excinfo.match(r"Invalid wrapping key length. Must be one of \[16, 24, 32\] bytes.")
 
 
 def test_on_encrypt_when_data_encryption_key_given(raw_aes_keyring, patch_generate_data_key):
