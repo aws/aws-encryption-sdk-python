@@ -29,7 +29,7 @@ def run(source_plaintext):
         "the data you are handling": "is what you think it is",
     }
 
-    # Generate an AES-256 key to use with your keyring.
+    # Generate a 256-bit (32 byte) AES key to use with your keyring.
     #
     # In practice, you should get this key from a secure key management system such as an HSM.
     key = os.urandom(32)
