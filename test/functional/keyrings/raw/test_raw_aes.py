@@ -65,21 +65,14 @@ def sample_encryption_materials():
 
 
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
-@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
-def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_algorithm_samples):
+def test_raw_aes_encryption_decryption(encryption_materials_samples):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_algorithm = wrapping_algorithm_samples
 
     # Creating an instance of a raw AES keyring
-    test_raw_aes_keyring = RawAESKeyring(
-        key_namespace=key_namespace,
-        key_name=key_name,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_algorithm=_wrapping_algorithm,
-    )
+    test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
 
     # Call on_encrypt function for the keyring
     encryption_materials = test_raw_aes_keyring.on_encrypt(encryption_materials=encryption_materials_samples)
@@ -101,21 +94,14 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples, wrapping_al
 
 
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
-@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
-def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples, wrapping_algorithm_samples):
+def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_algorithm = wrapping_algorithm_samples
 
     # Creating an instance of a raw AES keyring
-    test_raw_aes_keyring = RawAESKeyring(
-        key_namespace=key_namespace,
-        key_name=key_name,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_algorithm=_wrapping_algorithm,
-    )
+    test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
 
     # Creating an instance of a raw master key
     test_raw_master_key = RawMasterKey(
@@ -139,21 +125,14 @@ def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_
 
 
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
-@pytest.mark.parametrize("wrapping_algorithm_samples", _WRAPPING_ALGORITHM)
-def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_samples, wrapping_algorithm_samples):
+def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_samples):
 
     # Initializing attributes
     key_namespace = _PROVIDER_ID
     key_name = _KEY_ID
-    _wrapping_algorithm = wrapping_algorithm_samples
 
     # Creating an instance of a raw AES keyring
-    test_raw_aes_keyring = RawAESKeyring(
-        key_namespace=key_namespace,
-        key_name=key_name,
-        wrapping_key=_WRAPPING_KEY,
-        wrapping_algorithm=_wrapping_algorithm,
-    )
+    test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
 
     # Creating an instance of a raw master key
     test_raw_master_key = RawMasterKey(

@@ -50,12 +50,7 @@ _ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
 )
 
 _MULTI_KEYRING_WITH_GENERATOR_AND_CHILDREN = MultiKeyring(
-    generator=RawAESKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-        wrapping_key=_WRAPPING_KEY_AES,
-    ),
+    generator=RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
     children=[
         RawRSAKeyring(
             key_namespace=_PROVIDER_ID,
@@ -95,12 +90,7 @@ _MULTI_KEYRING_WITHOUT_GENERATOR = MultiKeyring(
                 public_exponent=65537, key_size=2048, backend=default_backend()
             ),
         ),
-        RawAESKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
-            wrapping_algorithm=WrappingAlgorithm.AES_128_GCM_IV12_TAG16_NO_PADDING,
-            wrapping_key=_WRAPPING_KEY_AES,
-        ),
+        RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
     ]
 )
 

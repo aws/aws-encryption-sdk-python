@@ -47,12 +47,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def raw_aes_keyring():
-    return RawAESKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
-        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-        wrapping_key=_WRAPPING_KEY,
-    )
+    return RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY,)
 
 
 @pytest.fixture
@@ -113,11 +108,17 @@ def test_valid_parameters(raw_aes_keyring):
 def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, wrapping_key):
     with pytest.raises(TypeError):
         RawAESKeyring(
-            key_namespace=key_namespace,
-            key_name=key_name,
-            wrapping_algorithm=wrapping_algorithm,
-            wrapping_key=wrapping_key,
+            key_namespace=key_namespace, key_name=key_name, wrapping_key=wrapping_key,
         )
+
+
+def test_invalid_key_length():
+    with pytest.raises(ValueError) as excinfo:
+        RawAESKeyring(
+            key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=b"012345",
+        )
+
+    excinfo.match(r"Invalid wrapping key length. Must be one of \[16, 24, 32\] bytes.")
 
 
 def test_on_encrypt_when_data_encryption_key_given(raw_aes_keyring, patch_generate_data_key):

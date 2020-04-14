@@ -10,7 +10,6 @@ In this example, we use the one-step encrypt and decrypt APIs.
 import os
 
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 
 
@@ -30,14 +29,10 @@ def run(source_plaintext):
         "the data you are handling": "is what you think it is",
     }
 
-    # Choose the wrapping algorithm for the keyring to use.
-    wrapping_algorithm = WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
-
-    # Generate an AES key to use with your keyring.
-    # The key size depends on the wrapping algorithm.
+    # Generate a 256-bit (32 byte) AES key to use with your keyring.
     #
     # In practice, you should get this key from a secure key management system such as an HSM.
-    key = os.urandom(wrapping_algorithm.algorithm.kdf_input_len)
+    key = os.urandom(32)
 
     # Create the keyring that determines how your data keys are protected.
     keyring = RawAESKeyring(
@@ -50,7 +45,6 @@ def run(source_plaintext):
         key_namespace="some managed raw keys",
         key_name=b"my AES wrapping key",
         wrapping_key=key,
-        wrapping_algorithm=wrapping_algorithm,
     )
 
     # Encrypt your plaintext data.
