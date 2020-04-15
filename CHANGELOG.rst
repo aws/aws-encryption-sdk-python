@@ -35,6 +35,15 @@ Deprecations
     * This does not mean that this library will no longer work or install with 3.4,
       but we are no longer testing against or advertising support for 3.4.
 
+Documentation
+-------------
+
+* Added new examples demonstrating how to use
+  APIs, keyrings, cryptographic materials managers, and master key providers.
+  `#221 <https://github.com/aws/aws-encryption-sdk-python/pull/221>`_
+  `#236 <https://github.com/aws/aws-encryption-sdk-python/pull/236>`_
+  `#239 <https://github.com/aws/aws-encryption-sdk-python/pull/239>`_
+
 1.4.1 -- 2019-09-20
 ===================
 
