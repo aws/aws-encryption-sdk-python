@@ -97,11 +97,12 @@ or a CMM. The examples in this readme use the ``KMSMasterKeyProvider`` class.
 
 KMSMasterKeyProvider
 ====================
-Because the ``KMSMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_, it requires AWS Credentials.
-To provide these credentials, use the `standard means by which boto3 locates credentials`_ or provide a
-pre-existing instance of a ``botocore session`` to the ``KMSMasterKeyProvider``.
-This latter option can be useful if you have an alternate way to store your AWS credentials or
-you want to reuse an existing instance of a botocore session in order to decrease startup costs.
+The ``KMSMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_, and thus requires AWS credentials in the form of a ``botocore
+session``. There are two ways to provide this:
+
+1. `Provide your AWS credentials per the boto3 documentation`_, and a ``botocore session`` will be created internally using the `standard means by which boto3 locates credentials`_.
+
+2. Provide a pre-existing instance of a ``botocore session`` to the ``KMSMasterKeyProvider``. This option can be useful if you have an alternate way of storing your AWS credentials or you want to reuse an existing instance of a botocore session in order to decrease startup costs. This can be done like so:
 
 .. code:: python
 
@@ -258,7 +259,8 @@ to your use-case in order to obtain peak performance.
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 .. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
 .. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
-.. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
+.. _Provide your AWS credentials per the boto3 documentation: https://boto3.readthedocs.io/en/latest/guide/configuration.html#credentials
+.. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
