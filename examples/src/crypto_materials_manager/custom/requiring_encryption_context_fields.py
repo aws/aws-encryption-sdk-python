@@ -11,7 +11,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#
 
 If you are using the AWS Encryption SDK with AWS KMS,
 you can use AWS KMS to provide additional powerful controls using the encryption context.
-For more information on that, see the KMS developer guide:
+For more information on that, see the AWS KMS developer guide:
 
 https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 

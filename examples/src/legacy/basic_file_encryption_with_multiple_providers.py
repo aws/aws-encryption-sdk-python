@@ -51,11 +51,11 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
-    """Encrypts and then decrypts a file using a KMS master key provider and a custom static master
+    """Encrypts and then decrypts a file using an AWS KMS master key provider and a custom static master
     key provider. Both master key providers are used to encrypt the plaintext file, so either one alone
     can decrypt it.
 
-    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS Customer Master Key (CMK)
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the AWS KMS Customer Master Key (CMK)
     (http://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html)
     :param str source_plaintext_filename: Filename of file to encrypt
     :param botocore_session: existing botocore session instance
@@ -66,7 +66,7 @@ def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
     cycled_kms_plaintext_filename = source_plaintext_filename + ".kms.decrypted"
     cycled_static_plaintext_filename = source_plaintext_filename + ".static.decrypted"
 
-    # Create a KMS master key provider
+    # Create an AWS KMS master key provider
     kms_kwargs = dict(key_ids=[aws_kms_cmk])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
@@ -77,18 +77,18 @@ def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
     static_master_key_provider = StaticRandomMasterKeyProvider()
     static_master_key_provider.add_master_key(static_key_id)
 
-    # Add the static master key provider to the KMS master key provider
-    #   The resulting master key provider uses KMS master keys to generate (and encrypt)
+    # Add the static master key provider to the AWS KMS master key provider
+    #   The resulting master key provider uses AWS KMS master keys to generate (and encrypt)
     #   data keys and static master keys to create an additional encrypted copy of each data key.
     kms_master_key_provider.add_master_key_provider(static_master_key_provider)
 
-    # Encrypt plaintext with both KMS and static master keys
+    # Encrypt plaintext with both AWS KMS and static master keys
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
         with aws_encryption_sdk.stream(source=plaintext, mode="e", key_provider=kms_master_key_provider) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
-    # Decrypt the ciphertext with only the KMS master key
+    # Decrypt the ciphertext with only the AWS KMS master key
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_kms_plaintext_filename, "wb") as plaintext:
         with aws_encryption_sdk.stream(
             source=ciphertext, mode="d", key_provider=aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)

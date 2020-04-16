@@ -3,5 +3,5 @@
 """
 AWS KMS keyring examples.
 
-These examples show how to use the KMS keyring.
+These examples show how to use the AWS KMS keyring.
 """

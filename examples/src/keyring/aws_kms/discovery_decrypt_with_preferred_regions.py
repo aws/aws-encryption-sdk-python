@@ -1,35 +1,35 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-When you give the KMS keyring specific key IDs it will use those CMKs and nothing else.
+When you give the AWS KMS keyring specific key IDs it will use those CMKs and nothing else.
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
 especially when you don't know which CMKs were used to encrypt a message.
-To address this need, you can use a KMS discovery keyring.
-The KMS discovery keyring does nothing on encrypt,
-but attempts to decrypt *any* data keys that were encrypted under a KMS CMK.
+To address this need, you can use an AWS KMS discovery keyring.
+The AWS KMS discovery keyring does nothing on encrypt,
+but attempts to decrypt *any* data keys that were encrypted under an AWS KMS CMK.
 
 However, sometimes you need to be a *bit* more restrictive than that.
-To address this need, you can use a client supplier to restrict what regions a KMS keyring can talk to.
+To address this need, you can use a client supplier to restrict what regions an AWS KMS keyring can talk to.
 
 A more complex but more common use-case is that you would *prefer* to stay within a region,
 but you would rather make calls to other regions than fail to decrypt the message.
 In this case, you want a keyring that will try to decrypt data keys in this region first,
 then try other regions.
 
-This example shows how to configure and use a multi-keyring with the KMS keyring
+This example shows how to configure and use a multi-keyring with the AWS KMS keyring
 to prefer the current AWS region while also failing over to other AWS regions.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with CMKs in multiple regions,
+For an example of how to use the AWS KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For examples of how to use the KMS keyring with custom client configurations,
+For examples of how to use the AWS KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS discovery keyring on decrypt,
+For examples of how to use the AWS KMS discovery keyring on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_in_region_only`` examples.
 """
@@ -43,7 +43,7 @@ from aws_encryption_sdk.keyrings.multi import MultiKeyring
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate configuring a KMS discovery-like keyring a particular AWS region and failover to others.
+    """Demonstrate configuring an AWS KMS discovery-like keyring a particular AWS region and failover to others.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -66,7 +66,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Create a throw-away boto3 session to discover the default region.
     local_region = Session().region_name
 
-    # Now, use that region name to create two KMS discovery keyrings:
+    # Now, use that region name to create two AWS KMS discovery keyrings:
     #
     # One that only works in the local region
     local_region_decrypt_keyring = AwsKmsKeyring(

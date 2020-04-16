@@ -5,14 +5,14 @@ import aws_encryption_sdk
 
 
 def run(aws_kms_cmk, source_plaintext, botocore_session=None):
-    """Encrypts and then decrypts a string under a KMS customer master key (CMK).
+    """Encrypts and then decrypts a string under an AWS KMS customer master key (CMK).
 
     :param str aws_kms_cmk: Amazon Resource Name (ARN) of the AWS KMS CMK
     :param bytes source_plaintext: Data to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
-    # Create a KMS master key provider
+    # Create an AWS KMS master key provider
     kms_kwargs = dict(key_ids=[aws_kms_cmk])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session

@@ -5,14 +5,14 @@ This example is intended to serve as reference material for users migrating away
 We recommend using keyrings rather than master key providers.
 For examples using keyrings, see the ``examples/src/keyrings`` directory.
 
-This example shows how to configure and use a KMS master key provider with with CMKs in multiple regions.
+This example shows how to configure and use an AWS KMS master key provider with with CMKs in multiple regions.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#master-key-provider
 
-For an example of how to use the KMS master key with a single CMK,
+For an example of how to use the AWS KMS master key with a single CMK,
 see the ``master_key_provider/aws_kms/single_cmk`` example.
 
-For an example of how to use the KMS master key provider in discovery mode on decrypt,
+For an example of how to use the AWS KMS master key provider in discovery mode on decrypt,
 see the ``master_key_provider/aws_kms/discovery_decrypt`` example.
 """
 import aws_encryption_sdk
@@ -27,10 +27,10 @@ except ImportError:  # pragma: no cover
 
 def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # type: (str, Sequence[str], bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS master key provider with CMKs in multiple regions.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS master key provider with CMKs in multiple regions.
 
     :param str aws_kms_generator_cmk: The ARN of the primary AWS KMS CMK
-    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary KMS CMKs
+    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary AWS KMS CMKs
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
@@ -45,7 +45,7 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
 
     # Create the master key provider that will encrypt your data keys under all requested CMKs.
     #
-    # The KMS master key provider generates the data key using the first key ID in the list.
+    # The AWS KMS master key provider generates the data key using the first key ID in the list.
     key_ids = [aws_kms_generator_cmk]
     key_ids.extend(aws_kms_additional_cmks)
     master_key_provider = KMSMasterKeyProvider(key_ids=key_ids)

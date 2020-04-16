@@ -1,18 +1,18 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to configure and use a KMS keyring with with CMKs in multiple regions.
+This example shows how to configure and use an AWS KMS keyring with with CMKs in multiple regions.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with a single CMK,
+For an example of how to use the AWS KMS keyring with a single CMK,
 see the ``keyring/aws_kms/single_cmk`` example.
 
-For examples of how to use the KMS keyring with custom client configurations,
+For examples of how to use the AWS KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the AWS KMS keyring in discovery mode on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
@@ -29,10 +29,10 @@ except ImportError:  # pragma: no cover
 
 def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # type: (str, Sequence[str], bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with CMKs in multiple regions.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring with CMKs in multiple regions.
 
     :param str aws_kms_generator_cmk: The ARN of the primary AWS KMS CMK
-    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary KMS CMKs
+    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary AWS KMS CMKs
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
