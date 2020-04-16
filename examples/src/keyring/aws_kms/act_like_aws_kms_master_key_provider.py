@@ -47,8 +47,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     # This is the master key provider whose behavior we want to replicate.
     #
-    # On encrypt, this master key provider only uses the single target AWS KMS CMK,
-    # but on decrypt, this master key provider attempts to decrypt
+    # On encrypt, this master key provider only uses the single target AWS KMS CMK.
+    # However, on decrypt, this master key provider attempts to decrypt
     # any data keys that were encrypted under an AWS KMS CMK.
     _master_key_provider_to_replicate = KMSMasterKeyProvider(key_ids=[aws_kms_cmk])
 
