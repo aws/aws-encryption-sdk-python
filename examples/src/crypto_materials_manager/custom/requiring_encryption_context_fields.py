@@ -11,7 +11,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#
 
 If you are using the AWS Encryption SDK with AWS KMS,
 you can use AWS KMS to provide additional powerful controls using the encryption context.
-For more information on that, see the KMS developer guide:
+For more information on that, see the AWS KMS developer guide:
 
 https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 
@@ -19,7 +19,7 @@ This example shows how to create a custom cryptographic materials manager (CMM)
 that requires a particular field in the encryption context.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials,
@@ -87,7 +87,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create the classification requiring cryptographic materials manager using your keyring.
     cmm = ClassificationRequiringCryptoMaterialsManager(keyring=keyring)

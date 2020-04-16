@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-By default, the KMS keyring uses a client supplier that
+By default, the AWS KMS keyring uses a client supplier that
 supplies a client with the same configuration for every region.
 If you need different behavior, you can write your own client supplier.
 
@@ -12,18 +12,18 @@ or if you are working with regions that have separate authentication silos
 like ``ap-east-1`` and ``me-south-1``.
 
 This example shows how to create a client supplier
-that will supply KMS clients with valid credentials for the target region
+that will supply AWS KMS clients with valid credentials for the target region
 even when working with regions that need different credentials.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with CMKs in multiple regions,
+For an example of how to use the AWS KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For another example of how to use the KMS keyring with a custom client configuration,
+For another example of how to use the AWS KMS keyring with a custom client configuration,
 see the ``keyring/aws_kms/custom_kms_client_config`` example.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the AWS KMS keyring in discovery mode on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
@@ -32,7 +32,7 @@ from botocore.client import BaseClient
 from botocore.session import Session
 
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import ClientSupplier, DefaultClientSupplier
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -72,7 +72,7 @@ class MultiPartitionClientSupplier(ClientSupplier):
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with a custom client supplier.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring with a custom client supplier.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -88,7 +88,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=MultiPartitionClientSupplier())
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=MultiPartitionClientSupplier())
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

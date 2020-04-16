@@ -24,7 +24,7 @@ In this example, we use the one-step encrypt and decrypt APIs.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 
 
@@ -46,7 +46,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create the caching cryptographic materials manager using your keyring.
     cmm = CachingCryptoMaterialsManager(

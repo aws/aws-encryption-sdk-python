@@ -1,15 +1,15 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing basic encryption and decryption of streaming data in memory using one KMS CMK."""
+"""Example showing basic encryption and decryption of streaming data in memory using one AWS KMS CMK."""
 import filecmp
 
 import aws_encryption_sdk
 
 
 def run(aws_kms_cmk, source_plaintext_filename, botocore_session=None):
-    """Encrypts and then decrypts streaming data under one KMS customer master key (CMK).
+    """Encrypts and then decrypts streaming data under one AWS KMS customer master key (CMK).
 
-    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the KMS CMK
+    :param str aws_kms_cmk: Amazon Resource Name (ARN) of the AWS KMS CMK
     :param str source_plaintext_filename: Filename of file to encrypt
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session

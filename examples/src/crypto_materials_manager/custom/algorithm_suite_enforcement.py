@@ -24,7 +24,7 @@ or do not specify an algorithm suite, in which case the default CMM uses the def
 """
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import AlgorithmSuite
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials,
@@ -92,7 +92,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create the algorithm suite restricting cryptographic materials manager using your keyring.
     cmm = RequireApprovedAlgorithmSuitesCryptoMaterialsManager(keyring=keyring)

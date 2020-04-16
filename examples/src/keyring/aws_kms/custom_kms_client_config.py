@@ -1,22 +1,22 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-By default, the KMS keyring uses the default configurations
-for all KMS clients and uses the default discoverable credentials.
+By default, the AWS KMS keyring uses the default configurations
+for all AWS KMS clients and uses the default discoverable credentials.
 If you need to change this configuration,
 you can configure the client supplier.
 
-This example shows how to use custom-configured clients with the KMS keyring.
+This example shows how to use custom-configured clients with the AWS KMS keyring.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with CMKs in multiple regions,
+For an example of how to use the AWS KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For another example of how to use the KMS keyring with custom client configuration,
+For another example of how to use the AWS KMS keyring with custom client configuration,
 see the ``keyring/aws_kms/custom_client_supplier`` example.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the AWS KMS keyring in discovery mode on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
@@ -26,13 +26,13 @@ from botocore.session import Session
 
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import DefaultClientSupplier
 
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with custom KMS client configuration.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring with custom AWS KMS client configuration.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -61,7 +61,7 @@ def run(aws_kms_cmk, source_plaintext):
 
     # Create the keyring that determines how your data keys are protected,
     # providing the client supplier that you created.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=client_supplier)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=client_supplier)
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

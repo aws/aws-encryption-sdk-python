@@ -14,7 +14,7 @@ see the ``keyring`` and ``master_key_provider`` directories.
 import filecmp
 
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 
 def run(aws_kms_cmk, source_plaintext_filename):
@@ -40,7 +40,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Open the files you want to work with.
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:

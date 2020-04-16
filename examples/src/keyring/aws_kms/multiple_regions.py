@@ -1,24 +1,24 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to configure and use a KMS keyring with with CMKs in multiple regions.
+This example shows how to configure and use an AWS KMS keyring with with CMKs in multiple regions.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with a single CMK,
+For an example of how to use the AWS KMS keyring with a single CMK,
 see the ``keyring/aws_kms/single_cmk`` example.
 
-For examples of how to use the KMS keyring with custom client configurations,
+For examples of how to use the AWS KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the AWS KMS keyring in discovery mode on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Sequence  # noqa pylint: disable=unused-import
@@ -29,10 +29,10 @@ except ImportError:  # pragma: no cover
 
 def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # type: (str, Sequence[str], bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with CMKs in multiple regions.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring with CMKs in multiple regions.
 
     :param str aws_kms_generator_cmk: The ARN of the primary AWS KMS CMK
-    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary KMS CMKs
+    :param List[str] aws_kms_additional_cmks: Additional ARNs of secondary AWS KMS CMKs
     :param bytes source_plaintext: Plaintext to encrypt
     """
     # Prepare your encryption context.
@@ -46,7 +46,7 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     }
 
     # Create the keyring that will encrypt your data keys under all requested CMKs.
-    many_cmks_keyring = KmsKeyring(generator_key_id=aws_kms_generator_cmk, key_ids=aws_kms_additional_cmks)
+    many_cmks_keyring = AwsKmsKeyring(generator_key_id=aws_kms_generator_cmk, key_ids=aws_kms_additional_cmks)
 
     # Create keyrings that each only use one of the CMKs.
     # We will use these later to demonstrate that any of the CMKs can be used to decrypt the message.
@@ -54,8 +54,8 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # We provide these in "key_ids" rather than "generator_key_id"
     # so that these keyrings cannot be used to generate a new data key.
     # We will only be using them on decrypt.
-    single_cmk_keyring_that_generated = KmsKeyring(key_ids=[aws_kms_generator_cmk])
-    single_cmk_keyring_that_encrypted = KmsKeyring(key_ids=[aws_kms_additional_cmks[0]])
+    single_cmk_keyring_that_generated = AwsKmsKeyring(key_ids=[aws_kms_generator_cmk])
+    single_cmk_keyring_that_encrypted = AwsKmsKeyring(key_ids=[aws_kms_additional_cmks[0]])
 
     # Encrypt your plaintext data using the keyring that uses all requests CMKs.
     ciphertext, encrypt_header = aws_encryption_sdk.encrypt(

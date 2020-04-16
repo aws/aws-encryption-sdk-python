@@ -80,7 +80,7 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
     .. versionadded:: 1.5.0
         Master key providers are deprecated.
-        Use :class:`aws_encryption_sdk.keyrings.aws_kms.KmsKeyring` instead.
+        Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
 
     >>> import aws_encryption_sdk
     >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
@@ -232,7 +232,7 @@ class KMSMasterKey(MasterKey):
 
     .. versionadded:: 1.5.0
         Master key providers are deprecated.
-        Use :class:`aws_encryption_sdk.keyrings.aws_kms.KmsKeyring` instead.
+        Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
 
     :param config: Configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyConfig

@@ -1,29 +1,29 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example shows how to configure and use a KMS keyring with a single KMS CMK.
+This example shows how to configure and use an AWS KMS keyring with a single AWS KMS CMK.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with CMKs in multiple regions,
+For an example of how to use the AWS KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For examples of how to use the KMS keyring with custom client configurations,
+For examples of how to use the AWS KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS keyring in discovery mode on decrypt,
+For examples of how to use the AWS KMS keyring in discovery mode on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``,
 ``keyring/aws_kms/discovery_decrypt_in_region_only``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS keyring with a single CMK.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring with a single CMK.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -39,7 +39,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

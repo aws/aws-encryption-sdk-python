@@ -39,8 +39,8 @@ def encrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
-        >>> keyring = KmsKeyring(
+        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
+        >>> keyring = AwsKmsKeyring(
         ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
         ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
         ... )
@@ -107,8 +107,8 @@ def decrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
-        >>> keyring = KmsKeyring(
+        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
+        >>> keyring = AwsKmsKeyring(
         ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
         ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
         ... )
@@ -166,8 +166,8 @@ def stream(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
-        >>> keyring = KmsKeyring(
+        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
+        >>> keyring = AwsKmsKeyring(
         ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
         ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
         ... )

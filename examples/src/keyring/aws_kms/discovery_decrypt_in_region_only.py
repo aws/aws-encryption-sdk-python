@@ -1,40 +1,40 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-When you give the KMS keyring specific key IDs it will use those CMKs and nothing else.
+When you give the AWS KMS keyring specific key IDs it will use those CMKs and nothing else.
 This is true both on encrypt and on decrypt.
 However, sometimes you need more flexibility on decrypt,
 especially when you don't know which CMKs were used to encrypt a message.
-To address this need, you can use a KMS discovery keyring.
-The KMS discovery keyring does nothing on encrypt,
-but attempts to decrypt *any* data keys that were encrypted under a KMS CMK.
+To address this need, you can use an AWS KMS discovery keyring.
+The AWS KMS discovery keyring does nothing on encrypt,
+but attempts to decrypt *any* data keys that were encrypted under an AWS KMS CMK.
 
 However, sometimes you need to be a *bit* more restrictive than that.
-To address this need, you can use a client supplier that restricts the regions a KMS keyring can talk to.
+To address this need, you can use a client supplier that restricts the regions an AWS KMS keyring can talk to.
 
-This example shows how to configure and use a KMS regional discovery keyring that is restricted to one region.
+This example shows how to configure and use an AWS KMS regional discovery keyring that is restricted to one region.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-kms-keyring
 
-For an example of how to use the KMS keyring with CMKs in multiple regions,
+For an example of how to use the AWS KMS keyring with CMKs in multiple regions,
 see the ``keyring/aws_kms/multiple_regions`` example.
 
-For examples of how to use the KMS keyring with custom client configurations,
+For examples of how to use the AWS KMS keyring with custom client configurations,
 see the ``keyring/aws_kms/custom_client_supplier``
 and ``keyring/aws_kms/custom_kms_client_config`` examples.
 
-For examples of how to use the KMS discovery keyring on decrypt,
+For examples of how to use the AWS KMS discovery keyring on decrypt,
 see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import AllowRegionsClientSupplier
 
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate configuring a KMS discovery keyring to only work within a single region.
+    """Demonstrate configuring an AWS KMS discovery keyring to only work within a single region.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -50,17 +50,17 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    encrypt_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Extract the region from the CMK ARN.
     decrypt_region = aws_kms_cmk.split(":", 4)[3]
 
-    # Create the KMS discovery keyring that we will use on decrypt.
+    # Create the AWS KMS discovery keyring that we will use on decrypt.
     #
     # The client supplier that we specify here will only supply clients for the specified region.
     # The keyring only attempts to decrypt data keys if it can get a client for that region,
     # so this keyring will now ignore any data keys that were encrypted under a CMK in another region.
-    decrypt_keyring = KmsKeyring(
+    decrypt_keyring = AwsKmsKeyring(
         is_discovery=True, client_supplier=AllowRegionsClientSupplier(allowed_regions=[decrypt_region])
     )
 
@@ -72,7 +72,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
-    # Decrypt your encrypted data using the KMS discovery keyring.
+    # Decrypt your encrypted data using the AWS KMS discovery keyring.
     #
     # You do not need to specify the encryption context on decrypt
     # because the header of the encrypted message includes the encryption context.

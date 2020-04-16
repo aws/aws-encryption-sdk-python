@@ -5,14 +5,14 @@ This example is intended to serve as reference material for users migrating away
 We recommend using keyrings rather than master key providers.
 For examples using keyrings, see the ``examples/src/keyrings`` directory.
 
-This example shows how to configure and use a KMS master key with a single KMS CMK.
+This example shows how to configure and use an AWS KMS master key with a single AWS KMS CMK.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#master-key-provider
 
-For an example of how to use the KMS master key provider with CMKs in multiple regions,
+For an example of how to use the AWS KMS master key provider with CMKs in multiple regions,
 see the ``master_key_provider/aws_kms/multiple_regions`` example.
 
-For an example of how to use the KMS master key provider in discovery mode on decrypt,
+For an example of how to use the AWS KMS master key provider in discovery mode on decrypt,
 see the ``master_key_provider/aws_kms/discovery_decrypt`` example.
 """
 import aws_encryption_sdk
@@ -21,7 +21,7 @@ from aws_encryption_sdk.key_providers.kms import KMSMasterKey
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a KMS master key with a single CMK.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS master key with a single CMK.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt

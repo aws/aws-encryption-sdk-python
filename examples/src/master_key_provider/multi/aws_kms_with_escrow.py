@@ -9,15 +9,15 @@ One use-case that we have seen customers need is
 the ability to enjoy the benefits of AWS KMS during normal operation
 but retain the ability to decrypt encrypted messages without access to AWS KMS.
 This example shows how you can achieve this
-by combining a KMS master key with a raw RSA master key.
+by combining an AWS KMS master key with a raw RSA master key.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#master-key-provider
 
-For more examples of how to use the KMS master key provider, see the ``master_key_provider/aws_kms`` examples.
+For more examples of how to use the AWS KMS master key provider, see the ``master_key_provider/aws_kms`` examples.
 
 For more examples of how to use the raw RSA master key, see the ``master_key_provider/raw_rsa`` examples.
 
-In this example we generate a RSA keypair
+In this example we generate an RSA keypair
 but in practice you would want to keep your private key in an HSM
 or other key management system.
 
@@ -35,7 +35,7 @@ from aws_encryption_sdk.key_providers.raw import RawMasterKey, WrappingKey
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate configuring a master key provider to use an AWS KMS CMK and a RSA wrapping key.
+    """Demonstrate configuring a master key provider to use an AWS KMS CMK and an RSA wrapping key.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
@@ -110,10 +110,10 @@ def run(aws_kms_cmk, source_plaintext):
         ),
     )
 
-    # Create the KMS master key that you will use for decryption during normal operations.
+    # Create the AWS KMS master key that you will use for decryption during normal operations.
     kms_master_key = KMSMasterKeyProvider(key_ids=[aws_kms_cmk])
 
-    # Add the escrow encrypt master key to the KMS master key.
+    # Add the escrow encrypt master key to the AWS KMS master key.
     kms_master_key.add_master_key_provider(escrow_encrypt_master_key)
 
     # Encrypt your plaintext data using the combined master keys.
@@ -122,13 +122,13 @@ def run(aws_kms_cmk, source_plaintext):
     )
 
     # Verify that the header contains the expected number of encrypted data keys (EDKs).
-    # It should contain one EDK for KMS and one for the escrow key.
+    # It should contain one EDK for AWS KMS and one for the escrow key.
     assert len(encrypt_header.encrypted_data_keys) == 2
 
     # Demonstrate that the ciphertext and plaintext are different.
     assert ciphertext != source_plaintext
 
-    # Decrypt your encrypted data separately using the KMS master key and the escrow decrypt master key.
+    # Decrypt your encrypted data separately using the AWS KMS master key and the escrow decrypt master key.
     #
     # You do not need to specify the encryption context on decrypt
     # because the header of the encrypted message includes the encryption context.

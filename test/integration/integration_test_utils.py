@@ -17,7 +17,7 @@ import botocore.session
 import pytest
 
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
 AWS_KMS_KEY_ID_2 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2"
@@ -94,7 +94,7 @@ def build_aws_kms_keyring(generate=True, cache=True):
     else:
         kwargs = dict(key_ids=[cmk_arn])
 
-    keyring = KmsKeyring(**kwargs)
+    keyring = AwsKmsKeyring(**kwargs)
 
     if cache:
         _KMS_KEYRING = keyring
