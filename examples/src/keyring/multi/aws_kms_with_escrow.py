@@ -13,7 +13,7 @@ For more examples of how to use the AWS KMS keyring, see the ``keyring/aws_kms``
 
 For more examples of how to use the raw RSA keyring, see the ``keyring/raw_rsa`` examples.
 
-In this example we generate a RSA keypair
+In this example we generate an RSA keypair
 but in practice you would want to keep your private key in an HSM
 or other key management system.
 
@@ -31,7 +31,7 @@ from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
 def run(aws_kms_cmk, source_plaintext):
     # type: (str, bytes) -> None
-    """Demonstrate configuring a keyring to use an AWS KMS CMK and a RSA wrapping key.
+    """Demonstrate configuring a keyring to use an AWS KMS CMK and an RSA wrapping key.
 
     :param str aws_kms_cmk: The ARN of an AWS KMS CMK that protects data keys
     :param bytes source_plaintext: Plaintext to encrypt
