@@ -28,7 +28,7 @@ see the ``keyring/aws_kms/discovery_decrypt``
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import AllowRegionsClientSupplier
 
 
@@ -50,7 +50,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    encrypt_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Extract the region from the CMK ARN.
     decrypt_region = aws_kms_cmk.split(":", 4)[3]
@@ -60,7 +60,7 @@ def run(aws_kms_cmk, source_plaintext):
     # The client supplier that we specify here will only supply clients for the specified region.
     # The keyring only attempts to decrypt data keys if it can get a client for that region,
     # so this keyring will now ignore any data keys that were encrypted under a CMK in another region.
-    decrypt_keyring = KmsKeyring(
+    decrypt_keyring = AwsKmsKeyring(
         is_discovery=True, client_supplier=AllowRegionsClientSupplier(allowed_regions=[decrypt_region])
     )
 

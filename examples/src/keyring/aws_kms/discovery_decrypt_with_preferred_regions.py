@@ -36,7 +36,7 @@ and ``keyring/aws_kms/discovery_decrypt_in_region_only`` examples.
 from boto3.session import Session
 
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import AllowRegionsClientSupplier, DenyRegionsClientSupplier
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 
@@ -59,7 +59,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    encrypt_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # To create our decrypt keyring, we need to know our current default AWS region.
     #
@@ -69,11 +69,11 @@ def run(aws_kms_cmk, source_plaintext):
     # Now, use that region name to create two KMS discovery keyrings:
     #
     # One that only works in the local region
-    local_region_decrypt_keyring = KmsKeyring(
+    local_region_decrypt_keyring = AwsKmsKeyring(
         is_discovery=True, client_supplier=AllowRegionsClientSupplier(allowed_regions=[local_region])
     )
     # and one that will work in any other region but NOT the local region.
-    other_regions_decrypt_keyring = KmsKeyring(
+    other_regions_decrypt_keyring = AwsKmsKeyring(
         is_discovery=True, client_supplier=DenyRegionsClientSupplier(denied_regions=[local_region])
     )
 

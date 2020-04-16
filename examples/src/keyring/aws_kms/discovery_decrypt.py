@@ -25,7 +25,7 @@ see the ``keyring/aws_kms/discovery_decrypt_in_region_only``
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 
 def run(aws_kms_cmk, source_plaintext):
@@ -46,10 +46,10 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    encrypt_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    encrypt_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create a KMS discovery keyring to use on decrypt.
-    decrypt_keyring = KmsKeyring(is_discovery=True)
+    decrypt_keyring = AwsKmsKeyring(is_discovery=True)
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

@@ -32,7 +32,7 @@ from botocore.client import BaseClient
 from botocore.session import Session
 
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import ClientSupplier, DefaultClientSupplier
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -88,7 +88,7 @@ def run(aws_kms_cmk, source_plaintext):
     }
 
     # Create the keyring that determines how your data keys are protected.
-    keyring = KmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=MultiPartitionClientSupplier())
+    keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk, client_supplier=MultiPartitionClientSupplier())
 
     # Encrypt your plaintext data.
     ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(

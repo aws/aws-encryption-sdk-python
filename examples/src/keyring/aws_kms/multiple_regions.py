@@ -18,7 +18,7 @@ see the ``keyring/aws_kms/discovery_decrypt``,
 and ``keyring/aws_kms/discovery_decrypt_with_preferred_region`` examples.
 """
 import aws_encryption_sdk
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Sequence  # noqa pylint: disable=unused-import
@@ -46,7 +46,7 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     }
 
     # Create the keyring that will encrypt your data keys under all requested CMKs.
-    many_cmks_keyring = KmsKeyring(generator_key_id=aws_kms_generator_cmk, key_ids=aws_kms_additional_cmks)
+    many_cmks_keyring = AwsKmsKeyring(generator_key_id=aws_kms_generator_cmk, key_ids=aws_kms_additional_cmks)
 
     # Create keyrings that each only use one of the CMKs.
     # We will use these later to demonstrate that any of the CMKs can be used to decrypt the message.
@@ -54,8 +54,8 @@ def run(aws_kms_generator_cmk, aws_kms_additional_cmks, source_plaintext):
     # We provide these in "key_ids" rather than "generator_key_id"
     # so that these keyrings cannot be used to generate a new data key.
     # We will only be using them on decrypt.
-    single_cmk_keyring_that_generated = KmsKeyring(key_ids=[aws_kms_generator_cmk])
-    single_cmk_keyring_that_encrypted = KmsKeyring(key_ids=[aws_kms_additional_cmks[0]])
+    single_cmk_keyring_that_generated = AwsKmsKeyring(key_ids=[aws_kms_generator_cmk])
+    single_cmk_keyring_that_encrypted = AwsKmsKeyring(key_ids=[aws_kms_additional_cmks[0]])
 
     # Encrypt your plaintext data using the keyring that uses all requests CMKs.
     ciphertext, encrypt_header = aws_encryption_sdk.encrypt(

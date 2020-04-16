@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import WrappingAlgorithm
-from aws_encryption_sdk.keyrings.aws_kms import KmsKeyring
+from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
@@ -89,7 +89,7 @@ def run(aws_kms_cmk, source_plaintext):
     )
 
     # Create the KMS keyring that you will use for decryption during normal operations.
-    kms_keyring = KmsKeyring(generator_key_id=aws_kms_cmk)
+    kms_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Combine the KMS keyring and the escrow encrypt keyring using the multi-keyring.
     encrypt_keyring = MultiKeyring(generator=kms_keyring, children=[escrow_encrypt_keyring])

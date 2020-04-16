@@ -4,7 +4,7 @@
 import pytest
 
 from aws_encryption_sdk.keyrings.aws_kms import (
-    KmsKeyring,
+    AwsKmsKeyring,
     _AwsKmsDiscoveryKeyring,
     _AwsKmsSingleCmkKeyring,
     _region_from_key_id,
@@ -31,7 +31,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 )
 def test_kms_keyring_invalid_parameters(kwargs):
     with pytest.raises(TypeError):
-        KmsKeyring(**kwargs)
+        AwsKmsKeyring(**kwargs)
 
 
 def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
@@ -41,7 +41,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
     grants = ("asdf", "fdsa")
     supplier = DefaultClientSupplier()
 
-    test = KmsKeyring(
+    test = AwsKmsKeyring(
         generator_key_id=generator_id, key_ids=(child_id_1, child_id_2), grant_tokens=grants, client_supplier=supplier,
     )
 
@@ -71,7 +71,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring():
 
 
 def test_kms_keyring_builds_correct_inner_keyring_multikeyring_no_generator():
-    test = KmsKeyring(key_ids=("bar", "baz"))
+    test = AwsKmsKeyring(key_ids=("bar", "baz"))
 
     # We specified child IDs, so the inner keyring MUST be a multikeyring
     assert isinstance(test._inner_keyring, MultiKeyring)
@@ -84,7 +84,7 @@ def test_kms_keyring_builds_correct_inner_keyring_multikeyring_no_generator():
 
 
 def test_kms_keyring_builds_correct_inner_keyring_multikeyring_no_children():
-    test = KmsKeyring(generator_key_id="foo")
+    test = AwsKmsKeyring(generator_key_id="foo")
 
     # We specified a generator ID, so the inner keyring MUST be a multikeyring
     assert isinstance(test._inner_keyring, MultiKeyring)
@@ -100,7 +100,7 @@ def test_kms_keyring_builds_correct_inner_keyring_discovery():
     grants = ("asdf", "fdas")
     supplier = DefaultClientSupplier()
 
-    test = KmsKeyring(is_discovery=True, grant_tokens=grants, client_supplier=supplier)
+    test = AwsKmsKeyring(is_discovery=True, grant_tokens=grants, client_supplier=supplier)
 
     # We specified neither a generator nor children, so the inner keyring MUST be a discovery keyring
     assert isinstance(test._inner_keyring, _AwsKmsDiscoveryKeyring)
@@ -113,7 +113,7 @@ def test_kms_keyring_builds_correct_inner_keyring_discovery():
 def test_kms_keyring_inner_keyring_on_encrypt(mocker):
     mock_keyring = mocker.Mock()
 
-    keyring = KmsKeyring(is_discovery=True)
+    keyring = AwsKmsKeyring(is_discovery=True)
     keyring._inner_keyring = mock_keyring
 
     test = keyring.on_encrypt(encryption_materials=mocker.sentinel.encryption_materials)
@@ -126,7 +126,7 @@ def test_kms_keyring_inner_keyring_on_encrypt(mocker):
 def test_kms_keyring_inner_keyring_on_decrypt(mocker):
     mock_keyring = mocker.Mock()
 
-    keyring = KmsKeyring(is_discovery=True)
+    keyring = AwsKmsKeyring(is_discovery=True)
     keyring._inner_keyring = mock_keyring
 
     test = keyring.on_decrypt(

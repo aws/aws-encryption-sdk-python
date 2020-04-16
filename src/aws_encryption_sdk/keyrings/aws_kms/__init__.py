@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__all__ = ("KmsKeyring", "KEY_NAMESPACE")
+__all__ = ("AwsKmsKeyring", "KEY_NAMESPACE")
 
 _LOGGER = logging.getLogger(__name__)
 _GENERATE_FLAGS = {KeyringTraceFlag.GENERATED_DATA_KEY}
@@ -42,7 +42,7 @@ KEY_NAMESPACE = "aws-kms"
 
 
 @attr.s
-class KmsKeyring(Keyring):
+class AwsKmsKeyring(Keyring):
     """Keyring that uses AWS Key Management Service (KMS) Customer Master Keys (CMKs) to manage wrapping keys.
 
     Set ``generator_key_id`` to require that the keyring use that CMK to generate the data key.
@@ -163,7 +163,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
     """AWS KMS keyring that only works with a single AWS KMS CMK.
 
     This keyring should never be used directly.
-    It should only ever be used internally by :class:`KmsKeyring`.
+    It should only ever be used internally by :class:`AwsKmsKeyring`.
 
     .. versionadded:: 1.5.0
 
@@ -241,7 +241,7 @@ class _AwsKmsDiscoveryKeyring(Keyring):
     """AWS KMS discovery keyring that will attempt to decrypt any AWS KMS encrypted data key.
 
     This keyring should never be used directly.
-    It should only ever be used internally by :class:`KmsKeyring`.
+    It should only ever be used internally by :class:`AwsKmsKeyring`.
 
     .. versionadded:: 1.5.0
 
