@@ -55,7 +55,7 @@ def run(aws_kms_cmk, source_plaintext):
     # Create a keyring that encrypts and decrypts using a single AWS KMS CMK.
     single_cmk_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
-    # Create a discovery keyring that will attempt to decrypt
+    # Create an AWS KMS discovery keyring that will attempt to decrypt
     # any data keys that were encrypted under an AWS KMS CMK.
     discovery_keyring = AwsKmsKeyring(is_discovery=True)
 
