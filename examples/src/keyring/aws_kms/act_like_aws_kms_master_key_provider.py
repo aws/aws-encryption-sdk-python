@@ -11,9 +11,9 @@ the AWS KMS master key provider encrypts with all CMKs that you identify,
 but unlike the AWS KMS keyring,
 the AWS KMS master key provider always attempts to decrypt
 *any* data keys that were encrypted under an AWS KMS CMK.
-We have found that separating these two behaviors out,
-as we did in the AWS KMS keyring,
-makes it more clear what behavior to expect.
+We have found that separating these two behaviors
+makes it more clear what behavior to expect,
+so that is what we did with the AWS KMS keyring and the AWS KMS discovery keyring.
 However, as you migrate away from master key providers to keyrings,
 you might need to replicate the behavior of the AWS KMS master key provider.
 
