@@ -15,7 +15,7 @@ We have found that separating these two behaviors out,
 as we did in the AWS KMS keyring,
 makes it more clear what behavior to expect.
 However, as you migrate away from master key providers to keyrings,
-you might need to replicate the exact behavior of the AWS KMS master key provider.
+you might need to replicate the behavior of the AWS KMS master key provider.
 
 This example shows how to configure a keyring that behaves like an AWS KMS master key provider.
 
