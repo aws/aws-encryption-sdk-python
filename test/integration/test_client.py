@@ -27,20 +27,23 @@ VALUES = {
 }
 
 
+def _generate_mkp():
+    """Isolated inside a function to avoid calling get_cmk_arn during test discovery."""
+    return setup_kms_master_key_provider().master_key(get_cmk_arn())
+
+
 @pytest.mark.parametrize(
-    "kwargs",
+    "parameter_name, value_partial",
     (
-        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="AWS KMS master key provider"),
-        pytest.param(
-            dict(key_provider=setup_kms_master_key_provider().master_key(get_cmk_arn())), id="AWS KMS master key"
-        ),
-        pytest.param(dict(keyring=build_aws_kms_keyring()), id="AWS KMS keyring"),
+        pytest.param("key_provider", setup_kms_master_key_provider, id="AWS KMS master key provider"),
+        pytest.param("key_provider", _generate_mkp, id="AWS KMS master key"),
+        pytest.param("keyring", build_aws_kms_keyring, id="AWS KMS keyring"),
     ),
 )
-def test_encrypt_verify_user_agent_in_logs(caplog, kwargs):
+def test_encrypt_verify_user_agent_in_logs(caplog, parameter_name, value_partial):
     caplog.set_level(level=logging.DEBUG)
 
-    aws_encryption_sdk.encrypt(source=VALUES["plaintext_128"], **kwargs)
+    aws_encryption_sdk.encrypt(source=VALUES["plaintext_128"], **{parameter_name: value_partial()})
 
     assert USER_AGENT_SUFFIX in caplog.text
 
@@ -48,17 +51,17 @@ def test_encrypt_verify_user_agent_in_logs(caplog, kwargs):
 @pytest.mark.parametrize("frame_size", (pytest.param(0, id="unframed"), pytest.param(1024, id="1024 byte frame")))
 @pytest.mark.parametrize("algorithm_suite", Algorithm)
 @pytest.mark.parametrize(
-    "encrypt_key_provider_kwargs",
+    "encrypt_key_provider_param, encrypt_key_provider_partial",
     (
-        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="encrypt with MKP"),
-        pytest.param(dict(keyring=build_aws_kms_keyring()), id="encrypt with keyring"),
+        pytest.param("key_provider", setup_kms_master_key_provider, id="encrypt with MKP"),
+        pytest.param("keyring", build_aws_kms_keyring, id="encrypt with keyring"),
     ),
 )
 @pytest.mark.parametrize(
-    "decrypt_key_provider_kwargs",
+    "decrypt_key_provider_param, decrypt_key_provider_partial",
     (
-        pytest.param(dict(key_provider=setup_kms_master_key_provider()), id="decrypt with MKP"),
-        pytest.param(dict(keyring=build_aws_kms_keyring()), id="decrypt with keyring"),
+        pytest.param("key_provider", setup_kms_master_key_provider, id="decrypt with MKP"),
+        pytest.param("keyring", build_aws_kms_keyring, id="decrypt with keyring"),
     ),
 )
 @pytest.mark.parametrize(
@@ -76,16 +79,25 @@ def test_encrypt_verify_user_agent_in_logs(caplog, kwargs):
     ),
 )
 def test_encrypt_decrypt_cycle_aws_kms(
-    frame_size, algorithm_suite, encrypt_key_provider_kwargs, decrypt_key_provider_kwargs, encryption_context, plaintext
+    frame_size,
+    algorithm_suite,
+    encrypt_key_provider_param,
+    encrypt_key_provider_partial,
+    decrypt_key_provider_param,
+    decrypt_key_provider_partial,
+    encryption_context,
+    plaintext,
 ):
     ciphertext, _ = aws_encryption_sdk.encrypt(
         source=plaintext,
         encryption_context=encryption_context,
         frame_length=frame_size,
         algorithm=algorithm_suite,
-        **encrypt_key_provider_kwargs
+        **{encrypt_key_provider_param: encrypt_key_provider_partial()}
     )
-    decrypted, _ = aws_encryption_sdk.decrypt(source=ciphertext, **decrypt_key_provider_kwargs)
+    decrypted, _ = aws_encryption_sdk.decrypt(
+        source=ciphertext, **{decrypt_key_provider_param: decrypt_key_provider_partial()}
+    )
     assert decrypted == plaintext
 
 
