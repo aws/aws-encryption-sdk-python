@@ -43,7 +43,7 @@ def _generate_mkp():
 def test_encrypt_verify_user_agent_in_logs(caplog, parameter_name, value_partial):
     caplog.set_level(level=logging.DEBUG)
 
-    aws_encryption_sdk.encrypt(source=VALUES["plaintext_128"], parameter_name=value_partial())
+    aws_encryption_sdk.encrypt(source=VALUES["plaintext_128"], **{parameter_name: value_partial()})
 
     assert USER_AGENT_SUFFIX in caplog.text
 
@@ -93,10 +93,10 @@ def test_encrypt_decrypt_cycle_aws_kms(
         encryption_context=encryption_context,
         frame_length=frame_size,
         algorithm=algorithm_suite,
-        encrypt_key_provider_param=encrypt_key_provider_partial(),
+        **{encrypt_key_provider_param: encrypt_key_provider_partial()}
     )
     decrypted, _ = aws_encryption_sdk.decrypt(
-        source=ciphertext, decrypt_key_provider_param=decrypt_key_provider_partial()
+        source=ciphertext, **{decrypt_key_provider_param: decrypt_key_provider_partial()}
     )
     assert decrypted == plaintext
 
