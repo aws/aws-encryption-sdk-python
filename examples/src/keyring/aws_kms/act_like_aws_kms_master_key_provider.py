@@ -50,7 +50,7 @@ def run(aws_kms_cmk, source_plaintext):
     # any data keys that were encrypted under an AWS KMS CMK.
     _master_key_provider_to_replicate = KMSMasterKeyProvider(key_ids=[aws_kms_cmk])  # noqa: intentionally never used
 
-    # Create a keyring that encrypts and decrypts using a single AWS KMS CMK.
+    # Create a single-CMK keyring that encrypts and decrypts using a single AWS KMS CMK.
     single_cmk_keyring = AwsKmsKeyring(generator_key_id=aws_kms_cmk)
 
     # Create an AWS KMS discovery keyring that will attempt to decrypt
