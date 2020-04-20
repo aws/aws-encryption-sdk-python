@@ -89,7 +89,8 @@ class KMSMasterKeyProvider(MasterKeyProvider):
 
         There are two ways to provide this:
         1. Provide your AWS credentials per the boto3 documentation[3],
-        and a botocore session will be created internally using the standard means by which boto3 locates credentials[4].
+        and a botocore session will be created internally
+        using the standard means by which boto3 locates credentials[4].
         2. Provide a pre-existing instance of a botocore session to the KMSMasterKeyProvider.
         This option can be useful if you have an alternate way of storing your AWS credentials,
         or if you want to reuse an existing instance of a botocore session in order to decrease startup costs.
