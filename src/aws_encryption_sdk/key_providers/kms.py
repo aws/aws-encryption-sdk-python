@@ -79,8 +79,8 @@ class KMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
 
     .. versionadded:: 1.5.0
-    Master key providers are deprecated.
-    Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
 
 
     .. note::
