@@ -1,21 +1,19 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-Before there were keyrings, there were master key providers.
-Master key providers were the original configuration structure
-that we provided for defining how you want to protect your data keys.
+In earlier versions of the AWS Encryption SDK, you used master key providers to determine how your data keys are protected.
 
-The AWS KMS master key provider was the tool that we provided for interacting with AWS KMS.
+The AWS Encryption SDK provided an AWS KMS master key provider for interacting with AWS Key Management Service (AWS KMS).
 Like the AWS KMS keyring,
 the AWS KMS master key provider encrypts with all CMKs that you identify,
 but unlike the AWS KMS keyring,
 the AWS KMS master key provider always attempts to decrypt
 *any* data keys that were encrypted under an AWS KMS CMK.
 We have found that separating these two behaviors
-makes it more clear what behavior to expect,
+makes the expected behavior clearer,
 so that is what we did with the AWS KMS keyring and the AWS KMS discovery keyring.
-However, as you migrate away from master key providers to keyrings,
-you might need to replicate the behavior of the AWS KMS master key provider.
+However, as you migrate from master key providers to keyrings,
+you might want a keyring that behaves like the AWS KMS master key provider.
 
 This example shows how to configure a keyring that behaves like an AWS KMS master key provider.
 
@@ -47,8 +45,8 @@ def run(aws_kms_cmk, source_plaintext):
 
     # This is the master key provider whose behavior we want to replicate.
     #
-    # On encrypt, this master key provider only uses the single target AWS KMS CMK.
-    # However, on decrypt, this master key provider attempts to decrypt
+    # When encrypting, this master key provider uses only the specified `aws_kms_cmk`.
+    # However, when decrypting, this master key provider attempts to decrypt
     # any data keys that were encrypted under an AWS KMS CMK.
     _master_key_provider_to_replicate = KMSMasterKeyProvider(key_ids=[aws_kms_cmk])  # noqa: intentionally never used
 
