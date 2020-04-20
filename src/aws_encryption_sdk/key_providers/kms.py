@@ -78,6 +78,11 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
 class KMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
 
+    .. versionadded:: 1.5.0
+    Master key providers are deprecated.
+    Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
+
+
     .. note::
         The KMSMasterKeyProvider uses the boto3 SDK[1] to interact with AWS KMS[2],
         and thus requires AWS credentials in the form of a botocore session.
@@ -268,6 +273,10 @@ class KMSMasterKeyConfig(MasterKeyConfig):
 
 class KMSMasterKey(MasterKey):
     """Master Key class for KMS CMKs.
+
+    .. versionadded:: 1.5.0
+        Master key providers are deprecated.
+        Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
 
     :param config: Configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyConfig

@@ -1,21 +1,33 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Helper utilities for use while testing examples."""
 import os
 import sys
+import inspect
+
+import pytest
+import six
+
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Callable, Dict, Iterable, List  # noqa pylint: disable=unused-import
+
+    # we only need pathlib here for typehints
+    from pathlib import Path
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+EXAMPLES_SOURCE = os.path.join(HERE, "..", "src")
+SINGLE_CMK_ARG = "aws_kms_cmk"
+GENERATOR_CMK_ARG = "aws_kms_generator_cmk"
+ADDITIONAL_CMKS_ARG = "aws_kms_additional_cmks"
+PLAINTEXT_ARG = "source_plaintext"
+PLAINTEXT_FILE_ARG = "source_plaintext_filename"
 
 os.environ["AWS_ENCRYPTION_SDK_EXAMPLES_TESTING"] = "yes"
 sys.path.extend([os.sep.join([os.path.dirname(__file__), "..", "..", "test", "integration"])])
+from integration_test_utils import get_all_cmk_arns  # noqa pylint: disable=unused-import,import-error
 
 static_plaintext = (
     b"Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
@@ -47,4 +59,62 @@ static_plaintext = (
 )
 
 
-from integration_test_utils import get_cmk_arn  # noqa pylint: disable=unused-import,import-error
+def all_examples():
+    # type: () -> Iterable[pytest.param]
+    for (dirpath, _dirnames, filenames) in os.walk(EXAMPLES_SOURCE):
+        for testfile in filenames:
+            split_path = testfile.rsplit(".", 1)
+            if len(split_path) != 2:
+                continue
+            stem, suffix = split_path
+            if suffix == "py" and stem != "__init__":
+                module_parent = dirpath[len(EXAMPLES_SOURCE) + 1 :].replace(os.path.sep, ".")
+                module_name = stem
+                if module_parent:
+                    import_path = "..src.{base}.{name}".format(base=module_parent, name=module_name)
+                else:
+                    import_path = "..src.{name}".format(name=module_name)
+
+                yield pytest.param(import_path, id="{base}.{name}".format(base=module_parent, name=module_name))
+
+
+def get_arg_names(function):
+    # type: (Callable) -> List[str]
+    if six.PY2:
+        # getargspec was deprecated in CPython 3.0 but 2.7 does not have either of the new options
+        spec = inspect.getargspec(function)  # pylint: disable=deprecated-method
+        return spec.args
+
+    spec = inspect.getfullargspec(function)
+    return spec.args
+
+
+def build_kwargs(function, temp_dir):
+    # type: (Callable, Path) -> Dict[str, str]
+
+    plaintext_file = temp_dir / "plaintext"
+    plaintext_file.write_bytes(static_plaintext)
+
+    cmk_arns = get_all_cmk_arns()
+
+    args = get_arg_names(function)
+    possible_kwargs = {
+        SINGLE_CMK_ARG: cmk_arns[0],
+        GENERATOR_CMK_ARG: cmk_arns[0],
+        ADDITIONAL_CMKS_ARG: cmk_arns[1:],
+        PLAINTEXT_ARG: static_plaintext,
+        PLAINTEXT_FILE_ARG: str(plaintext_file.absolute()),
+    }
+    kwargs = {}
+    for name in args:
+        try:
+            kwargs[name] = possible_kwargs[name]
+        except KeyError:
+            pass
+    return kwargs
+
+
+def default_region():
+    # type: () -> str
+    primary_cmk = get_all_cmk_arns()[0]
+    return primary_cmk.split(":", 4)[3]
