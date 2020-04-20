@@ -95,53 +95,6 @@ Usage
 To use this client, you (the caller) must provide an instance of either a master key provider
 or a CMM. The examples in this readme use the ``KMSMasterKeyProvider`` class.
 
-KMSMasterKeyProvider
-====================
-The ``KMSMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_, and thus requires AWS credentials in the form of a ``botocore
-session``. There are two ways to provide this:
-
-1. `Provide your AWS credentials per the boto3 documentation`_, and a ``botocore session`` will be created internally using the `standard means by which boto3 locates credentials`_.
-
-2. Provide a pre-existing instance of a ``botocore session`` to the ``KMSMasterKeyProvider``. This option can be useful if you have an alternate way of storing your AWS credentials or you want to reuse an existing instance of a botocore session in order to decrease startup costs. This can be done like so:
-
-.. code:: python
-
-    import aws_encryption_sdk
-    import botocore.session
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider()
-
-    existing_botocore_session = botocore.session.Session()
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(botocore_session=existing_botocore_session)
-
-
-You can pre-load the ``KMSMasterKeyProvider`` with one or more CMKs.
-To encrypt data, you must configure the ``KMSMasterKeyProvider`` with as least one CMK.
-If you configure the the ``KMSMasterKeyProvider`` with multiple CMKs, the `final message`_
-will include a copy of the data key encrypted by each configured CMK.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-
-You can add CMKs from multiple regions to the ``KMSMasterKeyProvider``.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333',
-        'arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444'
-    ])
-
-
 Encryption and Decryption
 =========================
 After you create an instance of a ``MasterKeyProvider``, you can use either of the two
@@ -258,9 +211,5 @@ to your use-case in order to obtain peak performance.
 .. _GitHub: https://github.com/aws/aws-encryption-sdk-python/
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 .. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
-.. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
-.. _Provide your AWS credentials per the boto3 documentation: https://boto3.readthedocs.io/en/latest/guide/configuration.html#credentials
-.. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
-.. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
