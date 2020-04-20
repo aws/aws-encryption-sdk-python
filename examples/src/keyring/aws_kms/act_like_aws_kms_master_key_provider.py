@@ -43,7 +43,7 @@ def run(aws_kms_cmk, source_plaintext):
         "the data you are handling": "is what you think it is",
     }
 
-    # This is the master key provider whose behavior we want to replicate.
+    # This is the master key provider whose behavior we want to reproduce.
     #
     # When encrypting, this master key provider uses only the specified `aws_kms_cmk`.
     # However, when decrypting, this master key provider attempts to decrypt
