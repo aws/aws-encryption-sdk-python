@@ -82,67 +82,58 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         Master key providers are deprecated.
         Use :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` instead.
 
+    To encrypt data, you must configure :class:`KMSMasterKeyProvider` with at least one CMK.
+    If you configure :class:`KMSMasterKeyProvider` with multiple CMKs,
+    it generates the data key using the first CMK and encrypts that data key using the rest,
+    so that the `encrypted message`_ includes a copy of the data key encrypted under each configured CMK.
 
-    .. note::
-        The KMSMasterKeyProvider uses the boto3 SDK[1] to interact with AWS KMS[2],
-        and thus requires AWS credentials in the form of a botocore session.
+    .. _encrypted message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 
-        There are two ways to provide this:
-        1. Provide your AWS credentials per the boto3 documentation[3],
-        and a botocore session will be created internally
-        using the standard means by which boto3 locates credentials[4].
-        2. Provide a pre-existing instance of a botocore session to the KMSMasterKeyProvider.
-        This option can be useful if you have an alternate way of storing your AWS credentials,
-        or if you want to reuse an existing instance of a botocore session in order to decrease startup costs.
-        This can be done like so:
+    >>> from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+    >>> kms_key_provider = KMSMasterKeyProvider(key_ids=[
+    ...     "arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
+    ...     "arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333",
+    ... ])
 
-        >>> import aws_encryption_sdk
-        >>> import botocore.session
+    You can also configure :class:`KMSMasterKeyProvider` with CMKs in multiple regions:
 
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider()
+    >>> from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+    >>> kms_key_provider = KMSMasterKeyProvider(key_ids=[
+    ...     "arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
+    ...     "arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333",
+    ...     "arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444",
+    ... ])
 
-        >>> existing_botocore_session = botocore.session.Session()
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(botocore_session=existing_botocore_session)
+    :class:`KMSMasterKeyProvider` needs AWS credentials in order to interact with `AWS KMS`_.
+    There are two ways that you can provide these credentials:
 
-    .. note::
-        You can pre-load the KMSMasterKeyProvider with one or more CMKs.
-        To encrypt data, you must configure the KMSMasterKeyProvider with at least one CMK.
-        If you configure the the KMSMasterKeyProvider with multiple CMKs,
-        the final message[5] will include a copy of the data key encrypted by each configured CMK.
+    .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 
-        >>> import aws_encryption_sdk
+    1. Provide your AWS credentials in one of the standard `AWS credential discovery locations`_
+       and the :class:`KMSMasterKeyProvider` instance automatically discovers those credentials.
 
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        >>>     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        >>>     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-        >>> ])
+    .. _AWS credential discovery locations:
+        https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#configuring-credentials
 
-    .. note::
-        You can add CMKs from multiple regions to the KMSMasterKeyProvider.
+    >>> from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+    >>> import botocore.session
+    >>> kms_key_provider = KMSMasterKeyProvider()
 
-        >>> import aws_encryption_sdk
+    2. Provide an existing botocore session to :class:`KMSMasterKeyProvider`.
+       This option can be useful if you want to use specific credentials
+       or if you want to reuse an existing botocore session instance to decrease startup costs.
 
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-        >>>     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        >>>     'arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333',
-        >>>     'arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444'
-        >>> ])
+    >>> from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+    >>> import botocore.session
+    >>> existing_botocore_session = botocore.session.Session(profile="custom")
+    >>> kms_key_provider = KMSMasterKeyProvider(botocore_session=existing_botocore_session)
 
-
-    .. note::
-        If multiple AWS Identities are needed, one of two options are available:
-
-        * Additional KMSMasterKeyProvider instances may be added to the primary MasterKeyProvider.
-
-        * KMSMasterKey instances may be manually created and added to this KMSMasterKeyProvider.
-
-    .. note::
-        References:
-        [1] https://boto3.readthedocs.io/en/latest/
-        [2] https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
-        [3] https://boto3.readthedocs.io/en/latest/guide/configuration.html#credentials
-        [4] https://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
-        [5] https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
+    If you need different credentials to use different CMKs,
+    you can combine multiple :class:`KMSMasterKeyProvider` or :class:`KMSMasterKey` instances,
+    each with their own credentials.
+    However, we recommend that you use
+    :class:`aws_encryption_sdk.keyrings.aws_kms.AwsKmsKeyring` and client suppliers
+    for a simpler user experience.
 
     :param config: Configuration object (optional)
     :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
