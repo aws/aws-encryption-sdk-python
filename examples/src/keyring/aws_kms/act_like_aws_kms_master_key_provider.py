@@ -1,9 +1,11 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-In earlier versions of the AWS Encryption SDK, you used master key providers to determine how your data keys are protected.
+In earlier versions of the AWS Encryption SDK,
+you used master key providers to determine how your data keys are protected.
 
-The AWS Encryption SDK provided an AWS KMS master key provider for interacting with AWS Key Management Service (AWS KMS).
+The AWS Encryption SDK provided an AWS KMS master key provider for
+interacting with AWS Key Management Service (AWS KMS).
 Like the AWS KMS keyring,
 the AWS KMS master key provider encrypts with all CMKs that you identify,
 but unlike the AWS KMS keyring,
