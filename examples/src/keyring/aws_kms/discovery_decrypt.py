@@ -7,7 +7,13 @@ However, sometimes you need more flexibility on decrypt,
 especially when you don't know which CMKs were used to encrypt a message.
 To address this need, you can use an AWS KMS discovery keyring.
 The AWS KMS discovery keyring does nothing on encrypt,
-but attempts to decrypt *any* data keys that were encrypted under an AWS KMS CMK.
+but on decrypt it reviews each encrypted data key (EDK) in turn
+and if the EDK was encrypted under an AWS KMS CMK
+then the AWS KMS discovery keyring attempts to decrypt it.
+Whether decryption succeeds depends on network access to the KMS service
+and permissions on the CMK.
+This continues until the AWS KMS discovery keyring either runs out of EDKs
+or succeeds in decrypting an EDK.
 
 This example shows how to configure and use an AWS KMS discovery keyring.
 
