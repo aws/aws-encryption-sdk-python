@@ -7,14 +7,13 @@ This example shows how to configure a keyring that behaves like an AWS KMS maste
 
 The AWS Encryption SDK provided an AWS KMS master key provider for
 interacting with AWS Key Management Service (AWS KMS).
-Like the AWS KMS keyring,
-the AWS KMS master key provider encrypts with all CMKs that you identify,
-but unlike the AWS KMS keyring,
-the AWS KMS master key provider reviews each encrypted data key (EDK) in turn
-and if the EDK was encrypted under an AWS KMS CMK
-then the AWS KMS master key provider attempts to decrypt it.
-Whether decryption succeeds depends on network access to the KMS service
-and permissions on the CMK.
+On encrypt, the AWS KMS master key provider behaves like the AWS KMS keyring
+and encrypts with all CMKs that you identify.
+However, on decrypt,
+the AWS KMS master key provider reviews each encrypted data key (EDK).
+If the EDK was encrypted under an AWS KMS CMK,
+the AWS KMS master key provider attempts to decrypt it.
+Whether decryption succeeds depends on permissions on the CMK.
 This continues until the AWS KMS master key provider either runs out of EDKs
 or succeeds in decrypting an EDK.
 We have found that separating these two behaviors
