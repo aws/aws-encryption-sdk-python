@@ -114,9 +114,14 @@ class AllowRegionsClientSupplier(ClientSupplier):
     """
 
     allowed_regions = attr.ib(
-        validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string)
+        validator=(deep_iterable(member_validator=instance_of((type(None), six.string_types))), value_is_not_a_string)
     )
     _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=optional(is_callable()))
+
+    def _check(self, region_name):
+        # type: (Union[None, str]) -> None
+        if region_name not in self.allowed_regions:
+            raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
 
     def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
@@ -125,10 +130,13 @@ class AllowRegionsClientSupplier(ClientSupplier):
         :rtype: BaseClient
         :raises UnknownRegionError: if a region is requested that is not in ``allowed_regions``
         """
-        if region_name not in self.allowed_regions:
-            raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
+        self._check(region_name=region_name)
 
-        return self._client_supplier(region_name)
+        client = self._client_supplier(region_name)
+
+        self._check(region_name=client.meta.region_name)
+
+        return client
 
 
 @attr.s
@@ -142,9 +150,14 @@ class DenyRegionsClientSupplier(ClientSupplier):
     """
 
     denied_regions = attr.ib(
-        validator=(deep_iterable(member_validator=instance_of(six.string_types)), value_is_not_a_string)
+        validator=(deep_iterable(member_validator=instance_of((type(None), six.string_types))), value_is_not_a_string)
     )
     _client_supplier = attr.ib(default=attr.Factory(DefaultClientSupplier), validator=optional(is_callable()))
+
+    def _check(self, region_name):
+        # type: (Union[None, str]) -> None
+        if region_name in self.denied_regions:
+            raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
 
     def __call__(self, region_name):
         # type: (Union[None, str]) -> BaseClient
@@ -153,7 +166,10 @@ class DenyRegionsClientSupplier(ClientSupplier):
         :rtype: BaseClient
         :raises UnknownRegionError: if a region is requested that is in ``denied_regions``
         """
-        if region_name in self.denied_regions:
-            raise UnknownRegionError("Unable to provide client for region '{}'".format(region_name))
+        self._check(region_name=region_name)
 
-        return self._client_supplier(region_name)
+        client = self._client_supplier(region_name)
+
+        self._check(region_name=client.meta.region_name)
+
+        return client

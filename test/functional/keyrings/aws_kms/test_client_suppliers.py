@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Functional tests for ``aws_encryption_sdk.keyrings.aws_kms.client_suppliers``."""
 import pytest
+from botocore.client import BaseClient
 from botocore.config import Config
 from botocore.session import Session
 
@@ -13,7 +14,26 @@ from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import (
     DenyRegionsClientSupplier,
 )
 
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Callable, Union  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
 pytestmark = [pytest.mark.functional, pytest.mark.local]
+
+
+class AlwaysOneRegionClientSupplier(ClientSupplier):
+    """Client supplier that always returns a client for a specific region."""
+
+    def __init__(self, region_name):
+        # type: (str) -> None
+        self._region_name = region_name
+        self._inner_supplier = DefaultClientSupplier()
+
+    def __call__(self, region_name):
+        # type: (Union[None, str]) -> BaseClient
+        return self._inner_supplier(self._region_name)
 
 
 def test_default_supplier_not_implemented():
@@ -114,3 +134,24 @@ def test_allow_deny_nested_supplier():
         test_deny("us-west-2")
 
     excinfo.match("Unable to provide client for region 'us-west-2'")
+
+
+def test_deny_region_block_on_response():
+    region = "us-west-2"
+    test = DenyRegionsClientSupplier(
+        denied_regions=[region], client_supplier=AlwaysOneRegionClientSupplier(region_name=region)
+    )
+
+    # Catch the blocked region on response.
+    with pytest.raises(UnknownRegionError):
+        test(None)
+
+
+def test_allow_region_block_on_response():
+    test = AllowRegionsClientSupplier(
+        allowed_regions=[None, "us-west-2"], client_supplier=AlwaysOneRegionClientSupplier(region_name="us-east-2")
+    )
+
+    # Catch the blocked region on response.
+    with pytest.raises(UnknownRegionError):
+        test(None)
