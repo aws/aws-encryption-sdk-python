@@ -17,6 +17,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from aws_encryption_sdk.exceptions import EncryptKeyError
 from aws_encryption_sdk.identifiers import (
     Algorithm,
     EncryptionKeyType,
@@ -307,7 +308,7 @@ def test_public_key_only_cannot_decrypt():
     assert test_materials is initial_decryption_materials
 
 
-def test_private_key_only_can_decrypt():
+def test_private_key_can_decrypt():
     complete_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -339,7 +340,7 @@ def test_private_key_only_can_decrypt():
     assert test_materials.data_encryption_key is not None
 
 
-def test_private_key_only_cannot_encrypt():
+def test_private_key_cannot_encrypt():
     test_keyring = RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
@@ -350,11 +351,10 @@ def test_private_key_only_cannot_encrypt():
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context=_ENCRYPTION_CONTEXT
     )
 
-    test_materials = test_keyring.on_encrypt(initial_materials)
+    with pytest.raises(EncryptKeyError) as excinfo:
+        test_keyring.on_encrypt(initial_materials)
 
-    assert test_materials is initial_materials
-    assert test_materials.data_encryption_key is None
-    assert not test_materials.encrypted_data_keys
+    excinfo.match("A public key is required to encrypt")
 
 
 def test_keypair_must_match():

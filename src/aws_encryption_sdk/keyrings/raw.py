@@ -380,7 +380,7 @@ class RawRSAKeyring(Keyring):
         new_materials = encryption_materials
 
         if self._public_wrapping_key is None:
-            return encryption_materials
+            raise EncryptKeyError("A public key is required to encrypt")
 
         if new_materials.data_encryption_key is None:
             new_materials = _generate_data_key(encryption_materials=new_materials, key_provider=self._key_provider)

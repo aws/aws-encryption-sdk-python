@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 import aws_encryption_sdk.key_providers.raw
 import aws_encryption_sdk.keyrings.raw
+from aws_encryption_sdk.exceptions import EncryptKeyError
 from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyrings.base import Keyring
@@ -148,14 +149,20 @@ def test_on_encrypt_when_data_encryption_key_given(raw_rsa_keyring, patch_genera
 
 
 def test_on_encrypt_no_public_key(raw_rsa_keyring):
-    raw_rsa_keyring._public_wrapping_key = None
+    private_key = raw_rsa_private_key()
+    test_keyring = RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+        private_wrapping_key=private_key,
+    )
 
-    intial_materials = get_encryption_materials_without_data_encryption_key()
+    initial_materials = get_encryption_materials_without_data_encryption_key()
 
-    test_materials = raw_rsa_keyring.on_encrypt(encryption_materials=intial_materials)
+    with pytest.raises(EncryptKeyError) as excinfo:
+        test_keyring.on_encrypt(encryption_materials=initial_materials)
 
-    assert test_materials is intial_materials
-    assert intial_materials.data_encryption_key is None
+    excinfo.match("A public key is required to encrypt")
 
 
 def test_on_encrypt_keyring_trace_when_data_encryption_key_given(raw_rsa_keyring):
