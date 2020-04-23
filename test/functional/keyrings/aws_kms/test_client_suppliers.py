@@ -136,6 +136,30 @@ def test_allow_deny_nested_supplier():
     excinfo.match("Unable to provide client for region 'us-west-2'")
 
 
+def test_deny_region_allowed_region_resolved_by_client_supplier():
+    region = "us-west-2"
+    supplier = DenyRegionsClientSupplier(
+        denied_regions=["us-east-1"], client_supplier=AlwaysOneRegionClientSupplier(region_name=region)
+    )
+
+    # Resolves to a region that is not blocked.
+    test = supplier(None)
+
+    assert test.meta.region_name == region
+
+
+def test_allow_region_allowed_region_resolved_by_client_supplier():
+    region = "us-west-2"
+    supplier = AllowRegionsClientSupplier(
+        allowed_regions=[None, region], client_supplier=AlwaysOneRegionClientSupplier(region_name=region)
+    )
+
+    # Resolves to a region that is allowed
+    test = supplier(None)
+
+    assert test.meta.region_name == region
+
+
 def test_deny_region_block_on_response():
     region = "us-west-2"
     test = DenyRegionsClientSupplier(
