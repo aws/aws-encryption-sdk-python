@@ -112,9 +112,6 @@ to your use-case in order to obtain peak performance.
 .. _GitHub: https://github.com/aws/aws-encryption-sdk-python/
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 .. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
-.. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
-.. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
-.. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _examples: https://github.com/aws/aws-encryption-sdk-python/tree/master/examples
 .. _Security issue notifications: https://github.com/aws/aws-encryption-sdk-python/tree/master/CONTRIBUTING.md#security-issue-notifications

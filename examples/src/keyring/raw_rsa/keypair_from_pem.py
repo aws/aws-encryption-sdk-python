@@ -1,16 +1,19 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This examples shows how to configure and use a raw RSA keyring using a pre-loaded RSA private key.
+When you store RSA keys, you have to serialize them somehow.
 
-If your RSA key is in PEM or DER format,
-see the ``keyring/raw_rsa/private_key_only_from_pem`` example.
+This example shows how to configure and use a raw RSA keyring using a PEM-encoded RSA keypair.
+
+The most commonly used encodings for RSA keys tend to be PEM and DER.
+The raw RSA keyring supports loading both public and private keys from these encodings.
 
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-rsa-keyring
 
 In this example, we use the one-step encrypt and decrypt APIs.
 """
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 import aws_encryption_sdk
@@ -20,7 +23,7 @@ from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
 
 def run(source_plaintext):
     # type: (bytes) -> None
-    """Demonstrate an encrypt/decrypt cycle using a raw RSA keyring.
+    """Demonstrate an encrypt/decrypt cycle using a raw RSA keyring loaded from a PEM-encoded key.
 
     :param bytes source_plaintext: Plaintext to encrypt
     """
@@ -44,8 +47,21 @@ def run(source_plaintext):
     # https://crypto.stanford.edu/~dabo/pubs/papers/RSA-survey.pdf
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 
+    # Serialize the RSA keypair to PEM encoding.
+    # This or DER encoding is likely to be what you get from your key management system in practice.
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    public_key_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
     # Create the keyring that determines how your data keys are protected.
-    keyring = RawRSAKeyring(
+    #
+    # If your key is encoded using DER, you can use RawRSAKeyring.from_der_encoding
+    keyring = RawRSAKeyring.from_pem_encoding(
         # The key namespace and key name are defined by you
         # and are used by the raw RSA keyring
         # to determine whether it should attempt to decrypt
@@ -54,7 +70,8 @@ def run(source_plaintext):
         # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-rsa-keyring
         key_namespace="some managed raw keys",
         key_name=b"my RSA wrapping key",
-        private_wrapping_key=private_key,
+        private_encoded_key=private_key_pem,
+        public_encoded_key=public_key_pem,
         # The wrapping algorithm tells the raw RSA keyring
         # how to use your wrapping key to encrypt data keys.
         #
