@@ -49,9 +49,9 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
         * [with keyrings](./src/keyring/raw_aes/raw_aes.py)
         * [with master key providers](./src/master_key_provider/raw_aes/raw_aes.py)
     * How to use a raw RSA wrapping key
-        * [with keyrings](./src/keyring/raw_rsa/private_key_only.py)
+        * [with keyrings](./src/keyring/raw_rsa/keypair.py)
     * How to use a raw RSA wrapping key when the key is PEM or DER encoded
-        * [with keyrings](./src/keyring/raw_rsa/private_key_only_from_pem.py)
+        * [with keyrings](./src/keyring/raw_rsa/keypair_from_pem.py)
         * [with master key providers](./src/master_key_provider/raw_rsa/private_key_only_from_pem.py)
     * How to encrypt with a raw RSA public key wrapping key without access to the private key
         * [with keyrings](./src/keyring/raw_rsa/public_private_key_separate.py)
@@ -62,9 +62,9 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
 * How to reuse data keys across multiple messages
     * [with the caching cryptographic materials manager](./src/crypto_materials_manager/caching/simple_cache.py)
 * How to restrict algorithm suites
-    * [with a custom cryptographic materials manager](src/crypto_materials_manager/custom/algorithm_suite_enforcement.py)
+    * [with a custom cryptographic materials manager](./src/crypto_materials_manager/custom/algorithm_suite_enforcement.py)
 * How to require encryption context fields
-    * [with a custom cryptographic materials manager](src/crypto_materials_manager/custom/requiring_encryption_context_fields.py)
+    * [with a custom cryptographic materials manager](./src/crypto_materials_manager/custom/requiring_encryption_context_fields.py)
 
 ### Keyrings
 

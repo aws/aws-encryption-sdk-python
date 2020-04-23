@@ -13,6 +13,8 @@
 """Unit tests for Raw AES keyring."""
 
 import pytest
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 import aws_encryption_sdk.key_providers.raw
@@ -45,11 +47,15 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def raw_rsa_keyring():
-    return RawRSAKeyring.from_pem_encoding(
+    private_key = serialization.load_pem_private_key(
+        data=VALUES["private_rsa_key_bytes"][1], password=None, backend=default_backend()
+    )
+    return RawRSAKeyring(
         key_namespace=_PROVIDER_ID,
         key_name=_KEY_ID,
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
-        private_encoded_key=VALUES["private_rsa_key_bytes"][1],
+        private_wrapping_key=private_key,
+        public_wrapping_key=private_key.public_key(),
     )
 
 
@@ -143,12 +149,20 @@ def test_on_encrypt_when_data_encryption_key_given(raw_rsa_keyring, patch_genera
 
 
 def test_on_encrypt_no_public_key(raw_rsa_keyring):
-    raw_rsa_keyring._public_wrapping_key = None
+    private_key = raw_rsa_private_key()
+    test_keyring = RawRSAKeyring(
+        key_namespace=_PROVIDER_ID,
+        key_name=_KEY_ID,
+        wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
+        private_wrapping_key=private_key,
+    )
+
+    initial_materials = get_encryption_materials_without_data_encryption_key()
 
     with pytest.raises(EncryptKeyError) as excinfo:
-        raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
+        test_keyring.on_encrypt(encryption_materials=initial_materials)
 
-    excinfo.match("Raw RSA keyring unable to encrypt data key: no public key available")
+    excinfo.match("A public key is required to encrypt")
 
 
 def test_on_encrypt_keyring_trace_when_data_encryption_key_given(raw_rsa_keyring):
@@ -187,16 +201,6 @@ def test_on_encrypt_when_data_encryption_key_not_given(raw_rsa_keyring):
     assert test.data_encryption_key.data_key is not None
 
     assert len(test.encrypted_data_keys) == original_number_of_encrypted_data_keys + 1
-
-
-def test_on_encrypt_cannot_encrypt(raw_rsa_keyring, mocker):
-    encrypt_patch = mocker.patch.object(raw_rsa_keyring._public_wrapping_key, "encrypt")
-    encrypt_patch.side_effect = Exception("ENCRYPT FAIL")
-
-    with pytest.raises(EncryptKeyError) as excinfo:
-        raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
-
-    excinfo.match("Raw RSA keyring unable to encrypt data key")
 
 
 def test_on_decrypt_when_data_key_given(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
