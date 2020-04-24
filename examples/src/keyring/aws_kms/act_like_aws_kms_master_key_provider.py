@@ -84,7 +84,7 @@ def run(aws_kms_cmk, aws_kms_additional_cmks, source_plaintext):
     # The CMK keyring reproduces the encryption behavior
     # and the discovery keyring reproduces the decryption behavior.
     # This also means that it does not matter if the CMK keyring fails to decrypt.
-    # For example if you configured the CMK keyring with aliases,
+    # For example, if you configured the CMK keyring with aliases,
     # it works on encrypt but fails to match any encrypted data keys on decrypt
     # because the serialized key name is the resulting CMK ARN rather than the alias name.
     # However, because the discovery keyring attempts to decrypt any AWS KMS-encrypted
