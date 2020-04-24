@@ -78,7 +78,7 @@ def run(aws_kms_cmk, aws_kms_additional_cmks, source_plaintext):
     # any data keys that were encrypted under an AWS KMS CMK.
     discovery_keyring = AwsKmsKeyring(is_discovery=True)
 
-    # Combine the single-CMK and discovery keyrings
+    # Combine the CMK and discovery keyrings
     # to create a keyring that behaves like an AWS KMS master key provider.
     #
     # The CMK keyring reproduces the encryption behavior
