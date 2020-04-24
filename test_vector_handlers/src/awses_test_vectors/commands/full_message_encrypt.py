@@ -10,9 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""
-AWS Encryption SDK full message encrypt command.
-"""
+"""AWS Encryption SDK full message encrypt command."""
 import argparse
 
 from awses_test_vectors.manifests.full_message.encrypt import MessageEncryptionManifest

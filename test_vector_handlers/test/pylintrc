@@ -1,10 +1,13 @@
 [MESSAGES CONTROL]
 # Disabling messages that we either don't care about for tests or are necessary to break for tests.
 disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
     useless-object-inheritance,  # we need to support Python 2, so no, not useless
-    duplicate-code,  # the manifest handlers have a lot of similar code
+    duplicate-code,  # unit tests for similar things tend to be similar
+    redefined-outer-name,  # raised when using decorators
 
 [FORMAT]
 max-line-length = 120

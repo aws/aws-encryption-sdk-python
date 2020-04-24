@@ -10,9 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""
-MyPy types for use in AWS Encryption SDK test vector handlers.
-"""
+"""MyPy types for use in AWS Encryption SDK test vector handlers."""
 # mypy types confuse pylint: disable=invalid-name
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules

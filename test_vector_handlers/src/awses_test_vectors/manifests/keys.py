@@ -108,6 +108,7 @@ class AwsKmsKeySpec(KeySpec):
 
 @attr.s(init=False)
 class ManualKeySpec(KeySpec):
+    # pylint: disable=too-many-arguments
     """Manual key specification.
 
     Allowed values described in AWS Crypto Tools Test Vector Framework feature #0002 Keys Manifest.

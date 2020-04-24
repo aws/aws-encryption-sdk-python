@@ -10,9 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""
-Utility functions for use in AWS Encryption SDK test vector handlers.
-"""
+"""Utility functions for use in AWS Encryption SDK test vector handlers."""
 import os
 import struct
 from binascii import unhexlify
@@ -100,7 +98,7 @@ def membership_validator(allowed):
     def _validate_membership(instance, attribute, value):
         # type: (object, Attribute, Any) -> None
         # pylint: disable=unused-argument
-        """"""
+        """Perform membership check."""
         if value not in allowed:
             raise ValueError(
                 'Unknown "{name}" value "{actual}" not in {expected}'.format(
@@ -178,9 +176,9 @@ def algorithm_suite_from_string_id(string_id):
     return AlgorithmSuite.get_by_id(numeric_id)
 
 
-# TODO: I want to replace these functions with an extensible "URI Handler" class
-#  that will abstract away any file handling. This will vastly simply extending
-#  these handlers to work with files in some non-local location, such as S3.
+# I want to replace these functions with an extensible "URI Handler" class
+# that will abstract away any file handling. This will vastly simply extending
+# these handlers to work with files in some non-local location, such as S3.
 def file_writer(parent_dir):
     # type: (str) -> Callable[[str, bytes], str]
     """Return a caller that will write the requested named data to a file and return
@@ -214,7 +212,7 @@ def file_writer(parent_dir):
 
 def file_reader(parent_dir):
     # type: (str) -> Callable[[str], bytes]
-    """Returns a callable that accepts a URI identifying a file relative to ``parent_dir``
+    """Return a callable that accepts a URI identifying a file relative to ``parent_dir``
     and returns the binary contents of that file.
 
     :param str parent_dir: Parent directory to use as the relative root for all URIs

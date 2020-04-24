@@ -51,6 +51,7 @@ SUPPORTED_VERSIONS = (1,)
 
 @attr.s(init=False)
 class MessageDecryptionTestScenario(object):
+    # pylint: disable=too-many-arguments
     """Data class for a single full message decrypt test scenario.
 
     Handles serialization and deserialization to and from manifest specs.
@@ -156,12 +157,12 @@ class MessageDecryptionTestScenario(object):
         """
         plaintext, _header = aws_encryption_sdk.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
         if plaintext != self.plaintext:
-            # TODO: Actually do something here
-            raise Exception("TODO: ERROR MESSAGE")
+            raise ValueError("Decrypted plaintext does not match expected value.")
 
 
 @attr.s(init=False)
 class MessageDecryptionManifest(object):
+    # pylint: disable=too-many-arguments
     """AWS Encryption SDK Decrypt Message manifest handler.
 
     Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Decrypt Message.
