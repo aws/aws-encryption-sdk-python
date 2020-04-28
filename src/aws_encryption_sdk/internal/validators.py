@@ -11,6 +11,9 @@ except ImportError:  # pragma: no cover
     pass
 
 
+# The unused-argument check is disabled because
+# this function MUST match the function signature
+# for attrs validators.
 def value_is_not_a_string(instance, attribute, value):  # pylint: disable=unused-argument
     # type: (Any, attr.Attribute, Any) -> None
     """Technically a string is an iterable containing strings.
