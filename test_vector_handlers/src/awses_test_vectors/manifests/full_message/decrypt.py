@@ -157,7 +157,7 @@ class MessageDecryptionTestScenario(object):
         """
         plaintext, _header = aws_encryption_sdk.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
         if plaintext != self.plaintext:
-            raise ValueError("Decrypted plaintext does not match expected value.")
+            raise ValueError("Decrypted plaintext does not match expected value for scenario '{}'".format(name))
 
 
 @attr.s(init=False)
