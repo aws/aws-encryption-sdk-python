@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
     pass
 
 
-def value_is_not_a_string(instance, attribute, value):
+def value_is_not_a_string(instance, attribute, value):  # pylint: disable=unused-argument
     # type: (Any, attr.Attribute, Any) -> None
     """Technically a string is an iterable containing strings.
 
