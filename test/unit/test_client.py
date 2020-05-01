@@ -53,13 +53,15 @@ class TestAwsEncryptionSdk(object):
         test_ciphertext, test_header = aws_encryption_sdk.encrypt(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         self.mock_stream_encryptor.called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         assert test_ciphertext is _CIPHERTEXT
-        assert test_header is _HEADER
+        assert test_header == _HEADER
+        assert test_header is not _HEADER
 
     def test_decrypt(self):
         test_plaintext, test_header = aws_encryption_sdk.decrypt(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         self.mock_stream_encryptor.called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
         assert test_plaintext is _PLAINTEXT
-        assert test_header is _HEADER
+        assert test_header == _HEADER
+        assert test_header is not _HEADER
 
     def test_stream_encryptor_e(self):
         test = aws_encryption_sdk.stream(mode="e", a=sentinel.a, b=sentinel.b, c=sentinel.b)
