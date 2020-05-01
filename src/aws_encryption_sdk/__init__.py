@@ -1,6 +1,8 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """High level AWS Encryption SDK client functions."""
+import copy
+
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
@@ -15,7 +17,6 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamEncryptor,
 )
 from aws_encryption_sdk.structures import CryptoResult
-import copy
 
 __all__ = ("encrypt", "decrypt", "stream")
 
