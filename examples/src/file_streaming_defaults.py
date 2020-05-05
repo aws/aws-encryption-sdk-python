@@ -30,6 +30,7 @@ def run(aws_kms_cmk, source_plaintext_filename):
     decrypted_filename = ciphertext_filename + ".decrypted"
 
     # Prepare your encryption context.
+    # Remember that your encryption context is NOT SECRET.
     # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
     encryption_context = {
         "encryption": "context",
