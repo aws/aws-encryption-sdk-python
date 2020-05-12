@@ -46,9 +46,9 @@ We start with AWS KMS examples, then show how to use other wrapping keys.
         * [with keyrings](./src/keyring/aws_kms/discovery_decrypt_with_preferred_regions.py)
     * How to reproduce the behavior of an AWS KMS master key provider
         * [with keyrings](./src/keyring/aws_kms/act_like_aws_kms_master_key_provider.py)
-    * How to provide a custom AWS KMS client configuration
+    * How to use AWS KMS clients with custom configuration
         * [with keyrings](./src/keyring/aws_kms/custom_kms_client_config.py)
-    * How to provide a custom AWS KMS client supplier
+    * How to use different AWS KMS client for different regions
         * [with keyrings](./src/keyring/aws_kms/custom_client_supplier.py)
 * Using raw wrapping keys
     * How to use a raw AES wrapping key
