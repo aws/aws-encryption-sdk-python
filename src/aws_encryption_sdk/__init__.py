@@ -1,5 +1,15 @@
-# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """High level AWS Encryption SDK client functions."""
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
@@ -14,9 +24,6 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamDecryptor,
     StreamEncryptor,
 )
-from aws_encryption_sdk.structures import CryptoResult
-
-__all__ = ("encrypt", "decrypt", "stream")
 
 
 def encrypt(**kwargs):
@@ -26,41 +33,28 @@ def encrypt(**kwargs):
         When using this function, the entire ciphertext message is encrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
-    .. versionadded:: 1.5.0
-       The *keyring* parameter.
-
-    .. versionadded:: 1.5.0
-
-        For backwards compatibility,
-        the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
-        This allows for backwards compatibility with the previous outputs
-        so this change should not break any existing consumers.
-
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
-        >>> keyring = AwsKmsKeyring(
-        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
-        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
-        ... )
+        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+        ... ])
         >>> my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
         ...     source=my_plaintext,
-        ...     keyring=keyring,
-        >>> )
+        ...     key_provider=kms_key_provider
+        ... )
 
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param CryptoMaterialsManager materials_manager:
-        Cryptographic materials manager to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
-    :param Keyring keyring: Keyring to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
-    :param MasterKeyProvider key_provider:
-        Master key provider to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
+        (either `materials_manager` or `key_provider` required)
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -78,13 +72,12 @@ def encrypt(**kwargs):
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
-    :returns: Encrypted message, message metadata (header), and keyring trace
-    :rtype: CryptoResult
+    :returns: Tuple containing the encrypted ciphertext and the message header object
+    :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
     """
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
-
-    return CryptoResult(result=ciphertext, header=encryptor.header, keyring_trace=encryptor.keyring_trace)
+    return ciphertext, encryptor.header
 
 
 def decrypt(**kwargs):
@@ -94,41 +87,28 @@ def decrypt(**kwargs):
         When using this function, the entire ciphertext message is decrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
-    .. versionadded:: 1.5.0
-       The *keyring* parameter.
-
-    .. versionadded:: 1.5.0
-
-        For backwards compatibility,
-        the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
-        This allows for backwards compatibility with the previous outputs
-        so this change should not break any existing consumers.
-
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
-        >>> keyring = AwsKmsKeyring(
-        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
-        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
-        ... )
-        >>> my_ciphertext, decryptor_header = aws_encryption_sdk.decrypt(
+        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+        ... ])
+        >>> my_ciphertext, encryptor_header = aws_encryption_sdk.decrypt(
         ...     source=my_ciphertext,
-        ...     keyring=keyring,
+        ...     key_provider=kms_key_provider
         ... )
 
     :param config: Client configuration object (config or individual parameters required)
     :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
-    :param CryptoMaterialsManager materials_manager:
-        Cryptographic materials manager to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
-    :param Keyring keyring: Keyring to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
-    :param MasterKeyProvider key_provider:
-        Master key provider to use for encryption
-        (either ``materials_manager``, ``keyring``, ``key_provider`` required)
+    :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
+        (either `materials_manager` or `key_provider` required)
+    :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+    :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
+        (either `materials_manager` or `key_provider` required)
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -137,13 +117,12 @@ def decrypt(**kwargs):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
-    :returns: Decrypted plaintext, message metadata (header), and keyring trace
-    :rtype: CryptoResult
+    :returns: Tuple containing the decrypted plaintext and the message header object
+    :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
     """
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()
-
-    return CryptoResult(result=plaintext, header=decryptor.header, keyring_trace=decryptor.keyring_trace)
+    return plaintext, decryptor.header
 
 
 def stream(**kwargs):
@@ -166,18 +145,17 @@ def stream(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
-        >>> keyring = AwsKmsKeyring(
-        ...     generator_key_id="arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222",
-        ...     key_ids=["arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333"],
-        ... )
+        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+        ...  ])
         >>> plaintext_filename = 'my-secret-data.dat'
         >>> ciphertext_filename = 'my-encrypted-data.ct'
         >>> with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
         ...      with aws_encryption_sdk.stream(
         ...         mode='e',
         ...         source=pt_file,
-        ...         keyring=keyring,
+        ...         key_provider=kms_key_provider
         ...     ) as encryptor:
         ...         for chunk in encryptor:
         ...              ct_file.write(chunk)
@@ -186,7 +164,7 @@ def stream(**kwargs):
         ...     with aws_encryption_sdk.stream(
         ...         mode='d',
         ...         source=ct_file,
-        ...         keyring=keyring,
+        ...         key_provider=kms_key_provider
         ...     ) as decryptor:
         ...         for chunk in decryptor:
         ...             pt_file.write(chunk)
@@ -204,3 +182,6 @@ def stream(**kwargs):
         return _stream_map[mode.lower()](**kwargs)
     except KeyError:
         raise ValueError("Unsupported mode: {}".format(mode))
+
+
+__all__ = ("encrypt", "decrypt", "stream")
