@@ -283,12 +283,8 @@ class RawRSAKeyring(Keyring):
         if self._public_wrapping_key is None and self._private_wrapping_key is None:
             raise TypeError("At least one of public key or private key must be provided.")
 
-        if self._public_wrapping_key is not None and self._private_wrapping_key is not None:
-            derived_public_key = self._private_wrapping_key.public_key()
-            # We cannot compare the public key objects directly.
-            # Instead, extract their numbers and compare those.
-            if derived_public_key.public_numbers() != self._public_wrapping_key.public_numbers():
-                raise ValueError("Private and public wrapping keys MUST be from the same keypair.")
+        if self._private_wrapping_key is not None and self._public_wrapping_key is None:
+            self._public_wrapping_key = self._private_wrapping_key.public_key()
 
     @classmethod
     def from_pem_encoding(
@@ -379,11 +375,12 @@ class RawRSAKeyring(Keyring):
         """
         new_materials = encryption_materials
 
-        if self._public_wrapping_key is None:
-            raise EncryptKeyError("A public key is required to encrypt")
-
         if new_materials.data_encryption_key is None:
             new_materials = _generate_data_key(encryption_materials=new_materials, key_provider=self._key_provider)
+
+        if self._public_wrapping_key is None:
+            # This should be impossible, but just in case, give a useful error message.
+            raise EncryptKeyError("Raw RSA keyring unable to encrypt data key: no public key available")
 
         try:
             # Encrypt data key
