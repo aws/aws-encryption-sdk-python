@@ -1,8 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """High level AWS Encryption SDK client functions."""
-import copy
-
 # Below are imported for ease of use by implementors
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
@@ -86,10 +84,7 @@ def encrypt(**kwargs):
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
 
-    header_copy = copy.deepcopy(encryptor.header)
-    keyring_trace_copy = copy.deepcopy(encryptor.keyring_trace)
-
-    return CryptoResult(result=ciphertext, header=header_copy, keyring_trace=keyring_trace_copy)
+    return CryptoResult(result=ciphertext, header=encryptor.header, keyring_trace=encryptor.keyring_trace)
 
 
 def decrypt(**kwargs):
@@ -148,10 +143,7 @@ def decrypt(**kwargs):
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()
 
-    header_copy = copy.deepcopy(decryptor.header)
-    keyring_trace_copy = copy.deepcopy(decryptor.keyring_trace)
-
-    return CryptoResult(result=plaintext, header=header_copy, keyring_trace=keyring_trace_copy)
+    return CryptoResult(result=plaintext, header=decryptor.header, keyring_trace=decryptor.keyring_trace)
 
 
 def stream(**kwargs):
