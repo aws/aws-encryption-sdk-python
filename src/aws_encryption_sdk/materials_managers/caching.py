@@ -1,25 +1,32 @@
-# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+# http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
 """Caching crypto material manager."""
 import logging
 import uuid
 
 import attr
 import six
-from attr.validators import instance_of, optional
 
-from aws_encryption_sdk.caches import (
+from ..caches import (
     CryptoMaterialsCacheEntryHints,
     build_decryption_materials_cache_key,
     build_encryption_materials_cache_key,
 )
-from aws_encryption_sdk.caches.base import CryptoMaterialsCache
-from aws_encryption_sdk.exceptions import CacheKeyError
-from aws_encryption_sdk.internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
-from aws_encryption_sdk.internal.str_ops import to_bytes
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
-from aws_encryption_sdk.keyrings.base import Keyring
-
+from ..caches.base import CryptoMaterialsCache
+from ..exceptions import CacheKeyError
+from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
+from ..internal.str_ops import to_bytes
+from ..key_providers.base import MasterKeyProvider
 from . import EncryptionMaterialsRequest
 from .base import CryptoMaterialsManager
 from .default import DefaultCryptoMaterialsManager
@@ -29,13 +36,9 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s(hash=False)
 class CachingCryptoMaterialsManager(CryptoMaterialsManager):
-    # pylint: disable=too-many-instance-attributes
     """Crypto material manager which caches results from an underlying material manager.
 
     .. versionadded:: 1.3.0
-
-    .. versionadded:: 1.5.0
-       The *keyring* parameter.
 
     >>> import aws_encryption_sdk
     >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
@@ -56,16 +59,17 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         value.  If no partition name is provided, a random UUID will be used.
 
     .. note::
-        Exactly one of ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` must be provided.
+        Either `backing_materials_manager` or `master_key_provider` must be provided.
+        `backing_materials_manager` will always be used if present.
 
-    :param CryptoMaterialsCache cache: Crypto cache to use with material manager
-    :param CryptoMaterialsManager backing_materials_manager:
-       Crypto material manager to back this caching material manager
-       (either ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` required)
-    :param MasterKeyProvider master_key_provider: Master key provider to use
-       (either ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` required)
-    :param Keyring keyring: Keyring to use
-       (either ``backing_materials_manager``, ``keyring``, or ``master_key_provider`` required)
+    :param cache: Crypto cache to use with material manager
+    :type cache: aws_encryption_sdk.caches.base.CryptoMaterialsCache
+    :param backing_materials_manager: Crypto material manager to back this caching material manager
+        (either `backing_materials_manager` or `master_key_provider` required)
+    :type backing_materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+    :param master_key_provider: Master key provider to use (either `backing_materials_manager` or
+        `master_key_provider` required)
+    :type master_key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     :param float max_age: Maximum time in seconds that a cache entry may be kept in the cache
     :param int max_messages_encrypted: Maximum number of messages that may be encrypted under
         a cache entry (optional)
@@ -74,14 +78,21 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
     :param bytes partition_name: Partition name to use for this instance (optional)
     """
 
-    cache = attr.ib(validator=instance_of(CryptoMaterialsCache))
-    max_age = attr.ib(validator=instance_of(float))
-    max_messages_encrypted = attr.ib(default=MAX_MESSAGES_PER_KEY, validator=instance_of(six.integer_types))
-    max_bytes_encrypted = attr.ib(default=MAX_BYTES_PER_KEY, validator=instance_of(six.integer_types))
-    partition_name = attr.ib(default=None, converter=to_bytes, validator=optional(instance_of(bytes)))
-    master_key_provider = attr.ib(default=None, validator=optional(instance_of(MasterKeyProvider)))
-    backing_materials_manager = attr.ib(default=None, validator=optional(instance_of(CryptoMaterialsManager)))
-    keyring = attr.ib(default=None, validator=optional(instance_of(Keyring)))
+    cache = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsCache))
+    max_age = attr.ib(validator=attr.validators.instance_of(float))
+    max_messages_encrypted = attr.ib(
+        default=MAX_MESSAGES_PER_KEY, validator=attr.validators.instance_of(six.integer_types)
+    )
+    max_bytes_encrypted = attr.ib(default=MAX_BYTES_PER_KEY, validator=attr.validators.instance_of(six.integer_types))
+    partition_name = attr.ib(
+        default=None, converter=to_bytes, validator=attr.validators.optional(attr.validators.instance_of(bytes))
+    )
+    master_key_provider = attr.ib(
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
+    )
+    backing_materials_manager = attr.ib(
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
+    )
 
     def __attrs_post_init__(self):
         """Applies post-processing which cannot be handled by attrs."""
@@ -100,21 +111,10 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         if self.max_age <= 0.0:
             raise ValueError("max_age cannot be less than or equal to 0")
 
-        options_provided = [
-            option is not None for option in (self.backing_materials_manager, self.keyring, self.master_key_provider)
-        ]
-        provided_count = len([is_set for is_set in options_provided if is_set])
-
-        if provided_count != 1:
-            raise TypeError("Exactly one of 'backing_materials_manager', 'keyring', or 'key_provider' must be provided")
-
         if self.backing_materials_manager is None:
-            if self.master_key_provider is not None:
-                self.backing_materials_manager = DefaultCryptoMaterialsManager(
-                    master_key_provider=self.master_key_provider
-                )
-            else:
-                self.backing_materials_manager = DefaultCryptoMaterialsManager(keyring=self.keyring)
+            if self.master_key_provider is None:
+                raise TypeError("Either backing_materials_manager or master_key_provider must be defined")
+            self.backing_materials_manager = DefaultCryptoMaterialsManager(self.master_key_provider)
 
         if self.partition_name is None:
             self.partition_name = to_bytes(str(uuid.uuid4()))

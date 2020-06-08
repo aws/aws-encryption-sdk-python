@@ -14,50 +14,37 @@
 import os
 
 import botocore.session
-import pytest
 
 from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
-from aws_encryption_sdk.keyrings.aws_kms import AwsKmsKeyring
 
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
-AWS_KMS_KEY_ID_2 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2"
 _KMS_MKP = None
 _KMS_MKP_BOTO = None
-_KMS_KEYRING = None
 
 
-def _get_single_cmk_arn(name):
-    # type: (str) -> str
-    """Retrieve a single target AWS KMS CMK ARN from the specified environment variable name."""
-    arn = os.environ.get(name, None)
+def get_cmk_arn():
+    """Retrieves the target CMK ARN from environment variable."""
+    arn = os.environ.get(AWS_KMS_KEY_ID, None)
     if arn is None:
         raise ValueError(
-            'Environment variable "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(name)
+            'Environment variable "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(
+                AWS_KMS_KEY_ID
+            )
         )
     if arn.startswith("arn:") and ":alias/" not in arn:
         return arn
     raise ValueError("KMS CMK ARN provided for integration tests much be a key not an alias")
 
 
-def get_cmk_arn():
-    """Retrieves the target AWS KMS CMK ARN from environment variable."""
-    return _get_single_cmk_arn(AWS_KMS_KEY_ID)
-
-
-def get_all_cmk_arns():
-    """Retrieve all known target AWS KMS CMK ARNs from environment variables."""
-    return [_get_single_cmk_arn(AWS_KMS_KEY_ID), _get_single_cmk_arn(AWS_KMS_KEY_ID_2)]
-
-
 def setup_kms_master_key_provider(cache=True):
-    """Build an AWS KMS Master Key Provider."""
+    """Reads the test_values config file and builds the requested KMS Master Key Provider."""
     global _KMS_MKP  # pylint: disable=global-statement
     if cache and _KMS_MKP is not None:
         return _KMS_MKP
 
     cmk_arn = get_cmk_arn()
     kms_master_key_provider = KMSMasterKeyProvider()
-    kms_master_key_provider.add_master_key(cmk_arn.encode("utf-8"))
+    kms_master_key_provider.add_master_key(cmk_arn)
 
     if cache:
         _KMS_MKP = kms_master_key_provider
@@ -66,42 +53,16 @@ def setup_kms_master_key_provider(cache=True):
 
 
 def setup_kms_master_key_provider_with_botocore_session(cache=True):
-    """Build an AWS KMS Master Key Provider with an explicit botocore_session."""
+    """Reads the test_values config file and builds the requested KMS Master Key Provider with botocore_session."""
     global _KMS_MKP_BOTO  # pylint: disable=global-statement
     if cache and _KMS_MKP_BOTO is not None:
         return _KMS_MKP_BOTO
 
     cmk_arn = get_cmk_arn()
     kms_master_key_provider = KMSMasterKeyProvider(botocore_session=botocore.session.Session())
-    kms_master_key_provider.add_master_key(cmk_arn.encode("utf-8"))
+    kms_master_key_provider.add_master_key(cmk_arn)
 
     if cache:
         _KMS_MKP_BOTO = kms_master_key_provider
 
     return kms_master_key_provider
-
-
-def build_aws_kms_keyring(generate=True, cache=True):
-    """Build an AWS KMS keyring."""
-    global _KMS_KEYRING  # pylint: disable=global-statement
-    if cache and _KMS_KEYRING is not None:
-        return _KMS_KEYRING
-
-    cmk_arn = get_cmk_arn()
-
-    if generate:
-        kwargs = dict(generator_key_id=cmk_arn)
-    else:
-        kwargs = dict(key_ids=[cmk_arn])
-
-    keyring = AwsKmsKeyring(**kwargs)
-
-    if cache:
-        _KMS_KEYRING = keyring
-
-    return keyring
-
-
-@pytest.fixture
-def aws_kms_keyring():
-    return build_aws_kms_keyring()
