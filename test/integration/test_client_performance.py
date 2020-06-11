@@ -7,6 +7,7 @@ import pytest
 
 import aws_encryption_sdk
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
+from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
@@ -43,14 +44,14 @@ def _cycle(**kwargs):
 
 
 @pytest.mark.parametrize(
-    "provider_param, provider_builder",
+    "provider_builder",
     (
-        pytest.param("keyring", ephemeral_raw_aes_keyring, id="Raw AES keyring"),
-        pytest.param("key_provider", ephemeral_raw_aes_master_key, id="Raw AES master key"),
-        pytest.param("keyring", ephemeral_raw_rsa_keyring, id="Raw RSA keyring"),
-        pytest.param("key_provider", ephemeral_raw_rsa_master_key, id="Raw RSA master key"),
-        pytest.param("keyring", build_aws_kms_keyring, id="AWS KMS keyring"),
-        pytest.param("key_provider", setup_kms_master_key_provider, id="AWS KMS master key provider"),
+        pytest.param(ephemeral_raw_aes_keyring, id="Raw AES keyring"),
+        pytest.param(ephemeral_raw_aes_master_key, id="Raw AES master key"),
+        pytest.param(ephemeral_raw_rsa_keyring, id="Raw RSA keyring"),
+        pytest.param(ephemeral_raw_rsa_master_key, id="Raw RSA master key"),
+        pytest.param(build_aws_kms_keyring, id="AWS KMS keyring"),
+        pytest.param(setup_kms_master_key_provider, id="AWS KMS master key provider"),
     ),
 )
 @pytest.mark.parametrize(
@@ -58,7 +59,7 @@ def _cycle(**kwargs):
     (
         pytest.param(0, id="no cache"),
         pytest.param(1000000, id="cache and only miss once"),
-        pytest.param(10, id="cache and only hit every 10"),
+        pytest.param(10, id="cache and miss every 10"),
     ),
 )
 @pytest.mark.parametrize("plaintext, frame_length", (pytest.param("foo", 1024, id="single frame"),))
@@ -70,10 +71,13 @@ def _cycle(**kwargs):
         pytest.param(_cycle, id="encrypt decrypt cycle"),
     ),
 )
-def test_end2end_performance(
-    benchmark, provider_param, provider_builder, cache_messages, plaintext, frame_length, operation
-):
+def test_end2end_performance(benchmark, provider_builder, cache_messages, plaintext, frame_length, operation):
     provider = provider_builder()
+    if isinstance(provider, Keyring):
+        provider_param = "keyring"
+    else:
+        provider_param = "master_key_provider"
+
     if cache_messages == 0:
         cmm = DefaultCryptoMaterialsManager(**{provider_param: provider})
     else:
@@ -83,12 +87,13 @@ def test_end2end_performance(
             cache=LocalCryptoMaterialsCache(capacity=10),
             **{provider_param: provider}
         )
+
     kwargs = dict(
         source=plaintext,
-        materials_provider=cmm,
+        materials_manager=cmm,
         encryption_context=copy.copy(ENCRYPTION_CONTEXT),
         frame_length=frame_length,
     )
     if operation is aws_encryption_sdk.decrypt:
-        kwargs = dict(source=aws_encryption_sdk.encrypt(**kwargs).result, materails_provider=cmm,)
+        kwargs = dict(source=aws_encryption_sdk.encrypt(**kwargs).result, materials_manager=cmm,)
     benchmark.pedantic(target=operation, kwargs=kwargs, iterations=100, rounds=10)
