@@ -17,9 +17,12 @@ from ..unit.unit_test_utils import (
 from .benchmark_test_utils import all_operations, run_benchmark
 
 pytestmark = [pytest.mark.benchmark]
-SMALL_PLAINTEXT = os.urandom(32)  # 32B
-LARGE_PLAINTEXT = os.urandom(1024 * 1024)  # 1MiB
-VERY_LARGE_PLAINTEXT = os.urandom(10 * 1024 * 1024)  # 10MiB
+
+PLAINTEXTS = {
+    "SMALL": os.urandom(32),  # 32B
+    "LARGE": os.urandom(1024 * 1024),  # 1MiB
+    "VERY_LARGE": os.urandom(10 * 1024 * 1024),  # 10MiB
+}
 
 
 @pytest.mark.parametrize("algorithm_suite", AlgorithmSuite)
@@ -55,11 +58,11 @@ def test_compare_caching_performance(benchmark, operation, cache_messages):
 @pytest.mark.parametrize(
     "plaintext, frame_length",
     (
-        pytest.param(SMALL_PLAINTEXT, 0, id="small message, unframed"),
-        pytest.param(SMALL_PLAINTEXT, 128, id="small message, single frame"),
-        pytest.param(LARGE_PLAINTEXT, 1024 * 1024 * 1024, id="large message, single frame"),
-        pytest.param(LARGE_PLAINTEXT, 102400, id="large message, few large frames"),
-        pytest.param(LARGE_PLAINTEXT, 1024, id="large message, many small frames"),
+        pytest.param("SMALL", 0, id="small message, unframed"),
+        pytest.param("SMALL", 128, id="small message, single frame"),
+        pytest.param("LARGE", 1024 * 1024 * 1024, id="large message, single frame"),
+        pytest.param("LARGE", 102400, id="large message, few large frames"),
+        pytest.param("LARGE", 1024, id="large message, many small frames"),
     ),
 )
 @all_operations()
@@ -71,19 +74,18 @@ def test_compare_framing_performance(benchmark, operation, plaintext, frame_leng
         benchmark=benchmark,
         provider_builder=ephemeral_raw_aes_keyring,
         operation=operation,
-        plaintext=plaintext,
+        plaintext=PLAINTEXTS[plaintext],
         frame_length=frame_length,
     )
 
 
 def _frame_sizes():
-    for frame_kb in (1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 10240):
+    for frame_kb in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 10240):
         yield pytest.param(frame_kb * 1024, id="{} kiB frame".format(frame_kb))
 
 
 @pytest.mark.parametrize(
-    "plaintext",
-    (pytest.param(LARGE_PLAINTEXT, id="1MiB plaintext"), pytest.param(VERY_LARGE_PLAINTEXT, id="10MiB plaintext"),),
+    "plaintext", (pytest.param("LARGE", id="1MiB plaintext"), pytest.param("VERY_LARGE", id="10MiB plaintext"),),
 )
 @pytest.mark.parametrize("frame_length", _frame_sizes())
 @all_operations()
@@ -95,7 +97,7 @@ def test_compare_frame_size_performance(benchmark, operation, plaintext, frame_l
         benchmark=benchmark,
         provider_builder=ephemeral_raw_aes_keyring,
         operation=operation,
-        plaintext=plaintext,
+        plaintext=PLAINTEXTS[plaintext],
         frame_length=frame_length,
     )
 
