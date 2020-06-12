@@ -61,12 +61,6 @@ jobs:
         run: tox -- -vv
   benchmarks:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        category:
-          - nocmk
-          - test-upstream-requirements-py37
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
