@@ -31,7 +31,9 @@ def test_compare_algorithm_suite_performance(benchmark, algorithm_suite, operati
     """Compare the affect of algorithm suite on performance.
     Use the Raw AES keyring as a baseline keyring.
     """
-    run_benchmark(benchmark=benchmark, provider_builder=ephemeral_raw_aes_keyring, operation=operation)
+    run_benchmark(
+        benchmark=benchmark, provider_builder=ephemeral_raw_aes_keyring, operation=operation, algorithm=algorithm_suite
+    )
 
 
 @pytest.mark.parametrize(
