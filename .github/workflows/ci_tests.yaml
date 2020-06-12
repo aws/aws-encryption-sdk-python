@@ -71,7 +71,7 @@ jobs:
           pip install --upgrade -r ci-requirements.txt
       - name: run test
         env:
-          TOXENV: benchmark-local
+          TOXENV: benchmark-nokms
         run: tox -- -vv
   upstream-py3:
     runs-on: ubuntu-latest
