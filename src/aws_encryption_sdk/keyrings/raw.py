@@ -74,6 +74,10 @@ class RawAESKeyring(Keyring):
     .. versionadded:: 1.5.0
 
     :param str key_namespace: String defining the keyring.
+
+    .. note::
+        key_namespace MUST NOT equal "aws-kms".
+
     :param bytes key_name: Key ID
     :param bytes wrapping_key: Encryption key with which to wrap plaintext data key.
 
@@ -97,6 +101,9 @@ class RawAESKeyring(Keyring):
                 WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             )
         }
+
+        if self.key_namespace == "aws-kms":
+            raise ValueError("Key namespace MUST NOT be \"aws-kms\"")
 
         try:
             self._wrapping_algorithm = key_size_to_wrapping_algorithm[len(self._wrapping_key)]
@@ -245,6 +252,10 @@ class RawRSAKeyring(Keyring):
     .. versionadded:: 1.5.0
 
     :param str key_namespace: String defining the keyring ID
+
+    .. note::
+        key_namespace MUST NOT equal "aws-kms".
+
     :param bytes key_name: Key ID
     :param cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey private_wrapping_key:
         Private encryption key with which to wrap plaintext data key (optional)
@@ -279,6 +290,9 @@ class RawRSAKeyring(Keyring):
         # type: () -> None
         """Prepares initial values not handled by attrs."""
         self._key_provider = MasterKeyInfo(provider_id=self.key_namespace, key_info=self.key_name)
+
+        if self.key_namespace == "aws-kms":
+            raise ValueError("Key namespace MUST NOT be \"aws-kms\"")
 
         if self._public_wrapping_key is None and self._private_wrapping_key is None:
             raise TypeError("At least one of public key or private key must be provided.")
