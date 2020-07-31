@@ -385,4 +385,4 @@ def test_must_not_accept_aws_kms():
             public_wrapping_key=_PUBLIC_WRAPPING_KEY,
         )
 
-    excinfo.match("Key namespace MUST NOT be \"aws-kms\"")
+    excinfo.match('Key namespace MUST NOT be "aws-kms"')

@@ -103,7 +103,7 @@ class RawAESKeyring(Keyring):
         }
 
         if self.key_namespace == "aws-kms":
-            raise ValueError("Key namespace MUST NOT be \"aws-kms\"")
+            raise ValueError('Key namespace MUST NOT be "aws-kms"')
 
         try:
             self._wrapping_algorithm = key_size_to_wrapping_algorithm[len(self._wrapping_key)]
@@ -292,7 +292,7 @@ class RawRSAKeyring(Keyring):
         self._key_provider = MasterKeyInfo(provider_id=self.key_namespace, key_info=self.key_name)
 
         if self.key_namespace == "aws-kms":
-            raise ValueError("Key namespace MUST NOT be \"aws-kms\"")
+            raise ValueError('Key namespace MUST NOT be "aws-kms"')
 
         if self._public_wrapping_key is None and self._private_wrapping_key is None:
             raise TypeError("At least one of public key or private key must be provided.")

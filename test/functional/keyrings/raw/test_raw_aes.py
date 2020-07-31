@@ -190,10 +190,8 @@ def test_must_not_accept_aws_kms():
     # Attempt to instantiate a raw AES keyring
     with pytest.raises(ValueError) as excinfo:
         RawAESKeyring(
-            key_namespace=key_namespace,
-            key_name=key_name,
-            wrapping_key=_WRAPPING_KEY,
+            key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,
         )
 
     # Check the error message
-    excinfo.match("Key namespace MUST NOT be \"aws-kms\"")
+    excinfo.match('Key namespace MUST NOT be "aws-kms"')
