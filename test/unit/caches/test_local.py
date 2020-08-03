@@ -300,7 +300,7 @@ def patch_get_single_entry(mocker):
 def test_get_encryption_materials(patch_get_single_entry):
     cache = build_lcmc()
 
-    sentinel.plaintext_length = int()
+    plaintext_length = 42
 
     test = cache.get_encryption_materials(cache_key=sentinel.cache_key, plaintext_length=sentinel.plaintext_length)
 
