@@ -25,6 +25,7 @@ from .client_suppliers import ClientSupplier  # noqa - only used in docstring pa
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Dict, Iterable, Union  # noqa pylint: disable=unused-import
+
     from .client_suppliers import ClientSupplierType  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
