@@ -179,3 +179,19 @@ def test_key_info_prefix_vectors(wrapping_algorithm):
         )
         == _KEY_ID + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
     )
+
+
+def test_must_not_accept_aws_kms():
+
+    # Initializing attributes
+    key_namespace = "aws-kms"
+    key_name = _KEY_ID
+
+    # Attempt to instantiate a raw AES keyring
+    with pytest.raises(ValueError) as excinfo:
+        RawAESKeyring(
+            key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,
+        )
+
+    # Check the error message
+    excinfo.match('Key namespace MUST NOT be "aws-kms"')
