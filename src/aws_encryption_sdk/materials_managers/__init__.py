@@ -140,9 +140,7 @@ class CryptographicMaterials(object):
         :raises AttributeError: if data encryption key is already set
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
-        self._validate_data_encryption_key(
-            data_encryption_key=data_encryption_key
-        )
+        self._validate_data_encryption_key(data_encryption_key=data_encryption_key)
 
         new_materials = copy.copy(self)
 
@@ -258,9 +256,7 @@ class EncryptionMaterials(CryptographicMaterials):
         :raises AttributeError: if data encryption key is already set
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
-        return self._with_data_encryption_key(
-            data_encryption_key=data_encryption_key,
-        )
+        return self._with_data_encryption_key(data_encryption_key=data_encryption_key,)
 
     def with_encrypted_data_key(self, encrypted_data_key):
         # type: (EncryptedDataKey) -> EncryptionMaterials
@@ -426,9 +422,7 @@ class DecryptionMaterials(CryptographicMaterials):
         if self.algorithm is None:
             raise AttributeError("Algorithm is not set")
 
-        return self._with_data_encryption_key(
-            data_encryption_key=data_encryption_key,
-        )
+        return self._with_data_encryption_key(data_encryption_key=data_encryption_key,)
 
     def with_verification_key(self, verification_key):
         # type: (bytes) -> DecryptionMaterials

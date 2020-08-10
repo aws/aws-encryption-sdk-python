@@ -47,9 +47,7 @@ _VERIFICATION_KEY = Verifier(algorithm=ALGORITHM, key=_SIGNATURE_PRIVATE_KEY.pub
 
 _VALID_KWARGS = {
     "CryptographicMaterials": dict(
-        algorithm=ALGORITHM,
-        encryption_context={"additional": "data"},
-        data_encryption_key=_DATA_KEY,
+        algorithm=ALGORITHM, encryption_context={"additional": "data"}, data_encryption_key=_DATA_KEY,
     ),
     "EncryptionMaterialsRequest": dict(
         encryption_context={},
@@ -215,11 +213,7 @@ def test_empty_encrypted_data_keys():
 
 
 @pytest.mark.parametrize(
-    "material_class",
-    (
-        (EncryptionMaterials),
-        (DecryptionMaterials),
-    ),
+    "material_class", ((EncryptionMaterials), (DecryptionMaterials),),
 )
 def test_with_data_encryption_key_success(material_class):
     kwargs = _copy_and_update_kwargs(
@@ -280,9 +274,7 @@ def test_with_encrypted_data_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", {})
     materials = EncryptionMaterials(**kwargs)
 
-    new_materials = materials.with_encrypted_data_key(
-        _ENCRYPTED_DATA_KEY,
-    )
+    new_materials = materials.with_encrypted_data_key(_ENCRYPTED_DATA_KEY,)
     assert new_materials is not materials
 
 

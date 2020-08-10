@@ -25,6 +25,7 @@ from .client_suppliers import ClientSupplier  # noqa - only used in docstring pa
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Dict, Iterable, Union  # noqa pylint: disable=unused-import
+
     from .client_suppliers import ClientSupplierType  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
@@ -188,9 +189,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                     algorithm=new_materials.algorithm,
                     grant_tokens=self._grant_tokens,
                 )
-                new_materials = new_materials.with_data_encryption_key(
-                    data_encryption_key=plaintext_key,
-                )
+                new_materials = new_materials.with_data_encryption_key(data_encryption_key=plaintext_key,)
             else:
                 encrypted_key = _do_aws_kms_encrypt(
                     client_supplier=self._client_supplier,
@@ -202,14 +201,12 @@ class _AwsKmsSingleCmkKeyring(Keyring):
         except Exception:  # pylint: disable=broad-except
             # We intentionally WANT to catch all exceptions here
             message = "Unable to generate or encrypt data key using {}".format(
-                    MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=self._key_id)
-                    )
+                MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=self._key_id)
+            )
             _LOGGER.exception(message)
             raise EncryptKeyError(message)
 
-        return new_materials.with_encrypted_data_key(
-            encrypted_data_key=encrypted_key,
-        )
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_key,)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -297,9 +294,7 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
         _LOGGER.exception("Unable to decrypt encrypted data key from %s", encrypted_data_key.key_provider)
         return decryption_materials
 
-    return decryption_materials.with_data_encryption_key(
-        data_encryption_key=plaintext_key,
-    )
+    return decryption_materials.with_data_encryption_key(data_encryption_key=plaintext_key,)
 
 
 def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryption_context, grant_tokens):

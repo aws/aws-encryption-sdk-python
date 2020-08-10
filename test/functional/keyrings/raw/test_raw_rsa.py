@@ -18,12 +18,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.exceptions import EncryptKeyError
-from aws_encryption_sdk.identifiers import (
-    Algorithm,
-    EncryptionKeyType,
-    EncryptionType,
-    WrappingAlgorithm,
-)
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, EncryptionType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring

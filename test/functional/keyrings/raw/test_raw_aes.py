@@ -14,12 +14,7 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import (
-    Algorithm,
-    EncryptionKeyType,
-    EncryptionType,
-    WrappingAlgorithm,
-)
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, EncryptionType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix
 from aws_encryption_sdk.key_providers.raw import RawMasterKey

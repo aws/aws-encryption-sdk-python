@@ -58,9 +58,7 @@ def _generate_data_key(
     # plaintext_data_key to RawDataKey
     data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
 
-    return encryption_materials.with_data_encryption_key(
-        data_encryption_key=data_encryption_key,
-    )
+    return encryption_materials.with_data_encryption_key(data_encryption_key=data_encryption_key,)
 
 
 @attr.s
@@ -389,7 +387,6 @@ class RawRSAKeyring(Keyring):
             error_message = "Raw RSA keyring unable to encrypt data key"
             _LOGGER.exception(error_message)
             raise EncryptKeyError(error_message)
-
 
         # Add encrypted data key to encryption_materials
         return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key)
