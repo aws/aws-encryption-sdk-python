@@ -28,10 +28,10 @@ def encrypt(**kwargs):
         When using this function, the entire ciphertext message is encrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
        The *keyring* parameter.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
         For backwards compatibility,
         the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
@@ -80,16 +80,15 @@ def encrypt(**kwargs):
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
-    :returns: Encrypted message, message metadata (header), and keyring trace
+    :returns: Encrypted message, and message metadata (header)
     :rtype: CryptoResult
     """
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
 
     header_copy = copy.deepcopy(encryptor.header)
-    keyring_trace_copy = copy.deepcopy(encryptor.keyring_trace)
 
-    return CryptoResult(result=ciphertext, header=header_copy, keyring_trace=keyring_trace_copy)
+    return CryptoResult(result=ciphertext, header=header_copy)
 
 
 def decrypt(**kwargs):
@@ -99,10 +98,10 @@ def decrypt(**kwargs):
         When using this function, the entire ciphertext message is decrypted into memory before returning
         any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
        The *keyring* parameter.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
         For backwards compatibility,
         the new :class:`CryptoResult` return value also unpacks like a 2-member tuple.
@@ -142,16 +141,15 @@ def decrypt(**kwargs):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
-    :returns: Decrypted plaintext, message metadata (header), and keyring trace
+    :returns: Decrypted plaintext, and message metadata (header)
     :rtype: CryptoResult
     """
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()
 
     header_copy = copy.deepcopy(decryptor.header)
-    keyring_trace_copy = copy.deepcopy(decryptor.keyring_trace)
 
-    return CryptoResult(result=plaintext, header=header_copy, keyring_trace=keyring_trace_copy)
+    return CryptoResult(result=plaintext, header=header_copy)
 
 
 def stream(**kwargs):

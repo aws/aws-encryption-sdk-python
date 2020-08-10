@@ -17,7 +17,7 @@ import attr
 import six
 from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
-from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
+from aws_encryption_sdk.identifiers import Algorithm, ContentType, ObjectType, SerializationVersion
 from aws_encryption_sdk.internal.str_ops import to_bytes, to_str
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -37,7 +37,7 @@ class MasterKeyInfo(object):
         For all other keyrings and master keys, ``key_info`` and ``key_name`` should always be the same.
 
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
         ``key_name``
 
     :param str provider_id: MasterKey provider_id value
@@ -60,7 +60,7 @@ class MasterKeyInfo(object):
     def key_namespace(self):
         """Access the key namespace value (previously, provider ID).
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         """
         return self.provider_id
@@ -83,7 +83,7 @@ class RawDataKey(object):
         # type: (DataKey) -> RawDataKey
         """Build an :class:`RawDataKey` from a :class:`DataKey`.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
         """
         if not isinstance(data_key, DataKey):
             raise TypeError("data_key must be type DataKey not {}".format(type(data_key).__name__))
@@ -123,7 +123,7 @@ class EncryptedDataKey(object):
         # type: (DataKey) -> EncryptedDataKey
         """Build an :class:`EncryptedDataKey` from a :class:`DataKey`.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
         """
         if not isinstance(data_key, DataKey):
             raise TypeError("data_key must be type DataKey not {}".format(type(data_key).__name__))
@@ -131,20 +131,6 @@ class EncryptedDataKey(object):
         return EncryptedDataKey(
             key_provider=copy.copy(data_key.key_provider), encrypted_data_key=copy.copy(data_key.encrypted_data_key)
         )
-
-
-@attr.s
-class KeyringTrace(object):
-    """Record of all actions that a KeyRing performed with a wrapping key.
-
-    .. versionadded:: 1.5.0
-
-    :param MasterKeyInfo wrapping_key: Wrapping key used
-    :param Set[KeyringTraceFlag] flags: Actions performed
-    """
-
-    wrapping_key = attr.ib(validator=instance_of(MasterKeyInfo))
-    flags = attr.ib(validator=deep_iterable(member_validator=instance_of(KeyringTraceFlag)))
 
 
 @attr.s(hash=True)
@@ -185,7 +171,7 @@ class MessageHeader(object):
 class CryptoResult(object):
     """Result container for one-shot cryptographic API results.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     .. note::
 
@@ -195,12 +181,10 @@ class CryptoResult(object):
 
     :param bytes result: Binary results of the cryptographic operation
     :param MessageHeader header: Encrypted message metadata
-    :param Tuple[KeyringTrace] keyring_trace: Keyring trace entries
     """
 
     result = attr.ib(validator=instance_of(bytes))
     header = attr.ib(validator=instance_of(MessageHeader))
-    keyring_trace = attr.ib(validator=deep_iterable(member_validator=instance_of(KeyringTrace)))
 
     def __attrs_post_init__(self):
         """Construct the inner tuple for backwards compatibility."""

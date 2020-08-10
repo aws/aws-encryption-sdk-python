@@ -10,7 +10,6 @@ import pytest
 from moto.kms import mock_kms
 
 from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError
-from aws_encryption_sdk.identifiers import KeyringTraceFlag
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.keyrings.aws_kms import (
     KEY_NAMESPACE,
@@ -24,7 +23,7 @@ from aws_encryption_sdk.keyrings.aws_kms import (
 )
 from aws_encryption_sdk.keyrings.aws_kms.client_suppliers import DefaultClientSupplier
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 # used as fixtures
 from ...functional_test_utils import fake_generator  # noqa pylint: disable=unused-import
@@ -40,13 +39,6 @@ except ImportError:  # pragma: no cover
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 
-def _matching_flags(wrapping_key, keyring_trace):
-    # type: (MasterKeyInfo, Iterable[KeyringTrace]) -> List[KeyringTraceFlag]
-    return list(
-        itertools.chain.from_iterable([entry.flags for entry in keyring_trace if entry.wrapping_key == wrapping_key])
-    )
-
-
 def test_aws_kms_single_cmk_keyring_on_encrypt_empty_materials(fake_generator):
     keyring = _AwsKmsSingleCmkKeyring(key_id=fake_generator, client_supplier=DefaultClientSupplier())
 
@@ -56,14 +48,6 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_empty_materials(fake_generator):
 
     assert result_materials.data_encryption_key is not None
     assert len(result_materials.encrypted_data_keys) == 1
-
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.GENERATED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.ENCRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT in generator_flags
 
 
 def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator):
@@ -82,14 +66,6 @@ def test_aws_kms_single_cmk_keyring_on_encrypt_existing_data_key(fake_generator)
     assert result_materials is not initial_materials
     assert result_materials.data_encryption_key is not None
     assert len(result_materials.encrypted_data_keys) == 1
-
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.GENERATED_DATA_KEY not in generator_flags
-    assert KeyringTraceFlag.ENCRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms
@@ -153,13 +129,6 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
     assert result_materials is not initial_decryption_materials
     assert result_materials.data_encryption_key is not None
 
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
-
 
 def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_child):
     generator, child = fake_generator_and_child
@@ -178,18 +147,6 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_c
     result_materials = decrypting_keyring.on_decrypt(
         decryption_materials=initial_decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
     )
-
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=generator), result_materials.keyring_trace
-    )
-    assert len(generator_flags) == 0
-
-    child_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=child), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in child_flags
-    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in child_flags
 
 
 def test_aws_kms_single_cmk_keyring_on_decrypt_no_match(fake_generator_and_child):
@@ -273,13 +230,6 @@ def test_aws_kms_discovery_keyring_on_decrypt(encryption_materials_for_discovery
 
     assert result_materials is not initial_decryption_materials
     assert result_materials.data_encryption_key is not None
-
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=generator_key_id), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms
@@ -379,13 +329,6 @@ def test_try_aws_kms_decrypt_succeed(fake_generator):
     )
 
     assert result_materials.data_encryption_key.data_key == plaintext
-
-    generator_flags = _matching_flags(
-        MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=fake_generator), result_materials.keyring_trace
-    )
-
-    assert KeyringTraceFlag.DECRYPTED_DATA_KEY in generator_flags
-    assert KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT in generator_flags
 
 
 @mock_kms

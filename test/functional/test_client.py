@@ -469,30 +469,8 @@ def run_raw_provider_check(
     )
     decrypt_result = aws_encryption_sdk.decrypt(source=encrypt_result.result, **decrypt_kwargs)
 
-    if isinstance(encrypting_provider, Keyring):
-        trace_entries = (
-            entry
-            for entry in encrypt_result.keyring_trace
-            if (
-                entry.wrapping_key.provider_id == encrypting_provider.key_namespace
-                and entry.wrapping_key.key_info == encrypting_provider.key_name
-            )
-        )
-        assert trace_entries
-
     assert decrypt_result.result == VALUES["plaintext_128"]
     assert_key_not_logged(encrypting_provider, log_capturer.text)
-
-    if isinstance(decrypting_provider, Keyring):
-        trace_entries = (
-            entry
-            for entry in decrypt_result.keyring_trace
-            if (
-                entry.wrapping_key.provider_id == decrypting_provider.key_namespace
-                and entry.wrapping_key.key_info == decrypting_provider.key_name
-            )
-        )
-        assert trace_entries
 
 
 @pytest.mark.parametrize(
