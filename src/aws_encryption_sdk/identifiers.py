@@ -14,7 +14,6 @@
 import struct
 from enum import Enum
 
-import attr
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.hazmat.primitives.ciphers import algorithms, modes

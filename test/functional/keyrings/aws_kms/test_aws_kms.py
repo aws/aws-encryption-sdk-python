@@ -1,7 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Functional tests for ``aws_encryption_sdk.keyrings.aws_kms``."""
-import itertools
 import logging
 import os
 
@@ -13,7 +12,6 @@ from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.keyrings.aws_kms import (
     KEY_NAMESPACE,
-    AwsKmsKeyring,
     _AwsKmsDiscoveryKeyring,
     _AwsKmsSingleCmkKeyring,
     _do_aws_kms_decrypt,
@@ -130,25 +128,6 @@ def test_aws_kms_single_cmk_keyring_on_decrypt_single_cmk(fake_generator):
     assert result_materials.data_encryption_key is not None
 
 
-def test_aws_kms_single_cmk_keyring_on_decrypt_multiple_cmk(fake_generator_and_child):
-    generator, child = fake_generator_and_child
-
-    encrypting_keyring = AwsKmsKeyring(generator_key_id=generator, key_ids=(child,))
-    decrypting_keyring = _AwsKmsSingleCmkKeyring(key_id=child, client_supplier=DefaultClientSupplier())
-
-    initial_encryption_materials = EncryptionMaterials(algorithm=ALGORITHM, encryption_context={})
-
-    encryption_materials = encrypting_keyring.on_encrypt(initial_encryption_materials)
-
-    initial_decryption_materials = DecryptionMaterials(
-        algorithm=encryption_materials.algorithm, encryption_context=encryption_materials.encryption_context
-    )
-
-    result_materials = decrypting_keyring.on_decrypt(
-        decryption_materials=initial_decryption_materials, encrypted_data_keys=encryption_materials.encrypted_data_keys
-    )
-
-
 def test_aws_kms_single_cmk_keyring_on_decrypt_no_match(fake_generator_and_child):
     generator, child = fake_generator_and_child
 
@@ -216,7 +195,7 @@ def encryption_materials_for_discovery_decrypt(fake_generator):
 
 
 def test_aws_kms_discovery_keyring_on_decrypt(encryption_materials_for_discovery_decrypt):
-    generator_key_id, encryption_materials = encryption_materials_for_discovery_decrypt
+    _, encryption_materials = encryption_materials_for_discovery_decrypt
 
     decrypting_keyring = _AwsKmsDiscoveryKeyring(client_supplier=DefaultClientSupplier())
 
