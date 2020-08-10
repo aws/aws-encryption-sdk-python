@@ -359,3 +359,18 @@ def test_keypair_must_match():
         )
 
     excinfo.match("Private and public wrapping keys MUST be from the same keypair.")
+
+
+def test_must_not_accept_aws_kms():
+    bad_key_namespace = "aws-kms"
+
+    with pytest.raises(ValueError) as excinfo:
+        RawRSAKeyring(
+            key_namespace=bad_key_namespace,
+            key_name=_KEY_ID,
+            wrapping_algorithm=_WRAPPING_ALGORITHM,
+            private_wrapping_key=_PRIVATE_WRAPPING_KEY,
+            public_wrapping_key=_PUBLIC_WRAPPING_KEY,
+        )
+
+    excinfo.match('Key namespace MUST NOT be "aws-kms"')
