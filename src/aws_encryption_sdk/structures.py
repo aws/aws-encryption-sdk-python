@@ -37,7 +37,7 @@ class MasterKeyInfo(object):
         For all other keyrings and master keys, ``key_info`` and ``key_name`` should always be the same.
 
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
         ``key_name``
 
     :param str provider_id: MasterKey provider_id value

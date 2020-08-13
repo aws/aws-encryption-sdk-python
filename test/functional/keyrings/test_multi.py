@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY_AES = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
 
 _ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY = EncryptionMaterials(
