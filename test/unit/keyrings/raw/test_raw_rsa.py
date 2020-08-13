@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 import aws_encryption_sdk.key_providers.raw
 import aws_encryption_sdk.keyrings.raw
 from aws_encryption_sdk.exceptions import EncryptKeyError
-from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.raw import RawRSAKeyring
@@ -165,21 +165,6 @@ def test_on_encrypt_no_public_key(raw_rsa_keyring):
     excinfo.match("A public key is required to encrypt")
 
 
-def test_on_encrypt_keyring_trace_when_data_encryption_key_given(raw_rsa_keyring):
-    materials = get_encryption_materials_with_data_encryption_key()
-    test = raw_rsa_keyring.on_encrypt(encryption_materials=materials)
-    assert test is not materials
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 1
-
-    encrypt_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.ENCRYPTED_DATA_KEY}]
-    assert len(encrypt_traces) == 1
-
-    generate_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.GENERATED_DATA_KEY}]
-    assert len(generate_traces) == 0
-
-
 def test_on_encrypt_when_data_encryption_key_not_given(raw_rsa_keyring):
     test_raw_rsa_keyring = raw_rsa_keyring
 
@@ -188,15 +173,6 @@ def test_on_encrypt_when_data_encryption_key_not_given(raw_rsa_keyring):
     )
 
     test = test_raw_rsa_keyring.on_encrypt(encryption_materials=get_encryption_materials_without_data_encryption_key())
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 2
-
-    encrypt_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.ENCRYPTED_DATA_KEY}]
-    assert len(encrypt_traces) == 1
-
-    generate_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.GENERATED_DATA_KEY}]
-    assert len(generate_traces) == 1
 
     assert test.data_encryption_key.data_key is not None
 
@@ -221,16 +197,6 @@ def test_on_decrypt_no_private_key(raw_rsa_keyring):
     assert test is materials
 
 
-def test_on_decrypt_keyring_trace_when_data_key_given(raw_rsa_keyring):
-    test_raw_rsa_keyring = raw_rsa_keyring
-    test = test_raw_rsa_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_with_data_encryption_key(),
-        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_RSA],
-    )
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 0
-
-
 def test_on_decrypt_when_data_key_and_edk_not_provided(raw_rsa_keyring, patch_decrypt_on_wrapping_key):
     test_raw_rsa_keyring = raw_rsa_keyring
 
@@ -238,9 +204,6 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(raw_rsa_keyring, patch_de
         decryption_materials=get_decryption_materials_without_data_encryption_key(), encrypted_data_keys=[]
     )
     assert not patch_decrypt_on_wrapping_key.called
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 0
 
     assert test.data_encryption_key is None
 
@@ -267,9 +230,6 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_not_in_keyring(raw_rsa_ke
     )
     assert not patch_decrypt_on_wrapping_key.called
 
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert not trace_entries
-
     assert test.data_encryption_key is None
 
 
@@ -286,25 +246,6 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(raw_rsa_keyring,
     )
 
 
-def test_on_decrypt_keyring_trace_when_data_key_not_provided_and_edk_provided(raw_rsa_keyring):
-    test_raw_rsa_keyring = raw_rsa_keyring
-
-    test = test_raw_rsa_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_without_data_encryption_key(),
-        encrypted_data_keys=test_raw_rsa_keyring.on_encrypt(
-            encryption_materials=get_encryption_materials_without_data_encryption_key()
-        ).encrypted_data_keys,
-    )
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 1
-
-    decrypt_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.DECRYPTED_DATA_KEY}]
-    assert len(decrypt_traces) == 1
-
-    assert test.data_encryption_key is not None
-
-
 def test_on_decrypt_continues_through_edks_on_failure(raw_rsa_keyring, mocker):
     patched_wrapping_key_decrypt = mocker.patch.object(raw_rsa_keyring._private_wrapping_key, "decrypt")
     patched_wrapping_key_decrypt.side_effect = (Exception("DECRYPT FAIL"), _DATA_KEY)
@@ -315,11 +256,5 @@ def test_on_decrypt_continues_through_edks_on_failure(raw_rsa_keyring, mocker):
     )
 
     assert patched_wrapping_key_decrypt.call_count == 2
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_rsa_keyring._key_provider]
-    assert len(trace_entries) == 1
-
-    decrypt_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.DECRYPTED_DATA_KEY}]
-    assert len(decrypt_traces) == 1
 
     assert test.data_encryption_key.data_key == _DATA_KEY

@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from aws_encryption_sdk.exceptions import DecryptKeyError
-from aws_encryption_sdk.identifiers import AlgorithmSuite, EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import AlgorithmSuite, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.utils.streams import InsistentReaderBytesIO
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
@@ -23,7 +23,7 @@ from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Dict, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -101,7 +101,6 @@ class OnlyGenerateKeyring(Keyring):
             )
             encryption_materials = encryption_materials.with_data_encryption_key(
                 data_encryption_key=data_encryption_key,
-                keyring_trace=KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.GENERATED_DATA_KEY}),
             )
         return encryption_materials
 
@@ -119,12 +118,6 @@ def get_encryption_materials_with_data_key():
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -137,12 +130,6 @@ def get_encryption_materials_with_data_encryption_key():
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -170,12 +157,6 @@ def get_encryption_materials_with_encrypted_data_key():
         ],
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -189,12 +170,6 @@ def get_encryption_materials_with_encrypted_data_key_aes():
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY, KeyringTraceFlag.ENCRYPTED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -223,12 +198,6 @@ def get_decryption_materials_with_data_key():
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         verification_key=b"ex_verification_key",
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -241,12 +210,6 @@ def get_decryption_materials_with_data_encryption_key():
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
         verification_key=b"ex_verification_key",
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
-                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
-            )
-        ],
     )
 
 
@@ -587,7 +550,6 @@ class BrokenKeyring(Keyring):
             encrypted_data_keys=encryption_materials.encrypted_data_keys,
             encryption_context=self._broken_encryption_context(encryption_materials.encryption_context),
             signing_key=self._broken_key(encryption_materials.signing_key),
-            keyring_trace=encryption_materials.keyring_trace,
         )
 
     def _break_decryption_materials(self, decryption_materials):
@@ -597,7 +559,6 @@ class BrokenKeyring(Keyring):
             data_encryption_key=decryption_materials.data_encryption_key,
             encryption_context=self._broken_encryption_context(decryption_materials.encryption_context),
             verification_key=self._broken_key(decryption_materials.verification_key),
-            keyring_trace=decryption_materials.keyring_trace,
         )
 
     def on_encrypt(self, encryption_materials):
@@ -625,7 +586,6 @@ class NoEncryptedDataKeysKeyring(Keyring):
             data_encryption_key=materials.data_encryption_key,
             encryption_context=materials.encryption_context,
             signing_key=materials.signing_key,
-            keyring_trace=materials.keyring_trace,
         )
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):

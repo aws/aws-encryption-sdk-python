@@ -43,13 +43,6 @@ class InvalidDataKeyError(AWSEncryptionSDKClientError):
     """Exception class for Invalid Data Keys."""
 
 
-class InvalidKeyringTraceError(AWSEncryptionSDKClientError):
-    """Exception class for invalid Keyring Traces.
-
-    .. versionadded:: 1.5.0
-    """
-
-
 class InvalidProviderIdError(AWSEncryptionSDKClientError):
     """Exception class for Invalid Provider IDs."""
 

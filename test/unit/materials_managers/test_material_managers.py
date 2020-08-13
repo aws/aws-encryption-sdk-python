@@ -17,8 +17,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock
 
-from aws_encryption_sdk.exceptions import InvalidDataKeyError, InvalidKeyringTraceError, SignatureKeyError
-from aws_encryption_sdk.identifiers import AlgorithmSuite, KeyringTraceFlag
+from aws_encryption_sdk.exceptions import InvalidDataKeyError, SignatureKeyError
+from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.internal.utils.streams import ROStream
@@ -30,7 +30,7 @@ from aws_encryption_sdk.materials_managers import (
     EncryptionMaterialsRequest,
     _data_key_to_raw_data_key,
 )
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -47,15 +47,7 @@ _VERIFICATION_KEY = Verifier(algorithm=ALGORITHM, key=_SIGNATURE_PRIVATE_KEY.pub
 
 _VALID_KWARGS = {
     "CryptographicMaterials": dict(
-        algorithm=ALGORITHM,
-        encryption_context={"additional": "data"},
-        data_encryption_key=_DATA_KEY,
-        keyring_trace=[
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id="Provider", key_info=b"Info"),
-                flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-            )
-        ],
+        algorithm=ALGORITHM, encryption_context={"additional": "data"}, data_encryption_key=_DATA_KEY,
     ),
     "EncryptionMaterialsRequest": dict(
         encryption_context={},
@@ -95,7 +87,6 @@ def _copy_and_update_kwargs(class_name, mod_kwargs):
         (CryptographicMaterials, dict(encryption_context=1234)),
         (CryptographicMaterials, dict(data_encryption_key=1234)),
         (CryptographicMaterials, dict(encrypted_data_keys=1234)),
-        (CryptographicMaterials, dict(keyring_trace=1234)),
         (EncryptionMaterialsRequest, dict(encryption_context=None)),
         (EncryptionMaterialsRequest, dict(frame_length="not an int")),
         (EncryptionMaterialsRequest, dict(algorithm="not an Algorithm or None")),
@@ -184,8 +175,6 @@ def _cryptographic_materials_attributes():
             "algorithm",
             "encryption_context",
             "data_encryption_key",
-            "_keyring_trace",
-            "keyring_trace",
             "_initialized",
         ):
             yield material, attribute
@@ -207,24 +196,6 @@ def test_cryptographic_materials_cannot_change_attribute(material_class, attribu
     excinfo.match("can't set attribute")
 
 
-@pytest.mark.parametrize("material_class", (CryptographicMaterials, EncryptionMaterials, DecryptionMaterials))
-def test_immutable_keyring_trace(material_class):
-    materials = material_class(**_VALID_KWARGS[material_class.__name__])
-
-    with pytest.raises(AttributeError):
-        materials.keyring_trace.append(42)
-
-
-@pytest.mark.parametrize("material_class", (CryptographicMaterials, EncryptionMaterials, DecryptionMaterials))
-def test_empty_keyring_trace(material_class):
-    materials = material_class(**_copy_and_update_kwargs(material_class.__name__, dict(keyring_trace=_REMOVE)))
-
-    trace = materials.keyring_trace
-
-    assert isinstance(trace, tuple)
-    assert not trace
-
-
 def test_immutable_encrypted_data_keys():
     materials = EncryptionMaterials(**_VALID_KWARGS["EncryptionMaterials"])
 
@@ -242,13 +213,9 @@ def test_empty_encrypted_data_keys():
 
 
 @pytest.mark.parametrize(
-    "material_class, flag",
-    (
-        (EncryptionMaterials, KeyringTraceFlag.GENERATED_DATA_KEY),
-        (DecryptionMaterials, KeyringTraceFlag.DECRYPTED_DATA_KEY),
-    ),
+    "material_class", ((EncryptionMaterials), (DecryptionMaterials),),
 )
-def test_with_data_encryption_key_success(material_class, flag):
+def test_with_data_encryption_key_success(material_class):
     kwargs = _copy_and_update_kwargs(
         material_class.__name__, dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE)
     )
@@ -258,45 +225,23 @@ def test_with_data_encryption_key_success(material_class, flag):
         data_encryption_key=RawDataKey(
             key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), data_key=b"1" * ALGORITHM.kdf_input_len
         ),
-        keyring_trace=KeyringTrace(wrapping_key=MasterKeyInfo(provider_id="a", key_info=b"b"), flags={flag}),
     )
     assert new_materials is not materials
 
 
 def _add_data_encryption_key_test_cases():
-    for material_class, required_flags in (
-        (EncryptionMaterials, KeyringTraceFlag.GENERATED_DATA_KEY),
-        (DecryptionMaterials, KeyringTraceFlag.DECRYPTED_DATA_KEY),
-    ):
+    for material_class in (EncryptionMaterials, DecryptionMaterials):
         yield (
             material_class,
             dict(data_encryption_key=_RAW_DATA_KEY, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _RAW_DATA_KEY,
-            KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
             AttributeError,
             "Data encryption key is already set.",
         )
         yield (
             material_class,
             dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
-            _RAW_DATA_KEY,
-            KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags=set()),
-            InvalidKeyringTraceError,
-            "Keyring flags do not match action.",
-        )
-        yield (
-            material_class,
-            dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
-            RawDataKey(key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), data_key=b"asdf"),
-            KeyringTrace(wrapping_key=MasterKeyInfo(provider_id="c", key_info=b"d"), flags={required_flags}),
-            InvalidKeyringTraceError,
-            "Keyring trace does not match data key provider.",
-        )
-        yield (
-            material_class,
-            dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE),
             RawDataKey(key_provider=_RAW_DATA_KEY.key_provider, data_key=b"1234"),
-            KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
             InvalidDataKeyError,
             r"Invalid data key length *",
         )
@@ -304,24 +249,23 @@ def _add_data_encryption_key_test_cases():
         DecryptionMaterials,
         dict(data_encryption_key=_REMOVE, data_key=_REMOVE, encrypted_data_keys=_REMOVE, algorithm=_REMOVE),
         RawDataKey(key_provider=_RAW_DATA_KEY.key_provider, data_key=b"1234"),
-        KeyringTrace(wrapping_key=_RAW_DATA_KEY.key_provider, flags={required_flags}),
         AttributeError,
         "Algorithm is not set",
     )
 
 
 @pytest.mark.parametrize(
-    "material_class, mod_kwargs, data_encryption_key, keyring_trace, exception_type, exception_message",
+    "material_class, mod_kwargs, data_encryption_key, exception_type, exception_message",
     _add_data_encryption_key_test_cases(),
 )
 def test_with_data_encryption_key_fail(
-    material_class, mod_kwargs, data_encryption_key, keyring_trace, exception_type, exception_message
+    material_class, mod_kwargs, data_encryption_key, exception_type, exception_message
 ):
     kwargs = _copy_and_update_kwargs(material_class.__name__, mod_kwargs)
     materials = material_class(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.with_data_encryption_key(data_encryption_key=data_encryption_key, keyring_trace=keyring_trace)
+        materials.with_data_encryption_key(data_encryption_key=data_encryption_key)
 
     excinfo.match(exception_message)
 
@@ -330,50 +274,27 @@ def test_with_encrypted_data_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", {})
     materials = EncryptionMaterials(**kwargs)
 
-    new_materials = materials.with_encrypted_data_key(
-        _ENCRYPTED_DATA_KEY,
-        keyring_trace=KeyringTrace(
-            wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}
-        ),
-    )
+    new_materials = materials.with_encrypted_data_key(_ENCRYPTED_DATA_KEY)
     assert new_materials is not materials
 
 
 @pytest.mark.parametrize(
-    "mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message",
+    "mod_kwargs, encrypted_data_key, exception_type, exception_message",
     (
-        (
-            {},
-            _ENCRYPTED_DATA_KEY,
-            KeyringTrace(wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags=set()),
-            InvalidKeyringTraceError,
-            "Keyring flags do not match action.",
-        ),
-        (
-            {},
-            EncryptedDataKey(key_provider=MasterKeyInfo(provider_id="a", key_info=b"b"), encrypted_data_key=b"asdf"),
-            KeyringTrace(
-                wrapping_key=MasterKeyInfo(provider_id="not a match", key_info=b"really not a match"),
-                flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
-            ),
-            InvalidKeyringTraceError,
-            "Keyring trace does not match data key encryptor.",
-        ),
         (
             dict(data_encryption_key=_REMOVE, encrypted_data_keys=_REMOVE),
             _ENCRYPTED_DATA_KEY,
-            KeyringTrace(wrapping_key=_ENCRYPTED_DATA_KEY.key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY}),
             AttributeError,
             "Data encryption key is not set.",
         ),
     ),
 )
-def test_with_encrypted_data_key_fail(mod_kwargs, encrypted_data_key, keyring_trace, exception_type, exception_message):
+def test_with_encrypted_data_key_fail(mod_kwargs, encrypted_data_key, exception_type, exception_message):
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", mod_kwargs)
     materials = EncryptionMaterials(**kwargs)
 
     with pytest.raises(exception_type) as excinfo:
-        materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
+        materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key)
 
     excinfo.match(exception_message)
 

@@ -137,7 +137,6 @@ class _EncryptionStream(io.IOBase):
     _message_prepped = None  # type: bool
     source_stream = None
     _stream_length = None  # type: int
-    keyring_trace = ()
 
     def __new__(cls, **kwargs):
         """Perform necessary handling for _EncryptionStream instances that should be
@@ -444,7 +443,6 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         self._encryption_materials = self.config.materials_manager.get_encryption_materials(
             request=encryption_materials_request
         )
-        self.keyring_trace = self._encryption_materials.keyring_trace
 
         if self.config.algorithm is not None and self._encryption_materials.algorithm != self.config.algorithm:
             raise ActionNotAllowedError(
@@ -781,7 +779,6 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             encryption_context=header.encryption_context,
         )
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
-        self.keyring_trace = decryption_materials.keyring_trace
 
         if decryption_materials.verification_key is None:
             self.verifier = None

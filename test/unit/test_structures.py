@@ -13,12 +13,11 @@
 """Unit test suite for aws_encryption_sdk.structures"""
 import pytest
 
-from aws_encryption_sdk.identifiers import Algorithm, ContentType, KeyringTraceFlag, ObjectType, SerializationVersion
+from aws_encryption_sdk.identifiers import Algorithm, ContentType, ObjectType, SerializationVersion
 from aws_encryption_sdk.structures import (
     CryptoResult,
     DataKey,
     EncryptedDataKey,
-    KeyringTrace,
     MasterKeyInfo,
     MessageHeader,
     RawDataKey,
@@ -65,11 +64,6 @@ VALID_KWARGS = {
             key_provider=MasterKeyInfo(provider_id="asjnoa", key_info=b"aosjfoaiwej"), encrypted_data_key=b"aisofiawjef"
         )
     ],
-    KeyringTrace: [
-        dict(
-            wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"), flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
-        )
-    ],
     CryptoResult: [
         dict(
             result=b"super secret stuff",
@@ -84,12 +78,6 @@ VALID_KWARGS = {
                 content_aad_length=32456,
                 header_iv_length=32456,
                 frame_length=234567,
-            ),
-            keyring_trace=(
-                KeyringTrace(
-                    wrapping_key=MasterKeyInfo(provider_id="foo", key_info=b"bar"),
-                    flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY},
-                ),
             ),
         )
     ],

@@ -12,14 +12,14 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
-from aws_encryption_sdk.identifiers import EncryptionKeyType, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, WrappingKey
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable  # noqa pylint: disable=unused-import
@@ -55,15 +55,10 @@ def _generate_data_key(
         _LOGGER.exception(error_message)
         raise GenerateKeyError("Unable to generate data encryption key.")
 
-    # Create a keyring trace
-    keyring_trace = KeyringTrace(wrapping_key=key_provider, flags={KeyringTraceFlag.GENERATED_DATA_KEY})
-
     # plaintext_data_key to RawDataKey
     data_encryption_key = RawDataKey(key_provider=key_provider, data_key=plaintext_data_key)
 
-    return encryption_materials.with_data_encryption_key(
-        data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
-    )
+    return encryption_materials.with_data_encryption_key(data_encryption_key=data_encryption_key,)
 
 
 @attr.s
@@ -71,7 +66,7 @@ class RawAESKeyring(Keyring):
     """Generate an instance of Raw AES Keyring which encrypts using AES-GCM algorithm using wrapping key provided as a
     byte array
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param str key_namespace: String defining the keyring.
 
@@ -175,13 +170,7 @@ class RawAESKeyring(Keyring):
             _LOGGER.exception(error_message)
             raise EncryptKeyError(error_message)
 
-        # Update Keyring Trace
-        keyring_trace = KeyringTrace(
-            wrapping_key=self._key_provider,
-            flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT},
-        )
-
-        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -228,18 +217,10 @@ class RawAESKeyring(Keyring):
                 # until it either succeeds or runs out of encrypted data keys.
                 continue
 
-            # Create a keyring trace
-            keyring_trace = KeyringTrace(
-                wrapping_key=self._key_provider,
-                flags={KeyringTraceFlag.DECRYPTED_DATA_KEY, KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT},
-            )
-
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
 
-            return new_materials.with_data_encryption_key(
-                data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
-            )
+            return new_materials.with_data_encryption_key(data_encryption_key=data_encryption_key)
 
         return new_materials
 
@@ -249,7 +230,7 @@ class RawRSAKeyring(Keyring):
     """Generate an instance of Raw RSA Keyring which performs asymmetric encryption and decryption using public
     and private keys provided
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param str key_namespace: String defining the keyring ID
 
@@ -421,11 +402,8 @@ class RawRSAKeyring(Keyring):
             _LOGGER.exception(error_message)
             raise EncryptKeyError(error_message)
 
-        # Update Keyring Trace
-        keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.ENCRYPTED_DATA_KEY})
-
         # Add encrypted data key to encryption_materials
-        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key, keyring_trace=keyring_trace)
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_data_key)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -465,14 +443,9 @@ class RawRSAKeyring(Keyring):
                 # until it either succeeds or runs out of encrypted data keys.
                 continue
 
-            # Create a keyring trace
-            keyring_trace = KeyringTrace(wrapping_key=self._key_provider, flags={KeyringTraceFlag.DECRYPTED_DATA_KEY})
-
             # Update decryption materials
             data_encryption_key = RawDataKey(key_provider=self._key_provider, data_key=plaintext_data_key)
 
-            return new_materials.with_data_encryption_key(
-                data_encryption_key=data_encryption_key, keyring_trace=keyring_trace
-            )
+            return new_materials.with_data_encryption_key(data_encryption_key=data_encryption_key)
 
         return new_materials
