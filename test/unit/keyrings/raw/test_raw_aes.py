@@ -20,7 +20,7 @@ import pytest
 import aws_encryption_sdk.key_providers.raw
 import aws_encryption_sdk.keyrings.raw
 from aws_encryption_sdk.exceptions import EncryptKeyError
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.raw import GenerateKeyError, RawAESKeyring, _generate_data_key
@@ -129,25 +129,6 @@ def test_on_encrypt_when_data_encryption_key_given(raw_aes_keyring, patch_genera
     assert not patch_generate_data_key.called
 
 
-def test_keyring_trace_on_encrypt_when_data_encryption_key_given(raw_aes_keyring):
-    test_raw_aes_keyring = raw_aes_keyring
-
-    test = test_raw_aes_keyring.on_encrypt(encryption_materials=get_encryption_materials_with_data_encryption_key())
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_aes_keyring._key_provider]
-    assert len(trace_entries) == 1
-
-    generate_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.GENERATED_DATA_KEY}]
-    assert len(generate_traces) == 0
-
-    encrypt_traces = [
-        entry
-        for entry in trace_entries
-        if entry.flags == {KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT}
-    ]
-    assert len(encrypt_traces) == 1
-
-
 def test_on_encrypt_when_data_encryption_key_not_given(raw_aes_keyring):
 
     test_raw_aes_keyring = raw_aes_keyring
@@ -160,20 +141,6 @@ def test_on_encrypt_when_data_encryption_key_not_given(raw_aes_keyring):
 
     # Check if data key is generated
     assert test.data_encryption_key is not None
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_aes_keyring._key_provider]
-    assert len(trace_entries) == 2
-
-    generate_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.GENERATED_DATA_KEY}]
-    assert len(generate_traces) == 1
-
-    encrypt_traces = [
-        entry
-        for entry in trace_entries
-        if entry.flags == {KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT}
-    ]
-    assert len(encrypt_traces) == 1
-
     assert len(test.encrypted_data_keys) == original_number_of_encrypted_data_keys + 1
 
 
@@ -199,17 +166,6 @@ def test_on_decrypt_when_data_key_given(raw_aes_keyring, decryption_materials, e
     assert not patch_decrypt_on_wrapping_key.called
 
 
-def test_on_decrypt_keyring_trace_when_data_key_given(raw_aes_keyring):
-    test_raw_aes_keyring = raw_aes_keyring
-    test = test_raw_aes_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_with_data_encryption_key(),
-        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
-    )
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_aes_keyring._key_provider]
-    assert len(trace_entries) == 0
-
-
 @pytest.mark.parametrize(
     "decryption_materials, edk",
     (
@@ -223,11 +179,8 @@ def test_on_decrypt_when_data_key_and_edk_not_provided(
     test_raw_aes_keyring = raw_aes_keyring
 
     test = test_raw_aes_keyring.on_decrypt(decryption_materials=decryption_materials, encrypted_data_keys=edk)
+
     assert not patch_decrypt_on_wrapping_key.called
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_aes_keyring._key_provider]
-    assert len(trace_entries) == 0
-
     assert test.data_encryption_key is None
 
 
@@ -241,25 +194,6 @@ def test_on_decrypt_when_data_key_not_provided_and_edk_provided(raw_aes_keyring,
     patch_decrypt_on_wrapping_key.assert_called_once_with(
         encrypted_wrapped_data_key=mock.ANY, encryption_context=mock.ANY
     )
-
-
-def test_on_decrypt_keyring_trace_when_data_key_not_provided_and_edk_provided(raw_aes_keyring):
-    test_raw_aes_keyring = raw_aes_keyring
-
-    test = test_raw_aes_keyring.on_decrypt(
-        decryption_materials=get_decryption_materials_without_data_encryption_key(),
-        encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
-    )
-
-    trace_entries = [entry for entry in test.keyring_trace if entry.wrapping_key == raw_aes_keyring._key_provider]
-    assert len(trace_entries) == 1
-
-    decrypt_traces = [
-        entry
-        for entry in trace_entries
-        if entry.flags == {KeyringTraceFlag.DECRYPTED_DATA_KEY, KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT}
-    ]
-    assert len(decrypt_traces) == 1
 
 
 def test_on_decrypt_continues_through_edks_on_failure(raw_aes_keyring, patch_decrypt_on_wrapping_key):
@@ -293,7 +227,7 @@ def test_generate_data_key_error_when_data_key_exists():
     assert exc_info.match("Data encryption key already exists.")
 
 
-def test_generate_data_key_keyring_trace():
+def test_generate_data_key_provider_info():
     encryption_materials_without_data_key = EncryptionMaterials(
         algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         encryption_context=_ENCRYPTION_CONTEXT,
@@ -306,13 +240,6 @@ def test_generate_data_key_keyring_trace():
 
     assert new_materials is not encryption_materials_without_data_key
     assert encryption_materials_without_data_key.data_encryption_key is None
-    assert not encryption_materials_without_data_key.keyring_trace
 
     assert new_materials.data_encryption_key is not None
     assert new_materials.data_encryption_key.key_provider == key_provider_info
-
-    trace_entries = [entry for entry in new_materials.keyring_trace if entry.wrapping_key == key_provider_info]
-    assert len(trace_entries) == 1
-
-    generate_traces = [entry for entry in trace_entries if entry.flags == {KeyringTraceFlag.GENERATED_DATA_KEY}]
-    assert len(generate_traces) == 1

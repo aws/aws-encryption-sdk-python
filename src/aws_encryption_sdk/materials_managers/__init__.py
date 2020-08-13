@@ -20,11 +20,11 @@ import attr
 import six
 from attr.validators import deep_iterable, deep_mapping, instance_of, optional
 
-from aws_encryption_sdk.exceptions import InvalidDataKeyError, InvalidKeyringTraceError, SignatureKeyError
-from aws_encryption_sdk.identifiers import Algorithm, KeyringTraceFlag
+from aws_encryption_sdk.exceptions import InvalidDataKeyError, SignatureKeyError
+from aws_encryption_sdk.identifiers import Algorithm
 from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
 from aws_encryption_sdk.internal.utils.streams import ROStream
-from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, KeyringTrace, RawDataKey
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, RawDataKey
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Any, Iterable, Tuple, Union  # noqa pylint: disable=unused-import
@@ -75,13 +75,11 @@ def _data_key_to_raw_data_key(data_key):
 class CryptographicMaterials(object):
     """Cryptographic materials core.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param Algorithm algorithm: Algorithm to use for encrypting message
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
     :param RawDataKey data_encryption_key: Plaintext data key to use for encrypting message
-    :param keyring_trace: Any KeyRing trace entries
-    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     algorithm = attr.ib(validator=optional(instance_of(Algorithm)))
@@ -92,9 +90,6 @@ class CryptographicMaterials(object):
     )
     data_encryption_key = attr.ib(
         default=None, validator=optional(instance_of(RawDataKey)), converter=_data_key_to_raw_data_key
-    )
-    _keyring_trace = attr.ib(
-        default=attr.Factory(list), validator=optional(deep_iterable(member_validator=instance_of(KeyringTrace)))
     )
     _initialized = False
 
@@ -115,30 +110,18 @@ class CryptographicMaterials(object):
         """Special __setattr__ to avoid having to perform multi-level super calls."""
         super(CryptographicMaterials, self).__setattr__(key, value)
 
-    def _validate_data_encryption_key(self, data_encryption_key, keyring_trace, required_flags):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace, Iterable[KeyringTraceFlag]) -> None
-        """Validate that the provided data encryption key and keyring trace match for each other and the materials.
+    def _validate_data_encryption_key(self, data_encryption_key):
+        # type: (Union[DataKey, RawDataKey]) -> None
+        """Validate that the provided data encryption key matches the materials.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param RawDataKey data_encryption_key: Data encryption key
-        :param KeyringTrace keyring_trace: Keyring trace corresponding to data_encryption_key
-        :param required_flags: Iterable of required flags
-        :type required_flags: iterable of :class:`KeyringTraceFlag`
         :raises AttributeError: if data encryption key is already set
-        :raises InvalidKeyringTraceError: if keyring trace does not match decrypt action
-        :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
         if self.data_encryption_key is not None:
             raise AttributeError("Data encryption key is already set.")
-
-        for flag in required_flags:
-            if flag not in keyring_trace.flags:
-                raise InvalidKeyringTraceError("Keyring flags do not match action.")
-
-        if keyring_trace.wrapping_key != data_encryption_key.key_provider:
-            raise InvalidKeyringTraceError("Keyring trace does not match data key provider.")
 
         if len(data_encryption_key.data_key) != self.algorithm.kdf_input_len:
             raise InvalidDataKeyError(
@@ -147,25 +130,17 @@ class CryptographicMaterials(object):
                 )
             )
 
-    def _with_data_encryption_key(self, data_encryption_key, keyring_trace, required_flags):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace, Iterable[KeyringTraceFlag]) -> CryptographicMaterials
+    def _with_data_encryption_key(self, data_encryption_key):
+        # type: (Union[DataKey, RawDataKey]) -> CryptographicMaterials
         """Get new cryptographic materials that include this data encryption key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param RawDataKey data_encryption_key: Data encryption key
-        :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
-          while getting this data encryption key
-        :param required_flags: Iterable of required flags
-        :type required_flags: iterable of :class:`KeyringTraceFlag`
         :raises AttributeError: if data encryption key is already set
-        :raises InvalidKeyringTraceError: if keyring trace does not match required actions
-        :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
-        self._validate_data_encryption_key(
-            data_encryption_key=data_encryption_key, keyring_trace=keyring_trace, required_flags=required_flags
-        )
+        self._validate_data_encryption_key(data_encryption_key=data_encryption_key)
 
         new_materials = copy.copy(self)
 
@@ -173,18 +148,8 @@ class CryptographicMaterials(object):
         new_materials._setattr(  # simplify access to copies pylint: disable=protected-access
             "data_encryption_key", data_key
         )
-        new_materials._keyring_trace.append(keyring_trace)  # simplify access to copies pylint: disable=protected-access
 
         return new_materials
-
-    @property
-    def keyring_trace(self):
-        # type: () -> Tuple[KeyringTrace]
-        """Return a read-only version of the keyring trace.
-
-        :rtype: tuple
-        """
-        return tuple(self._keyring_trace)
 
 
 @attr.s(hash=False, init=False)
@@ -193,11 +158,7 @@ class EncryptionMaterials(CryptographicMaterials):
 
     .. versionadded:: 1.3.0
 
-    .. versionadded:: 1.5.0
-
-        The **keyring_trace** parameter.
-
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
         Most parameters are now optional.
 
@@ -207,8 +168,6 @@ class EncryptionMaterials(CryptographicMaterials):
     :type encrypted_data_keys: list of :class:`EncryptedDataKey`
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys`
     :param bytes signing_key: Encoded signing key (optional)
-    :param keyring_trace: Any KeyRing trace entries (optional)
-    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     _encrypted_data_keys = attr.ib(
@@ -257,7 +216,6 @@ class EncryptionMaterials(CryptographicMaterials):
             encrypted_data_keys=copy.copy(self._encrypted_data_keys),
             encryption_context=self.encryption_context.copy(),
             signing_key=self.signing_key,
-            keyring_trace=copy.copy(self._keyring_trace),
         )
 
     @property
@@ -287,68 +245,44 @@ class EncryptionMaterials(CryptographicMaterials):
 
         return True
 
-    def with_data_encryption_key(self, data_encryption_key, keyring_trace):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> EncryptionMaterials
+    def with_data_encryption_key(self, data_encryption_key):
+        # type: (Union[DataKey, RawDataKey]) -> EncryptionMaterials
         """Get new encryption materials that also include this data encryption key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param RawDataKey data_encryption_key: Data encryption key
-        :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
-          while getting this data encryption key
         :rtype: EncryptionMaterials
         :raises AttributeError: if data encryption key is already set
-        :raises InvalidKeyringTraceError: if keyring trace does not match generate action
-        :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
-        return self._with_data_encryption_key(
-            data_encryption_key=data_encryption_key,
-            keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-        )
+        return self._with_data_encryption_key(data_encryption_key=data_encryption_key,)
 
-    def with_encrypted_data_key(self, encrypted_data_key, keyring_trace):
-        # type: (EncryptedDataKey, KeyringTrace) -> EncryptionMaterials
-        """Get new encryption materials that also include this encrypted data key with corresponding keyring trace.
+    def with_encrypted_data_key(self, encrypted_data_key):
+        # type: (EncryptedDataKey) -> EncryptionMaterials
+        """Get new encryption materials that also include this encrypted data key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param EncryptedDataKey encrypted_data_key: Encrypted data key to add
-        :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
-          while getting this encrypted data key
         :rtype: EncryptionMaterials
         :raises AttributeError: if data encryption key is not set
-        :raises InvalidKeyringTraceError: if keyring trace does not match generate action
-        :raises InvalidKeyringTraceError: if keyring trace does not match data key encryptor
         """
         if self.data_encryption_key is None:
             raise AttributeError("Data encryption key is not set.")
-
-        if KeyringTraceFlag.ENCRYPTED_DATA_KEY not in keyring_trace.flags:
-            raise InvalidKeyringTraceError("Keyring flags do not match action.")
-
-        if not all(
-            (
-                keyring_trace.wrapping_key.provider_id == encrypted_data_key.key_provider.provider_id,
-                keyring_trace.wrapping_key.key_name == encrypted_data_key.key_provider.key_name,
-            )
-        ):
-            raise InvalidKeyringTraceError("Keyring trace does not match data key encryptor.")
 
         new_materials = copy.copy(self)
 
         new_materials._encrypted_data_keys.append(  # simplify access to copies pylint: disable=protected-access
             encrypted_data_key
         )
-        new_materials._keyring_trace.append(keyring_trace)  # simplify access to copies pylint: disable=protected-access
         return new_materials
 
     def with_signing_key(self, signing_key):
         # type: (bytes) -> EncryptionMaterials
         """Get new encryption materials that also include this signing key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param bytes signing_key: Signing key
         :rtype: EncryptionMaterials
@@ -402,11 +336,11 @@ class DecryptionMaterials(CryptographicMaterials):
 
     .. versionadded:: 1.3.0
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
-        The **algorithm**, **data_encryption_key**, **encryption_context**, and **keyring_trace** parameters.
+        The **algorithm**, **data_encryption_key**, and **encryption_context** parameters.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
         All parameters are now optional.
 
@@ -414,8 +348,6 @@ class DecryptionMaterials(CryptographicMaterials):
     :param RawDataKey data_encryption_key: Plaintext data key to use for encrypting message (optional)
     :param dict encryption_context: Encryption context tied to `encrypted_data_keys` (optional)
     :param bytes verification_key: Raw signature verification key (optional)
-    :param keyring_trace: Any KeyRing trace entries (optional)
-    :type keyring_trace: list of :class:`KeyringTrace`
     """
 
     verification_key = attr.ib(default=None, repr=False, validator=optional(instance_of(bytes)))
@@ -450,7 +382,6 @@ class DecryptionMaterials(CryptographicMaterials):
             data_encryption_key=self.data_encryption_key,
             encryption_context=copy.copy(self.encryption_context),
             verification_key=self.verification_key,
-            keyring_trace=copy.copy(self._keyring_trace),
         )
 
     @property
@@ -477,35 +408,27 @@ class DecryptionMaterials(CryptographicMaterials):
         """Backwards-compatible shim for access to data key."""
         return self.data_encryption_key
 
-    def with_data_encryption_key(self, data_encryption_key, keyring_trace):
-        # type: (Union[DataKey, RawDataKey], KeyringTrace) -> DecryptionMaterials
+    def with_data_encryption_key(self, data_encryption_key):
+        # type: (Union[DataKey, RawDataKey]) -> DecryptionMaterials
         """Get new decryption materials that also include this data encryption key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param RawDataKey data_encryption_key: Data encryption key
-        :param KeyringTrace keyring_trace: Trace of actions that a keyring performed
-          while getting this data encryption key
         :rtype: DecryptionMaterials
         :raises AttributeError: if data encryption key is already set
-        :raises InvalidKeyringTraceError: if keyring trace does not match decrypt action
-        :raises InvalidKeyringTraceError: if keyring trace does not match data key provider
         :raises InvalidDataKeyError: if data key length does not match algorithm suite
         """
         if self.algorithm is None:
             raise AttributeError("Algorithm is not set")
 
-        return self._with_data_encryption_key(
-            data_encryption_key=data_encryption_key,
-            keyring_trace=keyring_trace,
-            required_flags={KeyringTraceFlag.DECRYPTED_DATA_KEY},
-        )
+        return self._with_data_encryption_key(data_encryption_key=data_encryption_key)
 
     def with_verification_key(self, verification_key):
         # type: (bytes) -> DecryptionMaterials
         """Get new decryption materials that also include this verification key.
 
-        .. versionadded:: 1.5.0
+        .. versionadded:: 2.0.0
 
         :param bytes verification_key: Verification key
         :rtype: DecryptionMaterials

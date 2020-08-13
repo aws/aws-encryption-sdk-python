@@ -14,19 +14,13 @@
 
 import pytest
 
-from aws_encryption_sdk.identifiers import (
-    Algorithm,
-    EncryptionKeyType,
-    EncryptionType,
-    KeyringTraceFlag,
-    WrappingAlgorithm,
-)
+from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, EncryptionType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto import WrappingKey
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -54,12 +48,6 @@ def sample_encryption_materials():
             ),
             encryption_context=_ENCRYPTION_CONTEXT,
             signing_key=_SIGNING_KEY,
-            keyring_trace=[
-                KeyringTrace(
-                    wrapping_key=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
-                    flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-                )
-            ],
         ),
     ]
 

@@ -16,12 +16,12 @@ import pytest
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from aws_encryption_sdk.identifiers import KeyringTraceFlag, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import WrappingAlgorithm
 from aws_encryption_sdk.internal.defaults import ALGORITHM
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.keyrings.raw import RawAESKeyring, RawRSAKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import MasterKeyInfo, RawDataKey
 
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
@@ -41,12 +41,6 @@ _ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
         data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
     ),
     encryption_context=_ENCRYPTION_CONTEXT,
-    keyring_trace=[
-        KeyringTrace(
-            wrapping_key=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
-            flags={KeyringTraceFlag.GENERATED_DATA_KEY},
-        )
-    ],
 )
 
 _rsa_private_key_a = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())

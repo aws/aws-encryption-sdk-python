@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Keyring for use with AWS Key Management Service (KMS).
 
-.. versionadded:: 1.5.0
+.. versionadded:: 2.0.0
 
 """
 import logging
@@ -17,7 +17,7 @@ from aws_encryption_sdk.internal.validators import value_is_not_a_string
 from aws_encryption_sdk.keyrings.base import Keyring
 from aws_encryption_sdk.keyrings.multi import MultiKeyring
 from aws_encryption_sdk.materials_managers import DecryptionMaterials, EncryptionMaterials
-from aws_encryption_sdk.structures import EncryptedDataKey, KeyringTrace, KeyringTraceFlag, MasterKeyInfo, RawDataKey
+from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .client_suppliers import DefaultClientSupplier
 
@@ -34,9 +34,6 @@ except ImportError:  # pragma: no cover
 __all__ = ("AwsKmsKeyring", "KEY_NAMESPACE")
 
 _LOGGER = logging.getLogger(__name__)
-_GENERATE_FLAGS = {KeyringTraceFlag.GENERATED_DATA_KEY}
-_ENCRYPT_FLAGS = {KeyringTraceFlag.ENCRYPTED_DATA_KEY, KeyringTraceFlag.SIGNED_ENCRYPTION_CONTEXT}
-_DECRYPT_FLAGS = {KeyringTraceFlag.DECRYPTED_DATA_KEY, KeyringTraceFlag.VERIFIED_ENCRYPTION_CONTEXT}
 
 #: Key namespace used for all encrypted data keys created by the KMS keyring.
 KEY_NAMESPACE = "aws-kms"
@@ -78,7 +75,7 @@ class AwsKmsKeyring(Keyring):
     .. _discovery mode:
        https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#kms-keyring-discovery
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param ClientSupplier client_supplier: Client supplier that provides AWS KMS clients (optional)
     :param bool is_discovery: Should this be a discovery keyring (optional)
@@ -166,7 +163,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
     This keyring should never be used directly.
     It should only ever be used internally by :class:`AwsKmsKeyring`.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param str key_id: CMK key ID
     :param ClientSupplier client_supplier: Client supplier to use when asking for clients
@@ -182,7 +179,6 @@ class _AwsKmsSingleCmkKeyring(Keyring):
 
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
-        trace_info = MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=self._key_id)
         new_materials = encryption_materials
         try:
             if new_materials.data_encryption_key is None:
@@ -193,10 +189,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                     algorithm=new_materials.algorithm,
                     grant_tokens=self._grant_tokens,
                 )
-                new_materials = new_materials.with_data_encryption_key(
-                    data_encryption_key=plaintext_key,
-                    keyring_trace=KeyringTrace(wrapping_key=trace_info, flags=_GENERATE_FLAGS),
-                )
+                new_materials = new_materials.with_data_encryption_key(data_encryption_key=plaintext_key)
             else:
                 encrypted_key = _do_aws_kms_encrypt(
                     client_supplier=self._client_supplier,
@@ -207,13 +200,13 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                 )
         except Exception:  # pylint: disable=broad-except
             # We intentionally WANT to catch all exceptions here
-            message = "Unable to generate or encrypt data key using {}".format(trace_info)
+            message = "Unable to generate or encrypt data key using {}".format(
+                MasterKeyInfo(provider_id=KEY_NAMESPACE, key_info=self._key_id)
+            )
             _LOGGER.exception(message)
             raise EncryptKeyError(message)
 
-        return new_materials.with_encrypted_data_key(
-            encrypted_data_key=encrypted_key, keyring_trace=KeyringTrace(wrapping_key=trace_info, flags=_ENCRYPT_FLAGS)
-        )
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_key)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
@@ -244,7 +237,7 @@ class _AwsKmsDiscoveryKeyring(Keyring):
     This keyring should never be used directly.
     It should only ever be used internally by :class:`AwsKmsKeyring`.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     :param ClientSupplier client_supplier: Client supplier to use when asking for clients
     :param List[str] grant_tokens: AWS KMS grant tokens to include in requests (optional)
@@ -285,7 +278,7 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
 
     Any errors encountered are caught and logged.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     """
     try:
@@ -301,10 +294,7 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
         _LOGGER.exception("Unable to decrypt encrypted data key from %s", encrypted_data_key.key_provider)
         return decryption_materials
 
-    return decryption_materials.with_data_encryption_key(
-        data_encryption_key=plaintext_key,
-        keyring_trace=KeyringTrace(wrapping_key=encrypted_data_key.key_provider, flags=_DECRYPT_FLAGS),
-    )
+    return decryption_materials.with_data_encryption_key(data_encryption_key=plaintext_key)
 
 
 def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryption_context, grant_tokens):
@@ -313,7 +303,7 @@ def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryptio
 
     Any errors encountered are passed up the chain without comment.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     """
     region = _region_from_key_id(encrypted_data_key.key_provider.key_info.decode("utf-8"))
@@ -360,7 +350,7 @@ def _do_aws_kms_generate_data_key(client_supplier, key_name, encryption_context,
 
     Any errors encountered are passed up the chain without comment.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     """
     region = _region_from_key_id(key_name)
@@ -383,7 +373,7 @@ def _region_from_key_id(key_id):
 
     If the region cannot be found, ``None`` is returned instead.
 
-    .. versionadded:: 1.5.0
+    .. versionadded:: 2.0.0
 
     """
     parts = key_id.split(":", 4)
