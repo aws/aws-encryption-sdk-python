@@ -141,7 +141,7 @@ def decrypt(**kwargs):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
-    :returns: Decrypted plaintext, and message metadata (header)
+    :returns: Decrypted plaintext and message metadata (header)
     :rtype: CryptoResult
     """
     with StreamDecryptor(**kwargs) as decryptor:
