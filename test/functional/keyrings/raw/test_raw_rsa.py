@@ -35,7 +35,7 @@ pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
 
 _PUBLIC_EXPONENT = 65537

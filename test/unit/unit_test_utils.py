@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
 _EXISTING_KEY_ID = b"pre-seeded key id"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
 _SIGNING_KEY = b"aws-crypto-public-key"
 _DATA_KEY = (
@@ -412,7 +412,7 @@ def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RS
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=size, backend=default_backend())
     return RawRSAKeyring(
         key_namespace="fake",
-        key_name="rsa-{}".format(size).encode("utf-8"),
+        key_name="rsa-{}".format(size),
         wrapping_algorithm=wrapping_algorithm,
         private_wrapping_key=private_key,
         public_wrapping_key=private_key.public_key(),
@@ -472,7 +472,7 @@ def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_I
     if key is None:
         key = os.urandom(key_length)
     return RawAESKeyring(
-        key_namespace="fake", key_name="aes-{}".format(key_length * 8).encode("utf-8"), wrapping_key=key,
+        key_namespace="fake", key_name="aes-{}".format(key_length * 8), wrapping_key=key,
     )
 
 

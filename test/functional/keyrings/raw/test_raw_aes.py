@@ -32,7 +32,7 @@ pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
 _PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
@@ -165,6 +165,7 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
 
 @pytest.mark.parametrize("wrapping_algorithm", _WRAPPING_ALGORITHM)
 def test_key_info_prefix_vectors(wrapping_algorithm):
+    expected_prefix = _KEY_ID.encode() + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
     assert (
         serialize_raw_master_key_prefix(
             raw_master_key=RawMasterKey(
@@ -177,7 +178,7 @@ def test_key_info_prefix_vectors(wrapping_algorithm):
                 ),
             )
         )
-        == _KEY_ID + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
+        == expected_prefix
     )
 
 

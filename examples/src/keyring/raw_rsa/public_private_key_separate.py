@@ -69,7 +69,7 @@ def run(source_plaintext):
         #
         # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-rsa-keyring
         key_namespace="some managed raw keys",
-        key_name=b"my RSA wrapping key",
+        key_name="my RSA wrapping key",
         public_wrapping_key=public_key,
         # The wrapping algorithm tells the raw RSA keyring
         # how to use your wrapping key to encrypt data keys.
