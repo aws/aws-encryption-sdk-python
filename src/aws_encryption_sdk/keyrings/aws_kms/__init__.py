@@ -189,7 +189,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
                     algorithm=new_materials.algorithm,
                     grant_tokens=self._grant_tokens,
                 )
-                new_materials = new_materials.with_data_encryption_key(data_encryption_key=plaintext_key,)
+                new_materials = new_materials.with_data_encryption_key(data_encryption_key=plaintext_key)
             else:
                 encrypted_key = _do_aws_kms_encrypt(
                     client_supplier=self._client_supplier,
