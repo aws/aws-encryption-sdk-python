@@ -34,8 +34,8 @@ from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKe
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
-_PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
+_KEY_NAMESPACE = "Random Raw Keys"
+_KEY_NAME = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_ALGORITHM = WrappingAlgorithm.RSA_OAEP_SHA256_MGF1
 
 _PUBLIC_EXPONENT = 65537
@@ -89,13 +89,13 @@ def sample_encryption_materials():
         EncryptionMaterials(
             algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
             data_encryption_key=RawDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
                 data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
             ),
             encryption_context=_ENCRYPTION_CONTEXT,
             keyring_trace=[
                 KeyringTrace(
-                    wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                    wrapping_key=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
                     flags={KeyringTraceFlag.GENERATED_DATA_KEY},
                 )
             ],
@@ -107,52 +107,52 @@ def sample_raw_rsa_keyring_using_different_wrapping_algorithm():
     for alg in WrappingAlgorithm:
         if alg.encryption_type is EncryptionType.ASYMMETRIC:
             yield RawRSAKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
+                key_namespace=_KEY_NAMESPACE,
+                key_name=_KEY_NAME,
                 wrapping_algorithm=alg,
                 private_wrapping_key=_PRIVATE_WRAPPING_KEY,
                 public_wrapping_key=_PUBLIC_WRAPPING_KEY,
             )
     pem_and_der_encoded_raw_rsa_keyring = [
         RawRSAKeyring.from_pem_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITHOUT_PASSWORD,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
         RawRSAKeyring.from_pem_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             private_encoded_key=_RAW_RSA_PRIVATE_KEY_PEM_ENCODED_WITH_PASSWORD,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
             password=b"mypassword",
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
         RawRSAKeyring.from_pem_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_PEM_ENCODED,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
         RawRSAKeyring.from_der_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITHOUT_PASSWORD,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
         RawRSAKeyring.from_der_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             private_encoded_key=_RAW_RSA_PRIVATE_KEY_DER_ENCODED_WITH_PASSWORD,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,
             password=b"mypassword",
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
         RawRSAKeyring.from_der_encoding(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             public_encoded_key=_RAW_RSA_PUBLIC_KEY_DER_ENCODED,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
         ),
@@ -190,8 +190,8 @@ def test_raw_rsa_encryption_decryption(encryption_materials_samples, test_raw_rs
 @pytest.mark.parametrize("encryption_materials_samples", sample_encryption_materials())
 def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples):
     test_raw_rsa_keyring = RawRSAKeyring.from_pem_encoding(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         private_encoded_key=_PRIVATE_WRAPPING_KEY_PEM,
         public_encoded_key=_PUBLIC_WRAPPING_KEY_PEM,
@@ -199,8 +199,8 @@ def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_
 
     # Creating an instance of a raw master key
     test_raw_master_key = RawMasterKey(
-        key_id=_KEY_ID,
-        provider_id=_PROVIDER_ID,
+        key_id=_KEY_NAME,
+        provider_id=_KEY_NAMESPACE,
         wrapping_key=WrappingKey(
             wrapping_algorithm=_WRAPPING_ALGORITHM,
             wrapping_key=_PRIVATE_WRAPPING_KEY_PEM,
@@ -226,8 +226,8 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
 
     # Create instance of raw master key
     test_raw_master_key = RawMasterKey(
-        key_id=_KEY_ID,
-        provider_id=_PROVIDER_ID,
+        key_id=_KEY_NAME,
+        provider_id=_KEY_NAMESPACE,
         wrapping_key=WrappingKey(
             wrapping_algorithm=_WRAPPING_ALGORITHM,
             wrapping_key=_PRIVATE_WRAPPING_KEY_PEM,
@@ -236,8 +236,8 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
     )
 
     test_raw_rsa_keyring = RawRSAKeyring.from_pem_encoding(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         private_encoded_key=_PRIVATE_WRAPPING_KEY_PEM,
         public_encoded_key=_PUBLIC_WRAPPING_KEY_PEM,
@@ -268,8 +268,8 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
 
 def test_public_key_only_can_encrypt():
     test_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         public_wrapping_key=_PUBLIC_WRAPPING_KEY,
     )
@@ -286,8 +286,8 @@ def test_public_key_only_can_encrypt():
 
 def test_public_key_only_cannot_decrypt():
     test_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         public_wrapping_key=_PUBLIC_WRAPPING_KEY,
     )
@@ -310,15 +310,15 @@ def test_public_key_only_cannot_decrypt():
 
 def test_private_key_can_decrypt():
     complete_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         private_wrapping_key=_PRIVATE_WRAPPING_KEY,
         public_wrapping_key=_PUBLIC_WRAPPING_KEY,
     )
     test_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         private_wrapping_key=_PRIVATE_WRAPPING_KEY,
     )
@@ -342,8 +342,8 @@ def test_private_key_can_decrypt():
 
 def test_private_key_cannot_encrypt():
     test_keyring = RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=_WRAPPING_ALGORITHM,
         private_wrapping_key=_PRIVATE_WRAPPING_KEY,
     )
@@ -363,8 +363,8 @@ def test_keypair_must_match():
 
     with pytest.raises(ValueError) as excinfo:
         RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
             private_wrapping_key=wrapping_key_a,
             public_wrapping_key=wrapping_key_b.public_key(),
@@ -379,7 +379,7 @@ def test_must_not_accept_aws_kms():
     with pytest.raises(ValueError) as excinfo:
         RawRSAKeyring(
             key_namespace=bad_key_namespace,
-            key_name=_KEY_ID,
+            key_name=_KEY_NAME,
             wrapping_algorithm=_WRAPPING_ALGORITHM,
             private_wrapping_key=_PRIVATE_WRAPPING_KEY,
             public_wrapping_key=_PUBLIC_WRAPPING_KEY,

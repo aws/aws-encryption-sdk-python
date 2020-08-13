@@ -31,8 +31,8 @@ from aws_encryption_sdk.structures import KeyringTrace, MasterKeyInfo, RawDataKe
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
-_PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = "5325b043-5843-4629-869c-64794af77ada"
+_KEY_NAMESPACE = "Random Raw Keys"
+_KEY_NAME = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"12345678901234567890123456789012"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
@@ -49,14 +49,14 @@ def sample_encryption_materials():
         EncryptionMaterials(
             algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
             data_encryption_key=RawDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
                 data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
             ),
             encryption_context=_ENCRYPTION_CONTEXT,
             signing_key=_SIGNING_KEY,
             keyring_trace=[
                 KeyringTrace(
-                    wrapping_key=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+                    wrapping_key=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
                     flags={KeyringTraceFlag.GENERATED_DATA_KEY},
                 )
             ],
@@ -68,8 +68,8 @@ def sample_encryption_materials():
 def test_raw_aes_encryption_decryption(encryption_materials_samples):
 
     # Initializing attributes
-    key_namespace = _PROVIDER_ID
-    key_name = _KEY_ID
+    key_namespace = _KEY_NAMESPACE
+    key_name = _KEY_NAME
 
     # Creating an instance of a raw AES keyring
     test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
@@ -97,8 +97,8 @@ def test_raw_aes_encryption_decryption(encryption_materials_samples):
 def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_samples):
 
     # Initializing attributes
-    key_namespace = _PROVIDER_ID
-    key_name = _KEY_ID
+    key_namespace = _KEY_NAMESPACE
+    key_name = _KEY_NAME
 
     # Creating an instance of a raw AES keyring
     test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
@@ -128,8 +128,8 @@ def test_raw_master_key_decrypts_what_raw_keyring_encrypts(encryption_materials_
 def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_samples):
 
     # Initializing attributes
-    key_namespace = _PROVIDER_ID
-    key_name = _KEY_ID
+    key_namespace = _KEY_NAMESPACE
+    key_name = _KEY_NAME
 
     # Creating an instance of a raw AES keyring
     test_raw_aes_keyring = RawAESKeyring(key_namespace=key_namespace, key_name=key_name, wrapping_key=_WRAPPING_KEY,)
@@ -165,12 +165,12 @@ def test_raw_keyring_decrypts_what_raw_master_key_encrypts(encryption_materials_
 
 @pytest.mark.parametrize("wrapping_algorithm", _WRAPPING_ALGORITHM)
 def test_key_info_prefix_vectors(wrapping_algorithm):
-    expected_prefix = _KEY_ID.encode() + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
+    expected_prefix = _KEY_NAME.encode() + b"\x00\x00\x00\x80\x00\x00\x00\x0c"
     assert (
         serialize_raw_master_key_prefix(
             raw_master_key=RawMasterKey(
-                provider_id=_PROVIDER_ID,
-                key_id=_KEY_ID,
+                provider_id=_KEY_NAMESPACE,
+                key_id=_KEY_NAME,
                 wrapping_key=WrappingKey(
                     wrapping_algorithm=wrapping_algorithm,
                     wrapping_key=_WRAPPING_KEY,
@@ -186,7 +186,7 @@ def test_must_not_accept_aws_kms():
 
     # Initializing attributes
     key_namespace = "aws-kms"
-    key_name = _KEY_ID
+    key_name = _KEY_NAME
 
     # Attempt to instantiate a raw AES keyring
     with pytest.raises(ValueError) as excinfo:

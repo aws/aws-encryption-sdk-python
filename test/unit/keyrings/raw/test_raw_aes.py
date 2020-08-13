@@ -32,8 +32,8 @@ from ...unit_test_utils import (
     _ENCRYPTED_DATA_KEY_AES,
     _ENCRYPTED_DATA_KEY_NOT_IN_KEYRING,
     _ENCRYPTION_CONTEXT,
-    _KEY_ID,
-    _PROVIDER_ID,
+    _KEY_NAME,
+    _KEY_NAMESPACE,
     _SIGNING_KEY,
     _WRAPPING_KEY,
     get_decryption_materials_with_data_encryption_key,
@@ -47,7 +47,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 @pytest.fixture
 def raw_aes_keyring():
-    return RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY,)
+    return RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY,)
 
 
 @pytest.fixture
@@ -80,8 +80,8 @@ def test_parent():
 
 def test_valid_parameters(raw_aes_keyring):
     test = raw_aes_keyring
-    assert test.key_name == _KEY_ID
-    assert test.key_namespace == _PROVIDER_ID
+    assert test.key_name == _KEY_NAME
+    assert test.key_namespace == _KEY_NAMESPACE
     assert test._wrapping_algorithm == WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING
     assert test._wrapping_key == _WRAPPING_KEY
 
@@ -89,11 +89,11 @@ def test_valid_parameters(raw_aes_keyring):
 @pytest.mark.parametrize(
     "key_namespace, key_name, wrapping_algorithm, wrapping_key",
     (
-        (_PROVIDER_ID, None, WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING, None),
+        (_KEY_NAMESPACE, None, WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING, None),
         (None, None, None, None),
         (
-            _PROVIDER_ID,
-            _KEY_ID,
+            _KEY_NAMESPACE,
+            _KEY_NAME,
             WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
             WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         ),
@@ -115,7 +115,7 @@ def test_invalid_parameters(key_namespace, key_name, wrapping_algorithm, wrappin
 def test_invalid_key_length():
     with pytest.raises(ValueError) as excinfo:
         RawAESKeyring(
-            key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=b"012345",
+            key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=b"012345",
         )
 
     excinfo.match(r"Invalid wrapping key length. Must be one of \[16, 24, 32\] bytes.")
@@ -279,7 +279,7 @@ def test_generate_data_key_error_when_data_key_not_generated(patch_os_urandom):
     with pytest.raises(GenerateKeyError) as exc_info:
         _generate_data_key(
             encryption_materials=get_encryption_materials_without_data_encryption_key(),
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
         )
     assert exc_info.match("Unable to generate data encryption key.")
 
@@ -288,7 +288,7 @@ def test_generate_data_key_error_when_data_key_exists():
     with pytest.raises(TypeError) as exc_info:
         _generate_data_key(
             encryption_materials=get_encryption_materials_with_data_encryption_key(),
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
         )
     assert exc_info.match("Data encryption key already exists.")
 
@@ -299,7 +299,7 @@ def test_generate_data_key_keyring_trace():
         encryption_context=_ENCRYPTION_CONTEXT,
         signing_key=_SIGNING_KEY,
     )
-    key_provider_info = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID)
+    key_provider_info = MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME)
     new_materials = _generate_data_key(
         encryption_materials=encryption_materials_without_data_key, key_provider=key_provider_info,
     )
