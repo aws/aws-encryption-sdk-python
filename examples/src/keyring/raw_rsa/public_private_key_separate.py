@@ -83,7 +83,7 @@ def run(source_plaintext):
     private_key_keyring = RawRSAKeyring(
         # The key namespace and key name MUST match the encrypt keyring.
         key_namespace="some managed raw keys",
-        key_name=b"my RSA wrapping key",
+        key_name="my RSA wrapping key",
         private_wrapping_key=private_key,
         # The wrapping algorithm MUST match the encrypt keyring.
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
