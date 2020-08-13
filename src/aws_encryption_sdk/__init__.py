@@ -80,7 +80,7 @@ def encrypt(**kwargs):
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
     :param int frame_length: Frame length in bytes
-    :returns: Encrypted message, and message metadata (header)
+    :returns: Encrypted message and message metadata (header)
     :rtype: CryptoResult
     """
     with StreamEncryptor(**kwargs) as encryptor:
