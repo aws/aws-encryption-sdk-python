@@ -274,7 +274,7 @@ def test_with_encrypted_data_key_success():
     kwargs = _copy_and_update_kwargs("EncryptionMaterials", {})
     materials = EncryptionMaterials(**kwargs)
 
-    new_materials = materials.with_encrypted_data_key(_ENCRYPTED_DATA_KEY,)
+    new_materials = materials.with_encrypted_data_key(_ENCRYPTED_DATA_KEY)
     assert new_materials is not materials
 
 

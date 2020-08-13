@@ -294,7 +294,7 @@ def _try_aws_kms_decrypt(client_supplier, decryption_materials, grant_tokens, en
         _LOGGER.exception("Unable to decrypt encrypted data key from %s", encrypted_data_key.key_provider)
         return decryption_materials
 
-    return decryption_materials.with_data_encryption_key(data_encryption_key=plaintext_key,)
+    return decryption_materials.with_data_encryption_key(data_encryption_key=plaintext_key)
 
 
 def _do_aws_kms_decrypt(client_supplier, key_name, encrypted_data_key, encryption_context, grant_tokens):

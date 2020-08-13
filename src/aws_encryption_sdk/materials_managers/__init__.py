@@ -422,7 +422,7 @@ class DecryptionMaterials(CryptographicMaterials):
         if self.algorithm is None:
             raise AttributeError("Algorithm is not set")
 
-        return self._with_data_encryption_key(data_encryption_key=data_encryption_key,)
+        return self._with_data_encryption_key(data_encryption_key=data_encryption_key)
 
     def with_verification_key(self, verification_key):
         # type: (bytes) -> DecryptionMaterials
