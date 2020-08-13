@@ -206,7 +206,7 @@ class _AwsKmsSingleCmkKeyring(Keyring):
             _LOGGER.exception(message)
             raise EncryptKeyError(message)
 
-        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_key,)
+        return new_materials.with_encrypted_data_key(encrypted_data_key=encrypted_key)
 
     def on_decrypt(self, decryption_materials, encrypted_data_keys):
         # type: (DecryptionMaterials, Iterable[EncryptedDataKey]) -> DecryptionMaterials
