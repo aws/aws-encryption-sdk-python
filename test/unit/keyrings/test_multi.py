@@ -40,8 +40,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
-_PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_NAMESPACE = "Random Raw Keys"
+_KEY_NAME = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY_AES = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
 _SIGNING_KEY = b"aws-crypto-public-key"
 
@@ -96,14 +96,16 @@ def test_parent():
 
 
 def test_keyring_with_generator_but_no_children():
-    generator_keyring = RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,)
+    generator_keyring = RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,)
     test_multi_keyring = MultiKeyring(generator=generator_keyring)
     assert test_multi_keyring.generator is generator_keyring
     assert not test_multi_keyring.children
 
 
 def test_keyring_with_children_but_no_generator():
-    children_keyring = [RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,)]
+    children_keyring = [
+        RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,)
+    ]
     test_multi_keyring = MultiKeyring(children=children_keyring)
     assert test_multi_keyring.children is children_keyring
     assert test_multi_keyring.generator is None

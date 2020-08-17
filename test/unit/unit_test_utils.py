@@ -32,9 +32,9 @@ except ImportError:  # pragma: no cover
     pass
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
-_PROVIDER_ID = "Random Raw Keys"
-_EXISTING_KEY_ID = b"pre-seeded key id"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_NAMESPACE = "Random Raw Keys"
+_EXISTING_KEY_NAME = "pre-seeded key id"
+_KEY_NAME = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
 _SIGNING_KEY = b"aws-crypto-public-key"
 _DATA_KEY = (
@@ -73,7 +73,7 @@ _ENCRYPTED_DATA_KEY_NOT_IN_KEYRING = EncryptedDataKey(
 )
 
 _ENCRYPTED_DATA_KEY_RSA = EncryptedDataKey(
-    key_provider=MasterKeyInfo(provider_id="Random Raw Keys", key_info=_KEY_ID),
+    key_provider=MasterKeyInfo(provider_id="Random Raw Keys", key_info=_KEY_NAME),
     encrypted_data_key=b"\xf3+\x15n\xe6`\xbe\xfe\xf0\x9e1\xe5\x9b"
     b"\xaf\xfe\xdaT\xbb\x17\x14\xfd} o\xdd\xf1"
     b"\xbc\xe1C\xa5J\xd8\xc7\x15\xc2\x90t=\xb9"
@@ -95,7 +95,7 @@ class OnlyGenerateKeyring(Keyring):
     def on_encrypt(self, encryption_materials):
         # type: (EncryptionMaterials) -> EncryptionMaterials
         if encryption_materials.data_encryption_key is None:
-            key_provider = MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID)
+            key_provider = MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME)
             data_encryption_key = RawDataKey(
                 key_provider=key_provider, data_key=os.urandom(encryption_materials.algorithm.kdf_input_len)
             )
@@ -113,7 +113,7 @@ def get_encryption_materials_with_data_key():
     return EncryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
@@ -125,7 +125,7 @@ def get_encryption_materials_with_data_encryption_key():
     return EncryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
@@ -145,12 +145,12 @@ def get_encryption_materials_with_encrypted_data_key():
     return EncryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encrypted_data_keys=[
             EncryptedDataKey(
-                key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+                key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
                 encrypted_data_key=b"\xde^\x97\x7f\x84\xe9\x9e\x98\xd0\xe2\xf8\xd5\xcb\xe9\x7f.}\x87\x16,\x11n#\xc8p"
                 b"\xdb\xbf\x94\x86*Q\x06\xd2\xf5\xdah\x08\xa4p\x81\xf7\xf4G\x07FzE\xde",
             )
@@ -164,7 +164,7 @@ def get_encryption_materials_with_encrypted_data_key_aes():
     return EncryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encrypted_data_keys=[_ENCRYPTED_DATA_KEY_AES],
@@ -193,7 +193,7 @@ def get_decryption_materials_with_data_key():
     return DecryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
@@ -205,7 +205,7 @@ def get_decryption_materials_with_data_encryption_key():
     return DecryptionMaterials(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
         data_encryption_key=RawDataKey(
-            key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_EXISTING_KEY_ID),
+            key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_EXISTING_KEY_NAME),
             data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
         ),
         encryption_context=_ENCRYPTION_CONTEXT,
@@ -220,18 +220,18 @@ def get_decryption_materials_without_data_key():
 def get_multi_keyring_with_generator_and_children():
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
     return MultiKeyring(
-        generator=RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
+        generator=RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,),
         children=[
             RawRSAKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
+                key_namespace=_KEY_NAMESPACE,
+                key_name=_KEY_NAME,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
                 private_wrapping_key=private_key,
                 public_wrapping_key=private_key.public_key(),
             ),
             RawRSAKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
+                key_namespace=_KEY_NAMESPACE,
+                key_name=_KEY_NAME,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
                 private_wrapping_key=private_key,
                 public_wrapping_key=private_key.public_key(),
@@ -244,8 +244,8 @@ def get_multi_keyring_with_no_children():
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
     return MultiKeyring(
         generator=RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             private_wrapping_key=private_key,
             public_wrapping_key=private_key.public_key(),
@@ -258,13 +258,13 @@ def get_multi_keyring_with_no_generator():
     return MultiKeyring(
         children=[
             RawRSAKeyring(
-                key_namespace=_PROVIDER_ID,
-                key_name=_KEY_ID,
+                key_namespace=_KEY_NAMESPACE,
+                key_name=_KEY_NAME,
                 wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
                 private_wrapping_key=private_key,
                 public_wrapping_key=private_key.public_key(),
             ),
-            RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
+            RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,),
         ]
     )
 
@@ -375,7 +375,7 @@ def ephemeral_raw_rsa_keyring(size=4096, wrapping_algorithm=WrappingAlgorithm.RS
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=size, backend=default_backend())
     return RawRSAKeyring(
         key_namespace="fake",
-        key_name="rsa-{}".format(size).encode("utf-8"),
+        key_name="rsa-{}".format(size),
         wrapping_algorithm=wrapping_algorithm,
         private_wrapping_key=private_key,
         public_wrapping_key=private_key.public_key(),
@@ -434,9 +434,7 @@ def ephemeral_raw_aes_keyring(wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_I
     key_length = wrapping_algorithm.algorithm.data_key_len
     if key is None:
         key = os.urandom(key_length)
-    return RawAESKeyring(
-        key_namespace="fake", key_name="aes-{}".format(key_length * 8).encode("utf-8"), wrapping_key=key,
-    )
+    return RawAESKeyring(key_namespace="fake", key_name="aes-{}".format(key_length * 8), wrapping_key=key,)
 
 
 class EphemeralRawMasterKeyProvider(RawMasterKeyProvider):

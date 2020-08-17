@@ -26,8 +26,8 @@ from aws_encryption_sdk.structures import MasterKeyInfo, RawDataKey
 pytestmark = [pytest.mark.functional, pytest.mark.local]
 
 _ENCRYPTION_CONTEXT = {"encryption": "context", "values": "here"}
-_PROVIDER_ID = "Random Raw Keys"
-_KEY_ID = b"5325b043-5843-4629-869c-64794af77ada"
+_KEY_NAMESPACE = "Random Raw Keys"
+_KEY_NAME = "5325b043-5843-4629-869c-64794af77ada"
 _WRAPPING_KEY_AES = b"\xeby-\x80A6\x15rA8\x83#,\xe4\xab\xac`\xaf\x99Z\xc1\xce\xdb\xb6\x0f\xb7\x805\xb2\x14J3"
 
 _ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY = EncryptionMaterials(
@@ -37,7 +37,7 @@ _ENCRYPTION_MATERIALS_WITHOUT_DATA_KEY = EncryptionMaterials(
 _ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
     algorithm=ALGORITHM,
     data_encryption_key=RawDataKey(
-        key_provider=MasterKeyInfo(provider_id=_PROVIDER_ID, key_info=_KEY_ID),
+        key_provider=MasterKeyInfo(provider_id=_KEY_NAMESPACE, key_info=_KEY_NAME),
         data_key=b'*!\xa1"^-(\xf3\x105\x05i@B\xc2\xa2\xb7\xdd\xd5\xd5\xa9\xddm\xfae\xa8\\$\xf9d\x1e(',
     ),
     encryption_context=_ENCRYPTION_CONTEXT,
@@ -46,18 +46,18 @@ _ENCRYPTION_MATERIALS_WITH_DATA_KEY = EncryptionMaterials(
 _rsa_private_key_a = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 _rsa_private_key_b = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 _MULTI_KEYRING_WITH_GENERATOR_AND_CHILDREN = MultiKeyring(
-    generator=RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
+    generator=RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,),
     children=[
         RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             private_wrapping_key=_rsa_private_key_a,
             public_wrapping_key=_rsa_private_key_a.public_key(),
         ),
         RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             private_wrapping_key=_rsa_private_key_b,
             public_wrapping_key=_rsa_private_key_b.public_key(),
@@ -67,8 +67,8 @@ _MULTI_KEYRING_WITH_GENERATOR_AND_CHILDREN = MultiKeyring(
 
 _MULTI_KEYRING_WITHOUT_CHILDREN = MultiKeyring(
     generator=RawRSAKeyring(
-        key_namespace=_PROVIDER_ID,
-        key_name=_KEY_ID,
+        key_namespace=_KEY_NAMESPACE,
+        key_name=_KEY_NAME,
         wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
         private_wrapping_key=_rsa_private_key_a,
         public_wrapping_key=_rsa_private_key_a.public_key(),
@@ -78,13 +78,13 @@ _MULTI_KEYRING_WITHOUT_CHILDREN = MultiKeyring(
 _MULTI_KEYRING_WITHOUT_GENERATOR = MultiKeyring(
     children=[
         RawRSAKeyring(
-            key_namespace=_PROVIDER_ID,
-            key_name=_KEY_ID,
+            key_namespace=_KEY_NAMESPACE,
+            key_name=_KEY_NAME,
             wrapping_algorithm=WrappingAlgorithm.RSA_OAEP_SHA256_MGF1,
             private_wrapping_key=_rsa_private_key_a,
             public_wrapping_key=_rsa_private_key_a.public_key(),
         ),
-        RawAESKeyring(key_namespace=_PROVIDER_ID, key_name=_KEY_ID, wrapping_key=_WRAPPING_KEY_AES,),
+        RawAESKeyring(key_namespace=_KEY_NAMESPACE, key_name=_KEY_NAME, wrapping_key=_WRAPPING_KEY_AES,),
     ]
 )
 

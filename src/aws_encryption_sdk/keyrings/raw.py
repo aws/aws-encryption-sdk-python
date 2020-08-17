@@ -1,6 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Resources required for Raw Keyrings."""
+import codecs
 import logging
 import os
 
@@ -14,6 +15,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPubl
 from aws_encryption_sdk.exceptions import EncryptKeyError, GenerateKeyError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import EncryptedData, WrappingKey
+from aws_encryption_sdk.internal.defaults import ENCODING
 from aws_encryption_sdk.internal.formatting.deserialize import deserialize_wrapped_key
 from aws_encryption_sdk.internal.formatting.serialize import serialize_raw_master_key_prefix, serialize_wrapped_key
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
@@ -73,7 +75,7 @@ class RawAESKeyring(Keyring):
     .. note::
         key_namespace MUST NOT equal "aws-kms".
 
-    :param bytes key_name: Key ID
+    :param str key_name: Key ID
     :param bytes wrapping_key: Encryption key with which to wrap plaintext data key.
 
     .. note::
@@ -82,7 +84,7 @@ class RawAESKeyring(Keyring):
     """
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))
-    key_name = attr.ib(validator=instance_of(six.binary_type))
+    key_name = attr.ib(validator=instance_of(six.string_types))
     _wrapping_key = attr.ib(repr=False, validator=instance_of(six.binary_type))
 
     def __attrs_post_init__(self):
@@ -197,9 +199,11 @@ class RawAESKeyring(Keyring):
             ):
                 continue
 
+            encoded_key_name = codecs.encode(self.key_name, ENCODING)
+
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=self.key_name, wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=encoded_key_name, wrapped_encrypted_key=key
             )
 
             # EncryptedData to raw key string
@@ -237,7 +241,7 @@ class RawRSAKeyring(Keyring):
     .. note::
         key_namespace MUST NOT equal "aws-kms".
 
-    :param bytes key_name: Key ID
+    :param str key_name: Key ID
     :param cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey private_wrapping_key:
         Private encryption key with which to wrap plaintext data key (optional)
     :param cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey public_wrapping_key:
@@ -251,7 +255,7 @@ class RawRSAKeyring(Keyring):
     """
 
     key_namespace = attr.ib(validator=instance_of(six.string_types))
-    key_name = attr.ib(validator=instance_of(six.binary_type))
+    key_name = attr.ib(validator=instance_of(six.string_types))
     _wrapping_algorithm = attr.ib(
         repr=False,
         validator=in_(
@@ -428,9 +432,11 @@ class RawRSAKeyring(Keyring):
             if key.key_provider != self._key_provider:
                 continue
 
+            encoded_key_name = codecs.encode(self.key_name, ENCODING)
+
             # Wrapped EncryptedDataKey to deserialized EncryptedData
             encrypted_wrapped_key = deserialize_wrapped_key(
-                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=self.key_name, wrapped_encrypted_key=key
+                wrapping_algorithm=self._wrapping_algorithm, wrapping_key_id=encoded_key_name, wrapped_encrypted_key=key
             )
             try:
                 plaintext_data_key = self._private_wrapping_key.decrypt(

@@ -44,7 +44,7 @@ def run(source_plaintext):
         #
         # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html#use-raw-aes-keyring
         key_namespace="some managed raw keys",
-        key_name=b"my AES wrapping key",
+        key_name="my AES wrapping key",
         wrapping_key=key,
     )
 
