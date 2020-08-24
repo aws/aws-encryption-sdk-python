@@ -38,13 +38,13 @@ def decrypt_endpoint() -> Text:
     try:
         deployment_id = os.environ[DEPLOYMENT_ID]
         region = os.environ[DEPLOYMENT_REGION]
-    except KeyError:
+    except KeyError as error:
         raise ValueError(
             (
                 'Environment variables "{region}" and "{deployment}" '
                 "must be set to the correct values for the deployed decrypt oracle."
             ).format(region=DEPLOYMENT_REGION, deployment=DEPLOYMENT_ID)
-        )
+        ) from error
 
     _ENDPOINT = "https://{deployment_id}.execute-api.{region}.amazonaws.com/api/v0/decrypt".format(
         deployment_id=deployment_id, region=region
@@ -56,12 +56,12 @@ def get_cmk_arn() -> Text:
     """Retrieve the target CMK ARN from environment variable."""
     try:
         arn = os.environ[AWS_KMS_KEY_ID]
-    except KeyError:
+    except KeyError as error:
         raise ValueError(
             'Environment variable "{}" must be set to a valid KMS CMK ARN for integration tests to run'.format(
                 AWS_KMS_KEY_ID
             )
-        )
+        ) from error
 
     if arn.startswith("arn:") and ":alias/" not in arn:
         return arn

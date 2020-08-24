@@ -37,7 +37,7 @@ class AllowEverywhere(AWS.Statement):
         """Set up override values."""
         my_kwargs = dict(Effect=AWS.Allow, Resource=["*"])
         my_kwargs.update(kwargs)
-        super(AllowEverywhere, self).__init__(*args, **my_kwargs)
+        super().__init__(*args, **my_kwargs)
 
 
 def _service_assume_role(service: str) -> AWS.Policy:
