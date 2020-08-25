@@ -26,7 +26,7 @@ class NullMasterKeyConfig(MasterKeyConfig):
 
     def __init__(self) -> None:
         """Set the key id to "null"."""
-        super(NullMasterKeyConfig, self).__init__(key_id=b"null")
+        super().__init__(key_id=b"null")
 
 
 class NullMasterKey(MasterKey):

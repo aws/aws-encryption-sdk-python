@@ -5,12 +5,15 @@ disable =
     ungrouped-imports,  # we let isort handle this
     no-member,  # breaks with attrs
     no-self-use,  # interesting to keep in mind for later refactoring, but not blocking
-    useless-object-inheritance,  # we need to support Python 2, so no, not useless
     too-few-public-methods,  # does not allow value stores
     no-else-return,  # we omit this on purpose for brevity where it would add no value
     attribute-defined-outside-init,  # breaks with attrs_post_init
     abstract-method,  # throws false positives on io.BaseIO grandchildren
     redefined-outer-name,  # we do this on purpose in multiple places
+    # All below are disabled because we need to support Python 2
+    useless-object-inheritance,
+    raise-missing-from,
+    super-with-arguments,
 
 [BASIC]
 # Allow function names up to 50 characters
