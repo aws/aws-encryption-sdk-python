@@ -5,9 +5,12 @@ disable =
     missing-docstring,  # we don't write docstrings for tests
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
-    useless-object-inheritance,  # we need to support Python 2, so no, not useless
     duplicate-code,  # unit tests for similar things tend to be similar
     redefined-outer-name,  # raised when using decorators
+    # All below are disabled because we need to support Python 2
+    useless-object-inheritance,
+    raise-missing-from,
+    super-with-arguments,
 
 [FORMAT]
 max-line-length = 120

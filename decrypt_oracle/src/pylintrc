@@ -3,7 +3,6 @@
 disable =
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
-    useless-object-inheritance,  # we need to support Python 2, so no, not useless
 
 [FORMAT]
 max-line-length = 120

@@ -30,7 +30,7 @@ class CountingMasterKeyConfig(MasterKeyConfig):
 
     def __init__(self) -> None:
         """Set the key id to "test_counting_prov_info"."""
-        super(CountingMasterKeyConfig, self).__init__(key_id=b"test_counting_prov_info")
+        super().__init__(key_id=b"test_counting_prov_info")
 
 
 class CountingMasterKey(MasterKey):

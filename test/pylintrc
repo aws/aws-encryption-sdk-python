@@ -8,7 +8,6 @@ disable =
     abstract-class-instantiated,  # we do this on purpose to test that they are enforced
     no-member,  # raised on patched objects with mock checks
     no-self-use,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
-    useless-object-inheritance,  # we need to support Python 2, so no, not useless
     duplicate-code,  # unit tests for similar things tend to be similar
     too-many-instance-attributes,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
     too-few-public-methods,  # common when setting up mock classes
@@ -19,6 +18,10 @@ disable =
     abstract-method,  # we do this on purpose to test that they are enforced
     redefined-outer-name,  # raised when using decorators
     unused-argument,  # raised when patches are needed but not called
+    # All below are disabled because we need to support Python 2
+    useless-object-inheritance,
+    raise-missing-from,
+    super-with-arguments,
 
 [VARIABLES]
 additional-builtins = raw_input
