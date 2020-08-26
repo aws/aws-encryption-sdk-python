@@ -3,8 +3,11 @@
 disable =
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
-    useless-object-inheritance,  # we need to support Python 2, so no, not useless
     duplicate-code,  # the manifest handlers have a lot of similar code
+    # All below are disabled because we need to support Python 2
+    useless-object-inheritance,
+    raise-missing-from,
+    super-with-arguments,
 
 [FORMAT]
 max-line-length = 120
