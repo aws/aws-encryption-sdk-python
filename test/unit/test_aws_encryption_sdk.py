@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for high-level functions in aws_encryption_sdk module"""
+import warnings
+
 import pytest
 from mock import MagicMock, patch, sentinel
 
@@ -78,3 +80,24 @@ class TestAwsEncryptionSdk(object):
         with pytest.raises(ValueError) as excinfo:
             aws_encryption_sdk.stream(mode="ERROR", a=sentinel.a, b=sentinel.b, c=sentinel.b)
         excinfo.match("Unsupported mode: *")
+
+    def test_encrypt_deprecation_warning(self):
+        warnings.simplefilter("error")
+
+        with pytest.raises(DeprecationWarning) as excinfo:
+            aws_encryption_sdk.encrypt(source=sentinel.a, key_provider=sentinel.b)
+        excinfo.match("This method is deprecated and will be removed in a future version")
+
+    def test_decrypt_deprecation_warning(self):
+        warnings.simplefilter("error")
+
+        with pytest.raises(DeprecationWarning) as excinfo:
+            aws_encryption_sdk.decrypt(source=sentinel.a, key_provider=sentinel.b)
+        excinfo.match("This method is deprecated and will be removed in a future version")
+
+    def test_stream_deprecation_warning(self):
+        warnings.simplefilter("error")
+
+        with pytest.raises(DeprecationWarning) as excinfo:
+            aws_encryption_sdk.stream(mode="e", source=sentinel.a, key_provider=sentinel.b)
+        excinfo.match("This method is deprecated and will be removed in a future version")

@@ -92,9 +92,9 @@ def patch_prehashed(mocker):
 
 def test_ecc_curve_not_in_cryptography():
     """If this test fails, then this pull or similar has gone through
-        and this library should be updated to use the ECC curve
-        parameters from cryptography.
-        https://github.com/pyca/cryptography/pull/2499
+    and this library should be updated to use the ECC curve
+    parameters from cryptography.
+    https://github.com/pyca/cryptography/pull/2499
     """
     assert not hasattr(ec.SECP384R1, "a")
 

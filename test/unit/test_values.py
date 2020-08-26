@@ -113,6 +113,7 @@ VALUES = {
         "\x08,/\x8b\x8b"
     ),
     "message_id": b"_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f",
+    "message_id_32_byte": b"_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f",
     "serialized_header": six.b(
         "\x01\x80\x03x_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f\x00\x8f\x00"
         "\x04\x00\x15aws-crypto-public-key\x00DAmZvwV/dN6o9p/usAnJdRcdnE12Uba"
@@ -149,12 +150,27 @@ VALUES = {
         "\xd2\xff\x10\x13\xfc\x1aX\x08,/\x8b\x8b\x02\x00\x00\x00\x00\x0c\x00"
         "\x00\x00 "
     ),
+    "serialized_header_v2_committing": six.b(
+        "\x02\x05x_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8f\x00\x8f\x00"
+        "\x04\x00\x15aws-crypto-public-key\x00DAmZvwV/dN6o9p/usAnJdRcdnE12UbaDHuEFPeyVkw5FC1ULGlSznzDdD3FP8SW1UMg"
+        "==\x00\x05key_a\x00\x07value_a\x00\x05key_b\x00\x07value_b\x00\x05key_c\x00\x07value_c\x00\x01\x00\x07aws"
+        "-kms\x00Karn:aws:kms:us-east-1:248168362296:key/ce78d3b3-f800-4785-a3b9-63e30bb4b183\x00\xcc\n "
+        "\x8b\xc6\xfd\x91\xc7\xd5\xdc+S\x15n\xd9P\x99n\x1d\xb2\xdd\x15\xeaW\xc3\x13k2\xf6\x02\xd0\x0f\x85\xec\x9e\x12"
+        "\xa7\x01\x01\x01\x01\x00x\x8b\xc6\xfd\x91\xc7\xd5\xdc+S\x15n\xd9P\x99n\x1d\xb2\xdd\x15\xeaW\xc3\x13k2\xf6"
+        "\x02\xd0\x0f\x85\xec\x9e\x00\x00\x00~0|\x06\t*\x86H\x86\xf7\r\x01\x07\x06\xa0o0m\x02\x01\x000h\x06\t*\x86H"
+        "\x86\xf7\r\x01\x07\x010\x1e\x06\t`\x86H\x01e\x03\x04\x01.0\x11\x04\x0c\xc9rP\xa1\x08t6{"
+        "\xf2\xfd\xf1\xb3\x02\x01\x10\x80;D\xa4\xed`qP~c\x0f\xa0d\xd5\xa2Kj\xc7\xb2\xc6\x1e\xec\xfb\x0fK\xb2*\xd5\t2"
+        '\x81pR\xee\xd1\x1a\xde<"\x1b\x98\x88\x8b\xf4&\xdaB\x95I\xd2\xff\x10\x13\xfc\x1aX\x08,'
+        "/\x8b\x8b\x02\x00\x00\x00 \x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25\xa8\x0b\x0b"
+        "\x16\x92\x91W\x01\xb7\x84"
+    ),
     "header_auth_base": EncryptedData(
         iv=b"s\x15<P\xaa\x94\xb8\x931P\xeb\xa0",
         ciphertext=b"",
         tag=b"\x91\xc5\xf7<\x7f\xc9\xb1k\x0e\xe2{\xe4\x97\x9d\xdbU",
     ),
     "serialized_header_auth": b"s\x15<P\xaa\x94\xb8\x931P\xeb\xa0\x91\xc5\xf7<\x7f\xc9\xb1k\x0e\xe2{\xe4\x97\x9d\xdbU",
+    "serialized_header_auth_v2": b"\x91\xc5\xf7<\x7f\xc9\xb1k\x0e\xe2{\xe4\x97\x9d\xdbU",
     "non_framed_aac": six.b(
         "_\xfd\xb3%\xa5}yd\x80}\xe2\x90\xf9\x0e&\x8fAWSKMSEncryptionClient"
         " Single Block\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00 "
@@ -370,8 +386,30 @@ VALUES["deserialized_header_small_frame"] = MessageHeader(
     header_iv_length=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384.iv_len,
     frame_length=32,
 )
+VALUES["deserialized_header_v2_committing"] = MessageHeader(
+    version=SerializationVersion.V2,
+    algorithm=Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384,
+    message_id=VALUES["message_id_32_byte"],
+    encryption_context=VALUES["updated_encryption_context"],
+    encrypted_data_keys=set(
+        [
+            EncryptedDataKey(
+                key_provider=VALUES["data_keys"][0].key_provider,
+                encrypted_data_key=VALUES["data_keys"][0].encrypted_data_key,
+            )
+        ]
+    ),
+    content_type=ContentType.FRAMED_DATA,
+    frame_length=32,
+    commitment_key=six.b(
+        "\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
+    ),
+)
 VALUES["deserialized_header_auth_block"] = MessageHeaderAuthentication(
     iv=VALUES["header_auth_base"].iv, tag=VALUES["header_auth_base"].tag
+)
+VALUES["deserialized_header_auth_block_v2"] = MessageHeaderAuthentication(
+    iv=b"\x00" * 12, tag=VALUES["header_auth_base"].tag
 )
 VALUES["deserialized_body_block"] = MessageNoFrameBody(
     iv=VALUES["non_framed_base"].iv, ciphertext=VALUES["non_framed_base"].ciphertext, tag=VALUES["non_framed_base"].tag

@@ -20,7 +20,7 @@ from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.internal.formatting.deserialize
 from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.identifiers import AlgorithmSuite
+from aws_encryption_sdk.identifiers import AlgorithmSuite, SerializationVersion
 from aws_encryption_sdk.internal.structures import EncryptedData
 
 from .test_values import VALUES
@@ -86,7 +86,7 @@ class TestDeserialize(object):
 
     def test_validate_header_valid(self):
         """Validate that the validate_header function behaves
-            as expected for a valid header.
+        as expected for a valid header.
         """
         self.mock_bytesio.read.return_value = VALUES["header"]
         self.mock_decrypt.return_value = sentinel.decrypted
@@ -105,7 +105,7 @@ class TestDeserialize(object):
 
     def test_validate_header_invalid(self):
         """Validate that the validate_header function behaves
-            as expected for a valid header.
+        as expected for a valid header.
         """
         self.mock_decrypt.side_effect = InvalidTag()
         with pytest.raises(SerializationError) as excinfo:
@@ -119,7 +119,7 @@ class TestDeserialize(object):
 
     def test_deserialize_header_unknown_object_type(self):
         """Validate that the deserialize_header function behaves
-            as expected for an unknown object type.
+        as expected for an unknown object type.
         """
         with pytest.raises(NotSupportedError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_invalid_object_type"])
@@ -128,7 +128,7 @@ class TestDeserialize(object):
 
     def test_deserialize_header_unknown_version(self):
         """Validate that the deserialize_header function behaves
-            as expected for an unknown message version.
+        as expected for an unknown message version.
         """
         with pytest.raises(NotSupportedError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_invalid_version"])
@@ -138,7 +138,7 @@ class TestDeserialize(object):
     @patch("aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id")
     def test_deserialize_header_unsupported_data_encryption_algorithm(self, mock_algorithm_get):
         """Validate that the deserialize_header function behaves
-            as expected for an unsupported/disallowed algorithm.
+        as expected for an unsupported/disallowed algorithm.
         """
         mock_unsupported_algorithm = MagicMock()
         mock_unsupported_algorithm.allowed = False
@@ -151,7 +151,7 @@ class TestDeserialize(object):
     @patch("aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id")
     def test_deserialize_header_unknown_data_encryption_algorithm(self, mock_algorithm_get):
         """Validate that the deserialize_header function behaves
-            as expected for an unknown algorithm.
+        as expected for an unknown algorithm.
         """
         mock_algorithm_get.side_effect = KeyError()
         with pytest.raises(UnknownIdentityError) as excinfo:
@@ -161,7 +161,7 @@ class TestDeserialize(object):
 
     def test_deserialize_header_unknown_content_type(self):
         """Validate that the deserialize_header function behaves
-            as expected for an unknown content type.
+        as expected for an unknown content type.
         """
         with pytest.raises(UnknownIdentityError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_unknown_content_type"])
@@ -170,8 +170,8 @@ class TestDeserialize(object):
 
     def test_deserialize_header_invalid_reserved_space(self):
         """Validate that the deserialize_header function behaves
-            as expected for an invalid value in the reserved
-            space (formerly content AAD).
+        as expected for an invalid value in the reserved
+        space (formerly content AAD).
         """
         with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_reserved_space"])
@@ -180,8 +180,8 @@ class TestDeserialize(object):
 
     def test_deserialize_header_bad_iv_len(self):
         """Validate that the deserialize_header function behaves
-            as expected for bad IV length (incompatible with
-            specified algorithm).
+        as expected for bad IV length (incompatible with
+        specified algorithm).
         """
         with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_iv_len"])
@@ -190,8 +190,8 @@ class TestDeserialize(object):
 
     def test_deserialize_header_framed_bad_frame_length(self):
         """Validate that the deserialize_header function behaves
-            as expected for bad frame length values (greater than
-            the default maximum).
+        as expected for bad frame length values (greater than
+        the default maximum).
         """
         with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_header_bad_frame_len"])
@@ -200,36 +200,57 @@ class TestDeserialize(object):
 
     def test_deserialize_header_non_framed_bad_frame_length(self):
         """Validate that the deserialize_header function behaves
-            as expected for bad frame length values for non-framed
-            messages (non-zero).
+        as expected for bad frame length values for non-framed
+        messages (non-zero).
         """
         with pytest.raises(SerializationError) as excinfo:
             stream = io.BytesIO(VALUES["serialized_non_framed_header_bad_frame_len"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
         excinfo.match("Non-zero frame length found for non-framed message")
 
-    def test_deserialize_header_valid(self):
+    def test_deserialize_header_v1_valid(self):
         """Validate that the deserialize_header function behaves
-            as expected for a valid header.
+        as expected for a valid header.
         """
         stream = io.BytesIO(VALUES["serialized_header_small_frame"])
         test_header, test_raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
         assert test_header == VALUES["deserialized_header_frame"]
         assert test_raw_header == VALUES["serialized_header_small_frame"]
 
+    def test_deserialize_header_v2_valid(self):
+        """Validate that the deserialize_header function behaves
+        as expected for a valid header.
+        """
+        stream = io.BytesIO(VALUES["serialized_header_v2_committing"])
+        test_header, test_raw_header = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        assert test_header == VALUES["deserialized_header_v2_committing"]
+        assert test_raw_header == VALUES["serialized_header_v2_committing"]
+
     def test_deserialize_header_auth(self):
         """Validate that the deserialize_header_auth function
-            behaves as expected for a valid header auth.
+        behaves as expected for a valid header auth.
         """
         stream = io.BytesIO(VALUES["serialized_header_auth"])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
-            stream=stream, algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16
+            version=SerializationVersion.V1, stream=stream, algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16
         )
         assert test == VALUES["deserialized_header_auth_block"]
 
+    def test_deserialize_header_auth_v2(self):
+        """Validate that the deserialize_header_auth function
+        behaves as expected for a valid header auth.
+        """
+        stream = io.BytesIO(VALUES["serialized_header_auth_v2"])
+        test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_header_auth(
+            version=SerializationVersion.V2,
+            stream=stream,
+            algorithm=AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384,
+        )
+        assert test == VALUES["deserialized_header_auth_block_v2"]
+
     def test_deserialize_body_frame_standard(self):
         """Validate that the deserialize_body_frame function
-            behaves as expected for a valid body frame.
+        behaves as expected for a valid body frame.
         """
         stream = io.BytesIO(VALUES["serialized_frame"])
         test_body, test_final = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
@@ -240,7 +261,7 @@ class TestDeserialize(object):
 
     def test_deserialize_body_frame_final(self):
         """Validate that the deserialize_body_frame function
-            behaves as expected for a valid final body frame.
+        behaves as expected for a valid final body frame.
         """
         stream = io.BytesIO(VALUES["serialized_final_frame"])
         test_body, test_final = aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
@@ -251,7 +272,7 @@ class TestDeserialize(object):
 
     def test_deserialize_body_frame_final_invalid_final_frame_length(self):
         """Validate that the deserialize_body_frame function
-            behaves as expected for a valid final body frame.
+        behaves as expected for a valid final body frame.
         """
         stream = io.BytesIO(VALUES["serialized_final_frame_bad_length"])
         with pytest.raises(SerializationError) as excinfo:
@@ -262,7 +283,7 @@ class TestDeserialize(object):
 
     def test_deserialize_footer_no_verifier(self):
         """Vaidate that the deserialize_footer function behaves
-            as expected when called with no verifier.
+        as expected when called with no verifier.
         """
         stream = io.BytesIO(VALUES["serialized_footer"])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream)
@@ -270,7 +291,7 @@ class TestDeserialize(object):
 
     def test_deserialize_footer(self):
         """Vaidate that the deserialize_footer function behaves
-            as expected when called with a verifier.
+        as expected when called with a verifier.
         """
         stream = io.BytesIO(VALUES["serialized_footer"])
         test = aws_encryption_sdk.internal.formatting.deserialize.deserialize_footer(stream, self.mock_verifier)
@@ -279,8 +300,8 @@ class TestDeserialize(object):
 
     def test_deserialize_footer_verifier_no_footer(self):
         """Vaidate that the deserialize_footer function behaves
-            as expected when called with a verifier but a message
-            with no footer.
+        as expected when called with a verifier but a message
+        with no footer.
         """
         stream = io.BytesIO(b"")
         with pytest.raises(SerializationError) as excinfo:
@@ -305,8 +326,8 @@ class TestDeserialize(object):
     @patch("aws_encryption_sdk.internal.formatting.deserialize.struct")
     def test_unpack_values_no_verifier(self, mock_struct):
         """Validate that the unpack_values function
-            behaves as expected when no verifier is
-            provided.
+        behaves as expected when no verifier is
+        provided.
         """
         self.mock_bytesio.read.return_value = sentinel.message_bytes
         mock_struct.calcsize.return_value = sentinel.size

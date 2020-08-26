@@ -92,76 +92,121 @@ uses a key derivation function, the data key is used to generate the key that di
 *****
 Usage
 *****
-To use this client, you (the caller) must provide an instance of either a master key provider
-or a CMM. The examples in this readme use the ``KMSMasterKeyProvider`` class.
 
-KMSMasterKeyProvider
-====================
-Because the ``KMSMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_, it requires AWS Credentials.
-To provide these credentials, use the `standard means by which boto3 locates credentials`_ or provide a
-pre-existing instance of a ``botocore session`` to the ``KMSMasterKeyProvider``.
-This latter option can be useful if you have an alternate way to store your AWS credentials or
-you want to reuse an existing instance of a botocore session in order to decrease startup costs.
+EncryptionSDKClient
+===================
+To use this module, you (the caller) must first create an instance of the ``EncryptionSDKClient`` class.
+The constructor to this class requires a single keyword argument, ``commitment_policy``. There is
+currently only one valid value for this argument: ``FORBID_ENCRYPT_ALLOW_DECRYPT``.
 
 .. code:: python
 
     import aws_encryption_sdk
-    import botocore.session
-
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider()
-
-    existing_botocore_session = botocore.session.Session()
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(botocore_session=existing_botocore_session)
+    from aws_encryption_sdk.identifiers import CommitmentPolicy
 
 
-You can pre-load the ``KMSMasterKeyProvider`` with one or more CMKs.
-To encrypt data, you must configure the ``KMSMasterKeyProvider`` with as least one CMK.
-If you configure the the ``KMSMasterKeyProvider`` with multiple CMKs, the `final message`_
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+
+You must then create an instance of either a master key provider or a CMM. The examples in this
+readme use the ``StrictAwsKmsMasterKeyProvider`` class.
+
+
+StrictAwsKmsMasterKeyProvider
+=============================
+A ``StrictAwsKmsMasterKeyProvider`` is configured with an explicit list of AWS KMS
+CMKs with which to encrypt and decrypt data. On encryption, it encrypts the plaintext with all
+configured CMKs. On decryption, it only attempts to decrypt ciphertexts that have been wrapped
+with one of the configured CMKs.
+
+Because the ``StrictAwsKmsMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_,
+it requires AWS Credentials.
+To provide these credentials, use the `standard means by which boto3 locates credentials`_ or provide a
+pre-existing instance of a ``botocore session`` to the ``StrictAwsKmsMasterKeyProvider``.
+This latter option can be useful if you have an alternate way to store your AWS credentials or
+you want to reuse an existing instance of a botocore session in order to decrease startup costs.
+
+To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs.
+If you configure the the ``StrictAwsKmsMasterKeyProvider`` with multiple CMKs, the `final message`_
 will include a copy of the data key encrypted by each configured CMK.
 
 .. code:: python
 
     import aws_encryption_sdk
 
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
 
-You can add CMKs from multiple regions to the ``KMSMasterKeyProvider``.
+You can add CMKs from multiple regions to the ``StrictAwsKmsMasterKeyProvider``.
 
 .. code:: python
 
     import aws_encryption_sdk
 
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333',
         'arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444'
     ])
 
 
-Encryption and Decryption
-=========================
-After you create an instance of a ``MasterKeyProvider``, you can use either of the two
-high-level ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
+DiscoveryAwsKmsMasterKeyProvider
+================================
+We recommend using a ``StrictAwsKmsMasterKeyProvider`` in order to ensure that you can only
+encrypt and decrypt data using the AWS KMS CMKs you expect. However, if you are unable to
+explicitly identify the AWS KMS CMKs that should be used for decryption, you can instead
+use a ``DiscoveryAwsKmsMasterKeyProvider`` for decryption operations. This provider
+attempts decryption of any ciphertexts as long as they match a ``DiscoveryFilter`` that
+you configure. A ``DiscoveryFilter`` consists of a list of AWS account ids and an AWS
+partition.
 
 .. code:: python
 
     import aws_encryption_sdk
+    from aws_encryption_sdk.key_providers.kms import DiscoveryFilter
 
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    discovery_filter = DiscoveryFilter(
+        account_ids=['222222222222', '333333333333'],
+        partition='aws'
+    )
+    kms_key_provider = aws_encryption_sdk.DiscoveryAwsKmsMasterKeyProvider(
+        discovery_filter=discovery_filter
+    )
+
+If you do not want to filter the set of allowed accounts, you can also omit the ``discovery_filter`` argument.
+
+Note that a ``DiscoveryAwsKmsMasterKeyProvider`` cannot be used for encryption operations.
+
+Encryption and Decryption
+=========================
+After you create an instance of an ``EncryptionSDKClient`` and a ``MasterKeyProvider``, you can use either of
+the client's two ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
+
+.. code:: python
+
+    import aws_encryption_sdk
+    from aws_encryption_sdk.identifiers import CommitmentPolicy
+
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
     my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
-    my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
+    my_ciphertext, encryptor_header = client.encrypt(
         source=my_plaintext,
         key_provider=kms_key_provider
     )
 
-    decrypted_plaintext, decryptor_header = aws_encryption_sdk.decrypt(
+    decrypted_plaintext, decryptor_header = client.decrypt(
         source=my_ciphertext,
         key_provider=kms_key_provider
     )
@@ -174,14 +219,19 @@ You can provide an `encryption context`_: a form of additional authenticating in
 .. code:: python
 
     import aws_encryption_sdk
+    from aws_encryption_sdk.identifiers import CommitmentPolicy
 
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
     my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
-    my_ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
+    my_ciphertext, encryptor_header = client.encrypt(
         source=my_plaintext,
         key_provider=kms_key_provider,
         encryption_context={
@@ -190,7 +240,7 @@ You can provide an `encryption context`_: a form of additional authenticating in
         }
     )
 
-    decrypted_plaintext, decryptor_header = aws_encryption_sdk.decrypt(
+    decrypted_plaintext, decryptor_header = client.decrypt(
         source=my_ciphertext,
         key_provider=kms_key_provider
     )
@@ -209,9 +259,14 @@ offering context manager and iteration support.
 .. code:: python
 
     import aws_encryption_sdk
+    from aws_encryption_sdk.identifiers import CommitmentPolicy
     import filecmp
 
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ])
@@ -219,7 +274,7 @@ offering context manager and iteration support.
     ciphertext_filename = 'my-encrypted-data.ct'
 
     with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
-        with aws_encryption_sdk.stream(
+        with client.stream(
             mode='e',
             source=pt_file,
             key_provider=kms_key_provider
@@ -230,7 +285,7 @@ offering context manager and iteration support.
     new_plaintext_filename = 'my-decrypted-data.dat'
 
     with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
-        with aws_encryption_sdk.stream(
+        with client.stream(
             mode='d',
             source=ct_file,
             key_provider=kms_key_provider

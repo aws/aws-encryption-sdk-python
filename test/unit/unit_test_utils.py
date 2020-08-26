@@ -26,9 +26,11 @@ def all_valid_kwargs(valid_kwargs):
     return valid
 
 
-def all_invalid_kwargs(valid_kwargs, invalid_kwargs=None):
+def all_invalid_kwargs(valid_kwargs, invalid_kwargs=None, optional_fields=None):
     if invalid_kwargs is None:
         invalid_kwargs = {}
+    if optional_fields is None:
+        optional_fields = []
     invalid = []
     for cls, kwargs_sets in valid_kwargs.items():
         if cls in invalid_kwargs:
@@ -38,6 +40,8 @@ def all_invalid_kwargs(valid_kwargs, invalid_kwargs=None):
 
         kwargs = kwargs_sets[-1]
         for key in kwargs:
+            if key in optional_fields:
+                continue
             _kwargs = copy.deepcopy(kwargs)
             _kwargs.update({key: None})
             invalid.append((cls, _kwargs))

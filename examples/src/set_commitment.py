@@ -10,7 +10,11 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Example showing basic encryption and decryption of a value already in memory using one KMS CMK."""
+"""Example showing how to disable commitment.
+
+Note: This configuration should only be used as part of a migration from version 1.x to 2.x, or for advanced users
+with specialized requirements. We recommend that AWS Encryption SDK users enable commitment whenever possible.
+"""
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 
@@ -28,7 +32,8 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
 
-    # Set up an encryption client with an explicit commitment policy
+    # Set up an encryption client with an explicit commitment policy disallowing encryption with algorithms that
+    # provide commitment
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
 
     # Create master key provider using the ARN of the key and the session (botocore_session)
@@ -41,10 +46,10 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header
     plaintext, decrypted_message_header = client.decrypt(source=ciphertext, key_provider=kms_key_provider)
 
-    # Check if the original message and the decrypted message are the same
+    # Verify that the original message and the decrypted message are the same
     assert source_plaintext == plaintext
 
-    # Check if the headers of the encrypted message and decrypted message match
+    # Verify that the encryption context of the encrypted message and decrypted message match
     assert all(
         pair in encrypted_message_header.encryption_context.items()
         for pair in decrypted_message_header.encryption_context.items()

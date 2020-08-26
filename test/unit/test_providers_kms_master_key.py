@@ -35,10 +35,10 @@ class TestKMSMasterKey(object):
         self.mock_client.generate_data_key.return_value = {
             "Plaintext": VALUES["data_key"],
             "CiphertextBlob": VALUES["encrypted_data_key"],
-            "KeyId": VALUES["arn"],
+            "KeyId": VALUES["arn_str"],
         }
         self.mock_client.encrypt.return_value = {"CiphertextBlob": VALUES["encrypted_data_key"], "KeyId": VALUES["arn"]}
-        self.mock_client.decrypt.return_value = {"Plaintext": VALUES["data_key"], "KeyId": VALUES["arn"]}
+        self.mock_client.decrypt.return_value = {"Plaintext": VALUES["data_key"], "KeyId": VALUES["arn_str"]}
         self.mock_algorithm = MagicMock()
         self.mock_algorithm.__class__ = Algorithm
         self.mock_algorithm.data_key_len = sentinel.data_key_len
@@ -47,6 +47,7 @@ class TestKMSMasterKey(object):
         self.mock_data_key.data_key = VALUES["data_key"]
         self.mock_encrypted_data_key = MagicMock()
         self.mock_encrypted_data_key.encrypted_data_key = VALUES["encrypted_data_key"]
+        self.mock_encrypted_data_key.key_provider.key_info = VALUES["arn_str"]
 
         self.mock_data_key_len_check_patcher = patch("aws_encryption_sdk.internal.utils.source_data_key_length_check")
         self.mock_data_key_len_check = self.mock_data_key_len_check_patcher.start()
@@ -162,7 +163,9 @@ class TestKMSMasterKey(object):
         decrypted_key = test._decrypt_data_key(
             encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm
         )
-        self.mock_client.decrypt.assert_called_once_with(CiphertextBlob=VALUES["encrypted_data_key"])
+        self.mock_client.decrypt.assert_called_once_with(
+            CiphertextBlob=VALUES["encrypted_data_key"], KeyId=VALUES["arn_str"]
+        )
         assert decrypted_key == DataKey(
             key_provider=test.key_provider, data_key=VALUES["data_key"], encrypted_data_key=VALUES["encrypted_data_key"]
         )
@@ -175,26 +178,57 @@ class TestKMSMasterKey(object):
             encryption_context=VALUES["encryption_context"],
         )
         self.mock_client.decrypt.assert_called_once_with(
-            CiphertextBlob=VALUES["encrypted_data_key"], EncryptionContext=VALUES["encryption_context"]
+            CiphertextBlob=VALUES["encrypted_data_key"],
+            EncryptionContext=VALUES["encryption_context"],
+            KeyId=VALUES["arn_str"],
         )
 
     def test_decrypt_data_key_with_grant_tokens(self):
         test = KMSMasterKey(config=self.mock_kms_mkc_2)
         test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
         self.mock_client.decrypt.assert_called_once_with(
-            CiphertextBlob=VALUES["encrypted_data_key"], GrantTokens=self.mock_grant_tokens
+            CiphertextBlob=VALUES["encrypted_data_key"], GrantTokens=self.mock_grant_tokens, KeyId=VALUES["arn_str"]
         )
 
     def test_decrypt_data_key_unsuccessful_clienterror(self):
         self.mock_client.decrypt.side_effect = ClientError({"Error": {}}, "This is an error!")
-        test = KMSMasterKey(config=self.mock_kms_mkc_3)
+        test = KMSMasterKey(config=self.mock_kms_mkc_1)
         with pytest.raises(DecryptKeyError) as excinfo:
             test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
         excinfo.match("Master Key .* unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_keyerror(self):
         self.mock_client.decrypt.side_effect = KeyError
-        test = KMSMasterKey(config=self.mock_kms_mkc_3)
+        test = KMSMasterKey(config=self.mock_kms_mkc_1)
         with pytest.raises(DecryptKeyError) as excinfo:
             test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
         excinfo.match("Master Key .* unable to decrypt data key")
+
+    def test_decrypt_data_key_unsuccessful_key_id_does_not_match_edk(self):
+        test = KMSMasterKey(config=self.mock_kms_mkc_3)
+        with pytest.raises(DecryptKeyError) as excinfo:
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        excinfo.match("does not match this provider's key_id")
+
+        self.mock_client.assert_not_called()
+
+    def test_decrypt_data_key_unsuccessful_response_missing_key_id(self):
+        self.mock_client.decrypt.return_value = {"Plaintext": VALUES["data_key"]}
+
+        test = KMSMasterKey(config=self.mock_kms_mkc_1)
+        with pytest.raises(DecryptKeyError) as excinfo:
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        excinfo.match("Master Key .* unable to decrypt data key")
+
+        self.mock_client.decrypt.assert_called_once_with(
+            CiphertextBlob=VALUES["encrypted_data_key"], KeyId=VALUES["arn_str"]
+        )
+
+    def test_decrypt_data_key_unsuccessful_mismatched_key_id(self):
+        mismatched_key_id = VALUES["arn_str"] + "-test"
+        self.mock_client.decrypt.return_value = {"Plaintext": VALUES["data_key"], "KeyId": mismatched_key_id}
+
+        test = KMSMasterKey(config=self.mock_kms_mkc_1)
+        with pytest.raises(DecryptKeyError) as excinfo:
+            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
+        excinfo.match("AWS KMS returned unexpected key_id")

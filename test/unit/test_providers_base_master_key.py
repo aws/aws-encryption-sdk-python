@@ -311,3 +311,26 @@ class TestMasterKey(object):
             algorithm=ALGORITHM,
             encryption_context=VALUES["encryption_context"],
         )
+
+    def test_decrypt_data_key_not_owned(self):
+        mock_master_key = MockMasterKey(
+            key_id=VALUES["key_info"],
+            mock_generated_data_key=sentinel.generated_data_key,
+            mock_encrypted_data_key=sentinel.encrypted_data_key,
+            mock_decrypted_data_key=sentinel.decrypted_data_key,
+        )
+        mock_master_key._decrypt_data_key = MagicMock(return_value=sentinel.raw_decrypted_data_key)
+
+        encrypted_data_key = MagicMock()
+        encrypted_data_key.encrypted_data_key = sentinel.encrypted_data_key
+        encrypted_data_key.key_provider.key_info = b"wrong key info"
+
+        with pytest.raises(IncorrectMasterKeyError) as excinfo:
+            mock_master_key.decrypt_data_key(
+                encrypted_data_key=encrypted_data_key,
+                algorithm=ALGORITHM,
+                encryption_context=VALUES["encryption_context"],
+            )
+        excinfo.match("does not match Master Key provider")
+
+        mock_master_key._decrypt_data_key.assert_not_called()

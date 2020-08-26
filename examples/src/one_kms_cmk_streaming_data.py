@@ -1,4 +1,3 @@
-
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
@@ -15,6 +14,7 @@
 import filecmp
 
 import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
 
 
 def encrypt_decrypt_stream(key_arn, source_plaintext_filename, botocore_session=None):
@@ -32,21 +32,24 @@ def encrypt_decrypt_stream(key_arn, source_plaintext_filename, botocore_session=
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
 
+    # Set up an encryption client with an explicit commitment policy
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     # Create master key provider using the ARN of the key and the session (botocore_session)
-    kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kwargs)
+    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kwargs)
 
     ciphertext_filename = source_plaintext_filename + ".encrypted"
     decrypted_text_filename = source_plaintext_filename + ".decrypted"
 
     # Encrypt the plaintext using the AWS Encryption SDK.
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
-        with aws_encryption_sdk.stream(source=plaintext, mode="e", key_provider=kms_key_provider) as encryptor:
+        with client.stream(source=plaintext, mode="e", key_provider=kms_key_provider) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
     # Decrypt the encrypted message using the AWS Encryption SDK.
     with open(ciphertext_filename, "rb") as ciphertext, open(decrypted_text_filename, "wb") as plaintext:
-        with aws_encryption_sdk.stream(source=ciphertext, mode="d", key_provider=kms_key_provider) as decryptor:
+        with client.stream(source=ciphertext, mode="d", key_provider=kms_key_provider) as decryptor:
             for chunk in decryptor:
                 plaintext.write(chunk)
 

@@ -15,7 +15,7 @@ import filecmp
 import os
 
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
@@ -53,6 +53,9 @@ def cycle_file(source_plaintext_filename):
 
     :param str source_plaintext_filename: Filename of file to encrypt
     """
+    # Set up an encryption client with an explicit commitment policy
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     # Create a static random master key provider
     key_id = os.urandom(8)
     master_key_provider = StaticRandomMasterKeyProvider()
@@ -63,13 +66,13 @@ def cycle_file(source_plaintext_filename):
 
     # Encrypt the plaintext source data
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
-        with aws_encryption_sdk.stream(mode="e", source=plaintext, key_provider=master_key_provider) as encryptor:
+        with client.stream(mode="e", source=plaintext, key_provider=master_key_provider) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
     # Decrypt the ciphertext
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_plaintext_filename, "wb") as plaintext:
-        with aws_encryption_sdk.stream(mode="d", source=ciphertext, key_provider=master_key_provider) as decryptor:
+        with client.stream(mode="d", source=ciphertext, key_provider=master_key_provider) as decryptor:
             for chunk in decryptor:
                 plaintext.write(chunk)
 

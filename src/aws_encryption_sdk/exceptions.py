@@ -85,6 +85,10 @@ class UnknownRegionError(AWSEncryptionSDKClientError):
     """Exception class for errors encountered when attempting to process unknown regions or region names."""
 
 
+class MalformedArnError(AWSEncryptionSDKClientError):
+    """Exception class for errors encountered when attempting to parse an Amazon Resource Name (ARN)."""
+
+
 class CacheError(AWSEncryptionSDKClientError):
     """General exception class for materials caches.
 

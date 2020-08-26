@@ -16,6 +16,7 @@ import io
 import pytest
 import six
 
+from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.internal.defaults import ALGORITHM, FRAME_LENGTH, LINE_LENGTH
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -92,6 +93,7 @@ def test_client_config_defaults():
     test = _ClientConfig(**BASE_KWARGS)
     assert test.source_length is None
     assert test.line_length == LINE_LENGTH
+    assert test.commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
 
 
 def test_encryptor_config_defaults():

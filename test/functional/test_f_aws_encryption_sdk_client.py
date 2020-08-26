@@ -27,14 +27,14 @@ from mock import MagicMock
 from wrapt import ObjectProxy
 
 import aws_encryption_sdk
-from aws_encryption_sdk import KMSMasterKeyProvider
 from aws_encryption_sdk.caches import build_decryption_materials_cache_key, build_encryption_materials_cache_key
 from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
-from aws_encryption_sdk.identifiers import Algorithm, EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.defaults import LINE_LENGTH
 from aws_encryption_sdk.internal.formatting.encryption_context import serialize_encryption_context
 from aws_encryption_sdk.key_providers.base import MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.kms import DiscoveryAwsKmsMasterKeyProvider
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 
@@ -91,7 +91,7 @@ VALUES = {
         b"\x0e\xae|%\xd8L]\xa2\xa2\x08\x1f"
     ),
     "encryption_context": {"key_a": "value_a", "key_b": "value_b", "key_c": "value_c"},
-    "arn": b"arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333",
+    "arn": "arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333",
     "provided": {
         "key": b"\x90\x86Z\x95\x96l'\xa7\x00yA\x9a\x1a\"\xa9\x8e",
         "ciphertext": (
@@ -220,7 +220,7 @@ def fake_kms_client(keysize=32):
 
 
 def fake_kms_key_provider(keysize=32):
-    mock_kms_key_provider = KMSMasterKeyProvider()
+    mock_kms_key_provider = DiscoveryAwsKmsMasterKeyProvider()
     mock_kms_key_provider._regional_clients["us-east-1"] = fake_kms_client(keysize)
     mock_kms_key_provider.add_master_key(VALUES["arn"])
     return mock_kms_key_provider
@@ -246,8 +246,8 @@ def build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type):
 
 def test_no_infinite_encryption_cycle_on_empty_source():
     """This catches a race condition where when calling encrypt with
-        an empty byte string, encrypt would enter an infinite loop.
-        If this test does not hang, the race condition is not present.
+    an empty byte string, encrypt would enter an infinite loop.
+    If this test does not hang, the race condition is not present.
     """
     aws_encryption_sdk.encrypt(source=b"", key_provider=fake_kms_key_provider())
 
@@ -297,6 +297,7 @@ def test_encrypt_decrypt_header_only():
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
+        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
@@ -375,6 +376,7 @@ def test_encryption_cycle_raw_mkp_openssl_102_plus(wrapping_algorithm, encryptio
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
+        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
@@ -400,6 +402,7 @@ def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_contex
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
+        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
@@ -435,7 +438,7 @@ def test_decrypt_legacy_provided_message():
     region = "us-west-2"
     key_info = "arn:aws:kms:us-west-2:249645522726:key/d1720f4e-953b-44bb-b9dd-fc8b9d0baa5f"
     mock_kms_client = fake_kms_client()
-    mock_kms_client.decrypt.return_value = {"Plaintext": VALUES["provided"]["key"]}
+    mock_kms_client.decrypt.return_value = {"Plaintext": VALUES["provided"]["key"], "KeyId": key_info}
     mock_kms_key_provider = fake_kms_key_provider()
     mock_kms_key_provider._regional_clients[region] = mock_kms_client
     mock_kms_key_provider.add_master_key(key_info)
@@ -467,6 +470,7 @@ def test_encryption_cycle_with_caching():
             frame_length=frame_length,
             algorithm=algorithm,
             plaintext_length=len(VALUES["plaintext_128"]),
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         ),
     )
     ciphertext, header = aws_encryption_sdk.encrypt(**encrypt_kwargs)
@@ -476,6 +480,7 @@ def test_encryption_cycle_with_caching():
             algorithm=algorithm,
             encrypted_data_keys=header.encrypted_data_keys,
             encryption_context=header.encryption_context,
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         ),
     )
 

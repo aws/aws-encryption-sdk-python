@@ -16,7 +16,7 @@ from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.exceptions import SerializationError
-from aws_encryption_sdk.identifiers import ContentAADString
+from aws_encryption_sdk.identifiers import ContentAADString, SerializationVersion
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_COUNT
 from aws_encryption_sdk.internal.structures import EncryptedData
 from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
@@ -89,9 +89,9 @@ class TestSerialize(object):
         self.mock_encrypt_patcher.stop()
         self.mock_valid_frame_length_patcher.stop()
 
-    def test_serialize_header(self):
+    def test_serialize_header_v1(self):
         """Validate that the _serialize_header function
-            behaves as expected.
+        behaves as expected.
         """
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_header(
             header=VALUES["deserialized_header_small_frame"], signer=self.mock_signer
@@ -102,21 +102,43 @@ class TestSerialize(object):
         self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_small_frame"])
         assert test == VALUES["serialized_header_small_frame"]
 
-    def test_serialize_header_no_signer(self):
+    def test_serialize_header_v1_no_signer(self):
         """Validate that the _serialize_header function
-            behaves as expected when called with no signer.
+        behaves as expected when called with no signer.
         """
         aws_encryption_sdk.internal.formatting.serialize.serialize_header(
             header=VALUES["deserialized_header_small_frame"]
         )
 
+    def test_serialize_header_v2(self):
+        """Validate that the _serialize_header_v2 function
+        behaves as expected.
+        """
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_header(
+            header=VALUES["deserialized_header_v2_committing"], signer=self.mock_signer
+        )
+        self.mock_serialize_acc.serialize_encryption_context.assert_called_once_with(
+            VALUES["updated_encryption_context"]
+        )
+        self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_v2_committing"])
+        assert test == VALUES["serialized_header_v2_committing"]
+
+    def test_serialize_header_v2_no_signer(self):
+        """Validate that the _serialize_header function
+        behaves as expected when called with no signer.
+        """
+        aws_encryption_sdk.internal.formatting.serialize.serialize_header(
+            header=VALUES["deserialized_header_v2_committing"]
+        )
+
     @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
-    def test_serialize_header_auth(self, mock_header_auth_iv):
+    def test_serialize_header_auth_v1(self, mock_header_auth_iv):
         """Validate that the _create_header_auth function
-            behaves as expected.
+        behaves as expected for SerializationVersion.V1.
         """
         self.mock_encrypt.return_value = VALUES["header_auth_base"]
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V1,
             algorithm=self.mock_algorithm,
             header=VALUES["serialized_header"],
             data_encryption_key=sentinel.encryption_key,
@@ -132,20 +154,58 @@ class TestSerialize(object):
         self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_auth"])
         assert test == VALUES["serialized_header_auth"]
 
-    def test_serialize_header_auth_no_signer(self):
+    def test_serialize_header_auth_v1_no_signer(self):
         """Validate that the _create_header_auth function
-            behaves as expected when called with no signer.
+        behaves as expected when called with no signer
+        for SerializationVersion.V1.
         """
         self.mock_encrypt.return_value = VALUES["header_auth_base"]
         aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V1,
             algorithm=self.mock_algorithm,
             header=VALUES["serialized_header"],
             data_encryption_key=VALUES["data_key_obj"],
         )
 
+    @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
+    def test_serialize_header_auth_v2(self, mock_header_auth_iv):
+        """Validate that the _create_header_auth function
+        behaves as expected for SerializationVersion.V2.
+        """
+        self.mock_encrypt.return_value = VALUES["header_auth_base"]
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V2,
+            algorithm=self.mock_algorithm,
+            header=VALUES["serialized_header_v2_committing"],
+            data_encryption_key=sentinel.encryption_key,
+            signer=self.mock_signer,
+        )
+        self.mock_encrypt.assert_called_once_with(
+            algorithm=self.mock_algorithm,
+            key=sentinel.encryption_key,
+            plaintext=b"",
+            associated_data=VALUES["serialized_header_v2_committing"],
+            iv=mock_header_auth_iv.return_value,
+        )
+        self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_auth_v2"])
+        assert test == VALUES["serialized_header_auth_v2"]
+
+    def test_serialize_header_auth_v2_no_signer(self):
+        """Validate that the _create_header_auth function
+        behaves as expected when called with no signer
+        for SerializationVersion.V1.
+        """
+        self.mock_encrypt.return_value = VALUES["header_auth_base"]
+        aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V2,
+            algorithm=self.mock_algorithm,
+            header=VALUES["serialized_header_v2_committing"],
+            data_encryption_key=VALUES["data_key_obj"],
+        )
+
     def test_serialize_non_framed_open(self):
         """Validate that the serialize_non_framed_open
-            function behaves as expected.
+        function behaves as expected.
         """
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
             algorithm=self.mock_algorithm,
@@ -158,8 +218,8 @@ class TestSerialize(object):
 
     def test_serialize_non_framed_open_no_signer(self):
         """Validate that the serialize_non_framed_open
-            function behaves as expected when called with
-            no signer.
+        function behaves as expected when called with
+        no signer.
         """
         aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_open(
             algorithm=self.mock_algorithm, iv=VALUES["final_frame_base"].iv, plaintext_length=len(VALUES["data_128"])
@@ -167,7 +227,7 @@ class TestSerialize(object):
 
     def test_serialize_non_framed_close(self):
         """Validate that the serialize_non_framed_close
-            function behaves as expected.
+        function behaves as expected.
         """
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(
             tag=VALUES["final_frame_base"].tag, signer=self.mock_signer
@@ -177,15 +237,15 @@ class TestSerialize(object):
 
     def test_serialize_non_framed_close_no_signer(self):
         """Validate that the serialize_non_framed_close
-            function behaves as expected when called with
-            no signer.
+        function behaves as expected when called with
+        no signer.
         """
         aws_encryption_sdk.internal.formatting.serialize.serialize_non_framed_close(tag=VALUES["final_frame_base"].tag)
 
     @patch("aws_encryption_sdk.internal.formatting.serialize.frame_iv")
     def test_encrypt_and_serialize_frame(self, mock_frame_iv):
         """Validate that the _encrypt_and_serialize_frame
-            function behaves as expected for a normal frame.
+        function behaves as expected for a normal frame.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES["frame_aac"]
         self.mock_encrypt.return_value = VALUES["frame_base"]
@@ -220,8 +280,8 @@ class TestSerialize(object):
 
     def test_encrypt_and_serialize_frame_no_signer(self):
         """Validate that the _encrypt_and_serialize_frame
-            function behaves as expected for a normal frame
-            when called with no signer.
+        function behaves as expected for a normal frame
+        when called with no signer.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES["frame_aac"]
         self.mock_encrypt.return_value = VALUES["frame_base"]
@@ -238,7 +298,7 @@ class TestSerialize(object):
     @patch("aws_encryption_sdk.internal.formatting.serialize.frame_iv")
     def test_encrypt_and_serialize_frame_final(self, mock_frame_iv):
         """Validate that the _encrypt_and_serialize_frame
-            function behaves as expected for a final frame.
+        function behaves as expected for a final frame.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES["final_frame_aac"]
         self.mock_encrypt.return_value = VALUES["final_frame_base"]
@@ -272,8 +332,8 @@ class TestSerialize(object):
 
     def test_encrypt_and_serialize_frame_final_no_signer(self):
         """Validate that the _encrypt_and_serialize_frame
-            function behaves as expected for a final frame
-            when called with no signer.
+        function behaves as expected for a final frame
+        when called with no signer.
         """
         self.mock_serialize_acc.assemble_content_aad.return_value = VALUES["final_frame_aac"]
         self.mock_encrypt.return_value = VALUES["final_frame_base"]
@@ -289,7 +349,7 @@ class TestSerialize(object):
 
     def test_serialize_footer_with_signer(self):
         """Validate that the serialize_footer function behaves as expected
-            when called with a signer.
+        when called with a signer.
         """
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_footer(self.mock_signer)
         self.mock_signer.finalize.assert_called_with()
@@ -297,7 +357,7 @@ class TestSerialize(object):
 
     def test_serialize_footer_no_signer(self):
         """Validate that the serialize_footer function behaves as expected
-            when called without a signer.
+        when called without a signer.
         """
         test = aws_encryption_sdk.internal.formatting.serialize.serialize_footer(None)
         assert test == b""

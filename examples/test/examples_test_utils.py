@@ -47,4 +47,4 @@ static_plaintext = (
 )
 
 
-from integration_test_utils import get_cmk_arn  # noqa pylint: disable=unused-import,import-error
+from integration_test_utils import get_cmk_arn, get_second_cmk_arn  # noqa pylint: disable=unused-import,import-error

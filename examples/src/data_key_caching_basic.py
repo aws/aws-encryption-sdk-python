@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Example of encryption with data key caching."""
 import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
 
 
 def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
@@ -31,8 +32,11 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
     # Create an encryption context
     encryption_context = {"purpose": "test"}
 
+    # Set up an encryption client with an explicit commitment policy
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     # Create a master key provider for the KMS customer master key (CMK)
-    key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[kms_cmk_arn])
+    key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[kms_cmk_arn])
 
     # Create a local cache
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(cache_capacity)
@@ -48,7 +52,7 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
     # When the call to encrypt data specifies a caching CMM,
     # the encryption operation uses the data key cache specified
     # in the caching CMM
-    encrypted_message, _header = aws_encryption_sdk.encrypt(
+    encrypted_message, _header = client.encrypt(
         source=my_data, materials_manager=caching_cmm, encryption_context=encryption_context
     )
 

@@ -17,7 +17,7 @@ import struct
 import aws_encryption_sdk.internal.defaults
 import aws_encryption_sdk.internal.formatting.encryption_context
 from aws_encryption_sdk.exceptions import SerializationError
-from aws_encryption_sdk.identifiers import ContentAADString, EncryptionType, SequenceIdentifier
+from aws_encryption_sdk.identifiers import ContentAADString, EncryptionType, SequenceIdentifier, SerializationVersion
 from aws_encryption_sdk.internal.crypto.encryption import encrypt
 from aws_encryption_sdk.internal.crypto.iv import frame_iv, header_auth_iv
 from aws_encryption_sdk.internal.str_ops import to_bytes
@@ -60,8 +60,8 @@ def serialize_encrypted_data_key(encrypted_data_key):
     )
 
 
-def serialize_header(header, signer=None):
-    """Serializes a header object.
+def _serialize_header_v1(header, signer=None):
+    """Serializes a header object for messages with SerializationVersion.V1.
 
     :param header: Header to serialize
     :type header: aws_encryption_sdk.structures.MessageHeader
@@ -118,8 +118,79 @@ def serialize_header(header, signer=None):
     return output
 
 
-def serialize_header_auth(algorithm, header, data_encryption_key, signer=None):
-    """Creates serialized header authentication data.
+def _serialize_header_v2(header, signer=None):
+    """Serializes a header object for messages with SerializationVersion.V2.
+
+    :param header: Header to serialize
+    :type header: aws_encryption_sdk.structures.MessageHeader
+    :param signer: Cryptographic signer object (optional)
+    :type signer: aws_encryption_sdk.internal.crypto.Signer
+    :returns: Serialized header
+    :rtype: bytes
+    """
+    ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+        header.encryption_context
+    )
+    header_start_format = (
+        ">"  # big endian
+        "B"  # version
+        "H"  # algorithm ID
+        "32s"  # message ID
+        "H"  # encryption context length
+        "{}s"  # serialized encryption context
+    ).format(len(ec_serialized))
+    header_bytes = bytearray()
+    header_bytes.extend(
+        struct.pack(
+            header_start_format,
+            header.version.value,
+            header.algorithm.algorithm_id,
+            header.message_id,
+            len(ec_serialized),
+            ec_serialized,
+        )
+    )
+
+    serialized_data_keys = bytearray()
+    for data_key in header.encrypted_data_keys:
+        serialized_data_keys.extend(serialize_encrypted_data_key(data_key))
+
+    header_bytes.extend(struct.pack(">H", len(header.encrypted_data_keys)))
+    header_bytes.extend(serialized_data_keys)
+
+    header_bytes.extend(struct.pack(">B", header.content_type.value))
+    header_bytes.extend(struct.pack(">I", header.frame_length))
+
+    if header.algorithm.is_committing():
+        algorithm_suite_data_length = header.algorithm.algorithm_suite_data_length()
+        header_bytes.extend(struct.pack(">{}s".format(algorithm_suite_data_length), header.commitment_key))
+
+    output = bytes(header_bytes)
+    if signer is not None:
+        signer.update(output)
+    return output
+
+
+def serialize_header(header, signer=None):
+    """Serializes a header object.
+
+    :param header: Header to serialize
+    :type header: aws_encryption_sdk.structures.MessageHeader
+    :param signer: Cryptographic signer object (optional)
+    :type signer: aws_encryption_sdk.internal.crypto.Signer
+    :returns: Serialized header
+    :rtype: bytes
+    """
+    if header.version == SerializationVersion.V1:
+        return _serialize_header_v1(header, signer)
+    elif header.version == SerializationVersion.V2:
+        return _serialize_header_v2(header, signer)
+    else:
+        raise SerializationError("Unrecognized message format version: {}".format(header.version))
+
+
+def _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer=None):
+    """Creates serialized header authentication data for messages in serialization version V1.
 
     :param algorithm: Algorithm to use for encryption
     :type algorithm: aws_encryption_sdk.identifiers.Algorithm
@@ -145,6 +216,56 @@ def serialize_header_auth(algorithm, header, data_encryption_key, signer=None):
     if signer is not None:
         signer.update(output)
     return output
+
+
+def _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer=None):
+    """Creates serialized header authentication data for messages in serialization version V2.
+
+    :param algorithm: Algorithm to use for encryption
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param bytes header: Serialized message header
+    :param bytes data_encryption_key: Data key with which to encrypt message
+    :param signer: Cryptographic signer object (optional)
+    :type signer: aws_encryption_sdk.Signer
+    :returns: Serialized header authentication data
+    :rtype: bytes
+    """
+    header_auth = encrypt(
+        algorithm=algorithm,
+        key=data_encryption_key,
+        plaintext=b"",
+        associated_data=header,
+        iv=header_auth_iv(algorithm),
+    )
+    output = struct.pack(
+        ">{tag_len}s".format(tag_len=algorithm.tag_len),
+        header_auth.tag,
+    )
+    if signer is not None:
+        signer.update(output)
+    return output
+
+
+def serialize_header_auth(version, algorithm, header, data_encryption_key, signer=None):
+    """Creates serialized header authentication data.
+
+    :param version: The serialization version of the message
+    :type version: int
+    :param algorithm: Algorithm to use for encryption
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :param bytes header: Serialized message header
+    :param bytes data_encryption_key: Data key with which to encrypt message
+    :param signer: Cryptographic signer object (optional)
+    :type signer: aws_encryption_sdk.Signer
+    :returns: Serialized header authentication data
+    :rtype: bytes
+    """
+    if version == SerializationVersion.V1:
+        return _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer)
+    elif version == SerializationVersion.V2:
+        return _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer)
+    else:
+        raise SerializationError("Unrecognized message format version: {}".format(version))
 
 
 def serialize_non_framed_open(algorithm, iv, plaintext_length, signer=None):

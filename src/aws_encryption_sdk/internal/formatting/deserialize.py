@@ -226,24 +226,23 @@ def _verified_frame_length(frame_length, content_type):
     return frame_length
 
 
-def deserialize_header(stream):
+def _deserialize_header_v1(header, tee_stream):
     # type: (IO) -> MessageHeader
-    """Deserializes the header from a source stream
+    """Deserializes the header from a source stream in SerializationVersion.V1.
 
-    :param stream: Source data stream
-    :type stream: io.BytesIO
+    :param header: A dictionary in which to store deserialized values
+    :type header: dict
+    :param tee_stream: The stream from which to read bytes
+    :type tee_stream: aws_encryption_sdk.internal.utils.streams.TeeStream
     :returns: Deserialized MessageHeader object
-    :rtype: :class:`aws_encryption_sdk.structures.MessageHeader` and bytes
+    :rtype: :class:`aws_encryption_sdk.structures.MessageHeader`
     :raises NotSupportedError: if unsupported data types are found
     :raises UnknownIdentityError: if unknown data types are found
     :raises SerializationError: if IV length does not match algorithm
     """
-    _LOGGER.debug("Starting header deserialization")
-    tee = io.BytesIO()
-    tee_stream = TeeStream(stream, tee)
-    version_id, message_type_id = unpack_values(">BB", tee_stream)
-    header = dict()
-    header["version"] = _verified_version_from_id(version_id)
+    _LOGGER.debug("Deserializing header in version V1")
+
+    (message_type_id,) = unpack_values(">B", tee_stream)
     header["type"] = _verified_message_type_from_id(message_type_id)
 
     algorithm_id, message_id, ser_encryption_context_length = unpack_values(">H16sH", tee_stream)
@@ -267,11 +266,77 @@ def deserialize_header(stream):
     (frame_length,) = unpack_values(">I", tee_stream)
     header["frame_length"] = _verified_frame_length(frame_length, header["content_type"])
 
-    return MessageHeader(**header), tee.getvalue()
+    return MessageHeader(**header)
 
 
-def deserialize_header_auth(stream, algorithm, verifier=None):
-    """Deserializes a MessageHeaderAuthentication object from a source stream.
+def _deserialize_header_v2(header, tee_stream):
+    # type: (IO) -> MessageHeader
+    """Deserializes the header from a source stream in SerializationVersion.V2.
+
+    :param header: A dictionary in which to store deserialized values
+    :type header: dict
+    :param tee_stream: The stream from which to read bytes
+    :type tee_stream: aws_encryption_sdk.internal.utils.streams.TeeStream
+    :returns: Deserialized MessageHeader object
+    :rtype: :class:`aws_encryption_sdk.structures.MessageHeader`
+    :raises NotSupportedError: if unsupported data types are found
+    :raises UnknownIdentityError: if unknown data types are found
+    :raises SerializationError: if IV length does not match algorithm
+    """
+    _LOGGER.debug("Deserializing header in version V2")
+
+    algorithm_id, message_id, ser_encryption_context_length = unpack_values(">H32sH", tee_stream)
+
+    header["algorithm"] = _verified_algorithm_from_id(algorithm_id)
+    header["message_id"] = message_id
+
+    header["encryption_context"] = deserialize_encryption_context(tee_stream.read(ser_encryption_context_length))
+
+    header["encrypted_data_keys"] = _deserialize_encrypted_data_keys(tee_stream)
+
+    (content_type_id,) = unpack_values(">B", tee_stream)
+    header["content_type"] = _verified_content_type_from_id(content_type_id)
+
+    (frame_length,) = unpack_values(">I", tee_stream)
+    header["frame_length"] = _verified_frame_length(frame_length, header["content_type"])
+
+    algorithm_suite_data_length = header["algorithm"].algorithm_suite_data_length()
+    (algorithm_suite_data,) = unpack_values(">{}s".format(algorithm_suite_data_length), tee_stream)
+    header["commitment_key"] = algorithm_suite_data
+
+    return MessageHeader(**header)
+
+
+def deserialize_header(stream):
+    # type: (IO) -> MessageHeader
+    """Deserializes the header from a source stream
+
+    :param stream: Source data stream
+    :type stream: io.BytesIO
+    :returns: Deserialized MessageHeader object
+    :rtype: :class:`aws_encryption_sdk.structures.MessageHeader` and bytes
+    :raises NotSupportedError: if unsupported data types are found
+    :raises UnknownIdentityError: if unknown data types are found
+    :raises SerializationError: if IV length does not match algorithm
+    """
+    _LOGGER.debug("Starting header deserialization")
+    tee = io.BytesIO()
+    tee_stream = TeeStream(stream, tee)
+    (version_id,) = unpack_values(">B", tee_stream)
+    version = _verified_version_from_id(version_id)
+    header = dict()
+    header["version"] = version
+
+    if version == SerializationVersion.V1:
+        return _deserialize_header_v1(header, tee_stream), tee.getvalue()
+    elif version == SerializationVersion.V2:
+        return _deserialize_header_v2(header, tee_stream), tee.getvalue()
+    else:
+        raise NotSupportedError("Unrecognized message format version: {}".format(version))
+
+
+def _deserialize_header_auth_v1(stream, algorithm, verifier=None):
+    """Deserializes a MessageHeaderAuthentication object from a source stream in serialization version V1.
 
     :param stream: Source data stream
     :type stream: io.BytesIO
@@ -282,9 +347,49 @@ def deserialize_header_auth(stream, algorithm, verifier=None):
     :returns: Deserialized MessageHeaderAuthentication object
     :rtype: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
     """
-    _LOGGER.debug("Starting header auth deserialization")
     format_string = ">{iv_len}s{tag_len}s".format(iv_len=algorithm.iv_len, tag_len=algorithm.tag_len)
     return MessageHeaderAuthentication(*unpack_values(format_string, stream, verifier))
+
+
+def _deserialize_header_auth_v2(stream, algorithm, verifier=None):
+    """Deserializes a MessageHeaderAuthentication object from a source stream in serialization version V1.
+
+    :param stream: Source data stream
+    :type stream: io.BytesIO
+    :param algorithm: The AlgorithmSuite object type contained in the header
+    :type algorith: aws_encryption_sdk.identifiers.AlgorithmSuite
+    :param verifier: Signature verifier object (optional)
+    :type verifier: aws_encryption_sdk.internal.crypto.Verifier
+    :returns: Deserialized MessageHeaderAuthentication object
+    :rtype: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
+    """
+    format_string = ">{tag_len}s".format(tag_len=algorithm.tag_len)
+    (tag,) = unpack_values(format_string, stream, verifier)
+    iv = algorithm.header_auth_iv
+    return MessageHeaderAuthentication(tag=tag, iv=iv)
+
+
+def deserialize_header_auth(version, stream, algorithm, verifier=None):
+    """Deserializes a MessageHeaderAuthentication object from a source stream.
+
+    :param version: The serialization version of the message
+    :type version: int
+    :param stream: Source data stream
+    :type stream: io.BytesIO
+    :param algorithm: The AlgorithmSuite object type contained in the header
+    :type algorith: aws_encryption_sdk.identifiers.AlgorithmSuite
+    :param verifier: Signature verifier object (optional)
+    :type verifier: aws_encryption_sdk.internal.crypto.Verifier
+    :returns: Deserialized MessageHeaderAuthentication object
+    :rtype: aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
+    """
+    _LOGGER.debug("Starting header auth deserialization")
+    if version == SerializationVersion.V1:
+        return _deserialize_header_auth_v1(stream, algorithm, verifier)
+    elif version == SerializationVersion.V2:
+        return _deserialize_header_auth_v2(stream, algorithm, verifier)
+    else:
+        raise SerializationError("Unrecognized message format version: {}".format(version))
 
 
 def deserialize_non_framed_values(stream, header, verifier=None):

@@ -17,7 +17,7 @@
 import attr
 import six
 
-from ..identifiers import Algorithm
+from ..identifiers import Algorithm, CommitmentPolicy
 from ..internal.utils.streams import ROStream
 from ..structures import DataKey
 
@@ -42,6 +42,10 @@ class EncryptionMaterialsRequest(object):
 
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
     frame_length = attr.ib(validator=attr.validators.instance_of(six.integer_types))
+    commitment_policy = attr.ib(
+        default=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        validator=attr.validators.optional(attr.validators.instance_of(CommitmentPolicy)),
+    )
     plaintext_rostream = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(ROStream))
     )
@@ -90,6 +94,10 @@ class DecryptionMaterialsRequest(object):
     algorithm = attr.ib(validator=attr.validators.instance_of(Algorithm))
     encrypted_data_keys = attr.ib(validator=attr.validators.instance_of(set))
     encryption_context = attr.ib(validator=attr.validators.instance_of(dict))
+    commitment_policy = attr.ib(
+        default=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        validator=attr.validators.optional(attr.validators.instance_of(CommitmentPolicy)),
+    )
 
 
 @attr.s(hash=False)

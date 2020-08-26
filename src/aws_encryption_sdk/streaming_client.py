@@ -14,6 +14,7 @@
 from __future__ import division
 
 import abc
+import hmac
 import io
 import logging
 import math
@@ -26,12 +27,13 @@ from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
     AWSEncryptionSDKClientError,
     CustomMaximumValueExceeded,
+    MasterKeyProviderError,
     NotSupportedError,
     SerializationError,
 )
-from aws_encryption_sdk.identifiers import Algorithm, ContentType
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, ContentType, SerializationVersion
 from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
-from aws_encryption_sdk.internal.crypto.data_keys import derive_data_encryption_key
+from aws_encryption_sdk.internal.crypto.data_keys import calculate_commitment_key, derive_data_encryption_key
 from aws_encryption_sdk.internal.crypto.encryption import Decryptor, Encryptor, decrypt
 from aws_encryption_sdk.internal.crypto.iv import non_framed_body_iv
 from aws_encryption_sdk.internal.defaults import FRAME_LENGTH, LINE_LENGTH, MAX_NON_FRAMED_SIZE, TYPE, VERSION
@@ -53,6 +55,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
+from aws_encryption_sdk.internal.utils.commitment import validate_commitment_policy_on_encrypt
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -91,6 +94,11 @@ class _ClientConfig(object):
     )
     source_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
+    )
+    commitment_policy = attr.ib(
+        hash=True,
+        default=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        validator=attr.validators.optional(attr.validators.instance_of(CommitmentPolicy)),
     )
     line_length = attr.ib(
         hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
@@ -423,6 +431,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         message_id = aws_encryption_sdk.internal.utils.message_id()
 
+        validate_commitment_policy_on_encrypt(self.config.commitment_policy, self.config.algorithm)
+
         try:
             plaintext_length = self.stream_length
         except NotSupportedError:
@@ -433,6 +443,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             frame_length=self.config.frame_length,
             plaintext_rostream=aws_encryption_sdk.internal.utils.streams.ROStream(self.source_stream),
             plaintext_length=plaintext_length,
+            commitment_policy=self.config.commitment_policy,
         )
         self._encryption_materials = self.config.materials_manager.get_encryption_materials(
             request=encryption_materials_request
@@ -464,27 +475,53 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             message_id=message_id,
         )
 
-        self._header = MessageHeader(
-            version=VERSION,
-            type=TYPE,
-            algorithm=self._encryption_materials.algorithm,
-            message_id=message_id,
-            encryption_context=self._encryption_materials.encryption_context,
-            encrypted_data_keys=self._encryption_materials.encrypted_data_keys,
-            content_type=self.content_type,
-            content_aad_length=0,
-            header_iv_length=self._encryption_materials.algorithm.iv_len,
-            frame_length=self.config.frame_length,
-        )
+        self._header = self.generate_header(message_id)
+
         self._write_header()
         if self.content_type == ContentType.NO_FRAMING:
             self._prep_non_framed()
         self._message_prepped = True
 
+    def generate_header(self, message_id):
+        """Generates the header object.
+
+        :param message_id: The randomly generated id for the message
+        :type message_id: bytes
+        """
+        version = VERSION
+        if self._encryption_materials.algorithm.message_format_version == 0x02:
+            version = SerializationVersion.V2
+
+        kwargs = dict(
+            version=version,
+            algorithm=self._encryption_materials.algorithm,
+            message_id=message_id,
+            encryption_context=self._encryption_materials.encryption_context,
+            encrypted_data_keys=self._encryption_materials.encrypted_data_keys,
+            content_type=self.content_type,
+            frame_length=self.config.frame_length,
+        )
+
+        if self._encryption_materials.algorithm.is_committing():
+            commitment_key = calculate_commitment_key(
+                source_key=self._encryption_materials.data_encryption_key.data_key,
+                algorithm=self._encryption_materials.algorithm,
+                message_id=message_id,
+            )
+            kwargs["commitment_key"] = commitment_key
+
+        if version == SerializationVersion.V1:
+            kwargs["type"] = TYPE
+            kwargs["content_aad_length"] = 0
+            kwargs["header_iv_length"] = self._encryption_materials.algorithm.iv_len
+
+        return MessageHeader(**kwargs)
+
     def _write_header(self):
         """Builds the message header and writes it to the output stream."""
         self.output_buffer += serialize_header(header=self._header, signer=self.signer)
         self.output_buffer += serialize_header_auth(
+            version=self._header.version,
             algorithm=self._encryption_materials.algorithm,
             header=self.output_buffer,
             data_encryption_key=self._derived_data_key,
@@ -761,6 +798,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             encrypted_data_keys=header.encrypted_data_keys,
             algorithm=header.algorithm,
             encryption_context=header.encryption_context,
+            commitment_policy=self.config.commitment_policy,
         )
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
         if decryption_materials.verification_key is None:
@@ -773,12 +811,27 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self.verifier.update(raw_header)
 
         header_auth = deserialize_header_auth(
-            stream=self.source_stream, algorithm=header.algorithm, verifier=self.verifier
+            version=header.version, stream=self.source_stream, algorithm=header.algorithm, verifier=self.verifier
         )
         self._derived_data_key = derive_data_encryption_key(
             source_key=decryption_materials.data_key.data_key, algorithm=header.algorithm, message_id=header.message_id
         )
+
+        if header.algorithm.is_committing():
+            expected_commitment_key = calculate_commitment_key(
+                source_key=decryption_materials.data_key.data_key,
+                algorithm=header.algorithm,
+                message_id=header.message_id,
+            )
+
+            if not hmac.compare_digest(expected_commitment_key, header.commitment_key):
+                raise MasterKeyProviderError(
+                    "Key commitment validation failed. Key identity does not match the identity asserted in the "
+                    "message. Halting processing of this message."
+                )
+
         validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
+
         return header, header_auth
 
     def _prep_non_framed(self):

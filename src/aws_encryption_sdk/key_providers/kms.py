@@ -11,18 +11,29 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Master Key Providers for use with AWS KMS"""
+import abc
 import functools
 import logging
+import warnings
 
 import attr
 import boto3
 import botocore.client
 import botocore.config
 import botocore.session
+import six
 from botocore.exceptions import ClientError
 
-from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, GenerateKeyError, UnknownRegionError
+from aws_encryption_sdk.exceptions import (
+    ConfigMismatchError,
+    DecryptKeyError,
+    EncryptKeyError,
+    GenerateKeyError,
+    MasterKeyProviderError,
+    UnknownRegionError,
+)
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
+from aws_encryption_sdk.internal.arn import arn_from_str
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
@@ -53,6 +64,20 @@ def _region_from_key_id(key_id, default_region=None):
 
 
 @attr.s(hash=True)
+class DiscoveryFilter(object):
+    """DiscoveryFilter to control accounts and partitions that can be used by a KMS Master Key Provider.
+
+    :param list account_ids: List of AWS Account Ids that are allowed to be used for decryption
+    :param str partition: The AWS partition to which account_ids belong
+    """
+
+    account_ids = attr.ib(
+        default=attr.Factory(tuple), hash=True, validator=attr.validators.instance_of(tuple), converter=tuple
+    )
+    partition = attr.ib(default=None, hash=True, validator=attr.validators.optional(attr.validators.instance_of(str)))
+
+
+@attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
 
@@ -60,6 +85,8 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     :type botocore_session: botocore.session.Session
     :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
     :param list region_names: List of regions for which to pre-populate clients (optional)
+    :param DiscoveryFilter discovery_filter: Filter indicating AWS accounts and partitions whose keys will be trusted
+        for decryption
     """
 
     botocore_session = attr.ib(
@@ -73,34 +100,18 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     region_names = attr.ib(
         hash=True, default=attr.Factory(tuple), validator=attr.validators.instance_of(tuple), converter=tuple
     )
+    discovery_filter = attr.ib(
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(DiscoveryFilter))
+    )
 
 
-class KMSMasterKeyProvider(MasterKeyProvider):
+@six.add_metaclass(abc.ABCMeta)
+class BaseKMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
 
-    >>> import aws_encryption_sdk
-    >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-    ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-    ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ... ])
-    >>> kms_key_provider.add_master_key('arn:aws:kms:ap-northeast-1:4444444444444:alias/another-key')
-
     .. note::
-        If no botocore_session is provided, the default botocore session will be used.
+        Cannot be instantiated directly. Callers should use one of the implementing classes.
 
-    .. note::
-        If multiple AWS Identities are needed, one of two options are available:
-
-        * Additional KMSMasterKeyProvider instances may be added to the primary MasterKeyProvider.
-
-        * KMSMasterKey instances may be manually created and added to this KMSMasterKeyProvider.
-
-    :param config: Configuration object (optional)
-    :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
-    :param botocore_session: botocore session object (optional)
-    :type botocore_session: botocore.session.Session
-    :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
-    :param list region_names: List of regions for which to pre-populate clients (optional)
     """
 
     provider_id = _PROVIDER_ID
@@ -112,9 +123,19 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         self._regional_clients = {}
         self._process_config()
 
+    @abc.abstractmethod
+    def validate_config(self):
+        """Validates the provided configuration.
+
+        .. note::
+            Must be implemented by specific KMSMasterKeyProvider implementations.
+        """
+
     def _process_config(self):
         """Traverses the config and adds master keys and regional clients as needed."""
         self._user_agent_adding_config = botocore.config.Config(user_agent_extra=USER_AGENT_SUFFIX)
+
+        self.validate_config()
 
         if self.config.region_names:
             self.add_regional_clients_from_list(self.config.region_names)
@@ -190,9 +211,163 @@ class KMSMasterKeyProvider(MasterKeyProvider):
         :returns: KMS Master Key based on key_id
         :rtype: aws_encryption_sdk.key_providers.kms.KMSMasterKey
         :raises InvalidKeyIdError: if key_id is not a valid KMS CMK ID to which this key provider has access
+        :raises MasterKeyProviderError: if this MasterKeyProvider is in discovery mode and key_id is not allowed
         """
         _key_id = to_str(key_id)  # KMS client requires str, not bytes
+
+        if self.config.discovery_filter:
+            arn = arn_from_str(_key_id)
+
+            if (
+                arn.partition != self.config.discovery_filter.partition
+                or arn.account_id not in self.config.discovery_filter.account_ids
+            ):
+                raise MasterKeyProviderError("Key {} not allowed by this Master Key Provider".format(key_id))
+
         return KMSMasterKey(config=KMSMasterKeyConfig(key_id=key_id, client=self._client(_key_id)))
+
+
+class KMSMasterKeyProvider(BaseKMSMasterKeyProvider):
+    """Master Key Provider for KMS.
+
+    >>> import aws_encryption_sdk
+    >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+    ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+    ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+    ... ])
+    >>> kms_key_provider.add_master_key('arn:aws:kms:ap-northeast-1:4444444444444:alias/another-key')
+
+    .. note::
+        If no botocore_session is provided, the default botocore session will be used.
+
+    .. note::
+        If multiple AWS Identities are needed, one of two options are available:
+
+        * Additional KMSMasterKeyProvider instances may be added to the primary MasterKeyProvider.
+
+        * KMSMasterKey instances may be manually created and added to this KMSMasterKeyProvider.
+
+    :param config: Configuration object (optional)
+    :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
+    :param botocore_session: botocore session object (optional)
+    :type botocore_session: botocore.session.Session
+    :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
+    :param list region_names: List of regions for which to pre-populate clients (optional)
+    """
+
+    def __init__(self, **kwargs):
+        """Sets configuration required by this provider type."""
+        warnings.warn(
+            "KMSMasterKeyProvider is deprecated. Use a StrictAwsKmsMasterKeyProvider or "
+            "DiscoveryAwsKmsMasterKeyProvider instead.",
+            DeprecationWarning,
+        )
+        super(KMSMasterKeyProvider, self).__init__(**kwargs)
+
+        self.vend_masterkey_on_decrypt = True
+
+    def validate_config(self):
+        """Validates the provided configuration."""
+        if self.config.discovery_filter:
+            raise ConfigMismatchError("To explicitly enable discovery mode use a DiscoveryAwsKmsMasterKeyProvider")
+
+
+class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
+    """Strict Master Key Provider for KMS. It is configured with an explicit list of AWS KMS master keys that
+    should be used for encryption in decryption. On encryption, the plaintext will be encrypted with all configured
+    master keys. On decryption, the ciphertext will be decrypted with the first master key that can decrypt. If the
+    ciphertext is encrypted with a master key that was not explicitly configured, decryption will fail.
+
+    >>> import aws_encryption_sdk
+    >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
+    ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+    ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+    ... ])
+    >>> kms_key_provider.add_master_key('arn:aws:kms:ap-northeast-1:4444444444444:alias/another-key')
+
+    .. note::
+        If no botocore_session is provided, the default botocore session will be used.
+
+    .. note::
+        If multiple AWS Identities are needed, one of two options are available:
+
+        * Additional KMSMasterKeyProvider instances may be added to the primary MasterKeyProvider.
+
+        * KMSMasterKey instances may be manually created and added to this KMSMasterKeyProvider.
+
+    :param config: Configuration object (optional)
+    :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
+    :param botocore_session: botocore session object (optional)
+    :type botocore_session: botocore.session.Session
+    :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
+    :param list region_names: List of regions for which to pre-populate clients (optional)
+    """
+
+    def __init__(self, **kwargs):
+        """Sets configuration required by this provider type."""
+        super(StrictAwsKmsMasterKeyProvider, self).__init__(**kwargs)
+
+        self.vend_masterkey_on_decrypt = False
+
+    def validate_config(self):
+        """Validates the provided configuration."""
+        if not self.config.key_ids:
+            raise ConfigMismatchError("To enable strict mode you must provide key ids")
+
+        for key_id in self.config.key_ids:
+            if not key_id:
+                raise ConfigMismatchError("Key ids must be valid AWS KMS ARNs")
+
+        if self.config.discovery_filter:
+            raise ConfigMismatchError("To enable discovery mode, use a DiscoveryAwsKmsMasterKeyProvider")
+
+
+class DiscoveryAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
+    """Discovery Master Key Provider for KMS. This can only be used for decryption. It is configured with an optional
+     Discovery Filter containing AWS account ids and partitions that should be trusted for decryption. If a ciphertext
+     was encrypted with an AWS KMS master key that matches an account and partition listed by this provider, decryption
+     will succeed. Otherwise, decryption will fail. If no Discovery Filter is configured, the provider will attempt
+     to decrypt any ciphertext created by an AWS KMS Master Key Provider.
+
+    >>> import aws_encryption_sdk
+    >>> kms_key_provider = aws_encryption_sdk.DiscoveryAwsKmsMasterKeyProvider(discovery_filter=DiscoveryFilter(
+    ...     account_ids=['2222222222222', '3333333333333']
+    ... )
+
+    .. note::
+        If no botocore_session is provided, the default botocore session will be used.
+
+    :param config: Configuration object (optional)
+    :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
+    :param botocore_session: botocore session object (optional)
+    :type botocore_session: botocore.session.Session
+    :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
+    :param list region_names: List of regions for which to pre-populate clients (optional)
+    """
+
+    def __init__(self, **kwargs):
+        """Sets configuration required by this provider type."""
+        super(DiscoveryAwsKmsMasterKeyProvider, self).__init__(**kwargs)
+
+        self.vend_masterkey_on_decrypt = True
+
+    def validate_config(self):
+        """Validates the provided configuration."""
+        if self.config.key_ids:
+            raise ConfigMismatchError(
+                "To explicitly identify which keys should be used, use a " "StrictAwsKmsMasterKeyProvider."
+            )
+
+        if self.config.discovery_filter:
+            if not self.config.discovery_filter.account_ids or not self.config.discovery_filter.partition:
+                raise ConfigMismatchError(
+                    "When specifying a discovery filter you must include both account ids and " "partition"
+                )
+            for account in self.config.discovery_filter.account_ids:
+                if not account:
+                    raise ConfigMismatchError(
+                        "When specifying a discovery filter, account ids must be non-empty " "strings"
+                    )
 
 
 @attr.s(hash=True)
@@ -312,7 +487,14 @@ class KMSMasterKey(MasterKey):
         :rtype: aws_encryption_sdk.structures.DataKey
         :raises DecryptKeyError: if Master Key is unable to decrypt data key
         """
-        kms_params = {"CiphertextBlob": encrypted_data_key.encrypted_data_key}
+        edk_key_id = to_str(encrypted_data_key.key_provider.key_info)
+        if edk_key_id != self._key_id:
+            raise DecryptKeyError(
+                "Cannot decrypt EDK wrapped by key_id={}, because it does not match this "
+                "provider's key_id={}".format(edk_key_id, self._key_id)
+            )
+
+        kms_params = {"CiphertextBlob": encrypted_data_key.encrypted_data_key, "KeyId": edk_key_id}
         if encryption_context:
             kms_params["EncryptionContext"] = encryption_context
         if self.config.grant_tokens:
@@ -320,6 +502,14 @@ class KMSMasterKey(MasterKey):
         # Catch any boto3 errors and normalize to expected DecryptKeyError
         try:
             response = self.config.client.decrypt(**kms_params)
+
+            returned_key_id = response["KeyId"]
+            if returned_key_id != edk_key_id:
+                error_message = "AWS KMS returned unexpected key_id {returned} (expected {key_id})".format(
+                    returned=returned_key_id, key_id=edk_key_id
+                )
+                _LOGGER.exception(error_message)
+                raise DecryptKeyError(error_message)
             plaintext = response["Plaintext"]
         except (ClientError, KeyError):
             error_message = "Master Key {key_id} unable to decrypt data key".format(key_id=self._key_id)

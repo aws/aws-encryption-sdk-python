@@ -194,6 +194,7 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
             encryption_context=request.encryption_context,
             frame_length=request.frame_length,
             algorithm=request.algorithm,
+            commitment_policy=request.commitment_policy,
         )
         cache_key = build_encryption_materials_cache_key(partition=self.partition_name, request=inner_request)
 

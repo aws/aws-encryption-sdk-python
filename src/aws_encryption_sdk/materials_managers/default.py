@@ -21,6 +21,7 @@ from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
 from ..internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from ..internal.str_ops import to_str
 from ..internal.utils import prepare_data_keys
+from ..internal.utils.commitment import validate_commitment_policy_on_encrypt
 from ..key_providers.base import MasterKeyProvider
 from . import DecryptionMaterials, EncryptionMaterials
 from .base import CryptoMaterialsManager
@@ -68,8 +69,13 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :raises MasterKeyProviderError: if no master keys are available from the underlying master key provider
         :raises MasterKeyProviderError: if the primary master key provided by the underlying master key provider
             is not included in the full set of master keys provided by that provider
+        :raises ActionNotAllowedError: if the commitment policy in the request is violated by the algorithm being
+            used
         """
         algorithm = request.algorithm if request.algorithm is not None else self.algorithm
+
+        validate_commitment_policy_on_encrypt(request.commitment_policy, algorithm)
+
         encryption_context = request.encryption_context.copy()
 
         signing_key = self._generate_signing_key_and_update_encryption_context(algorithm, encryption_context)

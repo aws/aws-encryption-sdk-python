@@ -22,7 +22,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
@@ -76,11 +76,14 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
     cycled_kms_plaintext_filename = source_plaintext_filename + ".kms.decrypted"
     cycled_static_plaintext_filename = source_plaintext_filename + ".static.decrypted"
 
+    # Set up an encryption client with an explicit commitment policy
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
-    kms_master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
+    kms_master_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
 
     # Create a static master key provider and add a master key to it
     static_key_id = os.urandom(8)
@@ -94,23 +97,21 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
 
     # Encrypt plaintext with both AWS KMS and static master keys
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
-        with aws_encryption_sdk.stream(source=plaintext, mode="e", key_provider=kms_master_key_provider) as encryptor:
+        with client.stream(source=plaintext, mode="e", key_provider=kms_master_key_provider) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
     # Decrypt the ciphertext with only the AWS KMS master key
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_kms_plaintext_filename, "wb") as plaintext:
-        with aws_encryption_sdk.stream(
-            source=ciphertext, mode="d", key_provider=aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
+        with client.stream(
+            source=ciphertext, mode="d", key_provider=aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
         ) as kms_decryptor:
             for chunk in kms_decryptor:
                 plaintext.write(chunk)
 
     # Decrypt the ciphertext with only the static master key
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_static_plaintext_filename, "wb") as plaintext:
-        with aws_encryption_sdk.stream(
-            source=ciphertext, mode="d", key_provider=static_master_key_provider
-        ) as static_decryptor:
+        with client.stream(source=ciphertext, mode="d", key_provider=static_master_key_provider) as static_decryptor:
             for chunk in static_decryptor:
                 plaintext.write(chunk)
 

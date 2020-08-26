@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Example showing basic encryption and decryption of a value already in memory."""
 import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
 
 
 def cycle_string(key_arn, source_plaintext, botocore_session=None):
@@ -22,17 +23,20 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
+    # Set up an encryption client with an explicit commitment policy
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
-    master_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(**kms_kwargs)
+    master_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
 
     # Encrypt the plaintext source data
-    ciphertext, encryptor_header = aws_encryption_sdk.encrypt(source=source_plaintext, key_provider=master_key_provider)
+    ciphertext, encryptor_header = client.encrypt(source=source_plaintext, key_provider=master_key_provider)
 
     # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=master_key_provider)
+    cycled_plaintext, decrypted_header = client.decrypt(source=ciphertext, key_provider=master_key_provider)
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == source_plaintext

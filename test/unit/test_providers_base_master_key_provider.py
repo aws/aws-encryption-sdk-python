@@ -21,7 +21,7 @@ from aws_encryption_sdk.exceptions import (
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
+from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyProvider, MasterKeyProviderConfig
 
 from .test_values import VALUES
 
@@ -270,6 +270,32 @@ class TestBaseMasterKeyProvider(object):
         )
         assert test is sentinel.data_key
 
+    def test_decrypt_data_key_successful_no_key_ids(self):
+        """Test that a Master Key Provider configured with vend_masterkey_on_decrypt = True
+        without any key ids can successfully decrypt an EDK.
+        """
+        mock_master_key = MagicMock()
+        mock_master_key.decrypt_data_key.return_value = sentinel.data_key
+
+        mock_encrypted_data_key = MagicMock()
+        mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
+        mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
+
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id, mock_new_master_key=mock_master_key
+        )
+        mock_master_key_provider.vend_masterkey_on_decrypt = True
+        mock_master_key_provider._members = []
+        test = mock_master_key_provider.decrypt_data_key(
+            encrypted_data_key=mock_encrypted_data_key,
+            algorithm=sentinel.algorithm,
+            encryption_context=sentinel.encryption_context,
+        )
+        mock_master_key.decrypt_data_key.assert_called_once_with(
+            mock_encrypted_data_key, sentinel.algorithm, sentinel.encryption_context
+        )
+        assert test is sentinel.data_key
+
     def test_decrypt_data_key_successful_second_try_provider_id(self):
         mock_first_member = MagicMock()
         mock_first_member.provider_id = sentinel.another_provider_id
@@ -293,7 +319,68 @@ class TestBaseMasterKeyProvider(object):
         assert not mock_first_member.master_key_for_decrypt.called
         assert test is sentinel.data_key
 
+    def test_decrypt_data_key_successful_multiple_members(self):
+        """Test that a Master Key Provider with multiple members which are able
+        to decrypt a given EDK will successfully use the first key to decrypt
+        and will not try the others.
+        """
+        mock_member1 = MagicMock()
+        mock_member1.provider_id = sentinel.provider_id
+        mock_member1.key_id = sentinel.key_info1
+
+        mock_member2 = MagicMock()
+        mock_member2.provider_id = sentinel.provider_id
+        mock_member2.key_id = sentinel.key_info2
+
+        mock_master_key = MagicMock()
+        mock_master_key.decrypt_data_key.return_value = sentinel.data_key
+
+        mock_member1.master_key_for_decrypt.return_value = mock_master_key
+
+        mock_encrypted_data_key = MagicMock()
+        mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
+        mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
+
+        mock_master_key_provider = MockMasterKeyProvider(
+            provider_id=sentinel.provider_id_2, mock_new_master_key=sentinel.new_master_key
+        )
+        mock_master_key_provider._members = [mock_member1, mock_member2]
+        test = mock_master_key_provider.decrypt_data_key(
+            encrypted_data_key=mock_encrypted_data_key,
+            algorithm=sentinel.algorithm,
+            encryption_context=sentinel.encryption_context,
+        )
+        assert mock_member1.master_key_for_decrypt.called
+        assert not mock_member2.master_key_for_decrypt.called
+        assert test is sentinel.data_key
+
+    def test_decrypt_data_key_successful_one_matching_member_no_vend(self):
+        """Test that a Master Key Provider configured to not vend keys
+        can successfully decrypt an EDK when it was configured with a
+        key that is able to decrypt the EDK.
+        """
+        mock_member = MagicMock()
+        mock_member.__class__ = MasterKey
+        mock_member.provider_id = sentinel.provider_id
+        mock_encrypted_data_key = MagicMock()
+        mock_encrypted_data_key.key_provider.provider_id = sentinel.provider_id
+        mock_encrypted_data_key.key_provider.key_info = sentinel.key_info
+        mock_master_key_provider = MockMasterKeyProviderNoVendOnDecrypt(provider_id=sentinel.provider_id)
+        mock_master_key_provider._members = [mock_member]
+        mock_master_key_provider.master_key_for_decrypt = MagicMock()
+        mock_master_key_provider.decrypt_data_key(
+            encrypted_data_key=mock_encrypted_data_key,
+            algorithm=sentinel.algorithm,
+            encryption_context=sentinel.encryption_context,
+        )
+        mock_member.decrypt_data_key.assert_called_once_with(
+            mock_encrypted_data_key, sentinel.algorithm, sentinel.encryption_context
+        )
+
     def test_decrypt_data_key_unsuccessful_no_matching_members(self):
+        """Test that a Master Key Provider returns the correct error when none
+        of its members are able to successfully decrypt an EDK
+        """
         mock_member = MagicMock()
         mock_member.provider_id = sentinel.another_provider_id
         mock_encrypted_data_key = MagicMock()
@@ -334,6 +421,10 @@ class TestBaseMasterKeyProvider(object):
             mock_master_key.assert_called_once_with(sentinel.key_info)
 
     def test_decrypt_data_key_unsuccessful_no_matching_members_no_vend(self):
+        """Test that a Master Key Provider cannot decrypt an EDK when it is
+        configured to not vend keys and no keys explicitly configured
+        match the EDK.
+        """
         mock_member = MagicMock()
         mock_member.provider_id = sentinel.another_provider_id
         mock_encrypted_data_key = MagicMock()
@@ -391,7 +482,7 @@ class TestBaseMasterKeyProvider(object):
             )
         excinfo.match("Unable to decrypt data key")
 
-    def test_decrypt_data_key_unsuccessful_master_key_decryt_error(self):
+    def test_decrypt_data_key_unsuccessful_master_key_decrypt_error(self):
         mock_member = MagicMock()
         mock_member.provider_id = sentinel.provider_id
         mock_master_key = MagicMock()
@@ -415,6 +506,9 @@ class TestBaseMasterKeyProvider(object):
         excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_unsuccessful_no_members(self):
+        """Test that a Master Key Provider configured with no master keys fails
+        to decrypt an EDK.
+        """
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id, mock_new_master_key=sentinel.new_master_key
         )
@@ -428,6 +522,10 @@ class TestBaseMasterKeyProvider(object):
         excinfo.match("Unable to decrypt data key")
 
     def test_decrypt_data_key_from_list_first_try(self):
+        """Test that a Master Key Provider configured with a single master key is able
+        to decrypt from a list of EDKs where the first EDK is decryptable by the
+        master key.
+        """
         mock_decrypt_data_key = MagicMock()
         mock_decrypt_data_key.return_value = sentinel.data_key
         mock_master_key_provider = MockMasterKeyProvider(
@@ -445,6 +543,10 @@ class TestBaseMasterKeyProvider(object):
         assert test is sentinel.data_key
 
     def test_decrypt_data_key_from_list_second_try(self):
+        """Test that a Master Key Provider configured with a single master key is able
+        to decrypt from a list of EDKs where the first EDK is not decryptable by the
+        master key but the second is.
+        """
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id, mock_new_master_key=sentinel.new_master_key
         )
@@ -465,6 +567,9 @@ class TestBaseMasterKeyProvider(object):
         assert test is sentinel.data_key
 
     def test_decrypt_data_key_from_list_unsuccessful(self):
+        """Test that a Master Key Provider configured with a single master key fails
+        to decrypt from a list of EDKs when each EDK throws an exception.
+        """
         mock_master_key_provider = MockMasterKeyProvider(
             provider_id=sentinel.provider_id, mock_new_master_key=sentinel.new_master_key
         )
