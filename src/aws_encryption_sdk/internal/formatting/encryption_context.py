@@ -43,7 +43,7 @@ def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     """
     if not isinstance(aad_content_string, aws_encryption_sdk.identifiers.ContentAADString):
         raise SerializationError("Unknown aad_content_string")
-    fmt = ">16s{}sIQ".format(len(aad_content_string.value))
+    fmt = ">{}s{}sIQ".format(len(message_id), len(aad_content_string.value))
     return struct.pack(fmt, message_id, aad_content_string.value, seq_num, length)
 
 

@@ -35,8 +35,6 @@ _VALID_KWARGS = {
 @pytest.yield_fixture
 def patch_time(mocker):
     mocker.patch.object(aws_encryption_sdk.caches.time, "time")
-    aws_encryption_sdk.caches.time.time.side_effect = (3.0, 10.0)
-    yield 7.0
 
 
 @pytest.mark.parametrize(
@@ -70,13 +68,16 @@ def test_crypto_cache_entry_valid_attributes(valid_kwargs_overrides):
 
 
 def test_crypto_cache_entry_init(patch_time):
+    mock_creation_time = 3.0
+    aws_encryption_sdk.caches.time.time.return_value = mock_creation_time
+
     entry = CryptoMaterialsCacheEntry(
         cache_key=b"ex_cache_key",
         value=MagicMock(__class__=EncryptionMaterials),
         hints=CryptoMaterialsCacheEntryHints(lifetime=10.0),
     )
 
-    assert entry.creation_time == 3.0
+    assert entry.creation_time == mock_creation_time
     assert entry.bytes_encrypted == 0
     assert entry.messages_encrypted == 0
     assert entry.valid
@@ -104,9 +105,13 @@ def test_crypto_cache_entry_setattr():
 
 
 def test_crypto_cache_entry_age(patch_time):
+    mock_creation_time = 5
+    mock_check_time = 10
+    aws_encryption_sdk.caches.time.time.return_value = mock_creation_time
     entry = CryptoMaterialsCacheEntry(**_VALID_KWARGS["CryptoMaterialsCacheEntry"])
+    aws_encryption_sdk.caches.time.time.return_value = mock_check_time
 
-    assert entry.age == patch_time
+    assert entry.age == mock_check_time - mock_creation_time
 
 
 def test_crypto_cache_entry_is_too_old_no_lifetime_hint(patch_time):
@@ -119,11 +124,15 @@ def test_crypto_cache_entry_is_too_old_no_lifetime_hint(patch_time):
 
 @pytest.mark.parametrize("age_modifier, result", ((-1.0, True), (0.0, False), (1.0, False)))
 def test_crypto_cache_entry_is_too_old(patch_time, age_modifier, result):
-    lifetime = patch_time + age_modifier
+    mock_creation_time = 1
+    aws_encryption_sdk.caches.time.time.return_value = mock_creation_time
+    lifetime = mock_creation_time + age_modifier
     kwargs = _VALID_KWARGS["CryptoMaterialsCacheEntry"].copy()
     kwargs["hints"] = MagicMock(__class__=CryptoMaterialsCacheEntryHints, lifetime=lifetime)
     entry = CryptoMaterialsCacheEntry(**kwargs)
+    assert entry.creation_time == mock_creation_time
 
+    aws_encryption_sdk.caches.time.time.return_value = mock_creation_time + 1
     if result:
         assert entry.is_too_old()
     else:

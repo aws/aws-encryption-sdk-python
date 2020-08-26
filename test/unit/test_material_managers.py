@@ -15,7 +15,7 @@ import pytest
 from mock import MagicMock
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy
 from aws_encryption_sdk.internal.utils.streams import ROStream
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials,
@@ -42,11 +42,18 @@ _VALID_KWARGS = {
         encrypted_data_keys=set([]),
         encryption_context={},
         signing_key=b"",
+        commitment_policy=MagicMock(__class__=CommitmentPolicy),
     ),
     "DecryptionMaterialsRequest": dict(
-        algorithm=MagicMock(__class__=Algorithm), encrypted_data_keys=set([]), encryption_context={}
+        algorithm=MagicMock(__class__=Algorithm),
+        encrypted_data_keys=set([]),
+        encryption_context={},
     ),
-    "DecryptionMaterials": dict(data_key=MagicMock(__class__=DataKey), verification_key=b"ex_verification_key"),
+    "DecryptionMaterials": dict(
+        data_key=MagicMock(__class__=DataKey),
+        verification_key=b"ex_verification_key",
+        commitment_policy=MagicMock(__class__=CommitmentPolicy),
+    ),
 }
 
 
@@ -77,7 +84,11 @@ def test_attributes_fails(attr_class, invalid_kwargs):
 
 
 def test_encryption_materials_request_attributes_defaults():
-    test = EncryptionMaterialsRequest(encryption_context={}, frame_length=5)
+    test = EncryptionMaterialsRequest(
+        encryption_context={},
+        frame_length=5,
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+    )
     assert test.plaintext_rostream is None
     assert test.algorithm is None
     assert test.plaintext_length is None

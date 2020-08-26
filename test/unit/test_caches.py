@@ -25,7 +25,7 @@ from aws_encryption_sdk.caches import (
     build_decryption_materials_cache_key,
     build_encryption_materials_cache_key,
 )
-from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.structures import DataKey, MasterKeyInfo
 
@@ -74,6 +74,7 @@ VALUES["cache_ids"] = {
                 "partition_name": VALUES["basic"]["partition_name"],
                 "algorithm": None,
                 "encryption_context": VALUES["basic"]["encryption_context"]["empty"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"rkrFAso1YyPbOJbmwVMjrPw+wwLJT7xusn8tA8zMe9e3+OqbtfDueB7bvoKLU3fsmdUvZ6eMt7mBp1ThMMB25Q==",
         },
@@ -82,6 +83,7 @@ VALUES["cache_ids"] = {
                 "partition_name": VALUES["basic"]["partition_name"],
                 "algorithm": Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
                 "encryption_context": VALUES["basic"]["encryption_context"]["empty"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"3icBIkLK4V3fVwbm3zSxUdUQV6ZvZYUOLl8buN36g6gDMqAkghcGryxX7QiVABkW1JhB6GRp5z+bzbiuciBcKQ==",
         },
@@ -90,6 +92,7 @@ VALUES["cache_ids"] = {
                 "partition_name": VALUES["basic"]["partition_name"],
                 "algorithm": None,
                 "encryption_context": VALUES["basic"]["encryption_context"]["full"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"IHiUHYOUVUEFTc3BcZPJDlsWct2Qy1A7JdfQl9sQoV/ILIbRpoz9q7RtGd/MlibaGl5ihE66cN8ygM8A5rtYbg==",
         },
@@ -98,6 +101,7 @@ VALUES["cache_ids"] = {
                 "partition_name": VALUES["basic"]["partition_name"],
                 "algorithm": Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
                 "encryption_context": VALUES["basic"]["encryption_context"]["full"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"mRNK7qhTb/kJiiyGPgAevp0gwFRcET4KeeNYwZHhoEDvSUzQiDgl8Of+YRDaVzKxAqpNBgcAuFXde9JlaRRsmw==",
         },
@@ -109,6 +113,7 @@ VALUES["cache_ids"] = {
                 "algorithm": Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
                 "encrypted_data_keys": set([VALUES["basic"]["encrypted_data_keys"][0]["key"]]),
                 "encryption_context": VALUES["basic"]["encryption_context"]["empty"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"n0zVzk9QIVxhz6ET+aJIKKOJNxtpGtSe1yAbu7WU5l272Iw/jmhlER4psDHJs9Mr8KYiIvLGSXzggNDCc23+9w==",
         },
@@ -118,6 +123,7 @@ VALUES["cache_ids"] = {
                 "algorithm": Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
                 "encrypted_data_keys": {entry["key"] for entry in VALUES["basic"]["encrypted_data_keys"]},
                 "encryption_context": VALUES["basic"]["encryption_context"]["full"]["raw"],
+                "commitment_policy": CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
             },
             "id": b"+rtwUe38CGnczGmYu12iqGWHIyDyZ44EvYQ4S6ACmsgS8VaEpiw0RTGpDk6Z/7YYN/jVHOAcNKDyCNP8EmstFg==",
         },
@@ -144,6 +150,7 @@ def test_encryption_context_hash(encryption_context, result):
                     encryption_context=scenario["components"]["encryption_context"],
                     frame_length=0,
                     algorithm=scenario["components"]["algorithm"],
+                    commitment_policy=scenario["components"]["commitment_policy"],
                 ),
             ),
             scenario["id"],
@@ -181,6 +188,7 @@ def test_encrypted_data_keys_hash(encrypted_data_keys, result):
                     algorithm=scenario["components"]["algorithm"],
                     encrypted_data_keys=scenario["components"]["encrypted_data_keys"],
                     encryption_context=scenario["components"]["encryption_context"],
+                    commitment_policy=scenario["components"]["commitment_policy"],
                 ),
             ),
             scenario["id"],

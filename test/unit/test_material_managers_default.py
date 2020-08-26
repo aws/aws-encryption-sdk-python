@@ -11,13 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Test suite for aws_encryption_sdk.materials_managers.default"""
+
 import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.materials_managers.default
-from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
-from aws_encryption_sdk.identifiers import Algorithm
+from aws_encryption_sdk.exceptions import ActionNotAllowedError, MasterKeyProviderError, SerializationError
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy
 from aws_encryption_sdk.internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import EncryptionMaterials
@@ -48,13 +49,18 @@ def patch_for_dcmm_decrypt(mocker):
     yield mock_verification_key
 
 
-def build_cmm():
+def build_mkp():
     mock_mkp = MagicMock(__class__=MasterKeyProvider)
     mock_mkp.decrypt_data_key_from_list.return_value = MagicMock(__class__=DataKey)
     mock_mkp.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
         set([sentinel.primary_mk, sentinel.mk_a, sentinel.mk_b]),
     )
+    return mock_mkp
+
+
+def build_cmm():
+    mock_mkp = build_mkp()
     return DefaultCryptoMaterialsManager(master_key_provider=mock_mkp)
 
 
@@ -126,7 +132,7 @@ def test_get_encryption_materials(patch_for_dcmm_encrypt):
         encryption_context=encryption_context,
     )
     assert isinstance(test, EncryptionMaterials)
-    assert test.algorithm is cmm.algorithm
+    assert test.algorithm is cmm.algorithm is ALGORITHM
     assert test.data_encryption_key is patch_for_dcmm_encrypt[0][0]
     assert test.encrypted_data_keys is patch_for_dcmm_encrypt[0][1]
     assert test.encryption_context == encryption_context
@@ -134,7 +140,9 @@ def test_get_encryption_materials(patch_for_dcmm_encrypt):
 
 
 def test_get_encryption_materials_override_algorithm(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(
+        algorithm=MagicMock(__class__=Algorithm, is_committing=MagicMock(return_value=False)), encryption_context={}
+    )
     cmm = build_cmm()
 
     test = cmm.get_encryption_materials(request=mock_request)
@@ -142,8 +150,26 @@ def test_get_encryption_materials_override_algorithm(patch_for_dcmm_encrypt):
     assert test.algorithm is mock_request.algorithm
 
 
+def test_get_encryption_materials_committing_algorithm_policy_forbids():
+    """Tests that a Default Crypto Materials Manager configured with policy FORBID_ENCRYPT_ALLOW_DECRYPT cannot
+    encrypt using an algorithm that provides commitment."""
+    mock_alg = MagicMock(__class__=Algorithm)
+    mock_alg.is_committing.return_value = True
+    mock_request = MagicMock(algorithm=mock_alg, encryption_context={})
+    mock_request.commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+
+    cmm = DefaultCryptoMaterialsManager(master_key_provider=build_mkp())
+
+    with pytest.raises(ActionNotAllowedError) as excinfo:
+        cmm.get_encryption_materials(request=mock_request)
+
+    excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only non-committed messages")
+
+
 def test_get_encryption_materials_no_mks(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(
+        algorithm=MagicMock(__class__=Algorithm, is_committing=MagicMock(return_value=False)), encryption_context={}
+    )
     cmm = build_cmm()
     cmm.master_key_provider.master_keys_for_encryption.return_value = (None, set([]))
 
@@ -154,7 +180,9 @@ def test_get_encryption_materials_no_mks(patch_for_dcmm_encrypt):
 
 
 def test_get_encryption_materials_primary_mk_not_in_mks(patch_for_dcmm_encrypt):
-    mock_request = MagicMock(algorithm=MagicMock(__class__=Algorithm), encryption_context={})
+    mock_request = MagicMock(
+        algorithm=MagicMock(__class__=Algorithm, is_committing=MagicMock(return_value=False)), encryption_context={}
+    )
     cmm = build_cmm()
     cmm.master_key_provider.master_keys_for_encryption.return_value = (
         sentinel.primary_mk,
@@ -218,8 +246,11 @@ def test_load_verification_key_from_encryption_context_key_is_needed_and_is_foun
     assert test is mock_verifier.key_bytes.return_value
 
 
-def test_decrypt_materials(mocker, patch_for_dcmm_decrypt):
-    mock_request = MagicMock()
+@pytest.mark.parametrize("is_committing", (True, False))
+def test_decrypt_materials(mocker, patch_for_dcmm_decrypt, is_committing):
+    mock_alg = MagicMock(__class__=Algorithm)
+    mock_alg.is_committing.return_value = is_committing
+    mock_request = MagicMock(algorithm=mock_alg)
     cmm = build_cmm()
 
     test = cmm.decrypt_materials(request=mock_request)

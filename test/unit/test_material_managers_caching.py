@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for CachingCryptoMaterialsManager"""
+
 import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
@@ -43,6 +44,7 @@ def fake_encryption_request():
         frame_length=sentinel.frame_length,
         algorithm=sentinel.algorithm,
         plaintext_length=sentinel.plaintext_length,
+        commitment_policy=sentinel.commitment_policy,
     )
 
 
@@ -277,7 +279,10 @@ def test_get_encryption_materials_cache_hit_expired_entry(
     test = ccmm.get_encryption_materials(mock_request)
 
     patch_encryption_materials_request.assert_called_once_with(
-        encryption_context=sentinel.encryption_context, frame_length=sentinel.frame_length, algorithm=sentinel.algorithm
+        encryption_context=sentinel.encryption_context,
+        frame_length=sentinel.frame_length,
+        algorithm=sentinel.algorithm,
+        commitment_policy=sentinel.commitment_policy,
     )
     patch_build_encryption_materials_cache_key.assert_called_once_with(
         partition=ccmm.partition_name, request=patch_encryption_materials_request.return_value

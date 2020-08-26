@@ -24,7 +24,7 @@ from aws_encryption_sdk.exceptions import (
     NotSupportedError,
     SerializationError,
 )
-from aws_encryption_sdk.identifiers import Algorithm, ContentType
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, ContentType, SerializationVersion
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
@@ -43,7 +43,9 @@ class TestStreamEncryptor(object):
         self.mock_key_provider.__class__ = MasterKeyProvider
         self.mock_materials_manager = MagicMock(__class__=CryptoMaterialsManager)
         self.mock_encryption_materials = MagicMock(
-            algorithm=MagicMock(__class__=Algorithm, iv_len=MagicMock(__class__=int)),
+            algorithm=MagicMock(
+                __class__=Algorithm, iv_len=MagicMock(__class__=int), is_committing=MagicMock(return_value=False)
+            ),
             encryption_context=MagicMock(__class__=dict),
             encrypted_data_keys=MagicMock(__class__=set),
         )
@@ -81,7 +83,7 @@ class TestStreamEncryptor(object):
             "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.utils.content_type"
         )
         self.mock_content_type = self.mock_content_type_patcher.start()
-        self.mock_content_type.return_value = sentinel.content_type
+        self.mock_content_type.return_value = MagicMock(__class__=ContentType)
         # Set up validate_from_length patch
         self.mock_validate_frame_length_patcher = patch(
             "aws_encryption_sdk.streaming_client.aws_encryption_sdk.internal.utils.validate_frame_length"
@@ -170,7 +172,8 @@ class TestStreamEncryptor(object):
         )
         assert test_encryptor.sequence_number == 1
         self.mock_content_type.assert_called_once_with(self.mock_frame_length)
-        assert test_encryptor.content_type is sentinel.content_type
+        assert test_encryptor.content_type is self.mock_content_type.return_value
+        assert test_encryptor.config.commitment_policy is CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
 
     def test_init_non_framed_message_too_large(self):
         with pytest.raises(SerializationError) as excinfo:
@@ -259,6 +262,7 @@ class TestStreamEncryptor(object):
             plaintext_rostream=sentinel.plaintext_rostream,
             frame_length=test_encryptor.config.frame_length,
             plaintext_length=5,
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         )
         self.mock_materials_manager.get_encryption_materials.assert_called_once_with(
             request=mock_encryption_materials_request.return_value
@@ -313,6 +317,36 @@ class TestStreamEncryptor(object):
         test_encryptor._prep_message()
         assert not self.mock_signer.called
 
+    def test_prep_message_algorithm_violates_policy(self):
+        algorithm = MagicMock(__class__=Algorithm)
+        algorithm.is_committing.return_value = True
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=algorithm,
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        )
+
+        with pytest.raises(ActionNotAllowedError) as excinfo:
+            test_encryptor._prep_message()
+        excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only non-committed messages")
+
+    def test_prep_message_algorithm_allowed_by_policy(self):
+        algorithm = MagicMock(__class__=Algorithm, iv_len=12)
+        algorithm.is_committing.return_value = False
+        self.mock_encryption_materials.algorithm = algorithm
+
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=algorithm,
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        )
+
+        test_encryptor._prep_message()
+
     def test_write_header(self):
         self.mock_serialize_header.return_value = b"12345"
         self.mock_serialize_header_auth.return_value = b"67890"
@@ -326,6 +360,7 @@ class TestStreamEncryptor(object):
         test_encryptor.signer = sentinel.signer
         test_encryptor.content_type = sentinel.content_type
         test_encryptor._header = sentinel.header
+        sentinel.header.version = SerializationVersion.V1
         test_encryptor.output_buffer = b""
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._derived_data_key = sentinel.derived_data_key
@@ -334,6 +369,7 @@ class TestStreamEncryptor(object):
 
         self.mock_serialize_header.assert_called_once_with(header=test_encryptor._header, signer=sentinel.signer)
         self.mock_serialize_header_auth.assert_called_once_with(
+            version=sentinel.header.version,
             algorithm=self.mock_encryption_materials.algorithm,
             header=b"12345",
             data_encryption_key=sentinel.derived_data_key,

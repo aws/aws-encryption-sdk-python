@@ -49,7 +49,7 @@ class MasterKeyProvider(object):
     #: Determines whether a MasterKeyProvider attempts to add a MasterKey on decrypt_data_key call.
     vend_masterkey_on_decrypt = True
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def provider_id(self):
         """String defining provider ID.
 
@@ -57,7 +57,7 @@ class MasterKeyProvider(object):
             Must be implemented by specific MasterKeyProvider implementations.
         """
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def _config_class(self):
         """Configuration class to use when setting up this class.
 
@@ -71,7 +71,7 @@ class MasterKeyProvider(object):
         """
         instance = super(MasterKeyProvider, cls).__new__(cls)
         config = kwargs.pop("config", None)
-        if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
+        if not isinstance(config, instance._config_class):  # pylint: disable=protected-access,W1116
             config = instance._config_class(**kwargs)  # pylint: disable=protected-access
         instance.config = config
         #: Index matching key IDs to existing MasterKey objects.
@@ -324,7 +324,7 @@ class MasterKey(MasterKeyProvider):
             # Only allow override if provider_id is NOT set to non-None for the class
             if instance.provider_id is None:
                 instance.provider_id = instance.config.provider_id
-            elif instance.provider_id != instance.config.provider_id:
+            elif instance.provider_id != instance.config.provider_id:  # pylint: disable=comparison-with-callable
                 raise ConfigMismatchError(
                     "Config provider_id does not match MasterKey provider_id: {config} != {instance}".format(
                         config=instance.config.provider_id, instance=instance.provider_id
@@ -474,8 +474,8 @@ class MasterKey(MasterKeyProvider):
     def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
         """Decrypts an encrypted data key and returns the plaintext.
 
-        :param data_key: Encrypted data key
-        :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
+        :param encrypted_data_key: Encrypted data key
+        :type encrypted_data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
         :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param dict encryption_context: Encryption context to use in decryption

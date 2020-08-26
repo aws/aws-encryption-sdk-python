@@ -20,7 +20,6 @@ from .unit_test_utils import all_invalid_kwargs, all_valid_kwargs
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
-
 VALID_KWARGS = {
     MessageHeader: [
         dict(
@@ -65,7 +64,9 @@ def test_attributes_valid_kwargs(cls, kwargs):
     cls(**kwargs)
 
 
-@pytest.mark.parametrize("cls, kwargs", all_invalid_kwargs(VALID_KWARGS))
+@pytest.mark.parametrize(
+    "cls, kwargs", all_invalid_kwargs(VALID_KWARGS, optional_fields=["type", "content_aad_length", "header_iv_length"])
+)
 def test_attributes_invalid_kwargs(cls, kwargs):
     with pytest.raises(TypeError):
         cls(**kwargs)

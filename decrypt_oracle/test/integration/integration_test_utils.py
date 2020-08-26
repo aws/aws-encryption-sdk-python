@@ -77,8 +77,7 @@ def kms_master_key_provider(cache: Optional[bool] = True):
         return _KMS_MKP
 
     cmk_arn = get_cmk_arn()
-    _kms_master_key_provider = KMSMasterKeyProvider()
-    _kms_master_key_provider.add_master_key(cmk_arn)
+    _kms_master_key_provider = KMSMasterKeyProvider(key_ids=[cmk_arn])
 
     if cache:
         _KMS_MKP = _kms_master_key_provider

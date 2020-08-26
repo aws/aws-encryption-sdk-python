@@ -12,10 +12,18 @@
 # language governing permissions and limitations under the License.
 """High level AWS Encryption SDK client functions."""
 # Below are imported for ease of use by implementors
+import warnings
+
+import attr
+
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
-from aws_encryption_sdk.identifiers import Algorithm, __version__  # noqa
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider, KMSMasterKeyProviderConfig  # noqa
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__  # noqa
+from aws_encryption_sdk.key_providers.kms import (  # noqa
+    DiscoveryAwsKmsMasterKeyProvider,
+    KMSMasterKeyProviderConfig,
+    StrictAwsKmsMasterKeyProvider,
+)
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager  # noqa
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager  # noqa
 from aws_encryption_sdk.streaming_client import (  # noqa
@@ -24,6 +32,203 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamDecryptor,
     StreamEncryptor,
 )
+
+
+@attr.s(hash=True)
+class EncryptionSDKClientConfig(object):
+    """Configuration object for EncryptionSDKClients
+
+    :param commitment_policy: The commitment policy to apply to encryption and decryption requests
+    :type commitment_policy: aws_encryption_sdk.materials_manager.identifiers.CommitmentPolicy
+    """
+
+    commitment_policy = attr.ib(hash=True, validator=attr.validators.instance_of(CommitmentPolicy))
+
+
+class EncryptionSDKClient(object):
+    """A client providing high level AWS Encryption SDK client methods."""
+
+    _config_class = EncryptionSDKClientConfig
+
+    def __new__(cls, **kwargs):
+        """Constructs a new EncryptionSDKClient instance."""
+        instance = super(EncryptionSDKClient, cls).__new__(cls)
+
+        config = kwargs.pop("config", None)
+        if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
+            config = instance._config_class(**kwargs)  # pylint: disable=protected-access
+        instance.config = config
+        return instance
+
+    def encrypt(self, **kwargs):
+        """Encrypts and serializes provided plaintext.
+
+        .. note::
+            When using this function, the entire ciphertext message is encrypted into memory before returning
+            any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
+
+        .. code:: python
+
+            >>> import aws_encryption_sdk
+            >>> client = aws_encryption_sdk.EncryptionSDKClient(
+            >>>     commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+            >>> )
+            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
+            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+            ... ])
+            >>> my_ciphertext, encryptor_header = client.encrypt(
+            ...     source=my_plaintext,
+            ...     key_provider=kms_key_provider
+            ... )
+
+        :param config: Client configuration object (config or individual parameters required)
+        :type config: aws_encryption_sdk.streaming_client.EncryptorConfig
+        :param source: Source data to encrypt or decrypt
+        :type source: str, bytes, io.IOBase, or file
+        :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
+            (requires either `materials_manager` or `key_provider`)
+        :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+        :param key_provider: `MasterKeyProvider` that returns data keys for encryption
+            (requires either `materials_manager` or `key_provider`)
+        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+        :param int source_length: Length of source data (optional)
+
+            .. note::
+                If source_length is not provided and unframed message is being written or read() is called,
+                will attempt to seek() to the end of the stream and tell() to find the length of source data.
+
+            .. note::
+                If `source_length` and `materials_manager` are both provided, the total plaintext bytes
+                encrypted will not be allowed to exceed `source_length`. To maintain backwards compatibility,
+                this is not enforced if a `key_provider` is provided.
+
+        :param dict encryption_context: Dictionary defining encryption context
+        :param algorithm: Algorithm to use for encryption
+        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :param int frame_length: Frame length in bytes
+        :returns: Tuple containing the encrypted ciphertext and the message header object
+        :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
+        """
+        kwargs["commitment_policy"] = self.config.commitment_policy
+        with StreamEncryptor(**kwargs) as encryptor:
+            ciphertext = encryptor.read()
+        return ciphertext, encryptor.header
+
+    def decrypt(self, **kwargs):
+        """Deserializes and decrypts provided ciphertext.
+
+        .. note::
+            When using this function, the entire ciphertext message is decrypted into memory before returning
+            any data.  If streaming is desired, see :class:`aws_encryption_sdk.stream`.
+
+        .. code:: python
+
+            >>> import aws_encryption_sdk
+            >>> client = aws_encryption_sdk.EncryptionSDKClient(
+            >>>     commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+            >>> )
+            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
+            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+            ... ])
+            >>> my_ciphertext, encryptor_header = client.decrypt(
+            ...     source=my_ciphertext,
+            ...     key_provider=kms_key_provider
+            ... )
+
+        :param config: Client configuration object (config or individual parameters required)
+        :type config: aws_encryption_sdk.streaming_client.DecryptorConfig
+        :param source: Source data to encrypt or decrypt
+        :type source: str, bytes, io.IOBase, or file
+        :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
+            (requires either `materials_manager` or `key_provider`)
+        :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+        :param key_provider: `MasterKeyProvider` that returns data keys for decryption
+            (requires either `materials_manager` or `key_provider`)
+        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+        :param int source_length: Length of source data (optional)
+
+            .. note::
+                If source_length is not provided and read() is called, will attempt to seek()
+                to the end of the stream and tell() to find the length of source data.
+
+        :param int max_body_length: Maximum frame size (or content length for non-framed messages)
+            in bytes to read from ciphertext message.
+        :returns: Tuple containing the decrypted plaintext and the message header object
+        :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
+        """
+        kwargs["commitment_policy"] = self.config.commitment_policy
+        with StreamDecryptor(**kwargs) as decryptor:
+            plaintext = decryptor.read()
+        return plaintext, decryptor.header
+
+    def stream(self, **kwargs):
+        """Provides an :py:func:`open`-like interface to the streaming encryptor/decryptor classes.
+
+        .. warning::
+            Take care when decrypting framed messages with large frame length and large non-framed
+            messages. In order to protect the authenticity of the encrypted data, no plaintext
+            is returned until it has been authenticated. Because of this, potentially large amounts
+            of data may be read into memory.  In the case of framed messages, the entire contents
+            of each frame are read into memory and authenticated before returning any plaintext.
+            In the case of non-framed messages, the entire message is read into memory and
+            authenticated before returning any plaintext.  The authenticated plaintext is held in
+            memory until it is requested.
+
+        .. note::
+            Consequently, keep the above decrypting consideration in mind when encrypting messages
+            to ensure that issues are not encountered when decrypting those messages.
+
+        .. code:: python
+
+            >>> import aws_encryption_sdk
+            >>> client = aws_encryption_sdk.EncryptionSDKClient(
+            >>>     commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+            >>> )
+            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
+            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
+            ...  ])
+            >>> plaintext_filename = 'my-secret-data.dat'
+            >>> ciphertext_filename = 'my-encrypted-data.ct'
+            >>> with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
+            ...      with client.stream(
+            ...         mode='e',
+            ...         source=pt_file,
+            ...         key_provider=kms_key_provider
+            ...     ) as encryptor:
+            ...         for chunk in encryptor:
+            ...              ct_file.write(chunk)
+            >>> new_plaintext_filename = 'my-decrypted-data.dat'
+            >>> with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
+            ...     with client.stream(
+            ...         mode='d',
+            ...         source=ct_file,
+            ...         key_provider=kms_key_provider
+            ...     ) as decryptor:
+            ...         for chunk in decryptor:
+            ...             pt_file.write(chunk)
+
+        :param str mode: Type of streaming client to return (e/encrypt: encryptor, d/decrypt: decryptor)
+        :param **kwargs: All other parameters provided are passed to the appropriate Streaming client
+        :returns: Streaming Encryptor or Decryptor, as requested
+        :rtype: :class:`aws_encryption_sdk.streaming_client.StreamEncryptor`
+            or :class:`aws_encryption_sdk.streaming_client.StreamDecryptor`
+        :raises ValueError: if supplied with an unsupported mode value
+        """
+        kwargs["commitment_policy"] = self.config.commitment_policy
+        mode = kwargs.pop("mode")
+        _stream_map = {
+            "e": StreamEncryptor,
+            "encrypt": StreamEncryptor,
+            "d": StreamDecryptor,
+            "decrypt": StreamDecryptor,
+        }
+        try:
+            return _stream_map[mode.lower()](**kwargs)
+        except KeyError:
+            raise ValueError("Unsupported mode: {}".format(mode))
 
 
 def encrypt(**kwargs):
@@ -36,7 +241,7 @@ def encrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
         ... ])
@@ -75,6 +280,11 @@ def encrypt(**kwargs):
     :returns: Tuple containing the encrypted ciphertext and the message header object
     :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
     """
+    warnings.warn(
+        "This method is deprecated and will be removed in a future version. Please construct an EncryptionSDKClient "
+        "object instead.",
+        DeprecationWarning,
+    )
     with StreamEncryptor(**kwargs) as encryptor:
         ciphertext = encryptor.read()
     return ciphertext, encryptor.header
@@ -90,7 +300,7 @@ def decrypt(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
         ... ])
@@ -120,6 +330,11 @@ def decrypt(**kwargs):
     :returns: Tuple containing the decrypted plaintext and the message header object
     :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
     """
+    warnings.warn(
+        "This method is deprecated and will be removed in a future version. Please construct an EncryptionSDKClient "
+        "object instead.",
+        DeprecationWarning,
+    )
     with StreamDecryptor(**kwargs) as decryptor:
         plaintext = decryptor.read()
     return plaintext, decryptor.header
@@ -145,7 +360,7 @@ def stream(**kwargs):
     .. code:: python
 
         >>> import aws_encryption_sdk
-        >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
+        >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
         ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
         ...  ])
@@ -176,6 +391,11 @@ def stream(**kwargs):
         or :class:`aws_encryption_sdk.streaming_client.StreamDecryptor`
     :raises ValueError: if supplied with an unsupported mode value
     """
+    warnings.warn(
+        "This method is deprecated and will be removed in a future version. Please construct an EncryptionSDKClient "
+        "object instead.",
+        DeprecationWarning,
+    )
     mode = kwargs.pop("mode")
     _stream_map = {"e": StreamEncryptor, "encrypt": StreamEncryptor, "d": StreamDecryptor, "decrypt": StreamDecryptor}
     try:

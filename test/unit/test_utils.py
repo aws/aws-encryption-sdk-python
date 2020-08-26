@@ -144,8 +144,8 @@ class TestUtils(object):
 
     def test_validate_frame_length_negative_frame_length(self):
         """Validate that the validate_frame_length function
-            behaves as expected when supplied with a
-            negative frame length.
+        behaves as expected when supplied with a
+        negative frame length.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(frame_length=-1, algorithm=self.mock_algorithm)
@@ -153,8 +153,8 @@ class TestUtils(object):
 
     def test_validate_frame_length_invalid_frame_length(self):
         """Validate that the validate_frame_length function
-            behaves as expected when supplied with an
-            invalid frame length.
+        behaves as expected when supplied with an
+        invalid frame length.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(frame_length=1, algorithm=self.mock_algorithm)
@@ -162,8 +162,8 @@ class TestUtils(object):
 
     def test_validate_frame_length_too_large(self):
         """Validate that the validate_frame_length function
-            behaves as expected when supplied with a
-            frame length which is too large.
+        behaves as expected when supplied with a
+        frame length which is too large.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.utils.validate_frame_length(
@@ -179,7 +179,7 @@ class TestUtils(object):
 
     def test_get_aad_content_string_no_framing(self):
         """Validate that the get_aad_content_string function behaves
-            as expected when called with NO_FRAMING.
+        as expected when called with NO_FRAMING.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
             aws_encryption_sdk.identifiers.ContentType.NO_FRAMING, False
@@ -188,7 +188,7 @@ class TestUtils(object):
 
     def test_get_aad_content_string_framing(self):
         """Validate that the get_aad_content_string function behaves
-            as expected when called with FRAMED_DATA.
+        as expected when called with FRAMED_DATA.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
             aws_encryption_sdk.identifiers.ContentType.FRAMED_DATA, False
@@ -197,7 +197,7 @@ class TestUtils(object):
 
     def test_get_aad_content_string_framing_final_frame(self):
         """Validate that the get_aad_content_string function behaves as
-            expected when called with FRAMED_DATA and final frame.
+        expected when called with FRAMED_DATA and final frame.
         """
         test = aws_encryption_sdk.internal.utils.get_aad_content_string(
             aws_encryption_sdk.identifiers.ContentType.FRAMED_DATA, True
@@ -206,7 +206,7 @@ class TestUtils(object):
 
     def test_get_aad_content_string_framing_bad_type(self):
         """Validate that the get_aad_content_string function behaves as
-            expected when called with an unknown content type.
+        expected when called with an unknown content type.
         """
         with pytest.raises(UnknownIdentityError) as excinfo:
             aws_encryption_sdk.internal.utils.get_aad_content_string(-1, False)

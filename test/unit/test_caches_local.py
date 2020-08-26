@@ -305,9 +305,7 @@ def test_get_encryption_materials(patch_get_single_entry):
     test = cache.get_encryption_materials(cache_key=sentinel.cache_key, plaintext_length=plaintext_length)
 
     patch_get_single_entry.assert_called_once_with(sentinel.cache_key)
-    patch_get_single_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(
-        plaintext_length
-    )
+    patch_get_single_entry.return_value._update_with_message_bytes_encrypted.assert_called_once_with(plaintext_length)
     assert test is patch_get_single_entry.return_value
 
 

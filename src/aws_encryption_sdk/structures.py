@@ -43,15 +43,32 @@ class MessageHeader(object):
     version = attr.ib(
         hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.SerializationVersion)
     )
-    type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ObjectType))
     algorithm = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.Algorithm))
     message_id = attr.ib(hash=True, validator=attr.validators.instance_of(bytes))
     encryption_context = attr.ib(hash=True, validator=attr.validators.instance_of(dict))
     encrypted_data_keys = attr.ib(hash=True, validator=attr.validators.instance_of(set))
     content_type = attr.ib(hash=True, validator=attr.validators.instance_of(aws_encryption_sdk.identifiers.ContentType))
-    content_aad_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
-    header_iv_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
     frame_length = attr.ib(hash=True, validator=attr.validators.instance_of(six.integer_types))
+
+    # Only present in SerializationVersion.V1
+    type = attr.ib(
+        hash=True,
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(aws_encryption_sdk.identifiers.ObjectType)),
+    )
+    content_aad_length = attr.ib(
+        hash=True,
+        default=None,
+        validator=attr.validators.optional(attr.validators.optional(attr.validators.instance_of(six.integer_types))),
+    )
+    header_iv_length = attr.ib(
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
+    )
+
+    # Only present in SerializationVersion.V2 with certain algorithm suites
+    commitment_key = attr.ib(
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(bytes))
+    )
 
 
 @attr.s(hash=True)

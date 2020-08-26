@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__version__ = "1.4.1"
+__version__ = "1.7.0"
 USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
 
@@ -93,6 +93,7 @@ class KDFSuite(Enum):
     NONE = (None, None, None)
     HKDF_SHA256 = (hkdf.HKDF, None, hashes.SHA256)
     HKDF_SHA384 = (hkdf.HKDF, None, hashes.SHA384)
+    HKDF_SHA512 = (hkdf.HKDF, None, hashes.SHA512)
 
     def __init__(self, algorithm, input_length, hash_algorithm):
         """Prepare a new KDFSuite."""
@@ -154,28 +155,39 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
 
     __rlookup__ = {}  # algorithm_id -> AlgorithmSuite
 
-    AES_128_GCM_IV12_TAG16 = (0x0014, EncryptionSuite.AES_128_GCM_IV12_TAG16)
-    AES_192_GCM_IV12_TAG16 = (0x0046, EncryptionSuite.AES_192_GCM_IV12_TAG16)
-    AES_256_GCM_IV12_TAG16 = (0x0078, EncryptionSuite.AES_256_GCM_IV12_TAG16)
-    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (0x0114, EncryptionSuite.AES_128_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
-    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (0x0146, EncryptionSuite.AES_192_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
-    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (0x0178, EncryptionSuite.AES_256_GCM_IV12_TAG16, KDFSuite.HKDF_SHA256)
+    AES_128_GCM_IV12_TAG16 = (0x0014, EncryptionSuite.AES_128_GCM_IV12_TAG16, 0x01)
+    AES_192_GCM_IV12_TAG16 = (0x0046, EncryptionSuite.AES_192_GCM_IV12_TAG16, 0x01)
+    AES_256_GCM_IV12_TAG16 = (0x0078, EncryptionSuite.AES_256_GCM_IV12_TAG16, 0x01)
+    AES_128_GCM_IV12_TAG16_HKDF_SHA256 = (0x0114, EncryptionSuite.AES_128_GCM_IV12_TAG16, 0x01, KDFSuite.HKDF_SHA256)
+    AES_192_GCM_IV12_TAG16_HKDF_SHA256 = (0x0146, EncryptionSuite.AES_192_GCM_IV12_TAG16, 0x01, KDFSuite.HKDF_SHA256)
+    AES_256_GCM_IV12_TAG16_HKDF_SHA256 = (0x0178, EncryptionSuite.AES_256_GCM_IV12_TAG16, 0x01, KDFSuite.HKDF_SHA256)
     AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256 = (
         0x0214,
         EncryptionSuite.AES_128_GCM_IV12_TAG16,
+        0x01,
         KDFSuite.HKDF_SHA256,
         AuthenticationSuite.SHA256_ECDSA_P256,
     )
     AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
         0x0346,
         EncryptionSuite.AES_192_GCM_IV12_TAG16,
+        0x01,
         KDFSuite.HKDF_SHA384,
         AuthenticationSuite.SHA256_ECDSA_P384,
     )
     AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 = (
         0x0378,
         EncryptionSuite.AES_256_GCM_IV12_TAG16,
+        0x01,
         KDFSuite.HKDF_SHA384,
+        AuthenticationSuite.SHA256_ECDSA_P384,
+    )
+    AES_256_GCM_HKDF_SHA512_COMMIT_KEY = (0x0478, EncryptionSuite.AES_256_GCM_IV12_TAG16, 0x02, KDFSuite.HKDF_SHA512)
+    AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384 = (
+        0x0578,
+        EncryptionSuite.AES_256_GCM_IV12_TAG16,
+        0x02,
+        KDFSuite.HKDF_SHA512,
         AuthenticationSuite.SHA256_ECDSA_P384,
     )
 
@@ -183,6 +195,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         self,
         algorithm_id,  # type: int
         encryption,  # type: EncryptionSuite
+        message_format_version,  # type: int
         kdf=KDFSuite.NONE,  # type: Optional[KDFSuite]
         authentication=AuthenticationSuite.NONE,  # type: Optional[AuthenticationSuite]
         allowed=True,  # type: bool
@@ -191,6 +204,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         """Prepare a new AlgorithmSuite."""
         self.algorithm_id = algorithm_id
         self.encryption = encryption
+        self.message_format_version = message_format_version
         self.encryption.valid_kdf(kdf)
         self.kdf = kdf
         self.authentication = authentication
@@ -212,6 +226,7 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         self.signing_algorithm_info = self.authentication.algorithm
         self.signing_hash_type = self.authentication.hash_algorithm
         self.signature_len = self.authentication.signature_length
+        self.header_auth_iv = b"\x00" * self.iv_len
 
         self.__rlookup__[algorithm_id] = self
 
@@ -233,11 +248,33 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
 
     def id_as_bytes(self):
         """Return the algorithm suite ID as a 2-byte array"""
-        return struct.pack(">H", self.algorithm_id)
+        b = bytearray()
+        b.extend(struct.pack(">H", self.algorithm_id))
+        return b
 
     def safe_to_cache(self):
         """Determine whether encryption materials for this algorithm suite should be cached."""
         return self.kdf is not KDFSuite.NONE
+
+    def is_committing(self):
+        """Determine whether this algorithm suite offers key commitment."""
+        upper_bytes = self.id_as_bytes()[0]
+        return upper_bytes in (0x04, 0x05)
+
+    def message_id_length(self):
+        """Returns the size of the message id."""
+        if self.message_format_version == 0x01:
+            return 16
+        else:
+            return 32
+
+    def algorithm_suite_data_length(self):
+        """Returns the length of the Algorithm Suite Data field."""
+        upper_bytes = self.id_as_bytes()[0]
+        if upper_bytes in (0x04, 0x05):
+            return 32
+        else:
+            return 0
 
 
 Algorithm = AlgorithmSuite
@@ -313,6 +350,7 @@ class SerializationVersion(Enum):
     """Valid Versions of AWS Encryption SDK message format."""
 
     V1 = 1  # pylint: disable=invalid-name
+    V2 = 2  # pylint: disable=invalid-name
 
 
 class ContentType(Enum):
@@ -328,3 +366,9 @@ class ContentAADString(Enum):
     FRAME_STRING_ID = b"AWSKMSEncryptionClient Frame"
     FINAL_FRAME_STRING_ID = b"AWSKMSEncryptionClient Final Frame"
     NON_FRAMED_STRING_ID = b"AWSKMSEncryptionClient Single Block"
+
+
+class CommitmentPolicy(Enum):
+    """Controls algorithm suites that can be used on encryption and decryption."""
+
+    FORBID_ENCRYPT_ALLOW_DECRYPT = 0

@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 class TestEncryptionContext(object):
     def test_assemble_content_aad(self):
         """Validate that the assemble_content_aad function
-            behaves as expected.
+        behaves as expected.
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.assemble_content_aad(
             message_id=VALUES["message_id"],
@@ -45,17 +45,17 @@ class TestEncryptionContext(object):
 
     def test_serialize_encryption_context_no_encryption_context(self):
         """Validate that the serialize_encryption_context
-            function behaves as expected when presented
-            with an empty encryption context.
+        function behaves as expected when presented
+        with an empty encryption context.
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context({})
         assert test == bytes()
 
     def test_serialize_encryption_context_too_many_elements(self):
         """Validate that the serialize_encryption_context
-            function behaves as expected when presented
-            with an encryption context with too many
-            elements.
+        function behaves as expected when presented
+        with an encryption context with too many
+        elements.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
@@ -65,8 +65,8 @@ class TestEncryptionContext(object):
 
     def test_serialize_encryption_context_too_large(self):
         """Validate that the serialize_encryption_context
-            function behaves as expected when presented
-            with an encryption context which is too large.
+        function behaves as expected when presented
+        with an encryption context which is too large.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
@@ -76,9 +76,9 @@ class TestEncryptionContext(object):
 
     def test_serialize_encryption_context_unencodable(self):
         """Validate that the serialize_encryption_context
-            function behaves as expected when presented
-            with an encryption context which contains
-            unencodable elements.
+        function behaves as expected when presented
+        with an encryption context which contains
+        unencodable elements.
         """
         for encryption_context in [{"a": b"\xc4"}, {b"\xc4": "a"}, {b"\xc4": b"\xc4"}]:
             with pytest.raises(SerializationError) as excinfo:
@@ -89,8 +89,8 @@ class TestEncryptionContext(object):
 
     def test_serialize_encryption_context_valid(self):
         """Validate that the serialize_encryption_context
-            function behaves as expected for a valid
-            encryption context.
+        function behaves as expected for a valid
+        encryption context.
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
             VALUES["updated_encryption_context"]
@@ -99,7 +99,7 @@ class TestEncryptionContext(object):
 
     def test_read_short_too_short(self):
         """Validate that the read_short function behaves
-            as expected when it encounters a struct error.
+        as expected when it encounters a struct error.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.read_short(b"d", 0)
@@ -107,7 +107,7 @@ class TestEncryptionContext(object):
 
     def test_read_short_valid(self):
         """Validate that the read_short function behaves
-            as expected with a valid call.
+        as expected with a valid call.
         """
         test_value, test_offset = aws_encryption_sdk.internal.formatting.encryption_context.read_short(b"\x00\x05df", 0)
         assert test_value == 5
@@ -115,8 +115,8 @@ class TestEncryptionContext(object):
 
     def test_read_string_encoding_error(self):
         """Validate that the read_string function behaves
-            as expected when it encounters an encoding
-            error.
+        as expected when it encounters an encoding
+        error.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.read_string(b"\xc4", 0, 1)
@@ -124,7 +124,7 @@ class TestEncryptionContext(object):
 
     def test_read_string_valid(self):
         """Validate that the read_string function behaves
-            as expected with a valid call.
+        as expected with a valid call.
         """
         test_value, test_offset = aws_encryption_sdk.internal.formatting.encryption_context.read_string(b"asdf", 0, 2)
         assert test_value == "as"
@@ -132,9 +132,9 @@ class TestEncryptionContext(object):
 
     def test_deserialize_encryption_context_too_large(self):
         """Validate that the deserialize_encryption_context
-            function behaves as expected when it encounters
-            a serialized encryption context which is too
-            large.
+        function behaves as expected when it encounters
+        a serialized encryption context which is too
+        large.
         """
         data = ""
         for i in range(aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE + 1):
@@ -147,9 +147,9 @@ class TestEncryptionContext(object):
 
     def test_deserialize_encryption_context_duplicate_key(self):
         """Validate that the deserialize_encryption_context
-            function behaves as expected when it encounters
-            a serialized encryption context which contains
-            duplicate keys.
+        function behaves as expected when it encounters
+        a serialized encryption context which contains
+        duplicate keys.
         """
         with pytest.raises(SerializationError) as excinfo:
             aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
@@ -159,10 +159,10 @@ class TestEncryptionContext(object):
 
     def test_deserialize_encryption_context_extra_data(self):
         """Validate that the deserialize_encryption_context
-            function behaves as expected when it encounters
-            a serialized encryption context which contains
-            extra data after processing the encoded number
-            of pairs (formatting error).
+        function behaves as expected when it encounters
+        a serialized encryption context which contains
+        extra data after processing the encoded number
+        of pairs (formatting error).
         """
         data = VALUES["serialized_encryption_context"] + b"jhofguijhsuskldfh"
         with pytest.raises(SerializationError) as excinfo:
@@ -173,8 +173,8 @@ class TestEncryptionContext(object):
 
     def test_deserialize_encryption_context_valid(self):
         """Validate that the deserialize_encryption_context
-            function behaves as expected for a valid
-            encryption context.
+        function behaves as expected for a valid
+        encryption context.
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
             serialized_encryption_context=VALUES["serialized_encryption_context"]
@@ -183,8 +183,8 @@ class TestEncryptionContext(object):
 
     def test_deserialize_encryption_context_empty(self):
         """Validate that the deserialize_encryption_context
-            function behaves as expected for an empty
-            encryption context.
+        function behaves as expected for an empty
+        encryption context.
         """
         test = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
             serialized_encryption_context=b""

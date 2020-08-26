@@ -24,7 +24,8 @@ def header_length(header):
     # Because encrypted data key lengths may not be knowable until the ciphertext
     #  is received from the providers, just serialize the header directly.
     header_length = len(serialize_header(header))
-    header_length += header.algorithm.iv_len  # Header Authentication IV
+    if header.algorithm.message_format_version == 0x01:
+        header_length += header.algorithm.iv_len  # Header Authentication IV
     header_length += header.algorithm.auth_len  # Header Authentication Tag
     return header_length
 
