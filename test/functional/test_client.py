@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Functional test suite for aws_encryption_sdk.kms_thick_client"""
+"""Functional test suite for aws_encryption_sdk"""
 from __future__ import division
 
 import io

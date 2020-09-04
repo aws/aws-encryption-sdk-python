@@ -49,97 +49,87 @@ matrix:
       dist: xenial
       sudo: true
       stage: Client Tests
+    - python: 3.8
+      env: TOXENV=py38-benchmark-kms
+      dist: xenial
+      sudo: true
+      stage: Client Tests
     ########################
     # Test Vector Handlers #
     ########################
     # CPython 2.7
     - python: 2.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_1.3.3
       stage: Test Vector Handler Tests
     - python: 2.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_1.3.max
       stage: Test Vector Handler Tests
     - python: 2.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py27-awses_latest
       stage: Test Vector Handler Tests
     # CPython 3.5
     - python: 3.5
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_1.3.3
       stage: Test Vector Handler Tests
     - python: 3.5
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_1.3.max
       stage: Test Vector Handler Tests
     - python: 3.5
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py35-awses_latest
       stage: Test Vector Handler Tests
     # CPython 3.6
     - python: 3.6
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_1.3.3
       stage: Test Vector Handler Tests
     - python: 3.6
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_1.3.max
       stage: Test Vector Handler Tests
     - python: 3.6
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py36-awses_latest
       stage: Test Vector Handler Tests
     # CPython 3.7
     - python: 3.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_1.3.3
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_1.3.max
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.7
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py37-awses_latest
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     # CPython 3.8
     - python: 3.8
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py38-awses_1.3.3
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.8
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py38-awses_1.3.max
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.8
-      env:
-        TEST_VECTOR_HANDLERS=1
+      env: TEST_VECTOR_HANDLERS=1
         TOXENV=py38-awses_latest
       dist: xenial
       sudo: true
