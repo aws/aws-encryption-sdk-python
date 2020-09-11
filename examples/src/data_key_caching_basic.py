@@ -32,8 +32,9 @@ def encrypt_with_caching(kms_cmk_arn, max_age_in_cache, cache_capacity):
     # Create an encryption context
     encryption_context = {"purpose": "test"}
 
-    # Set up an encryption client with an explicit commitment policy
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
+    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Create a master key provider for the KMS customer master key (CMK)
     key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[kms_cmk_arn])

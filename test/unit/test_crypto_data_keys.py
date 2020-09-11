@@ -73,7 +73,7 @@ def test_derive_data_encryption_key_with_hkdf_committing(patch_default_backend, 
 
 def test_derive_data_encryption_key_no_hkdf():
     algorithm = MagicMock(kdf_type=None)
-    test = test = data_keys.derive_data_encryption_key(
+    test = data_keys.derive_data_encryption_key(
         source_key=sentinel.source_key, algorithm=algorithm, message_id=sentinel.message_id
     )
     assert test == sentinel.source_key
@@ -83,7 +83,7 @@ def test_calculate_commitment_key(patch_default_backend, patch_struct):
     algorithm = MagicMock()
     algorithm.kdf_hash_type.return_value = sentinel.kdf_hash_type
     algorithm.is_committing.return_value = False
-    test = test = data_keys.calculate_commitment_key(
+    test = data_keys.calculate_commitment_key(
         source_key=sentinel.source_key, algorithm=algorithm, message_id=sentinel.message_id
     )
     patch_struct.pack.assert_called_with(">9s", data_keys.COMMIT_LABEL)

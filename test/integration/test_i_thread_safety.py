@@ -100,20 +100,17 @@ def test_threading_loop():
     # Check for the CMK ARN first to fail fast if it is not available
     get_cmk_arn()
     rounds = 20
+    client = aws_encryption_sdk.EncryptionSDKClient()
     plaintext_inputs = [
         dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time()) for _round in range(rounds)
     ]
 
-    ciphertext_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.encrypt, thread_inputs=plaintext_inputs
-    )
+    ciphertext_values = get_all_thread_outputs(crypto_function=client.encrypt, thread_inputs=plaintext_inputs)
     ciphertext_inputs = [
         dict(input_value=ciphertext, start_pause=random_pause_time()) for ciphertext in ciphertext_values
     ]
 
-    decrypted_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.decrypt, thread_inputs=ciphertext_inputs
-    )
+    decrypted_values = get_all_thread_outputs(crypto_function=client.decrypt, thread_inputs=ciphertext_inputs)
 
     assert all(value == PLAINTEXT for value in decrypted_values)
 
@@ -124,19 +121,16 @@ def test_threading_loop_with_common_cache():
     get_cmk_arn()
     rounds = 20
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(capacity=40)
+    client = aws_encryption_sdk.EncryptionSDKClient()
     plaintext_inputs = [
         dict(input_value=copy.copy(PLAINTEXT), start_pause=random_pause_time(), cache=cache) for _round in range(rounds)
     ]
 
-    ciphertext_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.encrypt, thread_inputs=plaintext_inputs
-    )
+    ciphertext_values = get_all_thread_outputs(crypto_function=client.encrypt, thread_inputs=plaintext_inputs)
     ciphertext_inputs = [
         dict(input_value=ciphertext, start_pause=random_pause_time(), cache=cache) for ciphertext in ciphertext_values
     ]
 
-    decrypted_values = get_all_thread_outputs(
-        crypto_function=aws_encryption_sdk.decrypt, thread_inputs=ciphertext_inputs
-    )
+    decrypted_values = get_all_thread_outputs(crypto_function=client.decrypt, thread_inputs=ciphertext_inputs)
 
     assert all(value == PLAINTEXT for value in decrypted_values)

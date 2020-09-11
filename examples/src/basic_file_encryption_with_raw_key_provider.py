@@ -53,8 +53,9 @@ def cycle_file(source_plaintext_filename):
 
     :param str source_plaintext_filename: Filename of file to encrypt
     """
-    # Set up an encryption client with an explicit commitment policy
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
+    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Create a static random master key provider
     key_id = os.urandom(8)

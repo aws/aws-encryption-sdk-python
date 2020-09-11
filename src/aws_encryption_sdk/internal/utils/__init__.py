@@ -64,13 +64,15 @@ def validate_frame_length(frame_length, algorithm):
         )
 
 
-def message_id():
+def message_id(size):
     """Generates a new message ID.
 
+    :param size: The size of the message id to generate, in bytes
+    :type size: int
     :returns: Message ID
     :rtype: bytes
     """
-    return os.urandom(aws_encryption_sdk.internal.defaults.MESSAGE_ID_LENGTH)
+    return os.urandom(size)
 
 
 def get_aad_content_string(content_type, is_final_frame):

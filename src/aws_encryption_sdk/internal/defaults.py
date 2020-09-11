@@ -30,6 +30,7 @@ VERSION = aws_encryption_sdk.identifiers.SerializationVersion.V1
 TYPE = aws_encryption_sdk.identifiers.ObjectType.CUSTOMER_AE_DATA
 #: Default algorithm as defined in specification
 ALGORITHM = aws_encryption_sdk.identifiers.Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384
+ALGORITHM_COMMIT_KEY = aws_encryption_sdk.identifiers.Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
 
 #: Key to add encoded signing key to encryption context dictionary as defined in specification
 ENCODED_SIGNER_KEY = "aws-crypto-public-key"

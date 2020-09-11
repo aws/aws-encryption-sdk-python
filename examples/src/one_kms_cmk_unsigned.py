@@ -12,6 +12,8 @@
 # language governing permissions and limitations under the License.
 """Example showing basic encryption and decryption of a value already in memory
 using one AWS KMS CMK with an unsigned algorithm.
+
+Note: We recommend using an algorithm with signing as an AWS Encryption SDK best practice.
 """
 import aws_encryption_sdk
 from aws_encryption_sdk import StrictAwsKmsMasterKeyProvider
@@ -31,15 +33,16 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
     if botocore_session is not None:
         kwargs["botocore_session"] = botocore_session
 
-    # Set up an encryption client with an explicit commitment policy
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
+    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Create master key provider using the ARN of the key and the session (botocore_session)
     kms_key_provider = StrictAwsKmsMasterKeyProvider(**kwargs)
 
     # Encrypt the plaintext using the AWS Encryption SDK. It returns the encrypted message and the header
     ciphertext, encrypted_message_header = client.encrypt(
-        algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256, source=source_plaintext, key_provider=kms_key_provider
+        algorithm=Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY, source=source_plaintext, key_provider=kms_key_provider
     )
 
     # Decrypt the encrypted message using the AWS Encryption SDK. It returns the decrypted message and the header

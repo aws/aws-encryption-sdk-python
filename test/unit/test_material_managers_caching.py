@@ -92,6 +92,7 @@ def test_custom_partition_name(patch_uuid4):
 
 def test_mkp_to_default_cmm(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "DefaultCryptoMaterialsManager")
+
     mock_mkp = MagicMock(__class__=MasterKeyProvider)
     test = CachingCryptoMaterialsManager(
         cache=MagicMock(__class__=CryptoMaterialsCache), max_age=10.0, master_key_provider=mock_mkp

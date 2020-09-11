@@ -73,6 +73,7 @@ class StaticRawMasterKeyProvider(RawMasterKeyProvider):
 
 def test_decrypt_v2_good_commitment():
     """Tests forwards compatibility with message serialization format v2."""
+    client = aws_encryption_sdk.EncryptionSDKClient()
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
@@ -80,12 +81,13 @@ def test_decrypt_v2_good_commitment():
     )
     provider.add_master_key("KeyId")
     ciphertext = VALUES["ciphertext_v2_good_commitment"]
-    plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=provider)
+    plaintext, _ = client.decrypt(source=ciphertext, key_provider=provider)
     assert plaintext == b"GoodCommitment"
 
 
 def test_decrypt_v2_bad_commitment():
     """Tests that we fail as expected when receiving a message with incorrect commitment value."""
+    client = aws_encryption_sdk.EncryptionSDKClient()
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
@@ -96,23 +98,140 @@ def test_decrypt_v2_bad_commitment():
     ciphertext = VALUES["ciphertext_v2_bad_commitment"]
 
     with pytest.raises(MasterKeyProviderError) as excinfo:
-        aws_encryption_sdk.decrypt(source=ciphertext, key_provider=provider)
+        client.decrypt(source=ciphertext, key_provider=provider)
     excinfo.match("Key commitment validation failed")
 
 
 def test_encrypt_with_committing_algorithm_policy_forbids_encrypt():
-    """Tests that a request with CommitmentPolicy FORBID_ENCRYPT_ALLOW_DECRYPT cannot encrypt using an
+    """Tests that a client configured with CommitmentPolicy FORBID_ENCRYPT_ALLOW_DECRYPT cannot encrypt using an
     algorithm that provides commitment."""
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
     algorithm = aws_encryption_sdk.Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY
     provider = fake_kms_key_provider(algorithm.kdf_input_len)
     plaintext = b"Yellow Submarine"
 
     with pytest.raises(ActionNotAllowedError) as excinfo:
-        aws_encryption_sdk.encrypt(
+        client.encrypt(
             source=plaintext,
             key_provider=provider,
             algorithm=Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY,
-            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         )
 
     excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only non-committed messages")
+
+
+@pytest.mark.parametrize(
+    "policy",
+    (
+        CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT,
+        CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+    ),
+)
+def test_encrypt_with_committing_algorithm_allow_decrypt(policy):
+    """Tests that a client configured with a CommitmentPolicy which allows decryption of committed ciphertexts can
+    decrypt a ciphertext encrypted by an algorithm that does provides commitment."""
+    encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+
+    algorithm = Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
+    provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    plaintext = b"Yellow Submarine"
+
+    ciphertext, _ = encrypting_client.encrypt(
+        source=plaintext,
+        key_provider=provider,
+        algorithm=algorithm,
+    )
+
+    decrypting_client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=policy)
+
+    decrypted, _ = decrypting_client.decrypt(source=ciphertext, key_provider=provider)
+    assert decrypted == plaintext
+
+
+@pytest.mark.parametrize(
+    "policy", (CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT, CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
+)
+def test_encrypt_with_uncommitting_algorithm_policy_requires_encrypt(policy):
+    """Tests that a client configured with CommitmentPolicy which requires commitment on encrypt cannot encrypt using an
+    algorithm that does not provide commitment."""
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=policy)
+
+    algorithm = Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256
+    provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    plaintext = b"Yellow Submarine"
+
+    with pytest.raises(ActionNotAllowedError) as excinfo:
+        client.encrypt(source=plaintext, key_provider=provider, algorithm=algorithm)
+
+    excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only committed messages")
+
+
+@pytest.mark.parametrize(
+    "policy", (CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT, CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
+)
+def test_encrypt_with_committing_algorithm_policy_requires_encrypt(policy):
+    """Tests that a client configured with CommitmentPolicy which requires commitment on encrypt can encrypt using an
+    algorithm that provides commitment."""
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=policy)
+
+    algorithm = Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
+    provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    plaintext = b"Yellow Submarine"
+
+    ciphertext, _ = client.encrypt(source=plaintext, key_provider=provider, algorithm=algorithm)
+
+    decrypting_client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=policy)
+
+    decrypted, _ = decrypting_client.decrypt(source=ciphertext, key_provider=provider)
+    assert decrypted == plaintext
+
+
+@pytest.mark.parametrize(
+    "policy", (CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT, CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
+)
+def test_encrypt_with_uncommitting_algorithm_allow_decrypt(policy):
+    """Tests that a client configured with CommitmentPolicy which allows decryption uncommitted ciphertexts can decrypt
+    a ciphertext encrypted by an algorithm that does not provide commitment."""
+    encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+    algorithm = Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256
+    provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    plaintext = b"Yellow Submarine"
+
+    ciphertext, _ = encrypting_client.encrypt(
+        source=plaintext,
+        key_provider=provider,
+        algorithm=algorithm,
+    )
+
+    decrypting_client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=policy)
+
+    decrypted, _ = decrypting_client.decrypt(source=ciphertext, key_provider=provider)
+    assert decrypted == plaintext
+
+
+def test_encrypt_with_uncommitting_algorithm_require_decrypt():
+    """Tests that a client configured with CommitmentPolicy REQUIRE_ENCRYPT_REQUIRE_DECRYPT cannot decrypt a ciphertext
+    encrypted by an algorithm that does not provide commitment."""
+    encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+
+    algorithm = Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256
+    key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    plaintext = b"Yellow Submarine"
+
+    ciphertext, _ = encrypting_client.encrypt(source=plaintext, key_provider=key_provider, algorithm=algorithm)
+
+    decrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+    with pytest.raises(ActionNotAllowedError) as excinfo:
+        decrypting_client.decrypt(source=ciphertext, key_provider=key_provider)
+    excinfo.match("Configuration conflict. Cannot decrypt due to .* requiring only committed messages")

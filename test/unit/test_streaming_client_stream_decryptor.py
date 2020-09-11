@@ -17,6 +17,7 @@ import pytest
 from mock import MagicMock, call, patch, sentinel
 
 from aws_encryption_sdk.exceptions import (
+    ActionNotAllowedError,
     CustomMaximumValueExceeded,
     MasterKeyProviderError,
     NotSupportedError,
@@ -104,6 +105,8 @@ class TestStreamDecryptor(object):
         self.mock_compare_digest = self.mock_compare_digest_patcher.start()
         self.mock_compare_digest.return_value = True
 
+        self.mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+
         yield
         # Run tearDown
         self.mock_deserialize_header_patcher.stop()
@@ -120,16 +123,23 @@ class TestStreamDecryptor(object):
 
     def test_init(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         assert test_decryptor.last_sequence_number == 0
-        assert test_decryptor.config.commitment_policy is CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
 
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._prep_non_framed")
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_header")
     def test_prep_message_framed_message(self, mock_read_header, mock_prep_non_framed):
         self.mock_header.content_type = ContentType.FRAMED_DATA
         mock_read_header.return_value = self.mock_header, sentinel.header_auth
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._prep_message()
         mock_read_header.assert_called_once_with()
         assert test_decryptor._header is self.mock_header
@@ -142,7 +152,11 @@ class TestStreamDecryptor(object):
     def test_prep_message_non_framed_message(self, mock_read_header, mock_prep_non_framed):
         self.mock_header.content_type = ContentType.NO_FRAMING
         mock_read_header.return_value = self.mock_header, sentinel.header_auth
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._prep_message()
         mock_prep_non_framed.assert_called_once_with()
 
@@ -204,7 +218,12 @@ class TestStreamDecryptor(object):
         self.mock_header.content_type = ContentType.FRAMED_DATA
         self.mock_header.frame_length = 1024
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream, max_body_length=10)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            max_body_length=10,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.key_provider = self.mock_key_provider
         test_decryptor.source_stream = ct_stream
         test_decryptor._stream_length = len(VALUES["data_128"])
@@ -221,7 +240,11 @@ class TestStreamDecryptor(object):
         self.mock_materials_manager.decrypt_materials.return_value = MagicMock(
             data_key=VALUES["data_key_obj"], verification_key=None
         )
-        test_decryptor = StreamDecryptor(materials_manager=self.mock_materials_manager, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.key_provider = self.mock_key_provider
         test_decryptor.source_stream = self.mock_input_stream
         test_decryptor._stream_length = len(VALUES["data_128"])
@@ -231,8 +254,16 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    def test_read_header_committing_algorithm_policy_allows_check_passes(
-        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
+    @pytest.mark.parametrize(
+        "policy",
+        (
+            CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT,
+            CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        ),
+    )
+    def test_commitment_committing_algorithm_policy_allows_check_passes(
+        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier, policy
     ):
         """Verifies that when the commitment check passes for a committing algorithm on decrypt, we successfully
         read the header."""
@@ -243,7 +274,7 @@ class TestStreamDecryptor(object):
         test_decryptor = StreamDecryptor(
             materials_manager=self.mock_materials_manager,
             source=self.mock_input_stream,
-            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            commitment_policy=policy,
         )
         test_decryptor.key_provider = self.mock_key_provider
         test_decryptor.source_stream = self.mock_input_stream
@@ -254,7 +285,7 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    def test_read_header_committing_algorithm_policy_allows_check_fails(
+    def test_commitment_committing_algorithm_policy_allows_check_fails(
         self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
     ):
         """Verifies that when the commitment check fails for a committing algorithm on decrypt, we emit the correct
@@ -269,9 +300,7 @@ class TestStreamDecryptor(object):
             source=self.mock_input_stream,
             commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         )
-        test_decryptor.key_provider = self.mock_key_provider
-        test_decryptor.source_stream = self.mock_input_stream
-        test_decryptor._stream_length = len(VALUES["data_128"])
+
         with pytest.raises(MasterKeyProviderError) as excinfo:
             test_decryptor._read_header()
         excinfo.match("Key commitment validation failed")
@@ -279,37 +308,56 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    def test_read_header_uncommitting_algorithm_policy_allows(
-        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
+    @pytest.mark.parametrize(
+        "policy", (CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT, CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
+    )
+    def test_commitment_uncommitting_algorithm_policy_allows(
+        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier, policy
     ):
-        """Verifies that when we can successfully read the header on a message encrypted with an algorithm that
-        does not provide commitment."""
+        """Verifies that we can successfully read the header on a message encrypted with an algorithm that
+        does not provide commitment when the policy allows it."""
         self.mock_header.algorithm = MagicMock(
             __class__=Algorithm, iv_len=12, is_committing=MagicMock(return_value=False)
         )
 
-        self.mock_materials_manager.decrypt_materials.return_value = MagicMock(
-            data_key=VALUES["data_key_obj"], verification_key=None
-        )
         test_decryptor = StreamDecryptor(
             materials_manager=self.mock_materials_manager,
             source=self.mock_input_stream,
-            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            commitment_policy=policy,
         )
-        test_decryptor.key_provider = self.mock_key_provider
-        test_decryptor.source_stream = self.mock_input_stream
-        test_decryptor._stream_length = len(VALUES["data_128"])
         test_decryptor._read_header()
         self.mock_deserialize_header.assert_called_once_with(self.mock_input_stream)
         self.mock_compare_digest.assert_not_called()
+
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    def test_commitment_uncommitting_algorithm_policy_requires_encrypt(
+        self, mock_derive_datakey, mock_decrypt_materials_request, mock_verifier
+    ):
+        """Verifies that we emit the correct exception on a message encrypted with an algorithm that
+        does not provide commitment when the policy requires commitment."""
+        self.mock_header.algorithm = MagicMock(
+            __class__=Algorithm, iv_len=12, is_committing=MagicMock(return_value=False)
+        )
+
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        )
+        with pytest.raises(ActionNotAllowedError) as excinfo:
+            test_decryptor._read_header()
+        excinfo.match("Configuration conflict. Cannot decrypt due to .* requiring only committed messages")
 
     def test_prep_non_framed_content_length_too_large(self):
         self.mock_header.content_type = ContentType.NO_FRAMING
         self.mock_header.frame_length = 1024
         test_decryptor = StreamDecryptor(
-            key_provider=self.mock_key_provider,
+            materials_manager=self.mock_materials_manager,
             source=self.mock_input_stream,
             max_body_length=len(VALUES["data_128"]) // 2,
+            commitment_policy=self.mock_commitment_policy,
         )
         test_decryptor._header = self.mock_header
         test_decryptor.verifier = sentinel.verifier
@@ -325,7 +373,11 @@ class TestStreamDecryptor(object):
         )
 
     def test_prep_non_framed(self):
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._header = self.mock_header
         test_decryptor.verifier = sentinel.verifier
         test_decryptor._derived_data_key = sentinel.derived_data_key
@@ -341,7 +393,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_non_framed(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.body_length = len(VALUES["data_128"])
         test_decryptor.decryptor = self.mock_decryptor_instance
         test_decryptor._header = self.mock_header
@@ -379,7 +435,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_non_framed_message_body_too_small(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.body_length = len(VALUES["data_128"] * 2)
         test_decryptor._header = self.mock_header
         with pytest.raises(SerializationError) as excinfo:
@@ -388,7 +448,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_non_framed_no_verifier(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.body_length = len(VALUES["data_128"])
         test_decryptor.decryptor = self.mock_decryptor_instance
         test_decryptor._header = self.mock_header
@@ -400,7 +464,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_non_framed_finalize(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.body_length = len(VALUES["data_128"])
         test_decryptor.decryptor = self.mock_decryptor_instance
         test_decryptor.verifier = MagicMock()
@@ -421,7 +489,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_framed_body_multi_frame_finalize(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.verifier = MagicMock()
         test_decryptor.data_key = MagicMock()
         test_decryptor._header = self.mock_header
@@ -555,7 +627,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_framed_body_single_frame(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.verifier = MagicMock()
         test_decryptor.data_key = MagicMock()
         test_decryptor._header = self.mock_header
@@ -579,7 +655,11 @@ class TestStreamDecryptor(object):
 
     def test_read_bytes_from_framed_body_bad_sequence_number(self):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.verifier = MagicMock()
         test_decryptor._header = self.mock_header
         frame_data = MagicMock()
@@ -595,7 +675,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
     def test_read_bytes_completed(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.footer = None
         test_decryptor._read_bytes(5)
         assert not mock_read_frame.called
@@ -605,7 +689,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
     def test_read_bytes_no_read_required(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.output_buffer = b"1234567"
         test_decryptor._read_bytes(5)
         assert not mock_read_frame.called
@@ -615,7 +703,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
     def test_read_bytes_framed(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._header = MagicMock()
         test_decryptor._header.content_type = ContentType.FRAMED_DATA
         test_decryptor._read_bytes(5)
@@ -626,7 +718,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
     def test_read_bytes_non_framed(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._header = MagicMock()
         test_decryptor._header.content_type = ContentType.NO_FRAMING
         test_decryptor._read_bytes(5)
@@ -637,7 +733,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.StreamDecryptor._read_bytes_from_framed_body")
     def test_read_bytes_unknown(self, mock_read_frame, mock_read_block):
         ct_stream = io.BytesIO(VALUES["data_128"])
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=ct_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor._header = MagicMock()
         test_decryptor._header.content_type = None
         with pytest.raises(NotSupportedError) as excinfo:
@@ -647,7 +747,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.close")
     def test_close(self, mock_close):
         self.mock_header.content_type = ContentType.NO_FRAMING
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         test_decryptor.footer = sentinel.footer
         test_decryptor.data_key = VALUES["data_key_obj"]
         test_decryptor.close()
@@ -656,7 +760,11 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.close")
     def test_close_no_footer(self, mock_close):
         self.mock_header.content_type = ContentType.FRAMED_DATA
-        test_decryptor = StreamDecryptor(key_provider=self.mock_key_provider, source=self.mock_input_stream)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
         with pytest.raises(SerializationError) as excinfo:
             test_decryptor.close()
         excinfo.match("Footer not read")

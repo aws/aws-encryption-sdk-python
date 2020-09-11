@@ -55,7 +55,10 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
-from aws_encryption_sdk.internal.utils.commitment import validate_commitment_policy_on_encrypt
+from aws_encryption_sdk.internal.utils.commitment import (
+    validate_commitment_policy_on_decrypt,
+    validate_commitment_policy_on_encrypt,
+)
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -86,6 +89,10 @@ class _ClientConfig(object):
     """
 
     source = attr.ib(hash=True, converter=aws_encryption_sdk.internal.utils.prep_stream_data)
+    commitment_policy = attr.ib(
+        hash=True,
+        validator=attr.validators.instance_of(CommitmentPolicy),
+    )
     materials_manager = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
     )
@@ -94,11 +101,6 @@ class _ClientConfig(object):
     )
     source_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
-    )
-    commitment_policy = attr.ib(
-        hash=True,
-        default=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
-        validator=attr.validators.optional(attr.validators.instance_of(CommitmentPolicy)),
     )
     line_length = attr.ib(
         hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
@@ -429,8 +431,6 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :raises MasterKeyProviderError: if primary master key is not a member of supplied MasterKeyProvider
         :raises MasterKeyProviderError: if no Master Keys are returned from key_provider
         """
-        message_id = aws_encryption_sdk.internal.utils.message_id()
-
         validate_commitment_policy_on_encrypt(self.config.commitment_policy, self.config.algorithm)
 
         try:
@@ -467,6 +467,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             )
         aws_encryption_sdk.internal.utils.validate_frame_length(
             frame_length=self.config.frame_length, algorithm=self._encryption_materials.algorithm
+        )
+
+        message_id = aws_encryption_sdk.internal.utils.message_id(
+            self._encryption_materials.algorithm.message_id_length()
         )
 
         self._derived_data_key = derive_data_encryption_key(
@@ -768,6 +772,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     def _prep_message(self):
         """Performs initial message setup."""
         self._header, self.header_auth = self._read_header()
+
         if self._header.content_type == ContentType.NO_FRAMING:
             self._prep_non_framed()
         self._message_prepped = True
@@ -782,6 +787,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         header, raw_header = deserialize_header(self.source_stream)
         self.__unframed_bytes_read += len(raw_header)
+
+        validate_commitment_policy_on_decrypt(self.config.commitment_policy, header.algorithm)
 
         if (
             self.config.max_body_length is not None
@@ -970,3 +977,5 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
 
 __all__ = ("DecryptorConfig", "EncryptorConfig", "StreamDecryptor", "StreamEncryptor")
+
+# pylint: disable=too-many-lines

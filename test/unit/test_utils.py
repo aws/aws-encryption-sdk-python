@@ -20,7 +20,7 @@ from mock import MagicMock, patch, sentinel
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
@@ -173,8 +173,8 @@ class TestUtils(object):
 
     def test_message_id(self):
         """Validate that the message_id function behaves as expected."""
-        test = aws_encryption_sdk.internal.utils.message_id()
-        self.mock_urandom.assert_called_once_with(MESSAGE_ID_LENGTH)
+        test = aws_encryption_sdk.internal.utils.message_id(25)
+        self.mock_urandom.assert_called_once_with(25)
         assert test == sentinel.random
 
     def test_get_aad_content_string_no_framing(self):

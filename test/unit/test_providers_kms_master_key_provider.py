@@ -29,7 +29,6 @@ from aws_encryption_sdk.key_providers.kms import (
     DiscoveryAwsKmsMasterKeyProvider,
     DiscoveryFilter,
     KMSMasterKey,
-    KMSMasterKeyProvider,
     StrictAwsKmsMasterKeyProvider,
 )
 
@@ -228,35 +227,6 @@ class TestBaseKMSMasterKeyProvider(KMSMasterKeyProviderTestBase):
 
         key = test._new_master_key(key_info)
         assert key.key_id == key_info
-
-
-class TestKMSMasterKeyProvider(KMSMasterKeyProviderTestBase):
-    def test_parent(self):
-        assert issubclass(KMSMasterKeyProvider, BaseKMSMasterKeyProvider)
-
-    @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider._process_config")
-    def test_init_bare(self, mock_process_config):
-        test = KMSMasterKeyProvider()
-        assert test.vend_masterkey_on_decrypt
-        mock_process_config.assert_called_once_with()
-
-    @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_master_keys_from_list")
-    def test_init_with_key_ids(self, mock_add_keys):
-        mock_ids = (sentinel.id_1, sentinel.id_2)
-        test = KMSMasterKeyProvider(key_ids=mock_ids)
-        assert test.vend_masterkey_on_decrypt
-        mock_add_keys.assert_called_once_with(mock_ids)
-
-    def test_init_with_discovery_filter_fails(self):
-        with pytest.raises(ConfigMismatchError) as excinfo:
-            KMSMasterKeyProvider(discovery_filter=DiscoveryFilter(partition="aws"))
-        excinfo.match("To explicitly enable discovery mode use a DiscoveryAwsKmsMasterKeyProvider")
-
-    @patch("aws_encryption_sdk.key_providers.kms.KMSMasterKeyProvider.add_master_keys_from_list")
-    def test_init_default_vends_master_keys(self, mock_add_keys):
-        test = KMSMasterKeyProvider()
-        assert test.vend_masterkey_on_decrypt
-        mock_add_keys.assert_not_called()
 
 
 class TestDiscoveryKMSMasterKeyProvider(KMSMasterKeyProviderTestBase):
