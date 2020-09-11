@@ -58,6 +58,7 @@ kat_tests = test_json["tests"]
 @pytest.mark.parametrize("info", kat_tests, ids=[info["comment"] for info in kat_tests])
 def test_kat(info):
     """Tests known answer tests"""
+    client = aws_encryption_sdk.EncryptionSDKClient()
     provider = None
     if info["keyring-type"] == "static":
         key_bytes = b"\00" * 32
@@ -74,11 +75,11 @@ def test_kat(info):
 
     if info["exception"]:
         with pytest.raises(MasterKeyProviderError) as excinfo:
-            aws_encryption_sdk.decrypt(source=ciphertext, key_provider=provider)
+            client.decrypt(source=ciphertext, key_provider=provider)
         expected_error = "Key commitment validation failed"
         excinfo.match(expected_error)
     else:
-        plaintext, header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=provider)
+        plaintext, header = client.decrypt(source=ciphertext, key_provider=provider)
 
         # Only supporting single frame messages for now
         if sys.version_info[0] == 3:

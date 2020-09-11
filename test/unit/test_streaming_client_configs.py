@@ -44,17 +44,36 @@ class FakeMasterKeyProvider(MasterKeyProvider):
         return
 
 
-BASE_KWARGS = dict(source=b"", materials_manager=FakeCryptoMaterialsManager())
+BASE_KWARGS = dict(
+    source=b"",
+    materials_manager=FakeCryptoMaterialsManager(),
+    commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+)
 VALID_KWARGS = {
     _ClientConfig: [
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), source_length=10, line_length=10),
-        dict(source="", materials_manager=FakeCryptoMaterialsManager(), source_length=10, line_length=10),
-        dict(source=io.BytesIO(), materials_manager=FakeCryptoMaterialsManager(), source_length=10, line_length=10),
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), source_length=10, line_length=10),
-        dict(source=b"", key_provider=FakeMasterKeyProvider(), source_length=10, line_length=10),
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), line_length=10),
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), source_length=10),
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager()),
+        dict(
+            source=b"",
+            materials_manager=FakeCryptoMaterialsManager(),
+            source_length=10,
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        ),
+        dict(
+            source="",
+            materials_manager=FakeCryptoMaterialsManager(),
+            source_length=10,
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        ),
+        dict(
+            source=io.BytesIO(),
+            materials_manager=FakeCryptoMaterialsManager(),
+            source_length=10,
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        ),
+        dict(
+            source=b"",
+            materials_manager=FakeCryptoMaterialsManager(),
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+        ),
     ],
     EncryptorConfig: build_valid_kwargs_list(
         BASE_KWARGS, dict(encryption_context={}, algorithm=ALGORITHM, frame_length=8192)
@@ -63,7 +82,7 @@ VALID_KWARGS = {
 }
 INVALID_KWARGS = {
     _ClientConfig: [
-        dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), key_provider=FakeMasterKeyProvider())
+        dict(source=b"", key_provider=FakeMasterKeyProvider(), source_length=10),
     ],
     EncryptorConfig: [
         dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), encryption_context=None),
@@ -93,7 +112,6 @@ def test_client_config_defaults():
     test = _ClientConfig(**BASE_KWARGS)
     assert test.source_length is None
     assert test.line_length == LINE_LENGTH
-    assert test.commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
 
 
 def test_encryptor_config_defaults():
@@ -103,7 +121,7 @@ def test_encryptor_config_defaults():
     assert test.frame_length == FRAME_LENGTH
 
 
-def test_decryptor_config_defautls():
+def test_decryptor_config_defaults():
     test = DecryptorConfig(**BASE_KWARGS)
     assert test.max_body_length is None
 
@@ -119,6 +137,7 @@ def test_decryptor_config_defautls():
     ),
 )
 def test_client_config_converts(kwargs, stream_type):
+    kwargs["commitment_policy"] = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     test = _ClientConfig(**kwargs)
     assert isinstance(test.source, stream_type)
     if test.key_provider is not None:

@@ -28,8 +28,9 @@ def encrypt_decrypt(key_arns, source_plaintext, botocore_session=None):
     if botocore_session is not None:
         encrypt_kwargs["botocore_session"] = botocore_session
 
-    # Set up an encryption client with an explicit commitment policy
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
+    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Create strict master key provider that is only allowed to encrypt and decrypt using the ARN of the provided key.
     strict_encrypt_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**encrypt_kwargs)

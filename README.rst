@@ -96,8 +96,11 @@ Usage
 EncryptionSDKClient
 ===================
 To use this module, you (the caller) must first create an instance of the ``EncryptionSDKClient`` class.
-The constructor to this class requires a single keyword argument, ``commitment_policy``. There is
-currently only one valid value for this argument: ``FORBID_ENCRYPT_ALLOW_DECRYPT``.
+The constructor to this class accepts an optional keyword argument, ``commitment_policy``, that controls
+which algorithm suites can be used for encryption and decryption. If no value
+is provided for this argument, a default value of ``REQUIRE_ENCRYPT_REQUIRE_DECRYPT`` is used. Unless
+you have specialized performance requirements or are in the process of migrating from an older
+version of the AWS Encryption SDK, we recommend using the default value.
 
 .. code:: python
 
@@ -106,7 +109,7 @@ currently only one valid value for this argument: ``FORBID_ENCRYPT_ALLOW_DECRYPT
 
 
     client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
 

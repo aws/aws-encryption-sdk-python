@@ -21,14 +21,14 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
+def test_init_defaults():
+    test = aws_encryption_sdk.EncryptionSDKClient()
+    assert test.config.commitment_policy == CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+
+
 def test_init_success():
     test = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
     assert test.config.commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
-
-
-def test_init_fails_without_commitment_policy():
-    with pytest.raises(TypeError):
-        aws_encryption_sdk.EncryptionSDKClient()
 
 
 def test_client_encrypt(mocker):

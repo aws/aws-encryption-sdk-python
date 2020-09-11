@@ -23,8 +23,9 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
-    # Set up an encryption client with an explicit commitment policy
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
+    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Create a KMS master key provider
     kms_kwargs = dict(key_ids=[key_arn])

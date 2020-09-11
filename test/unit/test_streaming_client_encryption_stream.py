@@ -61,6 +61,7 @@ class TestEncryptionStream(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
         self.mock_key_provider = self._mock_key_provider()
+        self.mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
         self.mock_source_stream = self._mock_source_stream()
 
     def test_read_bytes_enforcement(self):
@@ -102,14 +103,12 @@ class TestEncryptionStream(object):
 
     def test_new_with_params(self):
         mock_int_sentinel = MagicMock(__class__=int)
-        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
         mock_stream = MockEncryptionStream(
             source=self.mock_source_stream,
             key_provider=self.mock_key_provider,
             mock_read_bytes=sentinel.read_bytes,
-            line_length=io.DEFAULT_BUFFER_SIZE,
             source_length=mock_int_sentinel,
-            commitment_policy=mock_commitment_policy,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         assert mock_stream.config.source == self.mock_source_stream
@@ -118,7 +117,7 @@ class TestEncryptionStream(object):
         assert mock_stream.config.mock_read_bytes is sentinel.read_bytes
         assert mock_stream.config.line_length == io.DEFAULT_BUFFER_SIZE
         assert mock_stream.config.source_length is mock_int_sentinel
-        assert mock_stream.config.commitment_policy is mock_commitment_policy
+        assert mock_stream.config.commitment_policy is self.mock_commitment_policy
 
         assert mock_stream.bytes_read == 0
         assert mock_stream.output_buffer == b""
@@ -136,7 +135,10 @@ class TestEncryptionStream(object):
 
     def test_enter(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         test = mock_stream.__enter__()
         assert test is mock_stream
@@ -144,7 +146,10 @@ class TestEncryptionStream(object):
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.close")
     def test_exit(self, mock_close):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         test = mock_stream.__exit__(None, None, None)
         mock_close.assert_called_once_with()
@@ -154,7 +159,10 @@ class TestEncryptionStream(object):
     def test_exit_with_known_error(self, mock_close):
         mock_close.side_effect = aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         test = mock_stream.__exit__(None, None, None)
         mock_close.assert_called_once_with()
@@ -167,7 +175,10 @@ class TestEncryptionStream(object):
 
         mock_close.side_effect = CustomUnknownError
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         with pytest.raises(CustomUnknownError):
@@ -175,7 +186,10 @@ class TestEncryptionStream(object):
 
     def test_stream_length(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         assert mock_stream._stream_length is None
         test = mock_stream.stream_length
@@ -187,7 +201,10 @@ class TestEncryptionStream(object):
     def test_stream_length_unsupported(self):
         self.mock_source_stream.tell.side_effect = Exception("Unexpected exception!")
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         with pytest.raises(aws_encryption_sdk.exceptions.NotSupportedError) as excinfo:
@@ -198,7 +215,10 @@ class TestEncryptionStream(object):
     def test_header_property(self):
         mock_prep_message = MagicMock()
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream._prep_message = mock_prep_message
         mock_stream._message_prepped = False
@@ -210,7 +230,10 @@ class TestEncryptionStream(object):
     def test_header_property_already_parsed(self):
         mock_prep_message = MagicMock()
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream._prep_message = mock_prep_message
         mock_stream._message_prepped = True
@@ -221,7 +244,10 @@ class TestEncryptionStream(object):
 
     def test_read_closed(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream.close()
 
@@ -236,6 +262,7 @@ class TestEncryptionStream(object):
             source=io.BytesIO(VALUES["data_128"]),
             key_provider=self.mock_key_provider,
             mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         data = b"1234567890"
         mock_stream._read_bytes = MagicMock()
@@ -248,7 +275,10 @@ class TestEncryptionStream(object):
     @pytest.mark.parametrize("bytes_to_read", (None, -1, -99))
     def test_read_all(self, bytes_to_read):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream._stream_length = 5
         mock_stream.output_buffer = b"1234567890"
@@ -259,7 +289,10 @@ class TestEncryptionStream(object):
 
     def test_read_all_empty_source(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream._stream_length = 0
         mock_stream.output_buffer = b""
@@ -271,7 +304,10 @@ class TestEncryptionStream(object):
 
     def test_tell(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream.bytes_read = sentinel.bytes_read
         test = mock_stream.tell()
@@ -279,13 +315,19 @@ class TestEncryptionStream(object):
 
     def test_writable(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         assert not mock_stream.writable()
 
     def test_writelines(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         with pytest.raises(NotImplementedError) as excinfo:
@@ -295,7 +337,10 @@ class TestEncryptionStream(object):
 
     def test_write(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         with pytest.raises(NotImplementedError) as excinfo:
@@ -305,7 +350,10 @@ class TestEncryptionStream(object):
 
     def test_seek(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
 
         with pytest.raises(NotImplementedError) as excinfo:
@@ -317,7 +365,10 @@ class TestEncryptionStream(object):
         test_line = "TEST_LINE_AAAA"
         test_line_length = len(test_line)
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=test_line
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream.line_length = test_line_length
         mock_stream.read = MagicMock()
@@ -333,14 +384,20 @@ class TestEncryptionStream(object):
         lines = [sentinel.line_a, sentinel.line_b]
         mock_iter.return_value = iter(lines)
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         test = mock_stream.readlines()
         assert test == lines
 
     def test_next(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         self.mock_source_stream.closed = False
         mock_stream.readline = MagicMock(return_value=sentinel.line)
@@ -350,7 +407,10 @@ class TestEncryptionStream(object):
 
     def test_next_stream_closed(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         mock_stream.close()
 
@@ -359,7 +419,10 @@ class TestEncryptionStream(object):
 
     def test_next_source_stream_closed_and_buffer_empty(self):
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         self.mock_source_stream.closed = True
         mock_stream.output_buffer = b""
@@ -372,7 +435,10 @@ class TestEncryptionStream(object):
         mock_closed.side_effect = (False, False, False, False, True)
         self.mock_source_stream.closed = False
         mock_stream = MockEncryptionStream(
-            source=self.mock_source_stream, key_provider=self.mock_key_provider, mock_read_bytes=sentinel.read_bytes
+            source=self.mock_source_stream,
+            key_provider=self.mock_key_provider,
+            mock_read_bytes=sentinel.read_bytes,
+            commitment_policy=self.mock_commitment_policy,
         )
         lines = [sentinel.line_1, sentinel.line_2, sentinel.line_3, sentinel.line_4]
         mock_stream.readline = MagicMock(side_effect=lines)

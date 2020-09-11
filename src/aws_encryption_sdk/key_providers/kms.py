@@ -14,7 +14,6 @@
 import abc
 import functools
 import logging
-import warnings
 
 import attr
 import boto3
@@ -225,51 +224,6 @@ class BaseKMSMasterKeyProvider(MasterKeyProvider):
                 raise MasterKeyProviderError("Key {} not allowed by this Master Key Provider".format(key_id))
 
         return KMSMasterKey(config=KMSMasterKeyConfig(key_id=key_id, client=self._client(_key_id)))
-
-
-class KMSMasterKeyProvider(BaseKMSMasterKeyProvider):
-    """Master Key Provider for KMS.
-
-    >>> import aws_encryption_sdk
-    >>> kms_key_provider = aws_encryption_sdk.KMSMasterKeyProvider(key_ids=[
-    ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-    ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ... ])
-    >>> kms_key_provider.add_master_key('arn:aws:kms:ap-northeast-1:4444444444444:alias/another-key')
-
-    .. note::
-        If no botocore_session is provided, the default botocore session will be used.
-
-    .. note::
-        If multiple AWS Identities are needed, one of two options are available:
-
-        * Additional KMSMasterKeyProvider instances may be added to the primary MasterKeyProvider.
-
-        * KMSMasterKey instances may be manually created and added to this KMSMasterKeyProvider.
-
-    :param config: Configuration object (optional)
-    :type config: aws_encryption_sdk.key_providers.kms.KMSMasterKeyProviderConfig
-    :param botocore_session: botocore session object (optional)
-    :type botocore_session: botocore.session.Session
-    :param list key_ids: List of KMS CMK IDs with which to pre-populate provider (optional)
-    :param list region_names: List of regions for which to pre-populate clients (optional)
-    """
-
-    def __init__(self, **kwargs):
-        """Sets configuration required by this provider type."""
-        warnings.warn(
-            "KMSMasterKeyProvider is deprecated. Use a StrictAwsKmsMasterKeyProvider or "
-            "DiscoveryAwsKmsMasterKeyProvider instead.",
-            DeprecationWarning,
-        )
-        super(KMSMasterKeyProvider, self).__init__(**kwargs)
-
-        self.vend_masterkey_on_decrypt = True
-
-    def validate_config(self):
-        """Validates the provided configuration."""
-        if self.config.discovery_filter:
-            raise ConfigMismatchError("To explicitly enable discovery mode use a DiscoveryAwsKmsMasterKeyProvider")
 
 
 class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):

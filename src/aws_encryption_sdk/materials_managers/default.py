@@ -16,12 +16,13 @@ import logging
 import attr
 
 from ..exceptions import MasterKeyProviderError, SerializationError
+from ..identifiers import CommitmentPolicy
 from ..internal.crypto.authentication import Signer, Verifier
 from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
-from ..internal.defaults import ALGORITHM, ENCODED_SIGNER_KEY
+from ..internal.defaults import ALGORITHM, ALGORITHM_COMMIT_KEY, ENCODED_SIGNER_KEY
 from ..internal.str_ops import to_str
 from ..internal.utils import prepare_data_keys
-from ..internal.utils.commitment import validate_commitment_policy_on_encrypt
+from ..internal.utils.commitment import validate_commitment_policy_on_decrypt, validate_commitment_policy_on_encrypt
 from ..key_providers.base import MasterKeyProvider
 from . import DecryptionMaterials, EncryptionMaterials
 from .base import CryptoMaterialsManager
@@ -39,7 +40,6 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
     :type master_key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     """
 
-    algorithm = ALGORITHM
     master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
 
     def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):
@@ -72,9 +72,15 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :raises ActionNotAllowedError: if the commitment policy in the request is violated by the algorithm being
             used
         """
-        algorithm = request.algorithm if request.algorithm is not None else self.algorithm
+        default_algorithm = ALGORITHM
+        if request.commitment_policy in (
+            CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+            CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT,
+        ):
+            default_algorithm = ALGORITHM_COMMIT_KEY
+        algorithm = request.algorithm if request.algorithm is not None else default_algorithm
 
-        validate_commitment_policy_on_encrypt(request.commitment_policy, algorithm)
+        validate_commitment_policy_on_encrypt(request.commitment_policy, request.algorithm)
 
         encryption_context = request.encryption_context.copy()
 
@@ -139,6 +145,8 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :returns: decryption materials
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
+        validate_commitment_policy_on_decrypt(request.commitment_policy, request.algorithm)
+
         data_key = self.master_key_provider.decrypt_data_key_from_list(
             encrypted_data_keys=request.encrypted_data_keys,
             algorithm=request.algorithm,

@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__version__ = "1.7.0"
+__version__ = "2.0.0"
 USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
 
@@ -372,3 +372,5 @@ class CommitmentPolicy(Enum):
     """Controls algorithm suites that can be used on encryption and decryption."""
 
     FORBID_ENCRYPT_ALLOW_DECRYPT = 0
+    REQUIRE_ENCRYPT_ALLOW_DECRYPT = 1
+    REQUIRE_ENCRYPT_REQUIRE_DECRYPT = 2

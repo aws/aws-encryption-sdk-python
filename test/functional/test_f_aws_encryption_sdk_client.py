@@ -249,20 +249,29 @@ def test_no_infinite_encryption_cycle_on_empty_source():
     an empty byte string, encrypt would enter an infinite loop.
     If this test does not hang, the race condition is not present.
     """
-    aws_encryption_sdk.encrypt(source=b"", key_provider=fake_kms_key_provider())
+    aws_encryption_sdk.EncryptionSDKClient().encrypt(source=b"", key_provider=fake_kms_key_provider())
 
 
-def test_encrypt_load_header():
+def test_encrypt_load_header_v2():
     """Test that StreamEncryptor can extract header without reading plaintext."""
     # Using a non-signed algorithm to simplify header size calculation
-    algorithm = aws_encryption_sdk.Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256
+    algorithm = aws_encryption_sdk.Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
-    header_length = len(serialize_encryption_context(VALUES["encryption_context"]))
-    header_length += 34
-    header_length += algorithm.iv_len
-    header_length += algorithm.auth_len
+
+    header_length = 1  # version
+    header_length += 2  # algorithm id
+    header_length += 32  # message id
+    header_length += 2  # aad len
+    s = serialize_encryption_context(VALUES["encryption_context"])
+    header_length += len(s)
+    header_length += 2  # encrypted data key count
     header_length += 6 + 7 + len(VALUES["arn"]) + len(VALUES["data_keys"][algorithm.kdf_input_len]["encrypted"])
-    with aws_encryption_sdk.stream(
+    header_length += 1  # content type
+    header_length += 4  # frame length
+    header_length += 32  # algorithm suite data
+    header_length += algorithm.auth_len  # authentication tag
+
+    with aws_encryption_sdk.EncryptionSDKClient().stream(
         mode="e",
         source=VALUES["plaintext_128"],
         key_provider=key_provider,
@@ -278,12 +287,14 @@ def test_encrypt_load_header():
 
 def test_encrypt_decrypt_header_only():
     """Test that StreamDecryptor can extract header without reading ciphertext."""
-    ciphertext, encryptor_header = aws_encryption_sdk.encrypt(
+    mkp = fake_kms_key_provider()
+    ciphertext, encryptor_header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=VALUES["plaintext_128"],
-        key_provider=fake_kms_key_provider(),
+        key_provider=mkp,
         encryption_context=VALUES["encryption_context"],
     )
-    with aws_encryption_sdk.stream(mode="d", source=ciphertext, key_provider=fake_kms_key_provider()) as decryptor:
+
+    with aws_encryption_sdk.EncryptionSDKClient().stream(mode="d", source=ciphertext, key_provider=mkp) as decryptor:
         decryptor_header = decryptor.header
     assert decryptor.output_buffer == b""
     assert all(
@@ -297,12 +308,15 @@ def test_encrypt_decrypt_header_only():
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
-        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
 def test_encrypt_ciphertext_message(frame_length, algorithm, encryption_context):
-    with aws_encryption_sdk.stream(
+    commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    if algorithm.is_committing():
+        commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+    with client.stream(
         mode="e",
         source=VALUES["plaintext_128"] * 10,
         key_provider=fake_kms_key_provider(algorithm.kdf_input_len),
@@ -326,18 +340,20 @@ def test_encrypt_ciphertext_message(frame_length, algorithm, encryption_context)
         (WrappingAlgorithm.RSA_OAEP_SHA1_MGF1, EncryptionKeyType.PUBLIC, EncryptionKeyType.PRIVATE),
     ),
 )
-def test_encryption_cycle_raw_mkp(caplog, wrapping_algorithm, encryption_key_type, decryption_key_type):
+def test_encryption_cycle_default_cmm(caplog, wrapping_algorithm, encryption_key_type, decryption_key_type):
     caplog.set_level(logging.DEBUG)
 
     encrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type)
     decrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, decryption_key_type)
-    ciphertext, _ = aws_encryption_sdk.encrypt(
+    ciphertext, _ = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=VALUES["plaintext_128"],
         key_provider=encrypting_key_provider,
         encryption_context=VALUES["encryption_context"],
         frame_length=0,
     )
-    plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=decrypting_key_provider)
+    plaintext, _ = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext, key_provider=decrypting_key_provider
+    )
 
     assert plaintext == VALUES["plaintext_128"]
     for member in encrypting_key_provider._members:
@@ -360,13 +376,15 @@ def test_encryption_cycle_raw_mkp_openssl_102_plus(wrapping_algorithm, encryptio
     decryption_key_type = EncryptionKeyType.PRIVATE
     encrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, encryption_key_type)
     decrypting_key_provider = build_fake_raw_key_provider(wrapping_algorithm, decryption_key_type)
-    ciphertext, _ = aws_encryption_sdk.encrypt(
+    ciphertext, _ = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=VALUES["plaintext_128"],
         key_provider=encrypting_key_provider,
         encryption_context=VALUES["encryption_context"],
         frame_length=0,
     )
-    plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=decrypting_key_provider)
+    plaintext, _ = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext, key_provider=decrypting_key_provider
+    )
     assert plaintext == VALUES["plaintext_128"]
 
 
@@ -376,14 +394,17 @@ def test_encryption_cycle_raw_mkp_openssl_102_plus(wrapping_algorithm, encryptio
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
-        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
 def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_context):
+    commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    if not algorithm.is_committing():
+        commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
 
-    ciphertext, _ = aws_encryption_sdk.encrypt(
+    ciphertext, _ = client.encrypt(
         source=VALUES["plaintext_128"] * 10,
         key_provider=key_provider,
         frame_length=frame_length,
@@ -391,7 +412,7 @@ def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_contex
         encryption_context=encryption_context,
     )
 
-    plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    plaintext, _ = client.decrypt(source=ciphertext, key_provider=key_provider)
 
     assert plaintext == VALUES["plaintext_128"] * 10
 
@@ -402,15 +423,18 @@ def test_encryption_cycle_oneshot_kms(frame_length, algorithm, encryption_contex
         [frame_length, algorithm_suite, encryption_context]
         for frame_length in VALUES["frame_lengths"]
         for algorithm_suite in Algorithm
-        if not algorithm_suite.is_committing()
         for encryption_context in [{}, VALUES["encryption_context"]]
     ],
 )
 def test_encryption_cycle_stream_kms(frame_length, algorithm, encryption_context):
+    commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    if not algorithm.is_committing():
+        commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
 
     ciphertext = bytearray()
-    with aws_encryption_sdk.stream(
+    with client.stream(
         mode="e",
         source=VALUES["plaintext_128"] * 10,
         key_provider=key_provider,
@@ -423,7 +447,7 @@ def test_encryption_cycle_stream_kms(frame_length, algorithm, encryption_context
     ciphertext = bytes(ciphertext)
 
     plaintext = bytearray()
-    with aws_encryption_sdk.stream(mode="d", source=io.BytesIO(ciphertext), key_provider=key_provider) as decryptor:
+    with client.stream(mode="d", source=io.BytesIO(ciphertext), key_provider=key_provider) as decryptor:
         for chunk in decryptor:
             plaintext.extend(chunk)
     plaintext = bytes(plaintext)
@@ -442,20 +466,22 @@ def test_decrypt_legacy_provided_message():
     mock_kms_key_provider = fake_kms_key_provider()
     mock_kms_key_provider._regional_clients[region] = mock_kms_client
     mock_kms_key_provider.add_master_key(key_info)
-    plaintext, _ = aws_encryption_sdk.decrypt(
-        source=VALUES["provided"]["ciphertext"], key_provider=mock_kms_key_provider
-    )
+    commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+    plaintext, _ = client.decrypt(source=VALUES["provided"]["ciphertext"], key_provider=mock_kms_key_provider)
     assert plaintext == VALUES["provided"]["plaintext"]
 
 
 def test_encryption_cycle_with_caching():
-    algorithm = Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384
+    algorithm = Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
     frame_length = 1024
     key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
     cache = aws_encryption_sdk.LocalCryptoMaterialsCache(capacity=10)
     ccmm = aws_encryption_sdk.CachingCryptoMaterialsManager(
         master_key_provider=key_provider, cache=cache, max_age=3600.0, max_messages_encrypted=5
     )
+    client = aws_encryption_sdk.EncryptionSDKClient()
     encrypt_kwargs = dict(
         source=VALUES["plaintext_128"],
         materials_manager=ccmm,
@@ -473,7 +499,7 @@ def test_encryption_cycle_with_caching():
             commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
         ),
     )
-    ciphertext, header = aws_encryption_sdk.encrypt(**encrypt_kwargs)
+    ciphertext, header = client.encrypt(**encrypt_kwargs)
     decrypt_cache_key = build_decryption_materials_cache_key(
         partition=ccmm.partition_name,
         request=DecryptionMaterialsRequest(
@@ -488,22 +514,22 @@ def test_encryption_cycle_with_caching():
     assert cache._cache[encrypt_cache_key].messages_encrypted == 1
     assert cache._cache[encrypt_cache_key].bytes_encrypted == 128
 
-    _, _ = aws_encryption_sdk.decrypt(source=ciphertext, materials_manager=ccmm)
+    _, _ = client.decrypt(source=ciphertext, materials_manager=ccmm)
 
     assert len(cache._cache) == 2
     assert decrypt_cache_key in cache._cache
 
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
 
     assert len(cache._cache) == 2
     assert cache._cache[encrypt_cache_key].messages_encrypted == 4
     assert cache._cache[encrypt_cache_key].bytes_encrypted == 512
 
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
-    _, _ = aws_encryption_sdk.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
+    _, _ = client.encrypt(**encrypt_kwargs)
 
     assert len(cache._cache) == 2
     assert cache._cache[encrypt_cache_key].messages_encrypted == 2
@@ -515,7 +541,7 @@ def test_encrypt_source_length_enforcement():
     cmm = aws_encryption_sdk.DefaultCryptoMaterialsManager(key_provider)
     plaintext = io.BytesIO(VALUES["plaintext_128"])
     with pytest.raises(CustomMaximumValueExceeded) as excinfo:
-        aws_encryption_sdk.encrypt(
+        aws_encryption_sdk.EncryptionSDKClient().encrypt(
             source=plaintext, materials_manager=cmm, source_length=int(len(VALUES["plaintext_128"]) / 2)
         )
 
@@ -528,7 +554,7 @@ def test_encrypt_source_length_enforcement_legacy_support():
     # if a crypto materials manager is provided; not if a master key
     # provider is provided.
     key_provider = fake_kms_key_provider()
-    aws_encryption_sdk.encrypt(
+    aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=VALUES["plaintext_128"], key_provider=key_provider, source_length=int(len(VALUES["plaintext_128"]) / 2)
     )
 
@@ -552,23 +578,34 @@ def test_stream_encryptor_no_seek_input():
     plaintext = NoSeekBytesIO(VALUES["plaintext_128"])
     ciphertext = io.BytesIO()
     with aws_encryption_sdk.StreamEncryptor(
-        source=plaintext, key_provider=key_provider, encryption_context=VALUES["encryption_context"]
+        source=plaintext,
+        key_provider=key_provider,
+        encryption_context=VALUES["encryption_context"],
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
     ) as encryptor:
         for chunk in encryptor:
             ciphertext.write(chunk)
-    decrypted, _header = aws_encryption_sdk.decrypt(source=ciphertext.getvalue(), key_provider=key_provider)
+    decrypted, _header = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    ).decrypt(source=ciphertext.getvalue(), key_provider=key_provider)
     assert decrypted == VALUES["plaintext_128"]
 
 
 def test_stream_decryptor_no_seek_input():
     """Test that StreamDecryptor can handle an input stream that is not seekable."""
     key_provider = fake_kms_key_provider()
-    ciphertext, _header = aws_encryption_sdk.encrypt(
-        source=VALUES["plaintext_128"], key_provider=key_provider, encryption_context=VALUES["encryption_context"]
+    ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
+        source=VALUES["plaintext_128"],
+        key_provider=key_provider,
+        encryption_context=VALUES["encryption_context"],
     )
     ciphertext_no_seek = NoSeekBytesIO(ciphertext)
     decrypted = io.BytesIO()
-    with aws_encryption_sdk.StreamDecryptor(source=ciphertext_no_seek, key_provider=key_provider) as decryptor:
+    with aws_encryption_sdk.StreamDecryptor(
+        source=ciphertext_no_seek,
+        key_provider=key_provider,
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+    ) as decryptor:
         for chunk in decryptor:
             decrypted.write(chunk)
     assert decrypted.getvalue() == VALUES["plaintext_128"]
@@ -578,21 +615,23 @@ def test_encrypt_oneshot_no_seek_input():
     """Test that encrypt can handle an input stream that is not seekable."""
     key_provider = fake_kms_key_provider()
     plaintext = NoSeekBytesIO(VALUES["plaintext_128"])
-    ciphertext, _header = aws_encryption_sdk.encrypt(
+    ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=plaintext, key_provider=key_provider, encryption_context=VALUES["encryption_context"]
     )
-    decrypted, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    decrypted, _header = aws_encryption_sdk.EncryptionSDKClient().decrypt(source=ciphertext, key_provider=key_provider)
     assert decrypted == VALUES["plaintext_128"]
 
 
 def test_decrypt_oneshot_no_seek_input():
     """Test that decrypt can handle an input stream that is not seekable."""
     key_provider = fake_kms_key_provider()
-    ciphertext, _header = aws_encryption_sdk.encrypt(
+    ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=VALUES["plaintext_128"], key_provider=key_provider, encryption_context=VALUES["encryption_context"]
     )
     ciphertext_no_seek = NoSeekBytesIO(ciphertext)
-    decrypted, _header = aws_encryption_sdk.decrypt(source=ciphertext_no_seek, key_provider=key_provider)
+    decrypted, _header = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext_no_seek, key_provider=key_provider
+    )
     assert decrypted == VALUES["plaintext_128"]
 
 
@@ -600,7 +639,9 @@ def test_stream_encryptor_readable():
     """Verify that open StreamEncryptor instances report as readable."""
     key_provider = fake_kms_key_provider()
     plaintext = io.BytesIO(VALUES["plaintext_128"])
-    with aws_encryption_sdk.StreamEncryptor(source=plaintext, key_provider=key_provider) as handler:
+    with aws_encryption_sdk.StreamEncryptor(
+        source=plaintext, key_provider=key_provider, commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    ) as handler:
         assert handler.readable()
         handler.read()
     assert not handler.readable()
@@ -610,8 +651,10 @@ def test_stream_decryptor_readable():
     """Verify that open StreamEncryptor instances report as readable."""
     key_provider = fake_kms_key_provider()
     plaintext = io.BytesIO(VALUES["plaintext_128"])
-    ciphertext, _header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider)
-    with aws_encryption_sdk.StreamDecryptor(source=ciphertext, key_provider=key_provider) as handler:
+    ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(source=plaintext, key_provider=key_provider)
+    with aws_encryption_sdk.StreamDecryptor(
+        source=ciphertext, key_provider=key_provider, commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    ) as handler:
         assert handler.readable()
         handler.read()
     assert not handler.readable()
@@ -652,7 +695,7 @@ def test_incomplete_read_stream_cycle(frame_length):
     plaintext = exact_length_plaintext(384)
     ciphertext = b""
     cycle_count = 0
-    with aws_encryption_sdk.stream(
+    with aws_encryption_sdk.EncryptionSDKClient().stream(
         mode="encrypt",
         source=SometimesIncompleteReaderIO(plaintext),
         key_provider=key_provider,
@@ -671,7 +714,7 @@ def test_incomplete_read_stream_cycle(frame_length):
 
     decrypted = b""
     cycle_count = 0
-    with aws_encryption_sdk.stream(
+    with aws_encryption_sdk.EncryptionSDKClient().stream(
         mode="decrypt", source=SometimesIncompleteReaderIO(ciphertext), key_provider=key_provider
     ) as decryptor:
         while True:
@@ -727,7 +770,7 @@ def _error_check(capsys_instance):
 def test_plaintext_logs_oneshot(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
-    _ciphertext, _header = aws_encryption_sdk.encrypt(
+    _ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_size
     )
 
@@ -743,7 +786,7 @@ def test_plaintext_logs_stream(caplog, capsys, plaintext_length, frame_size):
     plaintext, key_provider = _prep_plaintext_and_logs(caplog, plaintext_length)
 
     ciphertext = b""
-    with aws_encryption_sdk.stream(
+    with aws_encryption_sdk.EncryptionSDKClient().stream(
         mode="encrypt", source=plaintext, key_provider=key_provider, frame_length=frame_size
     ) as encryptor:
         for line in encryptor:
@@ -781,11 +824,13 @@ def test_cycle_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
     plaintext = wrapping_class(io.BytesIO(raw_plaintext))
     key_provider = fake_kms_key_provider()
-    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
     )
     ciphertext = wrapping_class(io.BytesIO(raw_ciphertext))
-    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    decrypted, _decrypt_header = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext, key_provider=key_provider
+    )
     assert raw_plaintext == decrypted
 
 
@@ -795,10 +840,12 @@ def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
     raw_plaintext = exact_length_plaintext(100)
     plaintext = wrapping_class(io.BytesIO(raw_plaintext))
     key_provider = fake_kms_key_provider()
-    ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+    ciphertext, _encrypt_header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
     )
-    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    decrypted, _decrypt_header = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext, key_provider=key_provider
+    )
     assert raw_plaintext == decrypted
 
 
@@ -807,11 +854,13 @@ def test_encrypt_minimal_source_stream_api(frame_length, wrapping_class):
 def test_decrypt_minimal_source_stream_api(frame_length, wrapping_class):
     plaintext = exact_length_plaintext(100)
     key_provider = fake_kms_key_provider()
-    raw_ciphertext, _encrypt_header = aws_encryption_sdk.encrypt(
+    raw_ciphertext, _encrypt_header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
         source=plaintext, key_provider=key_provider, frame_length=frame_length
     )
     ciphertext = wrapping_class(io.BytesIO(raw_ciphertext))
-    decrypted, _decrypt_header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=key_provider)
+    decrypted, _decrypt_header = aws_encryption_sdk.EncryptionSDKClient().decrypt(
+        source=ciphertext, key_provider=key_provider
+    )
     assert plaintext == decrypted
 
 
@@ -831,8 +880,12 @@ def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
     caplog.set_level(logging.WARNING)
     plaintext = exact_length_plaintext(100)
     key_provider = fake_kms_key_provider()
-    ciphertext, _header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=key_provider, frame_length=0)
-    with aws_encryption_sdk.stream(mode="decrypt", source=ciphertext, key_provider=key_provider) as decryptor:
+    ciphertext, _header = aws_encryption_sdk.EncryptionSDKClient().encrypt(
+        source=plaintext, key_provider=key_provider, frame_length=0
+    )
+    with aws_encryption_sdk.EncryptionSDKClient().stream(
+        mode="decrypt", source=ciphertext, key_provider=key_provider
+    ) as decryptor:
         decrypted = decryptor.read()
 
     assert decrypted == plaintext
