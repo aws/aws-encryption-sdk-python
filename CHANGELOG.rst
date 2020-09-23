@@ -2,6 +2,25 @@
 Changelog
 *********
 
+2.0.0 -- 2020-09-24
+===================
+
+Features
+--------
+* Updates to the AWS Encryption SDK. 1cceceb
+
+Breaking Changes
+^^^^^^^^^^^^^^^^
+* ``KMSMasterKeyProvider`` is removed. Customers must use ``StrictAwsKmsMasterKeyProvider``
+  with explicit key ids, or ``DiscoveryAwsKmsMasterKeyProvider`` to allow decryption of any
+  ciphertext to which the application has access.
+* The ``encrypt``, ``decrypt``, and ``stream`` methods in the ``aws_encryption_sdk`` module
+  are removed, replaced by identically named methods on the new ``EncryptionSDKClient`` class.
+* Key committing algorithm suites are now default.
+
+See `Migration guide <https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/migration.html>`_
+for more details.
+
 1.7.0 -- 2020-09-24
 ===================
 
