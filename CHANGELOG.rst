@@ -5,7 +5,21 @@ Changelog
 1.7.0 -- 2020-09-24
 ===================
 
-TODO
+Features
+--------
+* Updates to the AWS Encryption SDK. bdbf00c
+
+Deprecations
+^^^^^^^^^^^^
+* ``KMSMasterKeyProvider`` is deprecated. Customers should move to ``StrictAwsKmsMasterKeyProvider``
+  with explicit key ids, or ``DiscoveryAwsKmsMasterKeyProvider`` to allow decryption of any
+  ciphertext to which the application has access.
+* The ``encrypt``, ``decrypt``, and ``stream`` methods in the ``aws_encryption_sdk`` module are
+  deprecated. Customers should move to the identically named methods on the new ``EncryptionSDKClient``
+  class.
+
+See `Migration guide <https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/migration.html>`_
+for more details.
 
 1.4.1 -- 2019-09-20
 ===================
