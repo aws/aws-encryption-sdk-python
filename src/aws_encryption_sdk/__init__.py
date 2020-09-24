@@ -21,6 +21,7 @@ from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__  # noqa
 from aws_encryption_sdk.key_providers.kms import (  # noqa
     DiscoveryAwsKmsMasterKeyProvider,
+    KMSMasterKeyProvider,
     KMSMasterKeyProviderConfig,
     StrictAwsKmsMasterKeyProvider,
 )

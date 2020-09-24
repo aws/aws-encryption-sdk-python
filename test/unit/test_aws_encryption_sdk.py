@@ -101,3 +101,10 @@ class TestAwsEncryptionSdk(object):
         with pytest.raises(DeprecationWarning) as excinfo:
             aws_encryption_sdk.stream(mode="e", source=sentinel.a, key_provider=sentinel.b)
         excinfo.match("This method is deprecated and will be removed in a future version")
+
+    def test_kms_master_key_provider_deprecation_warning(self):
+        warnings.simplefilter("error")
+
+        with pytest.raises(DeprecationWarning) as excinfo:
+            aws_encryption_sdk.KMSMasterKeyProvider()
+        excinfo.match("KMSMasterKeyProvider is deprecated")
