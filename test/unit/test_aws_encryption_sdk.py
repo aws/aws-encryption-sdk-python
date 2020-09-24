@@ -106,5 +106,5 @@ class TestAwsEncryptionSdk(object):
         warnings.simplefilter("error")
 
         with pytest.raises(DeprecationWarning) as excinfo:
-            provider = aws_encryption_sdk.KMSMasterKeyProvider()
+            aws_encryption_sdk.KMSMasterKeyProvider()
         excinfo.match("KMSMasterKeyProvider is deprecated")
