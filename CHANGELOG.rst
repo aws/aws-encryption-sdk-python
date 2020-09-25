@@ -2,6 +2,13 @@
 Changelog
 *********
 
+1.7.1 -- 2020-09-24
+===================
+
+Bugfix
+--------
+* Reintroduce removed symbol in top-level ``aws_encryption_sdk`` module
+
 1.7.0 -- 2020-09-24
 ===================
 
