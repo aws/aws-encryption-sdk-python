@@ -16,7 +16,7 @@ import logging
 import os
 
 import aws_encryption_sdk
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+from aws_encryption_sdk.key_providers.kms import DiscoveryAwsKmsMasterKeyProvider
 from chalice import Chalice, Response
 
 from .key_providers.counting import CountingMasterKey
@@ -27,9 +27,9 @@ APP = Chalice(app_name="aws-encryption-sdk-decrypt-oracle", debug=CHALICE_DEBUG)
 APP.log.setLevel(logging.DEBUG)
 
 
-def _master_key_provider() -> KMSMasterKeyProvider:
+def _master_key_provider() -> DiscoveryAwsKmsMasterKeyProvider:
     """Build the V0 master key provider."""
-    master_key_provider = KMSMasterKeyProvider()
+    master_key_provider = DiscoveryAwsKmsMasterKeyProvider()
     master_key_provider.add_master_key_provider(NullMasterKey())
     master_key_provider.add_master_key_provider(CountingMasterKey())
     return master_key_provider
@@ -59,8 +59,9 @@ def basic_decrypt() -> Response:
     APP.log.debug(APP.current_request.raw_body)
 
     try:
+        client = aws_encryption_sdk.EncryptionSDKClient()
         ciphertext = APP.current_request.raw_body
-        plaintext, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=_master_key_provider())
+        plaintext, _header = client.decrypt(source=ciphertext, key_provider=_master_key_provider())
         APP.log.debug("Plaintext:")
         APP.log.debug(plaintext)
         response = Response(body=plaintext, headers={"Content-Type": "application/octet-stream"}, status_code=200)

@@ -15,12 +15,12 @@ try:
     from aws_encryption_sdk.identifiers import AlgorithmSuite
 except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+from aws_encryption_sdk.key_providers.kms import DiscoveryAwsKmsMasterKeyProvider, StrictAwsKmsMasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING
 
 # This lets us easily use a single boto3 client per region for all KMS master keys.
-KMS_MASTER_KEY_PROVIDER = KMSMasterKeyProvider()
+KMS_MASTER_KEY_PROVIDER = DiscoveryAwsKmsMasterKeyProvider()
 
 
 def arn_from_key_id(key_id):
@@ -34,7 +34,8 @@ def arn_from_key_id(key_id):
     :returns: Full Arn for KMS CMK that key ID identifies
     :rtype: str
     """
-    encrypted_data_key = KMS_MASTER_KEY_PROVIDER.master_key(key_id.encode(ENCODING)).generate_data_key(
+    provider = StrictAwsKmsMasterKeyProvider(key_ids=[key_id])
+    encrypted_data_key = provider.master_key(key_id.encode(ENCODING)).generate_data_key(
         algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, encryption_context={}
     )
     return encrypted_data_key.key_provider.key_info.decode(ENCODING)

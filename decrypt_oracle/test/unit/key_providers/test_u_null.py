@@ -15,6 +15,7 @@ import aws_encryption_sdk
 import pytest
 from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 
+from aws_encryption_sdk.identifiers import CommitmentPolicy
 from ...integration.integration_test_utils import filtered_test_vectors
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
@@ -23,8 +24,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 @pytest.mark.parametrize("vector", filtered_test_vectors(lambda x: x.key_type == "null"))
 def test_null_master_key_decrypt_vectors(vector):
     master_key = NullMasterKey()
-
-    plaintext, _header = aws_encryption_sdk.decrypt(source=vector.ciphertext, key_provider=master_key)
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
+    plaintext, _header = client.decrypt(source=vector.ciphertext, key_provider=master_key)
 
     assert plaintext == vector.plaintext
 
@@ -32,9 +33,10 @@ def test_null_master_key_decrypt_vectors(vector):
 def test_null_master_key_cycle():
     plaintext = b"some super secret plaintext"
     master_key = NullMasterKey()
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
 
-    ciphertext, _header = aws_encryption_sdk.encrypt(source=plaintext, key_provider=master_key)
-    decrypted, _header = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=master_key)
+    ciphertext, _header = client.encrypt(source=plaintext, key_provider=master_key)
+    decrypted, _header = client.decrypt(source=ciphertext, key_provider=master_key)
 
     assert plaintext != ciphertext
     assert plaintext == decrypted

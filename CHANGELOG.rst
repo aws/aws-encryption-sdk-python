@@ -7,7 +7,7 @@ Changelog
 
 Features
 --------
-* Updates to the AWS Encryption SDK. 1cceceb
+* Updates to the AWS Encryption SDK. 73cce71
 
 Breaking Changes
 ^^^^^^^^^^^^^^^^
@@ -26,7 +26,7 @@ for more details.
 
 Features
 --------
-* Updates to the AWS Encryption SDK. bdbf00c
+* Updates to the AWS Encryption SDK. ef90351
 
 Deprecations
 ^^^^^^^^^^^^
