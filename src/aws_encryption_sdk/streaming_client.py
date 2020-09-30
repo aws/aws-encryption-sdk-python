@@ -75,6 +75,8 @@ class _ClientConfig(object):
 
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
+    :param commitment_policy: The commitment policy to use during encryption and decryption
+    :type commitment_policy: aws_encryption_sdk.identifiers.CommitmentPolicy
     :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
         (either `materials_manager` or `key_provider` required)
     :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
