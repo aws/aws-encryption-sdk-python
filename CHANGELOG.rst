@@ -14,7 +14,7 @@ Bugfix
 
 Features
 --------
-* Updates to the AWS Encryption SDK. bdbf00c
+* Updates to the AWS Encryption SDK. ef90351
 
 Deprecations
 ^^^^^^^^^^^^

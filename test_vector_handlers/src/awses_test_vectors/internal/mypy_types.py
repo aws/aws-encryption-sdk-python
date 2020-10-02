@@ -15,10 +15,10 @@
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import (  # noqa pylint: disable=unused-import
+        IO,
         Any,
         Callable,
         Dict,
-        IO,
         Iterable,
         Optional,
         Tuple,

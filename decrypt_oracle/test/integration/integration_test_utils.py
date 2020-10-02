@@ -17,8 +17,10 @@ import os
 from collections import namedtuple
 from typing import Any, Callable, Iterable, Optional, Text
 
+import aws_encryption_sdk
 import pytest
-from aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider
+from aws_encryption_sdk.identifiers import CommitmentPolicy
+from aws_encryption_sdk.key_providers.kms import StrictAwsKmsMasterKeyProvider
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 DEPLOYMENT_REGION = "AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION"
@@ -26,6 +28,8 @@ DEPLOYMENT_ID = "AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_API_DEPLOYMENT_ID"
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
 _KMS_MKP = None
 _ENDPOINT = None
+
+CLIENT = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT)
 
 
 def decrypt_endpoint() -> Text:
@@ -77,7 +81,7 @@ def kms_master_key_provider(cache: Optional[bool] = True):
         return _KMS_MKP
 
     cmk_arn = get_cmk_arn()
-    _kms_master_key_provider = KMSMasterKeyProvider(key_ids=[cmk_arn])
+    _kms_master_key_provider = StrictAwsKmsMasterKeyProvider(key_ids=[cmk_arn])
 
     if cache:
         _KMS_MKP = _kms_master_key_provider

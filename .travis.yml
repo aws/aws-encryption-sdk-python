@@ -56,12 +56,12 @@ matrix:
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py27-awses_1.3.3
+        TOXENV=py27-awses_1.7.1
       stage: Test Vector Handler Tests
     - python: 2.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py27-awses_1.3.max
+        TOXENV=py27-awses_2.0.0
       stage: Test Vector Handler Tests
     - python: 2.7
       env:
@@ -72,12 +72,12 @@ matrix:
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py35-awses_1.3.3
+        TOXENV=py35-awses_1.7.1
       stage: Test Vector Handler Tests
     - python: 3.5
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py35-awses_1.3.max
+        TOXENV=py35-awses_2.0.0
       stage: Test Vector Handler Tests
     - python: 3.5
       env:
@@ -88,12 +88,12 @@ matrix:
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py36-awses_1.3.3
+        TOXENV=py36-awses_1.7.1
       stage: Test Vector Handler Tests
     - python: 3.6
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py36-awses_1.3.max
+        TOXENV=py36-awses_2.0.0
       stage: Test Vector Handler Tests
     - python: 3.6
       env:
@@ -104,14 +104,14 @@ matrix:
     - python: 3.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py37-awses_1.3.3
+        TOXENV=py37-awses_1.7.1
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.7
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py37-awses_1.3.max
+        TOXENV=py37-awses_2.0.0
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
@@ -126,14 +126,14 @@ matrix:
     - python: 3.8
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py38-awses_1.3.3
+        TOXENV=py38-awses_1.7.1
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
     - python: 3.8
       env:
         TEST_VECTOR_HANDLERS=1
-        TOXENV=py38-awses_1.3.max
+        TOXENV=py38-awses_2.0.0
       dist: xenial
       sudo: true
       stage: Test Vector Handler Tests
