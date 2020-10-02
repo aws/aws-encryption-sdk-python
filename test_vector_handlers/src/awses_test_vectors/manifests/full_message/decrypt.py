@@ -21,6 +21,7 @@ import os
 import attr
 import aws_encryption_sdk
 import six
+from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -34,7 +35,8 @@ from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Callable, Dict, IO, Iterable, Optional  # noqa pylint: disable=unused-import
+    from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
+
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         DECRYPT_SCENARIO_SPEC,
         FULL_MESSAGE_DECRYPT_MANIFEST,
@@ -155,7 +157,8 @@ class MessageDecryptionTestScenario(object):
 
         :param str name: Descriptive name for this scenario to use in any logging or errors
         """
-        plaintext, _header = aws_encryption_sdk.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
+        client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+        plaintext, _header = client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
         if plaintext != self.plaintext:
             raise ValueError("Decrypted plaintext does not match expected value for scenario '{}'".format(name))
 

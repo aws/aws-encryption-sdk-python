@@ -1,0 +1,2 @@
+aws-encryption-sdk==2.0.0
+attrs<19.2.0
