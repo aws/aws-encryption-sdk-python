@@ -25,6 +25,7 @@ except ImportError:
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Any, Callable, Dict, Iterable, Type  # noqa pylint: disable=unused-import
+
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         ISINSTANCE,
         MANIFEST_VERSION,
