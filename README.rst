@@ -39,7 +39,7 @@ Required Prerequisites
 ======================
 
 * Python 2.7+ or 3.4+
-* cryptography >= 1.8.1
+* cryptography >= 2.5.0
 * boto3
 * attrs
 
