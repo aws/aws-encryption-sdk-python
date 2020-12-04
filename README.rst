@@ -131,7 +131,10 @@ pre-existing instance of a ``botocore session`` to the ``StrictAwsKmsMasterKeyPr
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
 
-To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs.
+To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs. For providers that will only
+be used for encryption, you can use a key ARN or alias ARN. For providers that will be used for decryption, you
+must use the key ARN; aliases are not supported.
+
 If you configure the the ``StrictAwsKmsMasterKeyProvider`` with multiple CMKs, the `final message`_
 will include a copy of the data key encrypted by each configured CMK.
 
