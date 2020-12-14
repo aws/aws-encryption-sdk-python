@@ -283,7 +283,6 @@ class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
     ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
     ... ])
-    >>> kms_key_provider.add_master_key('arn:aws:kms:ap-northeast-1:4444444444444:alias/another-key')
 
     .. note::
         If no botocore_session is provided, the default botocore session will be used.
