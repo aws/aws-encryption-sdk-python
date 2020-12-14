@@ -128,7 +128,10 @@ pre-existing instance of a ``botocore session`` to the ``StrictAwsKmsMasterKeyPr
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
 
-To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs.
+To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs. For providers that will only
+be used for encryption, you can use any valid `KMS key identifier`_. For providers that will be used for decryption, you
+must use the key ARN; key ids, alias names, and alias ARNs are not supported.
+
 If you configure the the ``StrictAwsKmsMasterKeyProvider`` with multiple CMKs, the `final message`_
 will include a copy of the data key encrypted by each configured CMK.
 
@@ -312,6 +315,7 @@ to your use-case in order to obtain peak performance.
 .. _GitHub: https://github.com/aws/aws-encryption-sdk-python/
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
 .. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+.. _KMS key identifier: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
 .. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
 .. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
