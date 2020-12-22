@@ -41,3 +41,4 @@ venv/
 # Chalice
 */.chalice/deployments
 */.chalice/venv
+/.history
