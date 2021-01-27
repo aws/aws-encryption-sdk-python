@@ -274,9 +274,13 @@ class KMSMasterKeyProvider(BaseKMSMasterKeyProvider):
 
 class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     """Strict Master Key Provider for KMS. It is configured with an explicit list of AWS KMS master keys that
-    should be used for encryption in decryption. On encryption, the plaintext will be encrypted with all configured
-    master keys. On decryption, the ciphertext will be decrypted with the first master key that can decrypt. If the
-    ciphertext is encrypted with a master key that was not explicitly configured, decryption will fail.
+    should be used for encryption and decryption. On encryption, the plaintext will be encrypted with all configured
+    master keys. On decryption, it only attempts to decrypt ciphertexts that have been wrapped with a CMK that
+    matches one of the configured CMK ARNs. If the ciphertext is encrypted with a master key that was not
+    explicitly configured, decryption will fail. To create a StrictAwsKmsMasterKeyProvider you must provide
+    one or more CMKs. For providers that will only be used for encryption, you can use any valid KMS key
+    identifier. For providers that will be used for decryption, you must use the key ARN; key ids, alias names, and
+    alias ARNs are not supported.
 
     >>> import aws_encryption_sdk
     >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
