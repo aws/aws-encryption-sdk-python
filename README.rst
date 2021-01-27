@@ -113,7 +113,11 @@ StrictAwsKmsMasterKeyProvider
 A ``StrictAwsKmsMasterKeyProvider`` is configured with an explicit list of AWS KMS
 CMKs with which to encrypt and decrypt data. On encryption, it encrypts the plaintext with all
 configured CMKs. On decryption, it only attempts to decrypt ciphertexts that have been wrapped
-with one of the configured CMKs.
+with a CMK that matches one of the configured CMK ARNs.
+
+To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs. For providers that will only
+be used for encryption, you can use any valid `KMS key identifier`_. For providers that will be used for decryption, you
+must use the key ARN; key ids, alias names, and alias ARNs are not supported.
 
 Because the ``StrictAwsKmsMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_,
 it requires AWS Credentials.
@@ -121,10 +125,6 @@ To provide these credentials, use the `standard means by which boto3 locates cre
 pre-existing instance of a ``botocore session`` to the ``StrictAwsKmsMasterKeyProvider``.
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
-
-To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs. For providers that will only
-be used for encryption, you can use any valid `KMS key identifier`_. For providers that will be used for decryption, you
-must use the key ARN; key ids, alias names, and alias ARNs are not supported.
 
 If you configure the the ``StrictAwsKmsMasterKeyProvider`` with multiple CMKs, the `final message`_
 will include a copy of the data key encrypted by each configured CMK.
