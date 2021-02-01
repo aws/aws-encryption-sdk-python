@@ -34,7 +34,7 @@ Required Prerequisites
 
 * Python 2.7+ or 3.4+
 * cryptography >= 2.5.0
-* boto3
+* boto3 >= 1.10.0
 * attrs
 
 Installation
