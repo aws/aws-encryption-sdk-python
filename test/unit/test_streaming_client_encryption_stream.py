@@ -401,7 +401,7 @@ class TestEncryptionStream(object):
         )
         self.mock_source_stream.closed = False
         mock_stream.readline = MagicMock(return_value=sentinel.line)
-        test = mock_stream.next()
+        test = mock_stream.next() # pylint: disable=not-callable
         mock_stream.readline.assert_called_once_with()
         assert test is sentinel.line
 
@@ -415,7 +415,7 @@ class TestEncryptionStream(object):
         mock_stream.close()
 
         with pytest.raises(StopIteration):
-            mock_stream.next()
+            mock_stream.next() # pylint: disable=not-callable
 
     def test_next_source_stream_closed_and_buffer_empty(self):
         mock_stream = MockEncryptionStream(
@@ -428,7 +428,7 @@ class TestEncryptionStream(object):
         mock_stream.output_buffer = b""
 
         with pytest.raises(StopIteration):
-            mock_stream.next()
+            mock_stream.next() # pylint: disable=not-callable
 
     @patch("aws_encryption_sdk.streaming_client._EncryptionStream.closed", new_callable=PropertyMock)
     def test_iteration(self, mock_closed):
