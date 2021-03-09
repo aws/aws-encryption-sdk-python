@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  variables:
+    BRANCH: "master"
+  secrets-manager:
+    TWINE_USERNAME: TestPyPiCryptoTools:username 
+    TWINE_PASSWORD: TestPyPiCryptoTools:password
+
+phases:
+  install:
+    runtime-versions:
+      python: latest
+  build:
+    commands:
+      - pip install tox
+      - git checkout $BRANCH
+      - tox -e park
+      - tox -e test-release
+
+
+batch:
+  fast-fail: false
+  build-list:
+    - identifier: test_release
