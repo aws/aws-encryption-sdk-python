@@ -91,6 +91,7 @@ class MessageDecryptionTestScenario(object):
         description=None,  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
+        """Set initial values for the test scenario."""
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
@@ -200,6 +201,7 @@ class MessageDecryptionManifest(object):
         client_version=aws_encryption_sdk.__version__,  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
+        """Set initial values for the manifest."""
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215

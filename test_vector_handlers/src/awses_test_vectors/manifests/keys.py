@@ -142,6 +142,7 @@ class ManualKeySpec(KeySpec):
         material,  # type: Iterable[str]
     ):  # noqa=D107
         # type: (...) -> None
+        """Set initial values for the ManualKeySpec."""
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
