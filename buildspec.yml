@@ -57,3 +57,6 @@ batch:
       buildspec: codebuild/py38/awses_2.0.0.yml
     - identifier: py38_awses_latest
       buildspec: codebuild/py38/awses_latest.yml
+
+    - identifier: code_coverage
+      buildspec: codebuild/coverage/coverage.yml
