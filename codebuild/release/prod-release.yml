@@ -16,11 +16,11 @@ phases:
       python: latest
   pre_build:
     commands:
-      - git checkout $BRANCH
-      - CURRENT_COMMIT=$(git rev-parse --short HEAD)
+      - git checkout $COMMIT_ID
+      - FOUND_VERSION=$(sed -n 's/__version__ = "\(.*\)"/\1/p' src/aws_encryption_sdk/identifiers.py)
       - |
-        if expr "${CURRENT_COMMIT}" != ${COMMIT_ID}; then
-          echo "HEAD of repository commit (${CURRENT_COMMIT}) did not match expected commit (${COMMIT_ID}), stopping"
+        if expr ${FOUND_VERSION} != ${VERSION}; then
+          echo "identifiers.py does not contain expected version string ${VERSION}, stopping"
           exit 1;
         fi
   build:
