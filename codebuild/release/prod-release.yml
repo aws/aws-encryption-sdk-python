@@ -34,7 +34,7 @@ batch:
     - identifier: release_to_prod
     - identifier: validate_prod_release
       depend-on:
-        - prod_release
+        - release_to_prod
       buildspec: codebuild/release/validate.yml
       env:
         variables:

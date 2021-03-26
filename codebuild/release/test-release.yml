@@ -35,7 +35,7 @@ batch:
     - identifier: release_to_staging
     - identifier: validate_staging_release
       depend-on:
-        - test_release
+        - release_to_staging
       buildspec: codebuild/release/validate.yml
       env:
         variables:
