@@ -1,0 +1,14 @@
+version: 0.2
+
+env:
+  variables:
+    TOXENV: "coverage"
+
+phases:
+  install:
+    runtime-versions:
+      python: latest
+  build:
+    commands:
+      - pip install tox
+      - tox
