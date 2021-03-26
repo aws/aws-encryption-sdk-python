@@ -20,7 +20,7 @@ phases:
       - FOUND_VERSION=$(sed -n 's/__version__ = "\(.*\)"/\1/p' src/aws_encryption_sdk/identifiers.py)
       - |
         if expr ${FOUND_VERSION} != ${VERSION}; then
-          echo "identifiers.py does not contain expected version string ${VERSION}, stopping"
+          echo "identifiers.py version (${FOUND_VERSION}) does not match expected version (${VERSION}), stopping"
           exit 1;
         fi
   build:
@@ -31,8 +31,8 @@ phases:
 batch:
   fast-fail: true 
   build-graph:
-    - identifier: prod_release
-    - identifier: validate_release
+    - identifier: release_to_prod
+    - identifier: validate_prod_release
       depend-on:
         - prod_release
       buildspec: codebuild/release/validate.yml
