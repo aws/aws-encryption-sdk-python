@@ -58,5 +58,16 @@ batch:
     - identifier: py38_awses_latest
       buildspec: codebuild/py38/awses_latest.yml
 
+    - identifier: py39_integ
+      buildspec: codebuild/py39/integ.yml
+    - identifier: py39_examples
+      buildspec: codebuild/py39/examples.yml
+    - identifier: py39_awses_1_7_1
+      buildspec: codebuild/py39/awses_1.7.1.yml
+    - identifier: py39_awses_2_0_0
+      buildspec: codebuild/py39/awses_2.0.0.yml
+    - identifier: py39_awses_latest
+      buildspec: codebuild/py39/awses_latest.yml
+
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
