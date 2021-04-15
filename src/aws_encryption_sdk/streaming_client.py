@@ -730,7 +730,7 @@ class DecryptorConfig(_ClientConfig):
 
 
 class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-attributes
-    """Provides a streaming encryptor for encrypting a stream source.
+    """Provides a streaming decryptor for decrypting a stream source.
     Behaves as a standard file-like object.
 
     .. note::
