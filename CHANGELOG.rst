@@ -2,6 +2,21 @@
 Changelog
 *********
 
+2.1.0 -- 2020-04-20
+===================
+
+Maintenance
+-----------
+* New minimum cryptography dependency 2.5.0 since we're using newer byte type checking
+  `#308 <https://github.com/aws/aws-encryption-sdk-python/pull/308>`_
+* New minimum boto dependency 1.10.0 to ensure KMS Decrypt APIs know about the KeyId parameter
+  `#317 <https://github.com/aws/aws-encryption-sdk-python/pull/317>`_
+* Add python 3.8 and 3.9 to CI and update setup.py to clarify we support them
+  `#329 <https://github.com/aws/aws-encryption-sdk-python/pull/329>`_
+* Update decrypt oracle and test vector handlers with 2.0.0 changes
+  `#303 <https://github.com/aws/aws-encryption-sdk-python/pull/303>`_
+* Added a number of CodeBuild specs to support integration tests and release processes
+
 2.0.0 -- 2020-09-24
 ===================
 
