@@ -6,7 +6,7 @@ aws-encryption-sdk
    :target: https://pypi.python.org/pypi/aws-encryption-sdk
    :alt: Latest Version
 
-.. image:: https://img.shields.io/pypi/pyversions/aws-encryption-sdk-cli.svg
+.. image:: https://img.shields.io/pypi/pyversions/aws-encryption-sdk.svg
    :target: https://pypi.python.org/pypi/aws-encryption-sdk
    :alt: Supported Python Versions
 
