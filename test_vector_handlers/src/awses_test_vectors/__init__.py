@@ -11,4 +11,4 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Static test vector handling logic for the AWS Encyrption SDK."""
-__version__ = "1.0.0"
+__version__ = "2.0.0"

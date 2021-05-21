@@ -1,3 +1,4 @@
 attrs >= 17.4.0
-aws-encryption-sdk
+aws-encryption-sdk>=2.0.0
+pytest>=3.3.1
 six
