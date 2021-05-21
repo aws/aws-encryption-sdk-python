@@ -59,6 +59,7 @@ setup(
     entry_points={
         "console_scripts": [
             "awses-full-message-encrypt=awses_test_vectors.commands.full_message_encrypt:cli",
+            "awses-full-message-decrypt-generate=awses_test_vectors.commands.full_message_decrypt_generate:cli",
             "awses-full-message-decrypt=awses_test_vectors.commands.full_message_decrypt:cli",
         ]
     },

@@ -10,10 +10,10 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Command to test AWS Encryption SDK full message encryption vectors."""
+"""Command to generate AWS Encryption SDK full message decryption vectors."""
 import argparse
 
-from awses_test_vectors.manifests.full_message.encrypt import MessageEncryptionManifest
+from awses_test_vectors.manifests.full_message.decrypt_generation import MessageDecryptionGenerationManifest
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Optional  # noqa pylint: disable=unused-import
@@ -24,16 +24,26 @@ except ImportError:  # pragma: no cover
 
 def cli(args=None):
     # type: (Optional[Iterable[str]]) -> None
-    """CLI entry point for processing AWS Encryption SDK Encrypt Message manifests."""
+    """CLI entry point for generating AWS Encryption SDK Decrypt Message manifests."""
     parser = argparse.ArgumentParser(
-        description="Build ciphertexts from keys and encrypt manifests"
+        description="Build a decrypt manifest from keys and decrypt generation manifests"
+    )
+    parser.add_argument("--output", required=True, help="Directory in which to store results")
+    parser.add_argument(
+        "--input", required=True, type=argparse.FileType("r"), help="Existing full message decrypt generation manifest"
     )
     parser.add_argument(
-        "--input", required=True, type=argparse.FileType("r"), help="Existing full message encrypt manifest"
+        "--human",
+        required=False,
+        default=None,
+        action="store_const",
+        const=4,
+        dest="json_indent",
+        help="Output human-readable JSON",
     )
 
     parsed = parser.parse_args(args)
 
-    encrypt_manifest = MessageEncryptionManifest.from_file(parsed.input)
+    encrypt_manifest = MessageDecryptionGenerationManifest.from_file(parsed.input)
 
-    encrypt_manifest.run()
+    encrypt_manifest.run_and_write_to_dir(target_directory=parsed.output, json_indent=parsed.json_indent)

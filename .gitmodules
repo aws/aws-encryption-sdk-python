@@ -1,0 +1,3 @@
+[submodule "test_vector_handlers/test/aws-crypto-tools-test-vector-framework"]
+	path = test_vector_handlers/test/aws-crypto-tools-test-vector-framework
+	url = https://github.com/awslabs/aws-crypto-tools-test-vector-framework.git

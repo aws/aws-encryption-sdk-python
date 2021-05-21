@@ -15,10 +15,8 @@ AWS Encryption SDK Encrypt Message manifest handler.
 
 Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption SDK Encrypt Message.
 """
-import binascii
 import json
 import os
-import uuid
 
 import attr
 import aws_encryption_sdk
@@ -30,12 +28,10 @@ from awses_test_vectors.internal.util import (
     algorithm_suite_from_string_id,
     dictionary_validator,
     file_reader,
-    file_writer,
     iterable_validator,
     membership_validator,
     validate_manifest_type,
 )
-from awses_test_vectors.manifests.full_message.decrypt import MessageDecryptionManifest, MessageDecryptionTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
@@ -56,11 +52,12 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (1,)
+SUPPORTED_VERSIONS = (2,)
 
 
 @attr.s
 class MessageEncryptionTestScenario(object):
+    # pylint: disable=too-many-instance-attributes
     """Data class for a single full message decrypt test scenario.
 
     Handles serialization and deserialization to and from manifest specs.
@@ -108,23 +105,7 @@ class MessageEncryptionTestScenario(object):
             master_key_provider=master_key_provider,
         )
 
-    @property
-    def scenario_spec(self):
-        # type: () -> ENCRYPT_SCENARIO_SPEC
-        """Build a scenario specification describing this test scenario.
-
-        :return: Scenario specification JSON
-        :rtype: dict
-        """
-        return {
-            "plaintext": self.plaintext_name,
-            "algorithm": binascii.hexlify(self.algorithm.id_as_bytes()),
-            "frame-size": self.frame_size,
-            "encryption-context": self.encryption_context,
-            "master-keys": [spec.scenario_spec for spec in self.master_key_specs],
-        }
-
-    def run(self, ciphertext_writer, plaintext_uri):
+    def run(self, materials_manager=None):
         """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
         a :class:`MessageDecryptionTestScenario` that describes the matching decrypt scenario.
 
@@ -134,26 +115,23 @@ class MessageEncryptionTestScenario(object):
         :return: Decrypt test scenario that describes the generated scenario
         :rtype: MessageDecryptionTestScenario
         """
-        client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        ciphertext, _header = client.encrypt(
+        commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+        if self.algorithm.is_committing():
+            commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
+
+        client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+        encrypt_kwargs = dict(
             source=self.plaintext,
             algorithm=self.algorithm,
             frame_length=self.frame_size,
             encryption_context=self.encryption_context,
-            key_provider=self.master_key_provider,
         )
-
-        ciphertext_name = str(uuid.uuid4())
-        ciphertext_uri = ciphertext_writer(ciphertext_name, ciphertext)
-
-        return MessageDecryptionTestScenario(
-            plaintext_uri=plaintext_uri,
-            plaintext=self.plaintext,
-            ciphertext_uri=ciphertext_uri,
-            ciphertext=ciphertext,
-            master_key_specs=self.master_key_specs,
-            master_key_provider=self.master_key_provider,
-        )
+        if materials_manager:
+            encrypt_kwargs["materials_manager"] = materials_manager
+        else:
+            encrypt_kwargs["key_provider"] = self.master_key_provider
+        ciphertext, _header = client.encrypt(**encrypt_kwargs)
+        return ciphertext
 
 
 @attr.s
@@ -214,30 +192,8 @@ class MessageEncryptionManifest(object):
                 continue
         return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
 
-    def run_and_write_to_dir(self, target_directory, json_indent=None):
-        # type: (str, Optional[int]) -> None
-        """Process all known encrypt test scenarios and write the resulting data and manifests to disk.
-
-        :param str target_directory: Directory in which to write all output
-        :param int json_indent: Number of spaces to indent JSON files (optional: default is to write minified)
-        """
-        root_dir = os.path.abspath(target_directory)
-        root_writer = file_writer(root_dir)
-
-        root_writer("keys.json", json.dumps(self.keys.manifest_spec, indent=json_indent).encode(ENCODING))
-
-        plaintext_writer = file_writer(os.path.join(root_dir, "plaintexts"))
-        plaintext_uris = {name: plaintext_writer(name, plaintext) for name, plaintext in self.plaintexts.items()}
-
-        ciphertext_writer = file_writer(os.path.join(root_dir, "ciphertexts"))
-
-        test_scenarios = {
-            name: scenario.run(ciphertext_writer, plaintext_uris[scenario.plaintext_name])
-            for name, scenario in self.tests.items()
-        }
-
-        decrypt_manifest = MessageDecryptionManifest(
-            keys_uri="file://keys.json", keys=self.keys, test_scenarios=test_scenarios
-        )
-
-        root_writer("manifest.json", json.dumps(decrypt_manifest.manifest_spec, indent=json_indent).encode(ENCODING))
+    def run(self):
+        # () -> None
+        """Process all scenarios in this manifest."""
+        for _, scenario in self.tests.items():
+            scenario.run()
