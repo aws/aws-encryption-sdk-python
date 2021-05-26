@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py38-awses_2.0.0"
+    TOXENV: "py27-awses_local"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-

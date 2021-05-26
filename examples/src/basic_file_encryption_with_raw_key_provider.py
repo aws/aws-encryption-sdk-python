@@ -15,7 +15,7 @@ import filecmp
 import os
 
 import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
@@ -65,14 +65,22 @@ def cycle_file(source_plaintext_filename):
     cycled_plaintext_filename = source_plaintext_filename + ".decrypted"
 
     # Encrypt the plaintext source data
+    # We can use an unsigning algorithm suite here under the assumption that the contexts that encrypt
+    # and decrypt are equally trusted.
     with open(source_plaintext_filename, "rb") as plaintext, open(ciphertext_filename, "wb") as ciphertext:
-        with client.stream(mode="e", source=plaintext, key_provider=master_key_provider) as encryptor:
+        with client.stream(
+            algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA256,
+            mode="e",
+            source=plaintext,
+            key_provider=master_key_provider,
+        ) as encryptor:
             for chunk in encryptor:
                 ciphertext.write(chunk)
 
     # Decrypt the ciphertext
+    # We can use the recommended "decrypt-unsigned" streaming mode since we encrypted with an unsigned algorithm suite.
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_plaintext_filename, "wb") as plaintext:
-        with client.stream(mode="d", source=ciphertext, key_provider=master_key_provider) as decryptor:
+        with client.stream(mode="decrypt-unsigned", source=ciphertext, key_provider=master_key_provider) as decryptor:
             for chunk in decryptor:
                 plaintext.write(chunk)
 

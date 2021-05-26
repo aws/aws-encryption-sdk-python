@@ -76,3 +76,14 @@ def setup_kms_master_key_provider_with_botocore_session(cache=True):
         _KMS_MKP_BOTO = kms_master_key_provider
 
     return kms_master_key_provider
+
+
+def setup_kms_master_key_provider_with_duplicate_keys(num_keys):
+    """Reads the test_values config file and builds the requested KMS Master Key Provider with multiple copies of
+    the requested key."""
+    assert num_keys > 1
+    cmk_arn = get_cmk_arn()
+    provider = StrictAwsKmsMasterKeyProvider(key_ids=[cmk_arn])
+    for _ in range(num_keys - 1):
+        provider.add_master_key_provider(StrictAwsKmsMasterKeyProvider(key_ids=[cmk_arn]))
+    return provider

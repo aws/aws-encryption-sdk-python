@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__version__ = "1.7.1"
+__version__ = "1.9.0"
 USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
 
@@ -260,6 +260,10 @@ class AlgorithmSuite(Enum):  # pylint: disable=too-many-instance-attributes
         """Determine whether this algorithm suite offers key commitment."""
         upper_bytes = self.id_as_bytes()[0]
         return upper_bytes in (0x04, 0x05)
+
+    def is_signing(self):
+        """Determine whether this algorithm suite includes signing."""
+        return self.signing_algorithm_info is not None
 
     def message_id_length(self):
         """Returns the size of the message id."""
