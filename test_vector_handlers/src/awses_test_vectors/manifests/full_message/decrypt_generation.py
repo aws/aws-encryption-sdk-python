@@ -18,6 +18,7 @@ Described in AWS Crypto Tools Test Vector Framework feature #0006 AWS Encryption
 import json
 import os
 import uuid
+from copy import copy
 
 import attr
 import six
@@ -35,14 +36,20 @@ from awses_test_vectors.internal.util import (
     validate_manifest_type,
 )
 from awses_test_vectors.manifests.full_message.decrypt import (
+    DecryptionMethod,
     MessageDecryptionManifest,
     MessageDecryptionTestResult,
     MessageDecryptionTestScenario,
 )
 from awses_test_vectors.manifests.full_message.encrypt import MessageEncryptionTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
-from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
+try:
+    from aws_encryption_sdk.identifiers import AlgorithmSuite
+except ImportError:
+    from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
+
+from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -55,7 +62,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (1,)
+SUPPORTED_VERSIONS = (2,)
 
 
 class TamperingMethod:
@@ -66,6 +73,12 @@ class TamperingMethod:
         """Load from a tampering specification"""
         if spec is None:
             return TamperingMethod()
+        if spec == "truncate":
+            return TruncateTamperingMethod()
+        if spec == "mutate":
+            return MutateTamperingMethod()
+        if spec == "half-sign":
+            return HalfSigningTamperingMethod()
         ((tampering_tag, tampering_values_spec),) = spec.items()
         if tampering_tag == "change-edk-provider-info":
             return ChangeEDKProviderInfoTamperingMethod.from_values_spec(tampering_values_spec)
@@ -87,9 +100,7 @@ class TamperingMethod:
                 plaintext_uri=plaintext_uri, plaintext=generation_scenario.encryption_scenario.plaintext
             )
         return [
-            generation_scenario.decryption_test_scenario_pair(
-                ciphertext_writer, ciphertext_to_decrypt, expected_result
-            )
+            generation_scenario.decryption_test_scenario_pair(ciphertext_writer, ciphertext_to_decrypt, expected_result)
         ]
 
 
@@ -167,6 +178,127 @@ class ProviderInfoChangingCryptoMaterialsManager(CryptoMaterialsManager):
         return self.wrapped_default_cmm.decrypt_materials(request)
 
 
+BITS_PER_BYTE = 8
+
+
+class TruncateTamperingMethod(TamperingMethod):
+    """Tampering method that truncates a good message at every byte (except zero)."""
+
+    # pylint: disable=R0201
+    def run_scenario_with_tampering(self, ciphertext_writer, generation_scenario, _plaintext_uri):
+        """
+        Run a given scenario, tampering with the input or the result.
+
+        return: a list of (ciphertext, result) pairs.
+        """
+        ciphertext_to_decrypt = generation_scenario.encryption_scenario.run()
+        return [
+            generation_scenario.decryption_test_scenario_pair(
+                ciphertext_writer,
+                TruncateTamperingMethod.flip_bit(ciphertext_to_decrypt, bit),
+                MessageDecryptionTestResult.expect_error("Bit {} flipped".format(bit)),
+            )
+            for bit in range(0, len(ciphertext_to_decrypt) * BITS_PER_BYTE)
+        ]
+
+    @classmethod
+    def flip_bit(cls, ciphertext, bit):
+        """Flip only the given bit in the given ciphertext"""
+        byte_index, bit_index = divmod(bit, BITS_PER_BYTE)
+        result = bytearray(ciphertext)
+        result[byte_index] ^= 1 << (BITS_PER_BYTE - bit_index - 1)
+        return bytes(result)
+
+
+class MutateTamperingMethod(TamperingMethod):
+    """Tampering method that produces a message with a single bit flipped, for every possible bit."""
+
+    # pylint: disable=R0201
+    def run_scenario_with_tampering(self, ciphertext_writer, generation_scenario, _plaintext_uri):
+        """
+        Run a given scenario, tampering with the input or the result.
+
+        return: a list of (ciphertext, result) pairs.
+        """
+        ciphertext_to_decrypt = generation_scenario.encryption_scenario.run()
+        return [
+            generation_scenario.decryption_test_scenario_pair(
+                ciphertext_writer,
+                ciphertext_to_decrypt[0:length],
+                MessageDecryptionTestResult.expect_error("Truncated at byte {}".format(length)),
+            )
+            for length in range(1, len(ciphertext_to_decrypt))
+        ]
+
+
+class HalfSigningTamperingMethod(TamperingMethod):
+    """Tampering method that changes the provider info on all EDKs."""
+
+    # pylint: disable=R0201
+    def run_scenario_with_tampering(self, ciphertext_writer, generation_scenario, _plaintext_uri):
+        """
+        Run a given scenario, tampering with the input or the result.
+
+        return: a list of (ciphertext, result) pairs.
+        """
+        tampering_materials_manager = HalfSigningCryptoMaterialsManager(
+            generation_scenario.encryption_scenario.master_key_provider
+        )
+        ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
+        expected_result = MessageDecryptionTestResult.expect_error(
+            "Unsigned message using a data key with a public key"
+        )
+        return [
+            generation_scenario.decryption_test_scenario_pair(ciphertext_writer, ciphertext_to_decrypt, expected_result)
+        ]
+
+
+class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
+    """
+    Custom CMM that generates materials for an unsigned algorithm suite
+    that includes the "aws-crypto-public-key" encryption context.
+
+    THIS IS ONLY USED TO CREATE INVALID MESSAGES and should never be used in
+    production! It is imitating what a malicious decryptor without encryption
+    permissions might do, to attempt to forge an unsigned message from a decrypted
+    signed message, and therefore this is an important case for ESDKs to reject.
+    """
+
+    wrapped_default_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManager))
+
+    def __init__(self, master_key_provider):
+        """
+        Create a new CMM that wraps a new DefaultCryptoMaterialsManager
+        based on the given master key provider.
+        """
+        self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
+
+    def get_encryption_materials(self, request):
+        """
+        Generate half-signing materials by requesting signing materials
+        from the wrapped default CMM, and then changing the algorithm suite
+        and removing the signing key from teh result.
+        """
+        if request.algorithm == AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY:
+            signing_request = copy(request)
+            signing_request.algorithm = AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
+
+            result = self.wrapped_default_cmm.get_encryption_materials(signing_request)
+            result.algorithm = request.algorithm
+            result.signing_key = None
+
+            return result
+
+        raise NotImplementedError(
+            "The half-sign tampering method is only supported on the "
+            "AES_256_GCM_HKDF_SHA512_COMMIT_KEY algorithm suite."
+        )
+
+    def decrypt_materials(self, request):
+        """Thunks to the wrapped default CMM"""
+        return self.wrapped_default_cmm.decrypt_materials(request)
+
+
 @attr.s
 class MessageDecryptionTestScenarioGenerator(object):
     # pylint: disable=too-many-instance-attributes
@@ -177,6 +309,7 @@ class MessageDecryptionTestScenarioGenerator(object):
     :param MessageEncryptionTestScenario encryption_scenario: Encryption parameters
     :param tampering_method: Optional method used to tamper with the ciphertext
     :type tampering_method: :class:`TamperingMethod`
+    :param decryption_method:
     :param decryption_master_key_specs: Iterable of master key specifications
     :type decryption_master_key_specs: iterable of :class:`MasterKeySpec`
     :param MasterKeyProvider decryption_master_key_provider:
@@ -185,6 +318,7 @@ class MessageDecryptionTestScenarioGenerator(object):
 
     encryption_scenario = attr.ib(validator=attr.validators.instance_of(MessageEncryptionTestScenario))
     tampering_method = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(TamperingMethod)))
+    decryption_method = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod)))
     decryption_master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
     decryption_master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
     result = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(MessageDecryptionTestResult)))
@@ -203,6 +337,8 @@ class MessageDecryptionTestScenarioGenerator(object):
         encryption_scenario = MessageEncryptionTestScenario.from_scenario(encryption_scenario_spec, keys, plaintexts)
         tampering = scenario.get("tampering")
         tampering_method = TamperingMethod.from_tampering_spec(tampering)
+        decryption_method_spec = scenario.get("decryption-method")
+        decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         if "decryption-master-keys" in scenario:
             decryption_master_key_specs = [
                 MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
@@ -219,6 +355,7 @@ class MessageDecryptionTestScenarioGenerator(object):
         return cls(
             encryption_scenario=encryption_scenario,
             tampering_method=tampering_method,
+            decryption_method=decryption_method,
             decryption_master_key_specs=decryption_master_key_specs,
             decryption_master_key_provider=decryption_master_key_provider,
             result=result,
@@ -236,9 +373,7 @@ class MessageDecryptionTestScenarioGenerator(object):
         """
         return dict(self.tampering_method.run_scenario_with_tampering(ciphertext_writer, self, plaintext_uri))
 
-    def decryption_test_scenario_pair(
-        self, ciphertext_writer, ciphertext_to_decrypt, expected_result
-    ):
+    def decryption_test_scenario_pair(self, ciphertext_writer, ciphertext_to_decrypt, expected_result):
         """Create a new (name, decryption scenario) pair"""
         ciphertext_name = str(uuid.uuid4())
         ciphertext_uri = ciphertext_writer(ciphertext_name, ciphertext_to_decrypt)
@@ -250,6 +385,7 @@ class MessageDecryptionTestScenarioGenerator(object):
                 ciphertext=ciphertext_to_decrypt,
                 master_key_specs=self.decryption_master_key_specs,
                 master_key_provider=self.decryption_master_key_provider,
+                decryption_method=self.decryption_method,
                 result=expected_result,
             ),
         )

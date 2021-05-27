@@ -74,6 +74,12 @@ VALID_KWARGS = {
             materials_manager=FakeCryptoMaterialsManager(),
             commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
         ),
+        dict(
+            source=b"",
+            materials_manager=FakeCryptoMaterialsManager(),
+            commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
+            max_encrypted_data_keys=3,
+        ),
     ],
     EncryptorConfig: build_valid_kwargs_list(
         BASE_KWARGS, dict(encryption_context={}, algorithm=ALGORITHM, frame_length=8192)
@@ -83,6 +89,11 @@ VALID_KWARGS = {
 INVALID_KWARGS = {
     _ClientConfig: [
         dict(source=b"", key_provider=FakeMasterKeyProvider(), source_length=10),
+        dict(
+            source=b"",
+            materials_manager=FakeCryptoMaterialsManager(),
+            max_encrypted_data_keys=0,
+        ),
     ],
     EncryptorConfig: [
         dict(source=b"", materials_manager=FakeCryptoMaterialsManager(), encryption_context=None),
@@ -112,6 +123,7 @@ def test_client_config_defaults():
     test = _ClientConfig(**BASE_KWARGS)
     assert test.source_length is None
     assert test.line_length == LINE_LENGTH
+    assert test.max_encrypted_data_keys is None
 
 
 def test_encryptor_config_defaults():

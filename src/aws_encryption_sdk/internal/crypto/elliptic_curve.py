@@ -123,6 +123,7 @@ def _ecc_decode_compressed_point(curve, compressed_point):
     y_order_map = {b"\x02": 0, b"\x03": 1}
     raw_x = compressed_point[1:]
     raw_x = to_bytes(raw_x)
+    # pylint gives a false positive that int_from_bytes is not callable
     x = int_from_bytes(raw_x, "big")  # pylint: disable=not-callable
     raw_y = compressed_point[0]
     # In Python3, bytes index calls return int values rather than strings

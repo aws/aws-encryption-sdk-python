@@ -13,11 +13,15 @@
 """High level AWS Encryption SDK client functions."""
 # Below are imported for ease of use by implementors
 
+import warnings
+
 import attr
 
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError  # noqa
 from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__  # noqa
+from aws_encryption_sdk.internal.utils.signature import SignaturePolicy  # noqa
 from aws_encryption_sdk.key_providers.kms import (  # noqa
     DiscoveryAwsKmsMasterKeyProvider,
     KMSMasterKeyProviderConfig,
@@ -39,6 +43,8 @@ class EncryptionSDKClientConfig(object):
 
     :param commitment_policy: The commitment policy to apply to encryption and decryption requests
     :type commitment_policy: aws_encryption_sdk.materials_manager.identifiers.CommitmentPolicy
+    :param max_encrypted_data_keys: The maximum number of encrypted data keys to allow during encryption and decryption
+    :type max_encrypted_data_keys: None or positive int
     """
 
     commitment_policy = attr.ib(
@@ -46,6 +52,14 @@ class EncryptionSDKClientConfig(object):
         default=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT,
         validator=attr.validators.instance_of(CommitmentPolicy),
     )
+    max_encrypted_data_keys = attr.ib(
+        hash=True, validator=attr.validators.optional(attr.validators.instance_of(int)), default=None
+    )
+
+    def __attrs_post_init__(self):
+        """Applies post-processing which cannot be handled by attrs."""
+        if self.max_encrypted_data_keys is not None and self.max_encrypted_data_keys < 1:
+            raise ValueError("max_encrypted_data_keys cannot be less than 1")
 
 
 class EncryptionSDKClient(object):
@@ -62,6 +76,22 @@ class EncryptionSDKClient(object):
             config = instance._config_class(**kwargs)  # pylint: disable=protected-access
         instance.config = config
         return instance
+
+    def _set_config_kwargs(self, callee_name, kwargs_dict):
+        """
+        Copy relevant StreamEncryptor/StreamDecryptor configuration from `self.config` into `kwargs`,
+        raising and exception if the keys already exist in `kwargs`.
+        """
+        for key in ("commitment_policy", "max_encrypted_data_keys"):
+            if key in kwargs_dict:
+                warnings.warn(
+                    "Invalid keyword argument '{key}' passed to {callee}. "
+                    "Set this value by passing a 'config' to the EncryptionSDKClient constructor instead.".format(
+                        key=key, callee=callee_name
+                    )
+                )
+        kwargs_dict["commitment_policy"] = self.config.commitment_policy
+        kwargs_dict["max_encrypted_data_keys"] = self.config.max_encrypted_data_keys
 
     def encrypt(self, **kwargs):
         """Encrypts and serializes provided plaintext.
@@ -111,7 +141,8 @@ class EncryptionSDKClient(object):
         :returns: Tuple containing the encrypted ciphertext and the message header object
         :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
         """
-        kwargs["commitment_policy"] = self.config.commitment_policy
+        self._set_config_kwargs("encrypt", kwargs)
+        kwargs["signature_policy"] = SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT
         with StreamEncryptor(**kwargs) as encryptor:
             ciphertext = encryptor.read()
         return ciphertext, encryptor.header
@@ -157,7 +188,8 @@ class EncryptionSDKClient(object):
         :returns: Tuple containing the decrypted plaintext and the message header object
         :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`
         """
-        kwargs["commitment_policy"] = self.config.commitment_policy
+        self._set_config_kwargs("decrypt", kwargs)
+        kwargs["signature_policy"] = SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT
         with StreamDecryptor(**kwargs) as decryptor:
             plaintext = decryptor.read()
         return plaintext, decryptor.header
@@ -214,13 +246,24 @@ class EncryptionSDKClient(object):
             or :class:`aws_encryption_sdk.streaming_client.StreamDecryptor`
         :raises ValueError: if supplied with an unsupported mode value
         """
-        kwargs["commitment_policy"] = self.config.commitment_policy
+        self._set_config_kwargs("stream", kwargs)
         mode = kwargs.pop("mode")
+
+        _signature_policy_map = {
+            "e": SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT,
+            "encrypt": SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT,
+            "d": SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT,
+            "decrypt": SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT,
+            "decrypt-unsigned": SignaturePolicy.ALLOW_ENCRYPT_FORBID_DECRYPT,
+        }
+        kwargs["signature_policy"] = _signature_policy_map[mode.lower()]
+
         _stream_map = {
             "e": StreamEncryptor,
             "encrypt": StreamEncryptor,
             "d": StreamDecryptor,
             "decrypt": StreamDecryptor,
+            "decrypt-unsigned": StreamDecryptor,
         }
         try:
             return _stream_map[mode.lower()](**kwargs)

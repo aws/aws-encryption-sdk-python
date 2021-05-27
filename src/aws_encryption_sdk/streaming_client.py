@@ -28,6 +28,7 @@ from aws_encryption_sdk.exceptions import (
     AWSEncryptionSDKClientError,
     CustomMaximumValueExceeded,
     MasterKeyProviderError,
+    MaxEncryptedDataKeysExceeded,
     NotSupportedError,
     SerializationError,
 )
@@ -59,6 +60,7 @@ from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
     validate_commitment_policy_on_encrypt,
 )
+from aws_encryption_sdk.internal.utils.signature import SignaturePolicy, validate_signature_policy_on_decrypt
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -70,13 +72,15 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s(hash=True)
 @six.add_metaclass(abc.ABCMeta)
-class _ClientConfig(object):
+class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param commitment_policy: The commitment policy to use during encryption and decryption
     :type commitment_policy: aws_encryption_sdk.identifiers.CommitmentPolicy
+    :param max_encrypted_data_keys: The maximum number of encrypted data keys to allow during encryption and decryption
+    :type max_encrypted_data_keys: None or positive int
     :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
         (either `materials_manager` or `key_provider` required)
     :type materials_manager: aws_encryption_sdk.materials_manager.base.CryptoMaterialsManager
@@ -94,6 +98,14 @@ class _ClientConfig(object):
     commitment_policy = attr.ib(
         hash=True,
         validator=attr.validators.instance_of(CommitmentPolicy),
+    )
+    signature_policy = attr.ib(
+        hash=True,
+        default=SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT,
+        validator=attr.validators.instance_of(SignaturePolicy),
+    )
+    max_encrypted_data_keys = attr.ib(
+        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(int))
     )
     materials_manager = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
@@ -461,6 +473,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 ).format(requested=self.config.algorithm, provided=self._encryption_materials.algorithm)
             )
 
+        num_keys = len(self._encryption_materials.encrypted_data_keys)
+        if self.config.max_encrypted_data_keys and num_keys > self.config.max_encrypted_data_keys:
+            raise MaxEncryptedDataKeysExceeded(num_keys, self.config.max_encrypted_data_keys)
+
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
@@ -786,11 +802,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         :rtype: tuple of aws_encryption_sdk.structures.MessageHeader
             and aws_encryption_sdk.internal.structures.MessageHeaderAuthentication
         :raises CustomMaximumValueExceeded: if frame length is greater than the custom max value
+        :raises CustomMaximumValueExceeded: if number of encrypted data keys is greater than the custom max value
         """
-        header, raw_header = deserialize_header(self.source_stream)
+        header, raw_header = deserialize_header(self.source_stream, self.config.max_encrypted_data_keys)
         self.__unframed_bytes_read += len(raw_header)
 
         validate_commitment_policy_on_decrypt(self.config.commitment_policy, header.algorithm)
+        validate_signature_policy_on_decrypt(self.config.signature_policy, header.algorithm)
 
         if (
             self.config.max_body_length is not None
