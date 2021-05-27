@@ -102,18 +102,18 @@ def cycle_file(key_arn, source_plaintext_filename, botocore_session=None):
                 ciphertext.write(chunk)
 
     # Decrypt the ciphertext with only the AWS KMS master key
+    # Buffer the data in memory before writing to disk to ensure the signature is verified first.
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_kms_plaintext_filename, "wb") as plaintext:
         with client.stream(
             source=ciphertext, mode="d", key_provider=aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
         ) as kms_decryptor:
-            for chunk in kms_decryptor:
-                plaintext.write(chunk)
+            plaintext.write(kms_decryptor.read())
 
     # Decrypt the ciphertext with only the static master key
+    # Buffer the data in memory before writing to disk to ensure the signature is verified first.
     with open(ciphertext_filename, "rb") as ciphertext, open(cycled_static_plaintext_filename, "wb") as plaintext:
         with client.stream(source=ciphertext, mode="d", key_provider=static_master_key_provider) as static_decryptor:
-            for chunk in static_decryptor:
-                plaintext.write(chunk)
+            plaintext.write(static_decryptor.read())
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert filecmp.cmp(source_plaintext_filename, cycled_kms_plaintext_filename)

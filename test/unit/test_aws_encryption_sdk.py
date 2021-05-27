@@ -18,6 +18,7 @@ from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk
 import aws_encryption_sdk.internal.defaults
+from aws_encryption_sdk.internal.utils.signature import SignaturePolicy
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -61,7 +62,9 @@ class TestAwsEncryptionSdk(object):
     def test_stream_encryptor_e(self):
         test = aws_encryption_sdk.stream(mode="e", a=sentinel.a, b=sentinel.b, c=sentinel.b)
         assert test is self.mock_stream_encryptor_instance
-        self.mock_stream_encryptor.assert_called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
+        self.mock_stream_encryptor.assert_called_once_with(
+            a=sentinel.a, b=sentinel.b, c=sentinel.b, signature_policy=SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT
+        )
 
     def test_stream_encryptor_encrypt(self):
         test = aws_encryption_sdk.stream(mode="ENCRYPT", a=sentinel.a, b=sentinel.b, c=sentinel.b)
@@ -70,7 +73,9 @@ class TestAwsEncryptionSdk(object):
     def test_stream_decryptor_d(self):
         test = aws_encryption_sdk.stream(mode="d", a=sentinel.a, b=sentinel.b, c=sentinel.b)
         assert test is self.mock_stream_decryptor_instance
-        self.mock_stream_decryptor.assert_called_once_with(a=sentinel.a, b=sentinel.b, c=sentinel.b)
+        self.mock_stream_decryptor.assert_called_once_with(
+            a=sentinel.a, b=sentinel.b, c=sentinel.b, signature_policy=SignaturePolicy.ALLOW_ENCRYPT_ALLOW_DECRYPT
+        )
 
     def test_stream_decryptor_decrypt(self):
         test = aws_encryption_sdk.stream(mode="DECRYPT", a=sentinel.a, b=sentinel.b, c=sentinel.b)

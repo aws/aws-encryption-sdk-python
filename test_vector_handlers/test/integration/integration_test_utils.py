@@ -20,9 +20,18 @@ import pytest
 
 def vectors_dir():
     here = os.path.abspath(os.path.dirname(__file__))
-    return os.path.abspath(os.path.join(here, "..", "vectors"))
+    return os.path.abspath(os.path.join(here, "..", "aws-crypto-tools-test-vector-framework"))
 
 
 @pytest.fixture
 def full_message_encrypt_vectors():
-    return os.path.join(vectors_dir(), "full-message-encrypt.json")
+    return os.path.join(
+        vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0003-awses-message-encryption.v2.json"
+    )
+
+
+@pytest.fixture
+def full_message_decrypt_generation_vectors():
+    return os.path.join(
+        vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0006-awses-message-decryption-generation.v1.json"
+    )

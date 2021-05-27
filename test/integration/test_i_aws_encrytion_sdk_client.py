@@ -18,8 +18,14 @@ import pytest
 from botocore.exceptions import BotoCoreError
 
 import aws_encryption_sdk
-from aws_encryption_sdk.exceptions import DecryptKeyError, EncryptKeyError, MasterKeyProviderError
-from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX, Algorithm
+from aws_encryption_sdk.exceptions import (
+    ActionNotAllowedError,
+    CustomMaximumValueExceeded,
+    DecryptKeyError,
+    EncryptKeyError,
+    MasterKeyProviderError,
+)
+from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX, Algorithm, CommitmentPolicy
 from aws_encryption_sdk.internal.arn import arn_from_str
 from aws_encryption_sdk.key_providers.kms import (
     DiscoveryAwsKmsMasterKeyProvider,
@@ -33,6 +39,7 @@ from .integration_test_utils import (
     get_cmk_arn,
     setup_kms_master_key_provider,
     setup_kms_master_key_provider_with_botocore_session,
+    setup_kms_master_key_provider_with_duplicate_keys,
 )
 
 pytestmark = [pytest.mark.integ]
@@ -639,6 +646,60 @@ class TestKMSThickClientIntegration(object):
             )
         excinfo.match("No Master Keys available from Master Key Provider")
 
+    @pytest.mark.parametrize("num_keys", (2, 3))
+    def test_encrypt_cycle_within_max_encrypted_data_keys(self, num_keys):
+        """Test that the client can encrypt and decrypt messages with fewer
+        EDKs than the configured max."""
+        provider = setup_kms_master_key_provider_with_duplicate_keys(num_keys)
+        client = aws_encryption_sdk.EncryptionSDKClient(
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            max_encrypted_data_keys=3,
+        )
+        ciphertext, _ = client.encrypt(
+            source=VALUES["plaintext_128"],
+            key_provider=provider,
+        )
+        plaintext, _ = client.decrypt(
+            source=ciphertext,
+            key_provider=provider,
+        )
+        assert plaintext == VALUES["plaintext_128"]
+
+    def test_encrypt_over_max_encrypted_data_keys(self):
+        """Test that the client refuses to encrypt when too many EDKs are provided."""
+        provider = setup_kms_master_key_provider_with_duplicate_keys(4)
+        client = aws_encryption_sdk.EncryptionSDKClient(
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            max_encrypted_data_keys=3,
+        )
+        with pytest.raises(CustomMaximumValueExceeded) as exc_info:
+            _, _ = client.encrypt(
+                source=VALUES["plaintext_128"],
+                key_provider=provider,
+            )
+        exc_info.match("Number of encrypted data keys found larger than configured value")
+
+    def test_decrypt_over_max_encrypted_data_keys(self):
+        """Test that the client refuses to decrypt a message with too many EDKs."""
+        provider = setup_kms_master_key_provider_with_duplicate_keys(4)
+        encrypt_client = aws_encryption_sdk.EncryptionSDKClient(
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+        )
+        ciphertext, _ = encrypt_client.encrypt(
+            source=VALUES["plaintext_128"],
+            key_provider=provider,
+        )
+        decrypt_client = aws_encryption_sdk.EncryptionSDKClient(
+            commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT,
+            max_encrypted_data_keys=3,
+        )
+        with pytest.raises(CustomMaximumValueExceeded) as exc_info:
+            _, _ = decrypt_client.decrypt(
+                source=ciphertext,
+                key_provider=provider,
+            )
+        exc_info.match("Number of encrypted data keys found larger than configured value")
+
     def test_decrypt_success_kms_provider_explicit(self):
         """Test that an old-style KMS Master Key Provider can decrypt a ciphertext when
         it was explicitly configured with the CMK for that ciphertext.
@@ -694,3 +755,36 @@ class TestKMSThickClientIntegration(object):
 
         plaintext, _ = aws_encryption_sdk.decrypt(source=ciphertext, key_provider=decrypt_provider)
         assert plaintext == VALUES["plaintext_128"]
+
+    def test_decrypt_unsigned_success_unsigned_message(self):
+        """Test that "decrypt-unsigned" mode accepts unsigned messages."""
+        ciphertext, _ = aws_encryption_sdk.encrypt(
+            source=VALUES["plaintext_128"],
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256,
+            key_provider=self.kms_master_key_provider,
+            encryption_context=VALUES["encryption_context"],
+            frame_length=1024,
+        )
+
+        with aws_encryption_sdk.stream(
+            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="decrypt-unsigned"
+        ) as decryptor:
+            plaintext = decryptor.read()
+            assert plaintext == VALUES["plaintext_128"]
+
+    def test_decrypt_unsigned_failure_signed_message(self):
+        """Test that "decrypt-unsigned" mode rejects signed messages."""
+        ciphertext, _ = aws_encryption_sdk.encrypt(
+            source=VALUES["plaintext_128"],
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256,
+            key_provider=self.kms_master_key_provider,
+            encryption_context=VALUES["encryption_context"],
+            frame_length=1024,
+        )
+
+        with aws_encryption_sdk.stream(
+            source=io.BytesIO(ciphertext), key_provider=self.kms_master_key_provider, mode="decrypt-unsigned"
+        ) as decryptor:
+            with pytest.raises(ActionNotAllowedError) as excinfo:
+                decryptor.read()
+            excinfo.match("Configuration conflict. Cannot decrypt signed message in decrypt-unsigned mode.")

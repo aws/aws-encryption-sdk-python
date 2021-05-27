@@ -24,21 +24,40 @@ processing of common test manifest types.
 Full Message Encrypt
 --------------------
 
-Used to process an AWS Encryption SDK Full Message Encrypt manifest and produce
+Used to process an AWS Encryption SDK Full Message Encrypt manifest.
+
+.. code::
+
+    usage: awses-full-message-encrypt [-h] --input INPUT
+
+    Build ciphertexts and decrypt manifest from keys and encrypt manifests
+
+    optional arguments:
+      -h, --help       show this help message and exit
+      --input INPUT    Existing full message encrypt manifest
+
+Full Message Decrypt Manifest Generate
+----------------------------------------
+
+Used to process an AWS Encryption SDK Full Message Decrypt Generation manifest and produce
 a Full Message Decrypt manifest along with all corresponding plaintexts and ciphertexts.
 
 .. code::
 
-    usage: awses-full-message-encrypt [-h] --output OUTPUT --input INPUT [--human]
+    usage: awses-full-message-decrypt-generate [-h] --output OUTPUT --input INPUT [--human]
 
     Build ciphertexts and decrypt manifest from keys and encrypt manifests
 
     optional arguments:
       -h, --help       show this help message and exit
       --output OUTPUT  Directory in which to store results
-      --input INPUT    Existing full message encrypt manifest
+      --input INPUT    Existing full message decrypt generation manifest
       --human          Output human-readable JSON
 
+The output of this command can be used to produce a zip file to be added to the
+`shared test vectors repository`_.
+Make sure that the individual contents of the output directory are top-level entries in
+the zip file; it is easy to add an additional top-level folder by accident!
 
 Full Message Decrypt
 --------------------
@@ -55,3 +74,5 @@ decrypt and verify all referenced ciphertexts.
     optional arguments:
       -h, --help     show this help message and exit
       --input INPUT  Existing full message decrypt manifest
+
+.. _shared test vectors repository: https://github.com/awslabs/aws-encryption-sdk-test-vectors

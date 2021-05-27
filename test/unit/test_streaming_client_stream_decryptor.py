@@ -45,7 +45,7 @@ class TestStreamDecryptor(object):
         self.mock_header.algorithm = MagicMock(
             __class__=Algorithm, iv_len=12, is_committing=MagicMock(return_value=False)
         )
-        self.mock_header.encrypted_data_keys = sentinel.encrypted_data_keys
+        self.mock_header.encrypted_data_keys = set((VALUES["encrypted_data_key_obj"],))
         self.mock_header.encryption_context = sentinel.encryption_context
 
         self.mock_raw_header = b"some bytes"
@@ -164,12 +164,12 @@ class TestStreamDecryptor(object):
 
         test_header, test_header_auth = test_decryptor._read_header()
 
-        self.mock_deserialize_header.assert_called_once_with(ct_stream)
+        self.mock_deserialize_header.assert_called_once_with(ct_stream, None)
         mock_verifier.from_key_bytes.assert_called_once_with(
             algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
         )
         mock_decrypt_materials_request.assert_called_once_with(
-            encrypted_data_keys=sentinel.encrypted_data_keys,
+            encrypted_data_keys=self.mock_header.encrypted_data_keys,
             algorithm=self.mock_header.algorithm,
             encryption_context=sentinel.encryption_context,
             commitment_policy=mock_commitment_policy,
@@ -249,7 +249,7 @@ class TestStreamDecryptor(object):
         test_decryptor.source_stream = self.mock_input_stream
         test_decryptor._stream_length = len(VALUES["data_128"])
         test_decryptor._read_header()
-        self.mock_deserialize_header.assert_called_once_with(self.mock_input_stream)
+        self.mock_deserialize_header.assert_called_once_with(self.mock_input_stream, None)
 
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
@@ -300,7 +300,7 @@ class TestStreamDecryptor(object):
         test_decryptor.source_stream = self.mock_input_stream
         test_decryptor._stream_length = len(VALUES["data_128"])
         test_decryptor._read_header()
-        self.mock_deserialize_header.assert_called_once_with(self.mock_input_stream)
+        self.mock_deserialize_header.assert_called_once_with(self.mock_input_stream, None)
         self.mock_compare_digest.assert_not_called()
 
     def test_prep_non_framed_content_length_too_large(self):

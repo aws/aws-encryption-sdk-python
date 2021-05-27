@@ -9,33 +9,21 @@ env:
 
 phases:
   install:
-    commands:
-      - pip install tox
-      - pip install --upgrade pip
     runtime-versions:
       python: latest
-  pre_build:
-    commands:
-      - git checkout $COMMIT_ID
-      - FOUND_VERSION=$(sed -n 's/__version__ = "\(.*\)"/\1/p' src/aws_encryption_sdk/identifiers.py)
-      - |
-        if expr ${FOUND_VERSION} != ${VERSION}; then
-          echo "identifiers.py version (${FOUND_VERSION}) does not match expected version (${VERSION}), stopping"
-          exit 1;
-        fi
   build:
     commands:
+      - pip install tox
+      - git checkout $BRANCH
       - tox -e park
       - tox -e release
+      - git clone https://github.com/aws-samples/busy-engineers-document-bucket.git
+      - cd busy-engineers-document-bucket/exercises/python/encryption-context-complete
+      - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
+      - tox -e test
+
 
 batch:
-  fast-fail: true 
-  build-graph:
-    - identifier: release_to_prod
-    - identifier: validate_prod_release
-      depend-on:
-        - release_to_prod
-      buildspec: codebuild/release/validate.yml
-      env:
-        variables:
-          PIP_INDEX_URL: https://pypi.python.org/simple/
+  fast-fail: false
+  build-list:
+    - identifier: prod_release
