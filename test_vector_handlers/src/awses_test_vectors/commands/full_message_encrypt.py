@@ -25,9 +25,7 @@ except ImportError:  # pragma: no cover
 def cli(args=None):
     # type: (Optional[Iterable[str]]) -> None
     """CLI entry point for processing AWS Encryption SDK Encrypt Message manifests."""
-    parser = argparse.ArgumentParser(
-        description="Build ciphertexts from keys and encrypt manifests"
-    )
+    parser = argparse.ArgumentParser(description="Build ciphertexts from keys and encrypt manifests")
     parser.add_argument(
         "--input", required=True, type=argparse.FileType("r"), help="Existing full message encrypt manifest"
     )

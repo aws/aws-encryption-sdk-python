@@ -146,7 +146,6 @@ class ManualKeySpec(KeySpec):
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
-        """Initialize ManualKeySpec."""  # noqa pylint: disable=W0105
         self.algorithm = algorithm
         self.type_name = type_name
         self.bits = bits

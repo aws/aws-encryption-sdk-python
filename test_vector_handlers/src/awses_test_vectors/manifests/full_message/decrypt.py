@@ -17,6 +17,7 @@ Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption
 """
 import json
 import os
+from enum import Enum
 
 import attr
 import aws_encryption_sdk
@@ -170,6 +171,12 @@ class MessageDecryptionTestResult(object):
         return {self.matcher_tag: self.matcher.matcher_spec}
 
 
+class DecryptionMethod(Enum):
+    """Enumeration of decryption methods."""
+
+    UNSIGNED_ONLY_STREAM = "streaming-unsigned-only"
+
+
 @attr.s(init=False)
 class MessageDecryptionTestScenario(object):
     # pylint: disable=too-many-arguments
@@ -179,6 +186,7 @@ class MessageDecryptionTestScenario(object):
 
     :param str ciphertext_uri: URI locating ciphertext data
     :param bytes ciphertext: Binary ciphertext data
+    :param boolean must_fail: Whether decryption is expected to fail
     :param master_key_specs: Iterable of master key specifications
     :type master_key_specs: iterable of :class:`MasterKeySpec`
     :param MasterKeyProvider master_key_provider:
@@ -192,6 +200,9 @@ class MessageDecryptionTestScenario(object):
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
     master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
     result = attr.ib(validator=attr.validators.instance_of(MessageDecryptionTestResult))
+    decryption_method = attr.ib(
+        default=None, validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod))
+    )
     description = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(six.string_types))
     )
@@ -203,6 +214,7 @@ class MessageDecryptionTestScenario(object):
         result,  # type: MessageDecryptionTestResult
         master_key_specs,  # type: Iterable[MasterKeySpec]
         master_key_provider,  # type: MasterKeyProvider
+        decryption_method=None,  # type: Optional[DecryptionMethod]
         description=None,  # type: Optional[str]
     ):  # noqa=D107
         # type: (...) -> None
@@ -215,6 +227,7 @@ class MessageDecryptionTestScenario(object):
         self.result = result
         self.master_key_specs = master_key_specs
         self.master_key_provider = master_key_provider
+        self.decryption_method = decryption_method
         self.description = description
         attr.validate(self)
 
@@ -239,6 +252,8 @@ class MessageDecryptionTestScenario(object):
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
         master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
+        decryption_method_spec = scenario.get("decryption-method")
+        decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         result_spec = scenario["result"]
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
 
@@ -248,6 +263,7 @@ class MessageDecryptionTestScenario(object):
             master_key_specs=master_key_specs,
             master_key_provider=master_key_provider,
             result=result,
+            decryption_method=decryption_method,
             description=scenario.get("description"),
         )
 
@@ -264,6 +280,8 @@ class MessageDecryptionTestScenario(object):
             "master-keys": [spec.scenario_spec for spec in self.master_key_specs],
             "result": self.result.result_spec,
         }
+        if self.decryption_method is not None:
+            spec["decryption-method"] = self.decryption_method.value
         if self.description is not None:
             spec["description"] = self.description
         return spec
@@ -295,8 +313,11 @@ class MessageDecryptionTestScenario(object):
 
         :param str name: Descriptive name for this scenario to use in any logging or errors
         """
-        self.result.matcher.match(name, self._one_shot_decrypt)
-        self.result.matcher.match(name, self._streaming_decrypt)
+        if self.decryption_method == DecryptionMethod.UNSIGNED_ONLY_STREAM:
+            self.result.matcher.match(name, self._streaming_decrypt_unsigned)
+        else:
+            self.result.matcher.match(name, self._one_shot_decrypt)
+            self.result.matcher.match(name, self._streaming_decrypt)
 
 
 @attr.s(init=False)
@@ -340,7 +361,6 @@ class MessageDecryptionManifest(object):
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
         # https://github.com/python-attrs/attrs/issues/215
-        """Initialize MessageDecryptionManifest."""  # noqa pylint: disable=W0105
         self.keys_uri = keys_uri
         self.keys = keys
         self.test_scenarios = test_scenarios

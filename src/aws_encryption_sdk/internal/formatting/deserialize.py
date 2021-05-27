@@ -19,7 +19,18 @@ import struct
 
 from cryptography.exceptions import InvalidTag
 
-from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Union  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
+from aws_encryption_sdk.exceptions import (
+    MaxEncryptedDataKeysExceeded,
+    NotSupportedError,
+    SerializationError,
+    UnknownIdentityError,
+)
 from aws_encryption_sdk.identifiers import (
     AlgorithmSuite,
     ContentType,
@@ -124,15 +135,18 @@ def _verified_algorithm_from_id(algorithm_id):
     return algorithm_suite
 
 
-def _deserialize_encrypted_data_keys(stream):
-    # type: (IO) -> Set[EncryptedDataKey]
+def deserialize_encrypted_data_keys(stream, max_encrypted_data_keys=None):
+    # type: (IO, Union[int, None]) -> Set[EncryptedDataKey]
     """Deserialize some encrypted data keys from a stream.
 
     :param stream: Stream from which to read encrypted data keys
+    :param max_encrypted_data_keys: Maximum number of encrypted data keys to deserialize
     :return: Loaded encrypted data keys
     :rtype: set of :class:`EncryptedDataKey`
     """
     (encrypted_data_key_count,) = unpack_values(">H", stream)
+    if max_encrypted_data_keys and encrypted_data_key_count > max_encrypted_data_keys:
+        raise MaxEncryptedDataKeysExceeded(encrypted_data_key_count, max_encrypted_data_keys)
     encrypted_data_keys = set([])
     for _ in range(encrypted_data_key_count):
         (key_provider_length,) = unpack_values(">H", stream)
@@ -226,14 +240,16 @@ def _verified_frame_length(frame_length, content_type):
     return frame_length
 
 
-def _deserialize_header_v1(header, tee_stream):
-    # type: (IO) -> MessageHeader
+def _deserialize_header_v1(header, tee_stream, max_encrypted_data_keys):
+    # type: (IO, Union[int, None]) -> MessageHeader
     """Deserializes the header from a source stream in SerializationVersion.V1.
 
     :param header: A dictionary in which to store deserialized values
     :type header: dict
     :param tee_stream: The stream from which to read bytes
     :type tee_stream: aws_encryption_sdk.internal.utils.streams.TeeStream
+    :param max_encrypted_data_keys: Maximum number of encrypted keys to deserialize
+    :type max_encrypted_data_keys: None or positive int
     :returns: Deserialized MessageHeader object
     :rtype: :class:`aws_encryption_sdk.structures.MessageHeader`
     :raises NotSupportedError: if unsupported data types are found
@@ -252,7 +268,7 @@ def _deserialize_header_v1(header, tee_stream):
 
     header["encryption_context"] = deserialize_encryption_context(tee_stream.read(ser_encryption_context_length))
 
-    header["encrypted_data_keys"] = _deserialize_encrypted_data_keys(tee_stream)
+    header["encrypted_data_keys"] = deserialize_encrypted_data_keys(tee_stream, max_encrypted_data_keys)
 
     (content_type_id,) = unpack_values(">B", tee_stream)
     header["content_type"] = _verified_content_type_from_id(content_type_id)
@@ -269,7 +285,7 @@ def _deserialize_header_v1(header, tee_stream):
     return MessageHeader(**header)
 
 
-def _deserialize_header_v2(header, tee_stream):
+def _deserialize_header_v2(header, tee_stream, max_encrypted_data_keys):
     # type: (IO) -> MessageHeader
     """Deserializes the header from a source stream in SerializationVersion.V2.
 
@@ -277,6 +293,8 @@ def _deserialize_header_v2(header, tee_stream):
     :type header: dict
     :param tee_stream: The stream from which to read bytes
     :type tee_stream: aws_encryption_sdk.internal.utils.streams.TeeStream
+    :param max_encrypted_data_keys: Maximum number of encrypted keys to deserialize
+    :type max_encrypted_data_keys: None or positive int
     :returns: Deserialized MessageHeader object
     :rtype: :class:`aws_encryption_sdk.structures.MessageHeader`
     :raises NotSupportedError: if unsupported data types are found
@@ -292,7 +310,7 @@ def _deserialize_header_v2(header, tee_stream):
 
     header["encryption_context"] = deserialize_encryption_context(tee_stream.read(ser_encryption_context_length))
 
-    header["encrypted_data_keys"] = _deserialize_encrypted_data_keys(tee_stream)
+    header["encrypted_data_keys"] = deserialize_encrypted_data_keys(tee_stream, max_encrypted_data_keys)
 
     (content_type_id,) = unpack_values(">B", tee_stream)
     header["content_type"] = _verified_content_type_from_id(content_type_id)
@@ -307,12 +325,14 @@ def _deserialize_header_v2(header, tee_stream):
     return MessageHeader(**header)
 
 
-def deserialize_header(stream):
-    # type: (IO) -> MessageHeader
+def deserialize_header(stream, max_encrypted_data_keys=None):
+    # type: (IO, Union[int, None]) -> MessageHeader
     """Deserializes the header from a source stream
 
     :param stream: Source data stream
     :type stream: io.BytesIO
+    :param max_encrypted_data_keys: Maximum number of encrypted keys to deserialize
+    :type max_encrypted_data_keys: None or positive int
     :returns: Deserialized MessageHeader object
     :rtype: :class:`aws_encryption_sdk.structures.MessageHeader` and bytes
     :raises NotSupportedError: if unsupported data types are found
@@ -328,9 +348,9 @@ def deserialize_header(stream):
     header["version"] = version
 
     if version == SerializationVersion.V1:
-        return _deserialize_header_v1(header, tee_stream), tee.getvalue()
+        return _deserialize_header_v1(header, tee_stream, max_encrypted_data_keys), tee.getvalue()
     elif version == SerializationVersion.V2:
-        return _deserialize_header_v2(header, tee_stream), tee.getvalue()
+        return _deserialize_header_v2(header, tee_stream, max_encrypted_data_keys), tee.getvalue()
     else:
         raise NotSupportedError("Unrecognized message format version: {}".format(version))
 
