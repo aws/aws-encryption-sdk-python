@@ -14,6 +14,7 @@ phases:
   build:
     commands:
       - NUM_RETRIES=3
+      - echo $0
       - |
         while [ $NUM_RETRIES -gt 0 ]
         do
@@ -21,7 +22,7 @@ phases:
           if [ $? -eq 0 ]; then
             break
           fi
-          ((NUM_RETRIES--))
+          NUM_RETRIES=$((NUM_RETRIES-1))
           if [ $NUM_RETRIES -eq 0 ]; then
             echo "All validation attempts failed, stopping"
           else
