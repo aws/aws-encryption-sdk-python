@@ -49,10 +49,10 @@ def encrypt_decrypt_stream(key_arn, source_plaintext_filename, botocore_session=
                 ciphertext.write(chunk)
 
     # Decrypt the encrypted message using the AWS Encryption SDK.
+    # Buffer the data in memory before writing to disk to ensure the signature is verified first.
     with open(ciphertext_filename, "rb") as ciphertext, open(decrypted_text_filename, "wb") as plaintext:
         with client.stream(source=ciphertext, mode="d", key_provider=kms_key_provider) as decryptor:
-            for chunk in decryptor:
-                plaintext.write(chunk)
+            plaintext.write(decryptor.read())
 
     # Check if the original message and the decrypted message are the same
     assert filecmp.cmp(source_plaintext_filename, decrypted_text_filename)

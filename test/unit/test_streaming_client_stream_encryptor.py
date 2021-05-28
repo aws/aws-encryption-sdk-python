@@ -20,11 +20,13 @@ from mock import MagicMock, call, patch, sentinel
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
+    CustomMaximumValueExceeded,
     MasterKeyProviderError,
     NotSupportedError,
     SerializationError,
 )
 from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, ContentType, SerializationVersion
+from aws_encryption_sdk.internal.utils.signature import SignaturePolicy
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.streaming_client import StreamEncryptor
@@ -147,6 +149,7 @@ class TestStreamEncryptor(object):
         self.mock_serialize_frame_patcher = patch("aws_encryption_sdk.streaming_client.serialize_frame")
         self.mock_serialize_frame = self.mock_serialize_frame_patcher.start()
         self.mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        self.mock_signature_policy = MagicMock(__class__=SignaturePolicy)
         yield
         # Run tearDown
         self.mock_content_type_patcher.stop()
@@ -171,6 +174,7 @@ class TestStreamEncryptor(object):
             frame_length=self.mock_frame_length,
             algorithm=self.mock_algorithm,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         assert test_encryptor.sequence_number == 1
         self.mock_content_type.assert_called_once_with(self.mock_frame_length)
@@ -185,6 +189,7 @@ class TestStreamEncryptor(object):
                 algorithm=self.mock_algorithm,
                 source_length=aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE + 1,
                 commitment_policy=self.mock_commitment_policy,
+                signature_policy=self.mock_signature_policy,
             )
         excinfo.match("Source too large for non-framed message")
 
@@ -196,6 +201,7 @@ class TestStreamEncryptor(object):
             frame_length=self.mock_frame_length,
             source_length=5,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
 
@@ -214,12 +220,54 @@ class TestStreamEncryptor(object):
             frame_length=self.mock_frame_length,
             source_length=5,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
 
         with pytest.raises(MasterKeyProviderError) as excinfo:
             test_encryptor._prep_message()
         excinfo.match("Primary Master Key not in provided Master Keys")
+
+    def test_prep_message_no_max_encrypted_data_keys(self):
+        test_encryptor = StreamEncryptor(
+            source=io.BytesIO(self.plaintext),
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            source_length=5,
+            commitment_policy=self.mock_commitment_policy,
+        )
+        self.mock_encryption_materials.encrypted_data_keys.__len__.return_value = 2 ** 16 - 1
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        test_encryptor._prep_message()
+
+    @pytest.mark.parametrize("num_keys", (2, 3))
+    def test_prep_message_within_max_encrypted_data_keys(self, num_keys):
+        test_encryptor = StreamEncryptor(
+            source=io.BytesIO(self.plaintext),
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            source_length=5,
+            commitment_policy=self.mock_commitment_policy,
+            max_encrypted_data_keys=3,
+        )
+        self.mock_encryption_materials.encrypted_data_keys.__len__.return_value = num_keys
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        test_encryptor._prep_message()
+
+    def test_prep_message_over_max_encrypted_data_keys(self):
+        test_encryptor = StreamEncryptor(
+            source=io.BytesIO(self.plaintext),
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            source_length=5,
+            commitment_policy=self.mock_commitment_policy,
+            max_encrypted_data_keys=3,
+        )
+        self.mock_encryption_materials.encrypted_data_keys.__len__.return_value = 4
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        with pytest.raises(CustomMaximumValueExceeded) as excinfo:
+            test_encryptor._prep_message()
+        excinfo.match("Number of encrypted data keys found larger than configured value")
 
     def test_prep_message_algorithm_change(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_256_GCM_IV12_TAG16
@@ -229,6 +277,7 @@ class TestStreamEncryptor(object):
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             source_length=128,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         with pytest.raises(ActionNotAllowedError) as excinfo:
             test_encryptor._prep_message()
@@ -257,6 +306,7 @@ class TestStreamEncryptor(object):
             source_length=5,
             encryption_context=VALUES["encryption_context"],
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryption_context = {aws_encryption_sdk.internal.defaults.ENCODED_SIGNER_KEY: sentinel.decoded_bytes}
@@ -310,6 +360,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             frame_length=self.mock_frame_length,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.NO_FRAMING
         test_encryptor._prep_message()
@@ -323,6 +374,7 @@ class TestStreamEncryptor(object):
             frame_length=self.mock_frame_length,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryptor._prep_message()
@@ -416,6 +468,7 @@ class TestStreamEncryptor(object):
             algorithm=aws_encryption_sdk.internal.defaults.ALGORITHM,
             frame_length=self.mock_frame_length,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor.content_type = sentinel.content_type
@@ -444,6 +497,7 @@ class TestStreamEncryptor(object):
             source=io.BytesIO(self.plaintext),
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -481,6 +535,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = MagicMock()
         test_encryptor.encryptor = MagicMock()
@@ -500,6 +555,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.bytes_read = aws_encryption_sdk.internal.defaults.MAX_NON_FRAMED_SIZE
         test_encryptor._StreamEncryptor__unframed_plaintext_cache = pt_stream
@@ -513,6 +569,7 @@ class TestStreamEncryptor(object):
             source=io.BytesIO(self.plaintext),
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = MagicMock()
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -540,6 +597,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor._header = MagicMock()
         test_encryptor.signer = None
@@ -561,6 +619,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.output_buffer = b"1234567"
         test_encryptor._read_bytes(5)
@@ -575,6 +634,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor._StreamEncryptor__message_complete = True
         test_encryptor._read_bytes(5)
@@ -589,6 +649,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         test_encryptor._read_bytes(5)
@@ -603,6 +664,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.content_type = ContentType.NO_FRAMING
         test_encryptor._read_bytes(5)
@@ -617,6 +679,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor._encryption_materials = self.mock_encryption_materials
         test_encryptor._header = MagicMock()
@@ -635,6 +698,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             frame_length=128,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -665,6 +729,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             frame_length=50,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -716,6 +781,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             frame_length=frame_length,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -791,6 +857,7 @@ class TestStreamEncryptor(object):
             materials_manager=self.mock_materials_manager,
             frame_length=len(self.plaintext),
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = sentinel.signer
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -810,6 +877,7 @@ class TestStreamEncryptor(object):
             frame_length=len(self.plaintext),
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor.signer = None
         test_encryptor._encryption_materials = self.mock_encryption_materials
@@ -829,6 +897,7 @@ class TestStreamEncryptor(object):
             source=pt_stream,
             materials_manager=self.mock_materials_manager,
             commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
         )
         test_encryptor._derived_data_key = sentinel.derived_data_key
 

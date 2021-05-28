@@ -19,7 +19,12 @@ from cryptography.exceptions import InvalidTag
 from mock import MagicMock, patch, sentinel
 
 import aws_encryption_sdk.internal.formatting.deserialize
-from aws_encryption_sdk.exceptions import NotSupportedError, SerializationError, UnknownIdentityError
+from aws_encryption_sdk.exceptions import (
+    CustomMaximumValueExceeded,
+    NotSupportedError,
+    SerializationError,
+    UnknownIdentityError,
+)
 from aws_encryption_sdk.identifiers import AlgorithmSuite, SerializationVersion
 from aws_encryption_sdk.internal.structures import EncryptedData
 
@@ -420,3 +425,32 @@ class TestDeserialize(object):
                 ],
             )
         excinfo.match("Malformed key info: incomplete ciphertext or tag")
+
+    def test_deserialize_encrypted_data_keys_no_max_encrypted_data_keys(self):
+        edks = aws_encryption_sdk.internal.formatting.deserialize.deserialize_encrypted_data_keys(
+            edks_stream(2 ** 16 - 1), max_encrypted_data_keys=None
+        )
+        assert len(edks) == 2 ** 16 - 1
+
+    @pytest.mark.parametrize("num_keys", (2, 3))
+    def test_deserialize_encrypted_data_keys_within_max_encrypted_data_keys(self, num_keys):
+        edks = aws_encryption_sdk.internal.formatting.deserialize.deserialize_encrypted_data_keys(
+            edks_stream(num_keys), 3
+        )
+        assert len(edks) == num_keys
+
+    def test_deserialize_encrypted_data_keys_over_max_encrypted_data_keys(self):
+        with pytest.raises(CustomMaximumValueExceeded) as excinfo:
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_encrypted_data_keys(edks_stream(4), 3)
+            excinfo.match("Number of encrypted data keys found larger than custom value")
+
+
+def edks_stream(num_keys):
+    raw = bytearray(struct.pack(">H", num_keys))
+    for i in range(num_keys):
+        # zero-length key provider ID and key provider info
+        raw.extend(b"\x00\x00\x00\x00")
+        # EDK ciphertext == index
+        raw.extend(b"\x00\x02")
+        raw.extend(struct.pack(">H", i))
+    return io.BytesIO(raw)

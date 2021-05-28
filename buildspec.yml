@@ -7,67 +7,42 @@ batch:
       buildspec: codebuild/py27/integ.yml
     - identifier: py27_examples
       buildspec: codebuild/py27/examples.yml
-    - identifier: py27_awses_1_7_1
-      buildspec: codebuild/py27/awses_1.7.1.yml
-    - identifier: py27_awses_2_0_0
-      buildspec: codebuild/py27/awses_2.0.0.yml
-    - identifier: py27_awses_latest
-      buildspec: codebuild/py27/awses_latest.yml
+    - identifier: py27_awses_local
+      buildspec: codebuild/py27/awses_local.yml
 
     - identifier: py35_integ
       buildspec: codebuild/py35/integ.yml
     - identifier: py35_examples
       buildspec: codebuild/py35/examples.yml
-    - identifier: py35_awses_1_7_1
-      buildspec: codebuild/py35/awses_1.7.1.yml
-    - identifier: py35_awses_2_0_0
-      buildspec: codebuild/py35/awses_2.0.0.yml
-    - identifier: py35_awses_latest
-      buildspec: codebuild/py35/awses_latest.yml
+    - identifier: py35_awses_local
+      buildspec: codebuild/py35/awses_local.yml
 
     - identifier: py36_integ
       buildspec: codebuild/py36/integ.yml
     - identifier: py36_examples
       buildspec: codebuild/py36/examples.yml
-    - identifier: py36_awses_1_7_1
-      buildspec: codebuild/py36/awses_1.7.1.yml
-    - identifier: py36_awses_2_0_0
-      buildspec: codebuild/py36/awses_2.0.0.yml
-    - identifier: py36_awses_latest
-      buildspec: codebuild/py36/awses_latest.yml
+    - identifier: py36_awses_local
+      buildspec: codebuild/py36/awses_local.yml
 
     - identifier: py37_integ
       buildspec: codebuild/py37/integ.yml
     - identifier: py37_examples
       buildspec: codebuild/py37/examples.yml
-    - identifier: py37_awses_1_7_1
-      buildspec: codebuild/py37/awses_1.7.1.yml
-    - identifier: py37_awses_2_0_0
-      buildspec: codebuild/py37/awses_2.0.0.yml
-    - identifier: py37_awses_latest
-      buildspec: codebuild/py37/awses_latest.yml
+    - identifier: py37_awses_local
+      buildspec: codebuild/py37/awses_local.yml
 
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml
     - identifier: py38_examples
       buildspec: codebuild/py38/examples.yml
-    - identifier: py38_awses_1_7_1
-      buildspec: codebuild/py38/awses_1.7.1.yml
-    - identifier: py38_awses_2_0_0
-      buildspec: codebuild/py38/awses_2.0.0.yml
-    - identifier: py38_awses_latest
-      buildspec: codebuild/py38/awses_latest.yml
+    - identifier: py38_awses_local
+      buildspec: codebuild/py38/awses_local.yml
 
     - identifier: py39_integ
       buildspec: codebuild/py39/integ.yml
     - identifier: py39_examples
       buildspec: codebuild/py39/examples.yml
-    - identifier: py39_awses_1_7_1
-      buildspec: codebuild/py39/awses_1.7.1.yml
-    - identifier: py39_awses_2_0_0
-      buildspec: codebuild/py39/awses_2.0.0.yml
     - identifier: py39_awses_latest
-      buildspec: codebuild/py39/awses_latest.yml
 
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
