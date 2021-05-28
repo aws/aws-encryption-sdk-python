@@ -15,12 +15,16 @@ phases:
     commands:
       - NUM_RETRIES=3
       - |
-        while [ $NUM_RETRIES -ge 0 ]
+        while [ $NUM_RETRIES -gt 0 ]
         do
           tox -re test
           if [ $? -eq 0 ]; then
             break
           fi
           ((NUM_RETRIES--))
-          echo "Validation failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
+          if [ $NUM_RETRIES -eq 0 ]; then
+            echo "All validation attempts failed, stopping"
+          else
+            echo "Validation failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
+          fi
         done
