@@ -25,6 +25,7 @@ phases:
           NUM_RETRIES=$((NUM_RETRIES-1))
           if [ $NUM_RETRIES -eq 0 ]; then
             echo "All validation attempts failed, stopping"
+            exit 1;
           else
             echo "Validation failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
           fi
