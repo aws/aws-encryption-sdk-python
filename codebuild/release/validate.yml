@@ -10,11 +10,10 @@ phases:
     commands:
       - git clone https://github.com/aws-samples/busy-engineers-document-bucket.git
       - cd busy-engineers-document-bucket/exercises/python/encryption-context-complete
-      - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==42.42.0/" requirements-dev.txt
+      - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
   build:
     commands:
       - NUM_RETRIES=3
-      - echo $0
       - |
         while [ $NUM_RETRIES -gt 0 ]
         do
