@@ -25,6 +25,22 @@ class CustomMaximumValueExceeded(SerializationError):
     """Exception class for use when values are found which exceed user-defined custom maximum values."""
 
 
+class MaxEncryptedDataKeysExceeded(CustomMaximumValueExceeded):
+    """
+    Exception class for use when a message or encryption materials
+    contain more encrypted data keys than a configured maximum value.
+    """
+
+    def __init__(self, num_keys, max_keys):
+        """Prepares exception message."""
+        super(MaxEncryptedDataKeysExceeded, self).__init__(
+            "Number of encrypted data keys found larger than configured value: {num_keys:d} > {max_keys:d}".format(
+                num_keys=num_keys,
+                max_keys=max_keys,
+            )
+        )
+
+
 class UnknownIdentityError(AWSEncryptionSDKClientError):
     """Exception class for unknown identity errors."""
 

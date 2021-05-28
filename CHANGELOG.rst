@@ -2,6 +2,15 @@
 Changelog
 *********
 
+2.2.0 -- 2021-05-27
+===================
+
+Features
+--------
+* Improvements to the message decryption process
+
+  See https://github.com/aws/aws-encryption-sdk-python/security/advisories/GHSA-x5h4-9gqw-942j.
+
 2.1.0 -- 2020-04-20
 ===================
 
