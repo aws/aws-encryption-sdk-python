@@ -13,4 +13,14 @@ phases:
       - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
   build:
     commands:
-      - tox -e test
+      - NUM_RETRIES=3
+      - |
+        while [ $NUM_RETRIES -ge 0 ]
+        do
+          tox -re test
+          if [ $? -eq 0 ]; then
+            break
+          fi
+          ((NUM_RETRIES--))
+          echo "Validation failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
+        done

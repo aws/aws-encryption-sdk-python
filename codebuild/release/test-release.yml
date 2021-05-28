@@ -27,7 +27,6 @@ phases:
     commands:
       - tox -e park
       - tox -e test-release
-      - echo "Sleeping 60 seconds to give new version time to become available on PyPi" && sleep 60
 
 
 batch:
