@@ -240,6 +240,12 @@ class TestBaseMasterKeyProvider(object):
         )
         mock_master_key_provider._new_master_key = MagicMock(return_value=sentinel.new_master_key)
 
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+        # //= type=test
+        # //# For each encrypted data key in the filtered set, one at a time, the
+        # //# master key provider MUST call Get Master Key (aws-kms-mrk-aware-
+        # //# master-key-provider.md#get-master-key) with the encrypted data key's
+        # //# provider info as the AWS KMS key ARN.
         test = mock_master_key_provider.master_key_for_decrypt(sentinel.key_info)
 
         mock_master_key_provider._new_master_key.assert_called_once_with(sentinel.key_info)
@@ -265,6 +271,12 @@ class TestBaseMasterKeyProvider(object):
             encryption_context=sentinel.encryption_context,
         )
         mock_member.master_key_for_decrypt.assert_called_once_with(sentinel.key_info)
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+        # //= type=test
+        # //# It MUST call Decrypt Data Key
+        # //# (aws-kms-mrk-aware-master-key.md#decrypt-data-key) on this master key
+        # //# with the input algorithm, this single encrypted data key, and the
+        # //# input encryption context.
         mock_master_key.decrypt_data_key.assert_called_once_with(
             mock_encrypted_data_key, sentinel.algorithm, sentinel.encryption_context
         )
@@ -537,6 +549,12 @@ class TestBaseMasterKeyProvider(object):
             algorithm=sentinel.algorithm,
             encryption_context=sentinel.encryption_context,
         )
+
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+        # //= type=test
+        # //# If the decrypt data key call is
+        # //# successful, then this function MUST return this result and not
+        # //# attempt to decrypt any more encrypted data keys.
         mock_decrypt_data_key.assert_called_once_with(
             sentinel.encrypted_data_key_a, sentinel.algorithm, sentinel.encryption_context
         )
@@ -575,6 +593,11 @@ class TestBaseMasterKeyProvider(object):
         )
         mock_master_key_provider.decrypt_data_key = MagicMock()
         mock_master_key_provider.decrypt_data_key.side_effect = (DecryptKeyError, DecryptKeyError)
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+        # //= type=test
+        # //# If all the input encrypted data keys have been processed then this
+        # //# function MUST yield an error that includes all the collected errors.
+        # Note that Python does not collect errors
         with pytest.raises(DecryptKeyError) as excinfo:
             mock_master_key_provider.decrypt_data_key_from_list(
                 encrypted_data_keys=[sentinel.encrypted_data_key_a, sentinel.encrypted_data_key_b],

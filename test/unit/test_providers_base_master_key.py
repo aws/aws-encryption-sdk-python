@@ -263,6 +263,12 @@ class TestMasterKey(object):
         mock_master_key._generate_data_key.assert_called_once_with(
             algorithm=ALGORITHM, encryption_context=VALUES["encryption_context"]
         )
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.10
+        # //= type=test
+        # //# If the call succeeds the AWS KMS Generate Data Key response's
+        # //# "Plaintext" MUST match the key derivation input length specified by
+        # //# the algorithm suite included in the input.
+
         self.mock_data_key_len_check.assert_called_once_with(
             source_data_key=sentinel.new_raw_data_key, algorithm=ALGORITHM
         )
@@ -296,16 +302,28 @@ class TestMasterKey(object):
         mock_master_key._key_check = MagicMock()
         mock_master_key._decrypt_data_key = MagicMock(return_value=sentinel.raw_decrypted_data_key)
 
-        mock_master_key.decrypt_data_key(
+        decrypted_data_key = mock_master_key.decrypt_data_key(
             encrypted_data_key=sentinel.encrypted_data_key,
             algorithm=ALGORITHM,
             encryption_context=VALUES["encryption_context"],
         )
 
+        assert decrypted_data_key == sentinel.raw_decrypted_data_key
+
         self.mock_data_key_len_check.assert_called_once_with(
             source_data_key=sentinel.raw_decrypted_data_key, algorithm=ALGORITHM
         )
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+        # //= type=test
+        # //# To match the encrypted data key's
+        # //# provider ID MUST exactly match the value "aws-kms".
         mock_master_key._key_check.assert_called_once_with(sentinel.encrypted_data_key)
+
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.9
+        # //= type=test
+        # //# If the AWS KMS response satisfies the requirements then it MUST be
+        # //# use and this function MUST return and not attempt to decrypt any more
+        # //# encrypted data keys.
         mock_master_key._decrypt_data_key.assert_called_once_with(
             encrypted_data_key=sentinel.encrypted_data_key,
             algorithm=ALGORITHM,

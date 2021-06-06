@@ -21,7 +21,6 @@ import os
 import attr
 import aws_encryption_sdk
 import six
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
@@ -69,7 +68,7 @@ class MessageEncryptionTestScenario(object):
     :param dict encryption_context: Encryption context to use
     :param master_key_specs: Iterable of loaded master key specifications
     :type master_key_specs: iterable of :class:`MasterKeySpec`
-    :param MasterKeyProvider master_key_provider:
+    :param Callable master_key_provider_fn:
     """
 
     plaintext_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
@@ -78,7 +77,7 @@ class MessageEncryptionTestScenario(object):
     frame_size = attr.ib(validator=attr.validators.instance_of(int))
     encryption_context = attr.ib(validator=dictionary_validator(six.string_types, six.string_types))
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
+    master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts):
@@ -93,7 +92,9 @@ class MessageEncryptionTestScenario(object):
         """
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]]
-        master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
+
+        def master_key_provider_fn():
+            return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(
             plaintext_name=scenario["plaintext"],
@@ -102,7 +103,7 @@ class MessageEncryptionTestScenario(object):
             frame_size=scenario["frame-size"],
             encryption_context=scenario["encryption-context"],
             master_key_specs=master_key_specs,
-            master_key_provider=master_key_provider,
+            master_key_provider_fn=master_key_provider_fn,
         )
 
     def run(self, materials_manager=None):
@@ -129,7 +130,7 @@ class MessageEncryptionTestScenario(object):
         if materials_manager:
             encrypt_kwargs["materials_manager"] = materials_manager
         else:
-            encrypt_kwargs["key_provider"] = self.master_key_provider
+            encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
         ciphertext, _header = client.encrypt(**encrypt_kwargs)
         return ciphertext
 

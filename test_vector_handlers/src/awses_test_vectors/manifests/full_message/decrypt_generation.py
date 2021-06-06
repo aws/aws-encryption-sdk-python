@@ -22,8 +22,9 @@ from copy import copy
 
 import attr
 import six
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -91,7 +92,9 @@ class TamperingMethod:
 
         return: a list of (ciphertext, result) pairs
         """
-        materials_manager = DefaultCryptoMaterialsManager(generation_scenario.encryption_scenario.master_key_provider)
+        materials_manager = DefaultCryptoMaterialsManager(
+            generation_scenario.encryption_scenario.master_key_provider_fn()
+        )
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(materials_manager)
         if generation_scenario.result:
             expected_result = generation_scenario.result
@@ -125,16 +128,28 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
 
         return: a list of (ciphertext, result) pairs.
         """
+        master_key_provider = generation_scenario.encryption_scenario.master_key_provider_fn()
+
+        # Use a caching CMM to avoid generating a new data key every time.
+        cache = LocalCryptoMaterialsCache(10)
+        caching_cmm = CachingCryptoMaterialsManager(
+            master_key_provider=master_key_provider,
+            cache=cache,
+            max_age=60.0,
+            max_messages_encrypted=100,
+        )
         return [
-            self.run_scenario_with_new_provider_info(ciphertext_writer, generation_scenario, new_provider_info)
+            self.run_scenario_with_new_provider_info(
+                ciphertext_writer, generation_scenario, caching_cmm, new_provider_info
+            )
             for new_provider_info in self.new_provider_infos
         ]
 
-    def run_scenario_with_new_provider_info(self, ciphertext_writer, generation_scenario, new_provider_info):
+    def run_scenario_with_new_provider_info(
+        self, ciphertext_writer, generation_scenario, materials_manager, new_provider_info
+    ):
         """Run with tampering for a specific new provider info value"""
-        tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(
-            generation_scenario.encryption_scenario.master_key_provider, new_provider_info
-        )
+        tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(materials_manager, new_provider_info)
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
         expected_result = MessageDecryptionTestResult.expect_error(
             "Incorrect encrypted data key provider info: " + new_provider_info
@@ -152,30 +167,27 @@ class ProviderInfoChangingCryptoMaterialsManager(CryptoMaterialsManager):
     production!
     """
 
-    wrapped_default_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManager))
+    wrapped_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManager))
     new_provider_info = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
-    def __init__(self, master_key_provider, new_provider_info):
-        """
-        Create a new CMM that wraps a new DefaultCryptoMaterialsManager
-        based on the given master key provider.
-        """
-        self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
+    def __init__(self, materials_manager, new_provider_info):
+        """Create a new CMM that wraps a the given CMM."""
+        self.wrapped_cmm = materials_manager
         self.new_provider_info = new_provider_info
 
     def get_encryption_materials(self, request):
         """
-        Request materials from the wrapped default CMM, and then change the provider info
+        Request materials from the wrapped CMM, and then change the provider info
         on each EDK.
         """
-        result = self.wrapped_default_cmm.get_encryption_materials(request)
+        result = self.wrapped_cmm.get_encryption_materials(request)
         for encrypted_data_key in result.encrypted_data_keys:
-            encrypted_data_key.provider_info = self.new_provider_info
+            encrypted_data_key.key_provider.key_info = self.new_provider_info
         return result
 
     def decrypt_materials(self, request):
-        """Thunks to the wrapped default CMM"""
-        return self.wrapped_default_cmm.decrypt_materials(request)
+        """Thunks to the wrapped CMM"""
+        return self.wrapped_cmm.decrypt_materials(request)
 
 
 BITS_PER_BYTE = 8
@@ -242,7 +254,7 @@ class HalfSigningTamperingMethod(TamperingMethod):
         return: a list of (ciphertext, result) pairs.
         """
         tampering_materials_manager = HalfSigningCryptoMaterialsManager(
-            generation_scenario.encryption_scenario.master_key_provider
+            generation_scenario.encryption_scenario.master_key_provider_fn()
         )
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
         expected_result = MessageDecryptionTestResult.expect_error(
@@ -312,7 +324,7 @@ class MessageDecryptionTestScenarioGenerator(object):
     :param decryption_method:
     :param decryption_master_key_specs: Iterable of master key specifications
     :type decryption_master_key_specs: iterable of :class:`MasterKeySpec`
-    :param MasterKeyProvider decryption_master_key_provider:
+    :param Callable decryption_master_key_provider_fn:
     :param result:
     """
 
@@ -320,7 +332,7 @@ class MessageDecryptionTestScenarioGenerator(object):
     tampering_method = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(TamperingMethod)))
     decryption_method = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod)))
     decryption_master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    decryption_master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
+    decryption_master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(MessageDecryptionTestResult)))
 
     @classmethod
@@ -343,12 +355,13 @@ class MessageDecryptionTestScenarioGenerator(object):
             decryption_master_key_specs = [
                 MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
             ]
-            decryption_master_key_provider = master_key_provider_from_master_key_specs(
-                keys, decryption_master_key_specs
-            )
+
+            def decryption_master_key_provider_fn():
+                return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
+
         else:
             decryption_master_key_specs = encryption_scenario.master_key_specs
-            decryption_master_key_provider = encryption_scenario.master_key_provider
+            decryption_master_key_provider_fn = encryption_scenario.master_key_provider_fn
         result_spec = scenario.get("result")
         result = MessageDecryptionTestResult.from_result_spec(result_spec, None) if result_spec else None
 
@@ -357,7 +370,7 @@ class MessageDecryptionTestScenarioGenerator(object):
             tampering_method=tampering_method,
             decryption_method=decryption_method,
             decryption_master_key_specs=decryption_master_key_specs,
-            decryption_master_key_provider=decryption_master_key_provider,
+            decryption_master_key_provider_fn=decryption_master_key_provider_fn,
             result=result,
         )
 
@@ -384,7 +397,7 @@ class MessageDecryptionTestScenarioGenerator(object):
                 ciphertext_uri=ciphertext_uri,
                 ciphertext=ciphertext_to_decrypt,
                 master_key_specs=self.decryption_master_key_specs,
-                master_key_provider=self.decryption_master_key_provider,
+                master_key_provider_fn=self.decryption_master_key_provider_fn,
                 decryption_method=self.decryption_method,
                 result=expected_result,
             ),

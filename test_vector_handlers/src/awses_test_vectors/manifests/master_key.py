@@ -19,10 +19,14 @@ import attr
 import six
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider  # noqa pylint: disable=unused-import
-from aws_encryption_sdk.key_providers.kms import KMSMasterKey  # noqa pylint: disable=unused-import
+from aws_encryption_sdk.key_providers.kms import (  # noqa pylint: disable=unused-import
+    DiscoveryFilter,
+    KMSMasterKey,
+    MRKAwareDiscoveryAwsKmsMasterKeyProvider,
+)
 from aws_encryption_sdk.key_providers.raw import RawMasterKey
 
-from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER
+from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER, KMS_MRK_AWARE_MASTER_KEY_PROVIDER
 from awses_test_vectors.internal.util import membership_validator
 from awses_test_vectors.manifests.keys import KeysManifest, KeySpec  # noqa pylint: disable=unused-import
 
@@ -40,7 +44,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-KNOWN_TYPES = ("aws-kms", "raw")
+KNOWN_TYPES = ("aws-kms", "aws-kms-mrk-aware", "aws-kms-mrk-aware-discovery", "raw")
 KNOWN_ALGORITHMS = ("aes", "rsa")
 KNOWN_PADDING = ("pkcs1", "oaep-mgf1")
 KNOWN_PADDING_HASH = ("sha1", "sha256", "sha384", "sha512")
@@ -70,7 +74,7 @@ _RAW_ENCRYPTION_KEY_TYPE = {
 
 
 @attr.s
-class MasterKeySpec(object):
+class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
     """AWS Encryption SDK master key specification utilities.
 
     Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
@@ -84,7 +88,9 @@ class MasterKeySpec(object):
     """
 
     type_name = attr.ib(validator=membership_validator(KNOWN_TYPES))
-    key_name = attr.ib(validator=attr.validators.instance_of(six.string_types))
+    key_name = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.string_types)))
+    default_mrk_region = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.string_types)))
+    discovery_filter = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(DiscoveryFilter)))
     provider_id = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(six.string_types)))
     encryption_algorithm = attr.ib(validator=attr.validators.optional(membership_validator(KNOWN_ALGORITHMS)))
     padding_algorithm = attr.ib(validator=attr.validators.optional(membership_validator(KNOWN_PADDING)))
@@ -106,6 +112,10 @@ class MasterKeySpec(object):
             if self.padding_algorithm == "oaep-mgf1" and self.padding_hash is None:
                 raise ValueError('Padding hash must be specified if padding algorithm is "oaep-mgf1"')
 
+        if self.type_name == "aws-kms-mrk-aware-discovery":
+            if self.default_mrk_region is None:
+                raise ValueError("Default MRK region is required for MRK-aware discovery master keys")
+
     @classmethod
     def from_scenario(cls, spec):
         # type: (MASTER_KEY_SPEC) -> MasterKeySpec
@@ -117,12 +127,24 @@ class MasterKeySpec(object):
         """
         return cls(
             type_name=spec["type"],
-            key_name=spec["key"],
+            key_name=spec.get("key"),
+            default_mrk_region=spec.get("default-mrk-region"),
+            discovery_filter=cls._discovery_filter_from_spec(spec.get("aws-kms-discovery-filter")),
             provider_id=spec.get("provider-id"),
             encryption_algorithm=spec.get("encryption-algorithm"),
             padding_algorithm=spec.get("padding-algorithm"),
             padding_hash=spec.get("padding-hash"),
         )
+
+    @classmethod
+    def _discovery_filter_from_spec(cls, spec):
+        if spec:
+            return DiscoveryFilter(partition=str(spec["partition"]), account_ids=spec["account-ids"])
+        return None
+
+    @classmethod
+    def _discovery_filter_spec(cls, discovery_filter):
+        return {"partition": discovery_filter.partition, "account-ids": discovery_filter.account_ids}
 
     def _wrapping_algorithm(self, key_bits):
         # type: (int) -> WrappingAlgorithm
@@ -170,8 +192,8 @@ class MasterKeySpec(object):
         key_type = _RAW_ENCRYPTION_KEY_TYPE[key_spec.type_name]
         return WrappingKey(wrapping_algorithm=algorithm, wrapping_key=material, wrapping_key_type=key_type)
 
-    def _raw_master_key_from_spec(self, key_spec):
-        # type: (KeySpec) -> RawMasterKey
+    def _raw_master_key_from_spec(self, keys):
+        # type: (KeysManifest) -> RawMasterKey
         """Build a raw master key using this specification.
 
         :param KeySpec key_spec: Key specification to use with this master key
@@ -182,11 +204,12 @@ class MasterKeySpec(object):
         if not self.type_name == "raw":
             raise TypeError("This is not a raw master key")
 
+        key_spec = keys.key(self.key_name)
         wrapping_key = self._wrapping_key(key_spec)
         return RawMasterKey(provider_id=self.provider_id, key_id=key_spec.key_id, wrapping_key=wrapping_key)
 
-    def _kms_master_key_from_spec(self, key_spec):
-        # type: (KeySpec) -> KMSMasterKey
+    def _kms_master_key_from_spec(self, keys):
+        # type: (KeysManifest) -> KMSMasterKey
         """Build an AWS KMS master key using this specification.
 
         :param KeySpec key_spec: Key specification to use with this master key
@@ -197,9 +220,46 @@ class MasterKeySpec(object):
         if not self.type_name == "aws-kms":
             raise TypeError("This is not an AWS KMS master key")
 
+        key_spec = keys.key(self.key_name)
         return KMS_MASTER_KEY_PROVIDER.master_key(key_id=key_spec.key_id)
 
-    _MASTER_KEY_LOADERS = {"aws-kms": _kms_master_key_from_spec, "raw": _raw_master_key_from_spec}
+    def _kms_mrk_aware_master_key_from_spec(self, keys):
+        # type: (KeysManifest) -> KMSMasterKey
+        """Build an AWS KMS master key using this specification.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: AWS KMS master key based on this specification
+        :rtype: KMSMasterKey
+        :raises TypeError: if this is not an AWS KMS master key specification
+        """
+        if not self.type_name == "aws-kms-mrk-aware":
+            raise TypeError("This is not an AWS KMS MRK-aware master key")
+
+        key_spec = keys.key(self.key_name)
+        return KMS_MRK_AWARE_MASTER_KEY_PROVIDER.master_key(key_id=key_spec.key_id)
+
+    def _kms_mrk_aware_discovery_master_key_from_spec(self, _keys):
+        # type: (KeysManifest) -> KMSMasterKey
+        """Build an AWS KMS master key using this specification.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: AWS KMS master key based on this specification
+        :rtype: KMSMasterKey
+        :raises TypeError: if this is not an AWS KMS master key specification
+        """
+        if not self.type_name == "aws-kms-mrk-aware-discovery":
+            raise TypeError("This is not an AWS KMS MRK-aware discovery master key")
+
+        return MRKAwareDiscoveryAwsKmsMasterKeyProvider(
+            discovery_region=self.default_mrk_region, discovery_filter=self.discovery_filter
+        )
+
+    _MASTER_KEY_LOADERS = {
+        "aws-kms": _kms_master_key_from_spec,
+        "aws-kms-mrk-aware": _kms_mrk_aware_master_key_from_spec,
+        "aws-kms-mrk-aware-discovery": _kms_mrk_aware_discovery_master_key_from_spec,
+        "raw": _raw_master_key_from_spec,
+    }
 
     def master_key(self, keys):
         # type: (KeysManifest) -> MasterKeyProvider
@@ -207,9 +267,8 @@ class MasterKeySpec(object):
 
         :param KeysManifest keys: Loaded key materials
         """
-        key_spec = keys.key(self.key_name)
         key_loader = self._MASTER_KEY_LOADERS[self.type_name]
-        return key_loader(self, key_spec)
+        return key_loader(self, keys)
 
     @property
     def scenario_spec(self):
@@ -219,7 +278,13 @@ class MasterKeySpec(object):
         :return: Master key specification JSON
         :rtype: dict
         """
-        spec = {"type": self.type_name, "key": self.key_name}
+        spec = {"type": self.type_name}
+        if self.type_name == "aws-kms-mrk-aware-discovery":
+            spec["default-mrk-region"] = self.default_mrk_region
+            if self.discovery_filter:
+                spec["aws-kms-discovery-filter"] = MasterKeySpec._discovery_filter_spec(self.discovery_filter)
+        else:
+            spec["key"] = self.key_name
 
         if self.type_name != "aws-kms":
             spec.update(
