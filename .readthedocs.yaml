@@ -1,0 +1,15 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Build documentation in the doc/ directory with Sphinx
+sphinx:
+   configuration: doc/conf.py
+
+# Don't need to build documentation for test vectors or any other
+# sub modules
+submodules:
+  exclude: all
