@@ -13,3 +13,10 @@ sphinx:
 # sub modules
 submodules:
   exclude: all
+
+python:
+  version: 3.8
+  install:
+    - requirements: requirements.txt
+    - method: setuptools
+      path: .
