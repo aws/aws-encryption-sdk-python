@@ -2,6 +2,24 @@
 Changelog
 *********
 
+2.3.0 -- 2021-06-16
+===================
+
+Features
+--------
+* AWS KMS multi-Region Key support
+
+  Added new the master key MRKAwareKMSMasterKey
+  and the new master key providers MRKAwareStrictAwsKmsMasterKeyProvider
+  and MRKAwareDiscoveryAwsKmsMasterKeyProvider
+  that support AWS KMS multi-Region Keys.
+
+  See https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
+  for more details about AWS KMS multi-Region Keys.
+  See https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/configure.html#config-mrks
+  for more details about how the AWS Encryption SDK interoperates
+  with AWS KMS multi-Region keys.
+
 2.2.0 -- 2021-05-27
 ===================
 

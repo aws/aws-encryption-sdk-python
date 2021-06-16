@@ -46,3 +46,6 @@ batch:
 
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
+
+    - identifier: compliance
+      buildspec: codebuild/compliance/compliance.yml

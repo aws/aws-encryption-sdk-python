@@ -80,6 +80,10 @@ VALUES = {
     "encoded_curve_point": "AmZvwV/dN6o9p/usAnJdRcdnE12UbaDHuEFPeyVkw5FC1ULGlSznzDdD3FP8SW1UMg==",
     "arn": b"arn:aws:kms:us-east-1:248168362296:key/ce78d3b3-f800-4785-a3b9-63e30bb4b183",
     "arn_str": "arn:aws:kms:us-east-1:248168362296:key/ce78d3b3-f800-4785-a3b9-63e30bb4b183",
+    "mrk_arn_region1": b"arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7",
+    "mrk_arn_region1_str": "arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7",
+    "mrk_arn_region2": b"arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7",
+    "mrk_arn_region2_str": "arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7",
     "data_key": six.b(
         "\x00\xfa\x8c\xdd\x08Au\xc6\x92_4\xc5\xfb\x90\xaf\x8f\xa1D\xaf\xcc\xd25\xa8\x0b\x0b\x16\x92\x91W\x01\xb7\x84"
     ),

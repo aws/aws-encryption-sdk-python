@@ -229,12 +229,22 @@ class MasterKeyProvider(object):
         master_key = None
         _LOGGER.debug("starting decrypt data key attempt")
         for member in [self] + self._members:
+            # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+            # //# To match the encrypted data key's
+            # //# provider ID MUST exactly match the value "aws-kms".
             if member.provider_id == encrypted_data_key.key_provider.provider_id:
                 _LOGGER.debug("attempting to locate master key from key provider: %s", member.provider_id)
                 if isinstance(member, MasterKey):
                     _LOGGER.debug("using existing master key")
                     master_key = member
                 elif self.vend_masterkey_on_decrypt:
+                    # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+                    # //# For each encrypted data key in the filtered set, one at a time, the
+                    # //# master key provider MUST call Get Master Key (aws-kms-mrk-aware-
+                    # //# master-key-provider.md#get-master-key) with the encrypted data key's
+                    # //# provider info as the AWS KMS key ARN.
+                    # We attempt to decrypt with pre-populated self._members for strict MKPs/MKs
+                    # and vend new MKs for Discovery MPKs/MKs.
                     try:
                         _LOGGER.debug("attempting to add master key: %s", encrypted_data_key.key_provider.key_info)
                         master_key = member.master_key_for_decrypt(encrypted_data_key.key_provider.key_info)
@@ -249,6 +259,12 @@ class MasterKeyProvider(object):
                     _LOGGER.debug(
                         "attempting to decrypt data key with provider %s", encrypted_data_key.key_provider.key_info
                     )
+                    # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+                    # //# It MUST call Decrypt Data Key
+                    # //# (aws-kms-mrk-aware-master-key.md#decrypt-data-key) on this master key
+                    # //# with the input algorithm, this single encrypted data key, and the
+                    # //# input encryption context.
+
                     data_key = master_key.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
                 except (IncorrectMasterKeyError, DecryptKeyError) as error:
                     _LOGGER.debug(
@@ -257,8 +273,27 @@ class MasterKeyProvider(object):
                         master_key.key_provider,
                     )
                     continue
+                # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.9
+                # //# If the AWS KMS response satisfies the requirements then it MUST be
+                # //# use and this function MUST return and not attempt to decrypt any more
+                # //# encrypted data keys.
+
+                # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+                # //# If the decrypt data key call is
+                # //# successful, then this function MUST return this result and not
+                # //# attempt to decrypt any more encrypted data keys.
+
                 break  # If this point is reached without throwing any errors, the data key has been decrypted
         if not data_key:
+            # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.9
+            # //# If all the input encrypted data keys have been processed then this
+            # //# function MUST yield an error that includes all the collected errors.
+            # Note the latter half of "includes all collected errors" is not satisfied
+
+            # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key-provider.txt#2.9
+            # //# If all the input encrypted data keys have been processed then this
+            # //# function MUST yield an error that includes all the collected errors.
+            # Note the latter half of "includes all collected errors" is not satisfied
             raise DecryptKeyError("Unable to decrypt data key")
         return data_key
 
@@ -296,6 +331,8 @@ class MasterKeyConfig(object):
     :param bytes key_id: Key ID for Master Key
     """
 
+    # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.6
+    # //# The AWS KMS key identifier MUST NOT be null or empty.
     key_id = attr.ib(hash=True, validator=attr.validators.instance_of((six.string_types, bytes)), converter=to_bytes)
 
     def __attrs_post_init__(self):
@@ -418,6 +455,10 @@ class MasterKey(MasterKeyProvider):
         """
         _LOGGER.info("generating data key with encryption context: %s", encryption_context)
         generated_data_key = self._generate_data_key(algorithm=algorithm, encryption_context=encryption_context)
+        # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.10
+        # //# If the call succeeds the AWS KMS Generate Data Key response's
+        # //# "Plaintext" MUST match the key derivation input length specified by
+        # //# the algorithm suite included in the input.
         aws_encryption_sdk.internal.utils.source_data_key_length_check(
             source_data_key=generated_data_key, algorithm=algorithm
         )

@@ -1,3 +1,9 @@
 [submodule "test_vector_handlers/test/aws-crypto-tools-test-vector-framework"]
 	path = test_vector_handlers/test/aws-crypto-tools-test-vector-framework
 	url = https://github.com/awslabs/private-aws-crypto-tools-test-vector-framework-staging.git
+[submodule "aws-encryption-sdk-specification"]
+	path = aws-encryption-sdk-specification
+	url = https://github.com/awslabs/private-aws-encryption-sdk-specification-staging.git
+[submodule "test_vector_handlers/test/aws-encryption-sdk-test-vectors"]
+	path = test_vector_handlers/test/aws-encryption-sdk-test-vectors
+	url = https://github.com/awslabs/private-aws-encryption-sdk-test-vectors-staging.git

@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: latest
+  build:
+    commands:
+      - aws-encryption-sdk-specification/util/test_conditions -s 'src/**/**/*.py' -s 'compliance_exceptions/*.py' -t 'test/**/*.py'

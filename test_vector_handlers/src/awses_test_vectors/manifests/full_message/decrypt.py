@@ -24,7 +24,6 @@ import aws_encryption_sdk
 import pytest
 import six
 from aws_encryption_sdk.identifiers import CommitmentPolicy
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
@@ -91,9 +90,12 @@ class MessageDecryptionTestOutputResultMatcher(object):
 
     def match(self, name, decrypt_fn):
         """Assert that the given decrypt closure behaves as expected."""
-        plaintext, _header = decrypt_fn()
-        if plaintext != self.plaintext:
-            raise ValueError("Decrypted plaintext does not match expected value for scenario '{}'".format(name))
+        try:
+            plaintext, _header = decrypt_fn()
+            if plaintext != self.plaintext:
+                raise ValueError("Decrypted plaintext does not match expected value for scenario '{}'".format(name))
+        except BaseException:
+            raise RuntimeError("Decryption did not succeed as expected for scenario '{}'".format(name))
 
 
 @attr.s
@@ -189,7 +191,7 @@ class MessageDecryptionTestScenario(object):
     :param boolean must_fail: Whether decryption is expected to fail
     :param master_key_specs: Iterable of master key specifications
     :type master_key_specs: iterable of :class:`MasterKeySpec`
-    :param MasterKeyProvider master_key_provider:
+    :param Callable master_key_provider_fn:
     :param str description: Description of test scenario (optional)
     """
 
@@ -198,7 +200,7 @@ class MessageDecryptionTestScenario(object):
     ciphertext_uri = attr.ib(validator=attr.validators.instance_of(six.string_types))
     ciphertext = attr.ib(validator=attr.validators.instance_of(six.binary_type))
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
+    master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.instance_of(MessageDecryptionTestResult))
     decryption_method = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod))
@@ -213,7 +215,7 @@ class MessageDecryptionTestScenario(object):
         ciphertext,  # type: bytes
         result,  # type: MessageDecryptionTestResult
         master_key_specs,  # type: Iterable[MasterKeySpec]
-        master_key_provider,  # type: MasterKeyProvider
+        master_key_provider_fn,  # type: Callable
         decryption_method=None,  # type: Optional[DecryptionMethod]
         description=None,  # type: Optional[str]
     ):  # noqa=D107
@@ -226,7 +228,7 @@ class MessageDecryptionTestScenario(object):
         self.ciphertext = ciphertext
         self.result = result
         self.master_key_specs = master_key_specs
-        self.master_key_provider = master_key_provider
+        self.master_key_provider_fn = master_key_provider_fn
         self.decryption_method = decryption_method
         self.description = description
         attr.validate(self)
@@ -251,7 +253,10 @@ class MessageDecryptionTestScenario(object):
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
-        master_key_provider = master_key_provider_from_master_key_specs(keys, master_key_specs)
+
+        def master_key_provider_fn():
+            return master_key_provider_from_master_key_specs(keys, master_key_specs)
+
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         result_spec = scenario["result"]
@@ -261,7 +266,7 @@ class MessageDecryptionTestScenario(object):
             ciphertext_uri=scenario["ciphertext"],
             ciphertext=ciphertext_reader(scenario["ciphertext"]),
             master_key_specs=master_key_specs,
-            master_key_provider=master_key_provider,
+            master_key_provider_fn=master_key_provider_fn,
             result=result,
             decryption_method=decryption_method,
             description=scenario.get("description"),
@@ -288,12 +293,12 @@ class MessageDecryptionTestScenario(object):
 
     def _one_shot_decrypt(self):
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider)
+        return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
 
     def _streaming_decrypt(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        with client.stream(source=self.ciphertext, mode="d", key_provider=self.master_key_provider) as decryptor:
+        with client.stream(source=self.ciphertext, mode="d", key_provider=self.master_key_provider_fn()) as decryptor:
             for chunk in decryptor:
                 result.extend(chunk)
             return result, decryptor.header
@@ -302,7 +307,7 @@ class MessageDecryptionTestScenario(object):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
         with client.stream(
-            source=self.ciphertext, mode="decrypt-unsigned", key_provider=self.master_key_provider
+            source=self.ciphertext, mode="decrypt-unsigned", key_provider=self.master_key_provider_fn()
         ) as decryptor:
             for chunk in decryptor:
                 result.extend(chunk)

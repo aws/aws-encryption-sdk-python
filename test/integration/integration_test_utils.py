@@ -19,6 +19,8 @@ from aws_encryption_sdk.key_providers.kms import StrictAwsKmsMasterKeyProvider
 
 AWS_KMS_KEY_ID = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID"
 AWS_KMS_KEY_ID_2 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2"
+AWS_KMS_MRK_KEY_ID_1 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1"
+AWS_KMS_MRK_KEY_ID_2 = "AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2"
 _KMS_MKP = None
 _KMS_MKP_BOTO = None
 
@@ -44,6 +46,16 @@ def get_cmk_arn():
 def get_second_cmk_arn():
     """Retrieves the target AWS KMS CMK ARN from environment variable."""
     return _get_single_cmk_arn(AWS_KMS_KEY_ID_2)
+
+
+def get_mrk_arn():
+    """Retrieves the target AWS KMS CMK ARN from environment variable."""
+    return _get_single_cmk_arn(AWS_KMS_MRK_KEY_ID_1)
+
+
+def get_second_mrk_arn():
+    """Retrieves the target AWS KMS CMK ARN from environment variable."""
+    return _get_single_cmk_arn(AWS_KMS_MRK_KEY_ID_2)
 
 
 def setup_kms_master_key_provider(cache=True):

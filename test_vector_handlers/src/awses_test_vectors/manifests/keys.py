@@ -99,11 +99,14 @@ class AwsKmsKeySpec(KeySpec):
         :return: Key specification JSON
         :rtype: dict
         """
+        key_id = self.key_id
+        if self.encrypt or self.decrypt:
+            key_id = arn_from_key_id(self.key_id)
         return {
             "encrypt": self.encrypt,
             "decrypt": self.decrypt,
             "type": self.type_name,
-            "key-id": arn_from_key_id(self.key_id),
+            "key-id": key_id,
         }
 
 
