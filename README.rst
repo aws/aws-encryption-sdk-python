@@ -26,6 +26,8 @@ Find us on `GitHub`_.
 
 `Security issue notifications`_
 
+See `Support Policy`_ for details on the current support status of all major versions of this library.
+
 ***************
 Getting Started
 ***************
@@ -48,6 +50,7 @@ Installation
    .. code::
 
        $ pip install aws-encryption-sdk
+
 
 Concepts
 ========
@@ -318,3 +321,4 @@ to your use-case in order to obtain peak performance.
 .. _final message: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/message-format.html
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
+.. _Support Policy: ./SUPPORT_POLICY.rst
