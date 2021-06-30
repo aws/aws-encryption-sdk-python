@@ -43,6 +43,7 @@ class TeeStream(ObjectProxy):
     :param tee: Stream to copy read bytes into.
     :type tee: io.BaseIO
     """
+
     # Prime ObjectProxy's attributes to allow setting in init.
     __tee = None  # pylint: disable=unused-private-member
 
