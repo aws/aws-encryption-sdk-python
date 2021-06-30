@@ -32,7 +32,7 @@ _VALID_KWARGS = {
 }
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_time(mocker):
     mocker.patch.object(aws_encryption_sdk.caches.time, "time")
 

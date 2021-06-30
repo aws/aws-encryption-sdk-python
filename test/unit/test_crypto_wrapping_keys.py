@@ -26,43 +26,43 @@ from .test_crypto import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_default_backend(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "default_backend")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.default_backend
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_serialization(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "serialization")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.serialization
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_derive_data_encryption_key(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "derive_data_encryption_key")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.derive_data_encryption_key
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_urandom(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys.os, "urandom")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.os.urandom
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_serialize_encryption_context(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "serialize_encryption_context")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.serialize_encryption_context
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_encrypt(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "encrypt")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.encrypt
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_decrypt(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.wrapping_keys, "decrypt")
     yield aws_encryption_sdk.internal.crypto.wrapping_keys.decrypt

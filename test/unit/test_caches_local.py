@@ -132,7 +132,7 @@ def test_try_to_evict_one_entry_entry_valid():
     cache._lre_deque.appendleft.assert_called_once_with(mock_reference)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_try_to_evict_one_entry(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "_try_to_evict_one_entry")
     yield LocalCryptoMaterialsCache._try_to_evict_one_entry
@@ -165,7 +165,7 @@ def test_prune(patch_try_to_evict_one_entry):
     patch_try_to_evict_one_entry.assert_has_calls((call(), call()))
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_prune(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "_prune")
     yield LocalCryptoMaterialsCache._prune
@@ -183,19 +183,19 @@ def test_add_value_to_cache(patch_prune):
     patch_prune.assert_called_once_with()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_try_to_evict_some_entries(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "_try_to_evict_some_entries")
     yield LocalCryptoMaterialsCache._try_to_evict_some_entries
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_add_value_to_cache(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "_add_value_to_cache")
     yield LocalCryptoMaterialsCache._add_value_to_cache
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_crypto_cache_entry(mocker):
     mocker.patch.object(aws_encryption_sdk.caches.local, "CryptoMaterialsCacheEntry")
     yield aws_encryption_sdk.caches.local.CryptoMaterialsCacheEntry
@@ -252,7 +252,7 @@ def test_remove_success():
     assert sentinel.value not in cache._cache
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_remove(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "remove")
     yield LocalCryptoMaterialsCache.remove
@@ -291,7 +291,7 @@ def test_get_single_entry_cache_hit_valid():
     assert test is mock_entry
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_get_single_entry(mocker):
     mocker.patch.object(LocalCryptoMaterialsCache, "_get_single_entry")
     yield LocalCryptoMaterialsCache._get_single_entry

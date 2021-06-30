@@ -24,37 +24,37 @@ from .test_crypto import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_default_backend(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "default_backend")
     yield aws_encryption_sdk.internal.crypto.authentication.default_backend
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_serialization(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "serialization")
     yield aws_encryption_sdk.internal.crypto.authentication.serialization
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_ecc_encode_compressed_point(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "_ecc_encode_compressed_point")
     yield aws_encryption_sdk.internal.crypto.authentication._ecc_encode_compressed_point
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_ecc_static_length_signature(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "_ecc_static_length_signature")
     yield aws_encryption_sdk.internal.crypto.authentication._ecc_static_length_signature
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_base64(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "base64")
     yield aws_encryption_sdk.internal.crypto.authentication.base64
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_build_hasher(mocker):
     mocker.patch.object(Signer, "_build_hasher")
     yield Signer._build_hasher
