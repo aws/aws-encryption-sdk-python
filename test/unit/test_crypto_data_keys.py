@@ -15,18 +15,18 @@ import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-import aws_encryption_sdk.internal.crypto.data_keys as data_keys
+from aws_encryption_sdk.internal.crypto import data_keys
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_default_backend(mocker):
     mocker.patch.object(data_keys, "default_backend")
     yield data_keys.default_backend
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_struct(mocker):
     mocker.patch.object(data_keys, "struct")
     yield data_keys.struct

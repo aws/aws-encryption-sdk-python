@@ -64,7 +64,7 @@ def test_attrs_fail(invalid_kwargs):
         build_ccmm(**invalid_kwargs)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_uuid4(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching.uuid, "uuid4")
     yield aws_encryption_sdk.materials_managers.caching.uuid.uuid4
@@ -203,25 +203,25 @@ def test_cache_entry_has_exceeded_limits(mocker, too_old, too_many_messages, too
         assert not test
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_crypto_cache_entry_hints(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "CryptoMaterialsCacheEntryHints")
     yield aws_encryption_sdk.materials_managers.caching.CryptoMaterialsCacheEntryHints
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cache_entry_has_exceeded_limits(mocker):
     mocker.patch.object(CachingCryptoMaterialsManager, "_cache_entry_has_exceeded_limits")
     yield CachingCryptoMaterialsManager._cache_entry_has_exceeded_limits
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_encryption_materials_request(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "EncryptionMaterialsRequest")
     yield aws_encryption_sdk.materials_managers.caching.EncryptionMaterialsRequest
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_build_encryption_materials_cache_key(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "build_encryption_materials_cache_key")
     yield aws_encryption_sdk.materials_managers.caching.build_encryption_materials_cache_key
@@ -246,7 +246,7 @@ def test_should_cache_encryption_request(plaintext_length, algorithm_provided, a
         assert not ccmm._should_cache_encryption_request(mock_request)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_should_cache_encryption_request(mocker):
     mocker.patch.object(CachingCryptoMaterialsManager, "_should_cache_encryption_request")
     CachingCryptoMaterialsManager._should_cache_encryption_request.return_value = True
@@ -381,13 +381,13 @@ def test_get_encryption_materials_cache_miss_algorithm_not_safe_to_cache(
     assert test is ccmm.backing_materials_manager.get_encryption_materials.return_value
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_build_decryption_materials_cache_key(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "build_decryption_materials_cache_key")
     yield aws_encryption_sdk.materials_managers.caching.build_decryption_materials_cache_key
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cache_entry_is_too_old(mocker):
     mocker.patch.object(CachingCryptoMaterialsManager, "_cache_entry_is_too_old")
     return CachingCryptoMaterialsManager._cache_entry_is_too_old

@@ -44,7 +44,8 @@ class TeeStream(ObjectProxy):
     :type tee: io.BaseIO
     """
 
-    __tee = None  # Prime ObjectProxy's attributes to allow setting in init.
+    # Prime ObjectProxy's attributes to allow setting in init.
+    __tee = None  # pylint: disable=unused-private-member
 
     def __init__(self, wrapped, tee):
         """Creates the local tee stream."""

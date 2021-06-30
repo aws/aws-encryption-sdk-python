@@ -21,19 +21,19 @@ from aws_encryption_sdk.internal.crypto.encryption import Decryptor, decrypt
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_default_backend(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "default_backend")
     yield aws_encryption_sdk.internal.crypto.encryption.default_backend
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cipher(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "Cipher")
     yield aws_encryption_sdk.internal.crypto.encryption.Cipher
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_decryptor(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.encryption, "Decryptor")
     yield aws_encryption_sdk.internal.crypto.encryption.Decryptor

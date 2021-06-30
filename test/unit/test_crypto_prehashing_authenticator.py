@@ -23,37 +23,37 @@ from aws_encryption_sdk.internal.crypto.authentication import _PrehashingAuthent
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_set_signature_type(mocker):
     mocker.patch.object(_PrehashingAuthenticator, "_set_signature_type")
     yield _PrehashingAuthenticator._set_signature_type
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_build_hasher(mocker):
     mocker.patch.object(_PrehashingAuthenticator, "_build_hasher")
     yield _PrehashingAuthenticator._build_hasher
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cryptography_utils_verify_interface(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "verify_interface")
     yield aws_encryption_sdk.internal.crypto.authentication.verify_interface
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cryptography_ec(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "ec")
     yield aws_encryption_sdk.internal.crypto.authentication.ec
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cryptography_hashes(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "hashes")
     yield aws_encryption_sdk.internal.crypto.authentication.hashes
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_cryptography_default_backend(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "default_backend")
     yield aws_encryption_sdk.internal.crypto.authentication.default_backend

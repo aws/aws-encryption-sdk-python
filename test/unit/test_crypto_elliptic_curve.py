@@ -36,55 +36,55 @@ from .test_crypto import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_default_backend(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "default_backend")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.default_backend
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_ec(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "ec")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.ec
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_pow(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "pow")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.pow
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_encode_dss_signature(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "encode_dss_signature")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.encode_dss_signature
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_decode_dss_signature(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "decode_dss_signature")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.decode_dss_signature
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_ecc_decode_compressed_point(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "_ecc_decode_compressed_point")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve._ecc_decode_compressed_point
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_verify_interface(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "verify_interface")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.verify_interface
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_ecc_curve_parameters(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "_ECC_CURVE_PARAMETERS")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve._ECC_CURVE_PARAMETERS
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patch_prehashed(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "Prehashed")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve.Prehashed
