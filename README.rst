@@ -39,7 +39,7 @@ Required Prerequisites
   **NOTE: 2.x is the last major version of this library that will
   support Python 2. Future major versions will begin to adopt changes
   known to break Python 2. Python 3.4 support will also be removed
-  in future major versions.**
+  in future major versions; Python 3.5+ will be required.**
 * cryptography >= 2.5.0
 * boto3 >= 1.10.0
 * attrs
