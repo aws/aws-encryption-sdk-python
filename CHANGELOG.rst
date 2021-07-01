@@ -10,7 +10,7 @@ Deprecation Announcement
 The AWS Encryption SDK for Python is discontinuing support for Python 2. Future major versions of this library
 will drop support for Python 2 and begin to adopt changes that are known to break Python 2.
 
-Security updates will still be available for the 2.x line for the next 12 months, in accordance with our `Support Policy <https://github.com/aws/aws-encryption-sdk-python/blob/master/SUPPORT_POLICY.rst>`_.
+Security updates will still be available for the 2.x line for the next 12 months, in accordance with our `Support Policy <https://github.com/aws/aws-encryption-sdk-python/blob/master/SUPPORT_POLICY.rst>`__.
 
 
 2.3.0 -- 2021-06-16
