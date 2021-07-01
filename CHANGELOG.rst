@@ -7,9 +7,11 @@ Changelog
 
 Deprecation
 -----------
-The AWS Encryption SDK for Python no longer supports Python 2 as of major version 3.x. Customers using Python 2
-can still use the 2.x line of the AWS Encryption SDK for Python, which will continue to receive
-security updates for the next 12 months, in accordance with our `Support Policy <https://github.com/aws/aws-encryption-sdk-python/blob/master/SUPPORT_POLICY.rst>`__.
+The AWS Encryption SDK for Python no longer supports Python 2 or Python 3.4
+as of major version 3.x; only Python 3.5+ is supported. Customers using Python 2
+or Python 3.4 can still use the 2.x line of the AWS Encryption SDK for Python,
+which will continue to receive security updates for the next 12 months, in accordance
+with our `Support Policy <https://github.com/aws/aws-encryption-sdk-python/blob/master/SUPPORT_POLICY.rst>`__.
 
 Maintenance
 -----------
