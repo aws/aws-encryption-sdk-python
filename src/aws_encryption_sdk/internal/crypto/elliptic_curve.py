@@ -18,7 +18,7 @@ import six
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
-from cryptography.utils import InterfaceNotImplemented, int_from_bytes, int_to_bytes, verify_interface
+from cryptography.utils import InterfaceNotImplemented, int_to_bytes, verify_interface
 
 from ...exceptions import NotSupportedError
 from ..str_ops import to_bytes
@@ -123,8 +123,7 @@ def _ecc_decode_compressed_point(curve, compressed_point):
     y_order_map = {b"\x02": 0, b"\x03": 1}
     raw_x = compressed_point[1:]
     raw_x = to_bytes(raw_x)
-    # pylint gives a false positive that int_from_bytes is not callable
-    x = int_from_bytes(raw_x, "big")  # pylint: disable=not-callable
+    x = int.from_bytes(raw_x, "big")
     raw_y = compressed_point[0]
     # In Python3, bytes index calls return int values rather than strings
     if isinstance(raw_y, six.integer_types):
