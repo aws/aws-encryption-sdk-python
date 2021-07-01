@@ -3,13 +3,6 @@ version: 0.2
 batch:
   fast-fail: false
   build-list:
-    - identifier: py27_integ
-      buildspec: codebuild/py27/integ.yml
-    - identifier: py27_examples
-      buildspec: codebuild/py27/examples.yml
-    - identifier: py27_awses_local
-      buildspec: codebuild/py27/awses_local.yml
-
     - identifier: py35_integ
       buildspec: codebuild/py35/integ.yml
     - identifier: py35_examples
