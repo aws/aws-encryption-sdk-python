@@ -344,7 +344,7 @@ def deserialize_header(stream, max_encrypted_data_keys=None):
     tee_stream = TeeStream(stream, tee)
     (version_id,) = unpack_values(">B", tee_stream)
     version = _verified_version_from_id(version_id)
-    header = dict()
+    header = {}
     header["version"] = version
 
     if version == SerializationVersion.V1:
