@@ -48,7 +48,7 @@ def _generate_test_cases():
         # Make no test cases if the ciphertext file is not found
         return []
 
-    with open(ciphertext_manifest_path) as f:
+    with open(ciphertext_manifest_path, encoding="utf-8") as f:
         ciphertext_manifest = json.load(f)
     _test_cases = []
 
@@ -69,9 +69,9 @@ def _generate_test_cases():
 @pytest.mark.parametrize("plaintext_filename, ciphertext_filename", _generate_test_cases())
 def test_decrypt_from_file(plaintext_filename, ciphertext_filename):
     """Tests decrypt from known good files."""
-    with open(ciphertext_filename, "rb") as infile:
+    with open(ciphertext_filename, "rb", encoding="utf-8") as infile:
         ciphertext = infile.read()
-    with open(plaintext_filename, "rb") as infile:
+    with open(plaintext_filename, "rb", encoding="utf-8") as infile:
         plaintext = infile.read()
     decrypted_ciphertext, _header = aws_encryption_sdk.decrypt(
         source=ciphertext, key_provider=setup_kms_master_key_provider()

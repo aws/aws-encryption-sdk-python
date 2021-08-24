@@ -35,7 +35,7 @@ def test_prep_stream_data_passthrough():
     assert_prepped_stream_identity(test, io.BytesIO)
 
 
-@pytest.mark.parametrize("source", (u"some unicode data ловие", b"\x00\x01\x02"))
+@pytest.mark.parametrize("source", ("some unicode data ловие", b"\x00\x01\x02"))
 def test_prep_stream_data_wrap(source):
     test = aws_encryption_sdk.internal.utils.prep_stream_data(source)
 
