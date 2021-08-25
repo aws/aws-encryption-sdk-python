@@ -50,7 +50,7 @@ if not os.path.isdir(root_dir):
 base_dir = os.path.join(root_dir, "test", "resources")
 file_path = os.path.join(base_dir, FILE_NAME)
 
-test_str = open(file_path, "r").read()  # pylint: disable=consider-using-with
+test_str = open(file_path, "r", encoding="utf-8").read()  # pylint: disable=consider-using-with
 test_json = json.loads(test_str)
 kat_tests = test_json["tests"]
 

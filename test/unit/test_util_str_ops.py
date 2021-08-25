@@ -39,17 +39,17 @@ class TestStrOps(object):
         assert test == b"\x3a\x00\x99"
 
     def test_to_str_bytes2unicode(self):
-        test = aws_encryption_sdk.internal.str_ops.to_str(codecs.encode(u"Предисловие", "utf-8"))
-        assert test == u"Предисловие"
+        test = aws_encryption_sdk.internal.str_ops.to_str(codecs.encode("Предисловие", "utf-8"))
+        assert test == "Предисловие"
 
     def test_to_str_unicode2unicode(self):
-        test = aws_encryption_sdk.internal.str_ops.to_str(u"Предисловие")
-        assert test == u"Предисловие"
+        test = aws_encryption_sdk.internal.str_ops.to_str("Предисловие")
+        assert test == "Предисловие"
 
     def test_to_str_unicode2bytes(self):
-        test = aws_encryption_sdk.internal.str_ops.to_bytes(u"Предисловие")
-        assert test == codecs.encode(u"Предисловие", "utf-8")
+        test = aws_encryption_sdk.internal.str_ops.to_bytes("Предисловие")
+        assert test == codecs.encode("Предисловие", "utf-8")
 
     def test_to_bytes_utf82utf8(self):
-        test = aws_encryption_sdk.internal.str_ops.to_bytes(codecs.encode(u"Предисловие", "utf-8"))
-        assert test == codecs.encode(u"Предисловие", "utf-8")
+        test = aws_encryption_sdk.internal.str_ops.to_bytes(codecs.encode("Предисловие", "utf-8"))
+        assert test == codecs.encode("Предисловие", "utf-8")

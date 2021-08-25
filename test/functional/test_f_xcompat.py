@@ -126,7 +126,7 @@ def _generate_test_cases():  # noqa=C901
         # Make no test cases if the ciphertext file is not found
         return []
 
-    with open(ciphertext_manifest_path) as f:
+    with open(ciphertext_manifest_path, encoding="utf-8") as f:
         ciphertext_manifest = json.load(f)
     _test_cases = []
 
