@@ -72,7 +72,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s(hash=True)  # pylint: disable=too-many-instance-attributes
 @six.add_metaclass(abc.ABCMeta)
-class _ClientConfig(object):
+class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
     :param source: Source data to encrypt or decrypt
