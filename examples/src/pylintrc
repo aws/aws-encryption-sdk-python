@@ -14,6 +14,7 @@ disable =
     attribute-defined-outside-init,  # breaks with attrs_post_init
     abstract-method,  # throws false positives on io.BaseIO grandchildren
     redefined-outer-name,  # we do this on purpose in multiple places
+    consider-using-f-string, # not supported in Python 3.5
 
 [BASIC]
 # Allow function names up to 50 characters
