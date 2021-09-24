@@ -70,9 +70,9 @@ from aws_encryption_sdk.structures import MessageHeader
 _LOGGER = logging.getLogger(__name__)
 
 
-@attr.s(hash=True)
+@attr.s(hash=True)  # pylint: disable=too-many-instance-attributes
 @six.add_metaclass(abc.ABCMeta)
-class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
+class _ClientConfig(object):
     """Parent configuration object for StreamEncryptor and StreamDecryptor objects.
 
     :param source: Source data to encrypt or decrypt

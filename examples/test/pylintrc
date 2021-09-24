@@ -7,6 +7,7 @@ disable =
                             # unknown modules as non-standard-library. flake8 tests for this as well
                             # and does treat them properly
     duplicate-code,  # tests for similar things tend to be similar
+    consider-using-f-string, # not supported in Python 3.5
 
 [VARIABLES]
 additional-builtins = raw_input
