@@ -18,7 +18,7 @@ phases:
       python: latest
   build:
     commands:
-      - pyenv install 3.6.12
-      - pyenv local 3.6.12
+      - pyenv install 3.6.15
+      - pyenv local 3.6.15
       - pip install tox tox-pyenv
       - tox
