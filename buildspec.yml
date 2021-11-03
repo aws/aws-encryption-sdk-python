@@ -37,6 +37,14 @@ batch:
       buildspec: codebuild/py39/examples.yml
     - identifier: py39_awses_latest
 
+    - identifier: py310_integ
+      buildspec: codebuild/py310/integ.yml
+    - identifier: py310_examples
+      buildspec: codebuild/py310/examples.yml
+    - identifier: py310_awses_latest
+      buildspec: codebuild/py310/awses_local.yml
+
+
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
 
