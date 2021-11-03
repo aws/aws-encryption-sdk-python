@@ -11,7 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """AWS Encryption SDK native data structures for defining implementation-specific characteristics."""
+import datetime
 import struct
+import sys
+import warnings
 from enum import Enum
 
 from cryptography.hazmat.primitives import hashes
@@ -378,3 +381,44 @@ class CommitmentPolicy(Enum):
     FORBID_ENCRYPT_ALLOW_DECRYPT = 0
     REQUIRE_ENCRYPT_ALLOW_DECRYPT = 1
     REQUIRE_ENCRYPT_REQUIRE_DECRYPT = 2
+
+
+class PythonVersionSupport:
+    """Configures Python Version warnings/error messaging"""
+
+    WARN_BELOW_MAJOR = 3
+    WARN_BELOW_MINOR = 6
+    ERROR_BELOW_MAJOR = 3
+    ERROR_BELOW_MINOR = 5
+    ERROR_DATE = datetime.datetime(year=2022, month=1, day=1)
+
+
+def check_python_version(
+    warn_below_major=PythonVersionSupport.WARN_BELOW_MAJOR,
+    warn_below_minor=PythonVersionSupport.WARN_BELOW_MINOR,
+    error_below_major=PythonVersionSupport.ERROR_BELOW_MAJOR,
+    error_below_minor=PythonVersionSupport.ERROR_BELOW_MINOR,
+    error_date=PythonVersionSupport.ERROR_DATE,
+):
+    """Checks that we are on a supported version of Python.
+    Prints an error message to stderr if the Python Version is unsupported and therefore untested.
+    Emits a warning if the Python version will be unsupported.
+    """
+    if datetime.datetime.now() > error_date and (
+        sys.version_info.major < error_below_major or sys.version_info.minor < error_below_minor
+    ):
+        sys.stderr.write(
+            "ERROR: Python {} is not supported by the aws-encryption-sdk! ".format(
+                ".".join(map(str, [sys.version_info.major, sys.version_info.minor]))
+            )
+            + "Please upgrade to Python {} or higher.".format(".".join(map(str, [warn_below_major, warn_below_minor])))
+        )
+        return
+    if sys.version_info.major < warn_below_major or sys.version_info.minor < warn_below_minor:
+        warnings.warn(
+            "Python {} support will be removed in a future release. ".format(
+                ".".join(map(str, [sys.version_info.major, sys.version_info.minor]))
+            )
+            + "Please upgrade to Python {} or higher.".format(".".join(map(str, [warn_below_major, warn_below_minor]))),
+            DeprecationWarning,
+        )
