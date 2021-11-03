@@ -12,13 +12,13 @@
 # language governing permissions and limitations under the License.
 """High level AWS Encryption SDK client functions."""
 # Below are imported for ease of use by implementors
-
 import warnings
 
 import attr
 
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
+from aws_encryption_sdk.compatability import _warn_deprecated_python
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError  # noqa
 from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__  # noqa
 from aws_encryption_sdk.internal.utils.signature import SignaturePolicy  # noqa
@@ -35,6 +35,8 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamDecryptor,
     StreamEncryptor,
 )
+
+_warn_deprecated_python()
 
 
 @attr.s(hash=True)

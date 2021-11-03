@@ -5,6 +5,7 @@ disable =
     missing-docstring,  # we don't write docstrings for tests
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
+    wrong-import-order,  # we let isort handle this
     abstract-class-instantiated,  # we do this on purpose to test that they are enforced
     no-member,  # raised on patched objects with mock checks
     no-self-use,  # common pattern when using pytest classes: can be enabled once all tests are refactored to pytest functions
@@ -23,6 +24,7 @@ disable =
     raise-missing-from,
     super-with-arguments,
     consider-using-f-string # disable until 2022-05-05; 6 months after 3.5 deprecation
+
 
 [VARIABLES]
 additional-builtins = raw_input
