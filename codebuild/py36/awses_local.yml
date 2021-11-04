@@ -23,4 +23,5 @@ phases:
       - pyenv install 3.6.15
       - pyenv local 3.6.15
       - pip install tox tox-pyenv
+      - cd test_vector_handlers
       - tox
