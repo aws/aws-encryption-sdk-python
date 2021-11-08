@@ -14,10 +14,10 @@
 import os
 import re
 import sys
+from typing import Mapping, Optional
 
 import mock
 import pytest
-from typing import Mapping, Optional
 
 from aws_encryption_sdk.compatability import DEPRECATION_DATE_MAP, _warn_deprecated_python
 
@@ -49,14 +49,14 @@ def _parse_support_policy() -> Mapping[str, str]:
     reg_date = re.compile(r"[\d]{4}-[\d]{2}-[\d]{2}")
     mv_regs = {mv: re.compile(reg_mv_base + _major_version_re_frmt(mv)) for mv in DEPRECATION_DATE_MAP}
 
-    def _match_mv_reg(a_line: str, reg_exp, mvstr: str) -> Optional[str]:
+    def _match_mv_reg(a_line: str, reg_exp, mvstr: str) -> Optional[str]:  # pylint: disable=inconsistent-return-statements
         """Match a Major Version string in a row of the support version table
         :return None or Major Version String
         """
         if reg_exp.match(a_line):
             return mvstr
 
-    def _match_mv_regs(a_line: str) -> Optional[str]:
+    def _match_mv_regs(a_line: str) -> Optional[str]:  # pylint: disable=inconsistent-return-statements
         """Check for any Major Version string in a row
         :return None or Major Version String
         """
@@ -78,7 +78,7 @@ def _parse_support_policy() -> Mapping[str, str]:
 def parsed_deprecation_date_map():
     try:
         return _parse_support_policy()
-    except Exception as ex:
+    except Exception:
         raise RuntimeError(
             "The Format of SUPPORT_POLICY.rst has changed! " "The logic in test_compatability must be updated!"
         )
