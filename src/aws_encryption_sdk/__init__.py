@@ -18,8 +18,9 @@ import attr
 
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache  # noqa
 from aws_encryption_sdk.caches.null import NullCryptoMaterialsCache  # noqa
+from aws_encryption_sdk.compatability import _warn_deprecated_python
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError  # noqa
-from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__, check_python_version  # noqa
+from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, __version__  # noqa
 from aws_encryption_sdk.internal.utils.signature import SignaturePolicy  # noqa
 from aws_encryption_sdk.key_providers.kms import (  # noqa
     DiscoveryAwsKmsMasterKeyProvider,
@@ -35,7 +36,7 @@ from aws_encryption_sdk.streaming_client import (  # noqa
     StreamEncryptor,
 )
 
-check_python_version()
+_warn_deprecated_python()
 
 
 @attr.s(hash=True)
