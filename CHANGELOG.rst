@@ -2,6 +2,25 @@
 Changelog
 *********
 
+3.1.0 -- 2021-11-10
+===================
+
+Deprecation
+-----------
+The AWS Encryption SDK for Python no longer supports Python 3.5
+as of version 3.1; only Python 3.6+ is supported. Customers using
+Python 3.5 can still use the 2.x line of the AWS Encryption SDK for Python,
+which will continue to receive security updates, in accordance
+with our `Support Policy <https://github.com/aws/aws-encryption-sdk-python/blob/master/SUPPORT_POLICY.rst>`__.
+
+Feature
+-----------
+* Warn on Deprecated Python usage
+  `#368 <https://github.com/aws/aws-encryption-sdk-python/pull/368>`_
+* Add Python 3.10 to CI
+* Remove Python 3.5 from testing
+
+
 3.0.0 -- 2021-07-01
 ===================
 
