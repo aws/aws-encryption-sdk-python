@@ -14,10 +14,10 @@
 import os
 import re
 import sys
-from typing import Mapping, Optional
 
 import mock
 import pytest
+from typing import Mapping, Optional
 
 from aws_encryption_sdk.compatability import DEPRECATION_DATE_MAP, _warn_deprecated_python
 
@@ -49,7 +49,9 @@ def _parse_support_policy() -> Mapping[str, str]:
     reg_date = re.compile(r"[\d]{4}-[\d]{2}-[\d]{2}")
     mv_regs = {mv: re.compile(reg_mv_base + _major_version_re_frmt(mv)) for mv in DEPRECATION_DATE_MAP}
 
-    def _match_mv_reg(a_line: str, reg_exp, mvstr: str) -> Optional[str]:  # pylint: disable=inconsistent-return-statements
+    def _match_mv_reg(  # pylint: disable=inconsistent-return-statements
+        a_line: str, reg_exp, mvstr: str
+    ) -> Optional[str]:
         """Match a Major Version string in a row of the support version table
         :return None or Major Version String
         """
