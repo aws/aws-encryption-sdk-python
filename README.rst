@@ -34,7 +34,7 @@ Getting Started
 Required Prerequisites
 ======================
 
-* Python 3.5+
+* Python 3.6+
 * cryptography >= 2.5.0
 * boto3 >= 1.10.0
 * attrs
