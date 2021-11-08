@@ -3,13 +3,6 @@ version: 0.2
 batch:
   fast-fail: false
   build-list:
-    - identifier: py35_integ
-      buildspec: codebuild/py35/integ.yml
-    - identifier: py35_examples
-      buildspec: codebuild/py35/examples.yml
-    - identifier: py35_awses_local
-      buildspec: codebuild/py35/awses_local.yml
-
     - identifier: py36_integ
       buildspec: codebuild/py36/integ.yml
     - identifier: py36_examples
