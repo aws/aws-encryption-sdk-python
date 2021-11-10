@@ -8,12 +8,12 @@ phases:
       python: latest
   pre_build:
     commands:
-      - pyenv install 3.8.12
-      - pip install tox tox-pyenv
       - git clone https://github.com/aws-samples/busy-engineers-document-bucket.git
       - cd busy-engineers-document-bucket/exercises/python/encryption-context-complete
-      - pyenv local 3.8.12
       - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
+      - pyenv install 3.8.12
+      - pyenv local 3.8.12
+      - pip install tox tox-pyenv
   build:
     commands:
       - NUM_RETRIES=3
