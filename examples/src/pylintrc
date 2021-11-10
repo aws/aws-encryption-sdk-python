@@ -14,7 +14,7 @@ disable =
     attribute-defined-outside-init,  # breaks with attrs_post_init
     abstract-method,  # throws false positives on io.BaseIO grandchildren
     redefined-outer-name,  # we do this on purpose in multiple places
-    consider-using-f-string # disable until 2022-05-05; 6 months after 3.5 deprecation
+    consider-using-f-string
 
 [BASIC]
 # Allow function names up to 50 characters
