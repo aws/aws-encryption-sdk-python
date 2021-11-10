@@ -20,6 +20,8 @@ phases:
       python: latest
   build:
     commands:
-      - pip install tox
+      - pyenv install 3.8.12
+      - pyenv local 3.8.12
+      - pip install tox tox-pyenv
       - cd test_vector_handlers
       - tox

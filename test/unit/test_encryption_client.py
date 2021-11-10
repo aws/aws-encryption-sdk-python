@@ -59,7 +59,7 @@ def test_client_encrypt(mocker):
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT, max_encrypted_data_keys=3
     )
 
-    kwargs = dict()
+    kwargs = {}
     kwargs["source"] = b"plaintext"
     kwargs["materials_manager"] = cmm
     client.encrypt(**kwargs)
@@ -77,7 +77,7 @@ def test_client_decrypt(mocker):
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT, max_encrypted_data_keys=3
     )
 
-    kwargs = dict()
+    kwargs = {}
     kwargs["source"] = b"ciphertext"
     kwargs["materials_manager"] = cmm
     client.decrypt(**kwargs)
@@ -94,7 +94,7 @@ def test_client_stream_encrypt(mocker, mode_string):
     cmm = MagicMock(__class__=CryptoMaterialsManager)
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
 
-    kwargs = dict()
+    kwargs = {}
     kwargs["mode"] = mode_string
     kwargs["source"] = b"plaintext"
     kwargs["materials_manager"] = cmm
@@ -113,7 +113,7 @@ def test_client_stream_decrypt(mocker, mode_string):
     cmm = MagicMock(__class__=CryptoMaterialsManager)
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
 
-    kwargs = dict()
+    kwargs = {}
     kwargs["mode"] = mode_string
     kwargs["source"] = b"ciphertext"
     kwargs["materials_manager"] = cmm
@@ -132,7 +132,7 @@ def test_client_bad_kwargs(mocker, method, key):
     mocker.patch.object(aws_encryption_sdk, "StreamEncryptor")
 
     cmm = MagicMock(__class__=CryptoMaterialsManager)
-    kwargs = dict()
+    kwargs = {}
     kwargs[key] = "foobar"
     kwargs["source"] = b"ciphertext"
     kwargs["materials_manager"] = cmm

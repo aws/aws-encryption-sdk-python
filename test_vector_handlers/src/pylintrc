@@ -8,6 +8,7 @@ disable =
     useless-object-inheritance,
     raise-missing-from,
     super-with-arguments,
+    consider-using-f-string
 
 [FORMAT]
 max-line-length = 120

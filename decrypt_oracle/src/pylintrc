@@ -3,6 +3,7 @@
 disable =
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
+    consider-using-f-string
 
 [FORMAT]
 max-line-length = 120
