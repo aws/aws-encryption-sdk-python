@@ -100,7 +100,7 @@ TestVector = namedtuple("TestVector", ["plaintext", "ciphertext", "key_type", "a
 def all_test_vectors() -> Iterable[Any]:
     """Collect and iterate through all test vectors."""
 
-    with open(test_vectors_filename(), "r") as vectors_file:
+    with open(test_vectors_filename(), "r") as vectors_file:  # pylint: disable=unspecified-encoding
         raw_vectors = json.load(vectors_file)
 
     for vector in raw_vectors:
