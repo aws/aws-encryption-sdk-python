@@ -18,10 +18,13 @@ disable =
     abstract-method,  # we do this on purpose to test that they are enforced
     redefined-outer-name,  # raised when using decorators
     unused-argument,  # raised when patches are needed but not called
+    unspecified-encoding,  # we use open() in binary mode which doesn't support encoding
     # All below are disabled because we need to support Python 2
     useless-object-inheritance,
     raise-missing-from,
     super-with-arguments,
+    consider-using-f-string,
+    redundant-u-string-prefix,
 
 [VARIABLES]
 additional-builtins = raw_input

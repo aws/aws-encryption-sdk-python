@@ -25,7 +25,7 @@ def encrypt_decrypt_stream(key_arn, source_plaintext_filename, botocore_session=
     :param botocore_session: existing botocore session instance
     :type botocore_session: botocore.session.Session
     """
-    kwargs = dict()
+    kwargs = {}
 
     kwargs["key_ids"] = [key_arn]
 

@@ -15,7 +15,7 @@ import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
-import aws_encryption_sdk.internal.crypto.data_keys as data_keys
+from aws_encryption_sdk.internal.crypto import data_keys
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 

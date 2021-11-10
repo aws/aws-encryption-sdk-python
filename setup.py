@@ -10,7 +10,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def read(*args):
     """Reads complete file contents."""
-    return open(os.path.join(HERE, *args)).read()
+    return open(os.path.join(HERE, *args)).read()  # pylint: disable=unspecified-encoding
 
 
 def get_version():
