@@ -6,4 +6,5 @@ include requirements.txt
 
 recursive-include doc *
 recursive-include test *.py
+recursive-include test *.json
 recursive-include examples *.py
