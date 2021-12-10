@@ -27,7 +27,8 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
-    # Create a KMS master key provider
+    # Create a KMS master key provider. Note that because we are planning on decrypting using this same provider,
+    # we MUST provide the ARN of the KMS Key. If we provide a raw key id or a key alias, decryption will fail.
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
