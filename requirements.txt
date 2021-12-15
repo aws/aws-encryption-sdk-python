@@ -2,11 +2,3 @@ boto3==1.20.24
 cryptography==36.0.1
 attrs==21.2.0
 wrapt==1.13.3
-
-bandit==1.7.1
-doc8==0.10.1
-flake8==4.0.1
-pylint==2.12.2
-black==21.12b0
-isort==5.10.1
-

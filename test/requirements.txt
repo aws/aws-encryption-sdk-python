@@ -2,3 +2,10 @@ mock==4.0.0
 pytest==6.2.5
 pytest-cov==3.0.0
 pytest-mock==3.6.0
+
+bandit==1.7.1
+doc8==0.10.1
+flake8==4.0.1
+pylint==2.12.2
+black==21.12b0
+isort==5.10.1
