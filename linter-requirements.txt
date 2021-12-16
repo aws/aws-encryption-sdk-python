@@ -1,0 +1,14 @@
+bandit==1.7.0
+black==21.12b0
+doc8==0.10.1
+flake8==4.0.1
+flake8-bugbear==21.11.29
+flake8-docstrings==1.6.0
+flake8-print==4.0.0
+isort==5.10.1
+pyflakes==2.4.0
+pylint==2.12.2
+readme_renderer==32.0
+seed-isort-config==2.2.0
+sphinx==4.3.1
+vulture==2.3

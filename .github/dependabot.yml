@@ -1,0 +1,42 @@
+version: 2
+updates:
+  # master
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "pip"
+      directory: "/decrypt_oracle"
+      schedule:
+        interval: "daily"
+
+  # mainline-1.x
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "mainline-1.x"
+  - package-ecosystem: "pip"
+      directory: "/decrypt_oracle"
+      schedule:
+        interval: "daily"
+    target-branch: "mainline-1.x"
+
+  # mainline-2.x
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "mainline-2.x"
+  # decrypt_oracle
+  - package-ecosystem: "pip"
+      directory: "/decrypt_oracle"
+      schedule:
+        interval: "daily"
+    target-branch: "mainline-2.x"
+
+  # Github Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
