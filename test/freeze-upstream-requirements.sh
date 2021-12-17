@@ -6,5 +6,5 @@ if [ -z ${1} ]; then
 fi
 
 pip install -r requirements.txt
-pip install -r test/requirements.txt
+pip install -r dev_requirements/test-requirements.txt
 pip freeze > ${1}
