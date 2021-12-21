@@ -17,6 +17,6 @@ submodules:
 python:
   version: 3.8
   install:
-    - requirements: doc/requirements.txt
+    - requirements: dev_requirements/doc-requirements.txt
     - method: setuptools
       path: .
