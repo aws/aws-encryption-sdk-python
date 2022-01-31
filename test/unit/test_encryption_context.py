@@ -189,4 +189,4 @@ class TestEncryptionContext(object):
         test = aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
             serialized_encryption_context=b""
         )
-        assert test == {}
+        assert not test
