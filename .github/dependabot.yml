@@ -6,20 +6,6 @@ updates:
     schedule:
       interval: "daily"
 
-  # mainline-1.x
-  - package-ecosystem: "pip"
-    directory: "/dev_requirements"
-    schedule:
-      interval: "daily"
-    target-branch: "mainline-1.x"
-
-  # mainline-2.x
-  - package-ecosystem: "pip"
-    directory: "/dev_requirements"
-    schedule:
-      interval: "daily"
-    target-branch: "mainline-2.x"
-
   # Github Actions
   - package-ecosystem: "github-actions"
     directory: "/"
