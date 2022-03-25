@@ -11,7 +11,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           # The oracle runs in a Python 3.6 Lamba
@@ -38,7 +38,7 @@ jobs:
           - flake8-tests
           - pylint-tests
     steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
         - uses: actions/setup-python@v1
           with:
             python-version: 3.8
