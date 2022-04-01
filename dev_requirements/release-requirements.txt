@@ -1,4 +1,4 @@
 pypi-parker==0.1.2
-setuptools==60.9.3
+setuptools==61.3.0
 twine==3.8.0
 wheel==0.37.1
