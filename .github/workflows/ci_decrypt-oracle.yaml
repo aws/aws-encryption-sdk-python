@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3.1.2
         with:
           # The oracle runs in a Python 3.6 Lamba
           python-version: 3.6
@@ -39,7 +39,7 @@ jobs:
           - pylint-tests
     steps:
         - uses: actions/checkout@v3
-        - uses: actions/setup-python@v1
+        - uses: actions/setup-python@v3.1.2
           with:
             python-version: 3.8
         - run: |
