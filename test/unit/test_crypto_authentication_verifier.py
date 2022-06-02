@@ -86,6 +86,7 @@ def test_f_verifier_key_bytes():
 def test_verifier_from_encoded_point(
     patch_default_backend,
     patch_serialization,
+    patch_ec,
     patch_ecc_public_numbers_from_compressed_point,
     patch_base64,
     patch_build_hasher,
@@ -94,21 +95,24 @@ def test_verifier_from_encoded_point(
     mock_point_instance.public_key.return_value = sentinel.public_key
     patch_ecc_public_numbers_from_compressed_point.return_value = mock_point_instance
     patch_base64.b64decode.return_value = sentinel.compressed_point
-    algorithm = MagicMock()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
-    verifier = Verifier.from_encoded_point(algorithm=algorithm, encoded_point=sentinel.encoded_point)
+    verifier = Verifier.from_encoded_point(algorithm=mock_algorithm, encoded_point=sentinel.encoded_point)
 
     patch_base64.b64decode.assert_called_once_with(sentinel.encoded_point)
-    algorithm.signing_algorithm_info.assert_called_once_with()
+    mock_algorithm.signing_algorithm_info.assert_called_once_with()
     patch_ecc_public_numbers_from_compressed_point.assert_called_once_with(
-        curve=algorithm.signing_algorithm_info.return_value, compressed_point=sentinel.compressed_point
+        curve=mock_algorithm.signing_algorithm_info.return_value, compressed_point=sentinel.compressed_point
     )
     mock_point_instance.public_key.assert_called_once_with(patch_default_backend.return_value)
     assert isinstance(verifier, Verifier)
 
 
-def test_verifier_update(patch_default_backend, patch_serialization, patch_build_hasher):
-    verifier = Verifier(algorithm=MagicMock(), key=MagicMock())
+def test_verifier_update(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    verifier = Verifier(algorithm=mock_algorithm, key=MagicMock())
     verifier.update(sentinel.data)
     verifier._hasher.update.assert_called_once_with(sentinel.data)
 

@@ -18,13 +18,12 @@ import six
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
-from cryptography.utils import InterfaceNotImplemented, int_to_bytes, verify_interface
+from cryptography.utils import int_to_bytes
 
 from ...exceptions import NotSupportedError
 from ..str_ops import to_bytes
 
 _LOGGER = logging.getLogger(__name__)
-
 
 # Curve parameter values are included strictly as a temporary measure
 #  until they can be rolled into the cryptography.io library.
@@ -44,10 +43,10 @@ _ECC_CURVE_PARAMETERS = {
         order=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973,
     ),
     "secp521r1": _ECCCurveParameters(
-        p=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,  # noqa pylint: disable=line-too-long
-        a=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC,  # noqa pylint: disable=line-too-long
-        b=0x0051953EB9618E1C9A1F929A21A0B68540EEA2DA725B99B315F3B8B489918EF109E156193951EC7E937B1652C0BD3BB1BF073573DF883D2C34F1EF451FD46B503F00,  # noqa pylint: disable=line-too-long
-        order=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409,  # noqa pylint: disable=line-too-long
+        p=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, # noqa pylint: disable=line-too-long
+        a=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC, # noqa pylint: disable=line-too-long
+        b=0x0051953EB9618E1C9A1F929A21A0B68540EEA2DA725B99B315F3B8B489918EF109E156193951EC7E937B1652C0BD3BB1BF073573DF883D2C34F1EF451FD46B503F00, # noqa pylint: disable=line-too-long
+        order=0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409, # noqa pylint: disable=line-too-long
     ),
 }
 
@@ -182,8 +181,6 @@ def generate_ecc_signing_key(algorithm):
     :returns: Generated signing key
     :raises NotSupportedError: if signing algorithm is not supported on this platform
     """
-    try:
-        verify_interface(ec.EllipticCurve, algorithm.signing_algorithm_info)
-        return ec.generate_private_key(curve=algorithm.signing_algorithm_info(), backend=default_backend())
-    except InterfaceNotImplemented:
+    if not isinstance(algorithm.signing_algorithm_info, type(ec.EllipticCurve)):
         raise NotSupportedError("Unsupported signing algorithm info")
+    return ec.generate_private_key(curve=algorithm.signing_algorithm_info(), backend=default_backend())
