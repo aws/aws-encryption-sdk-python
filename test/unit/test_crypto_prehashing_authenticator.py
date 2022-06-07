@@ -36,12 +36,6 @@ def patch_build_hasher(mocker):
 
 
 @pytest.fixture
-def patch_cryptography_utils_verify_interface(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "verify_interface")
-    yield aws_encryption_sdk.internal.crypto.authentication.verify_interface
-
-
-@pytest.fixture
 def patch_cryptography_ec(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "ec")
     yield aws_encryption_sdk.internal.crypto.authentication.ec
@@ -71,23 +65,25 @@ def test_init(patch_set_signature_type, patch_build_hasher):
 
 
 def test_set_signature_type_elliptic_curve(
-    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_ec
 ):
-    mock_algorithm = MagicMock()
+    patch_cryptography_ec.generate_private_key.return_value = sentinel.raw_signing_key
+    patch_cryptography_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
-    patch_cryptography_utils_verify_interface.assert_called_once_with(
-        patch_cryptography_ec.EllipticCurve, mock_algorithm.signing_algorithm_info
-    )
     assert test._signature_type is patch_cryptography_ec.EllipticCurve
 
 
 def test_set_signature_type_unknown(
-    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_ec
 ):
-    patch_cryptography_utils_verify_interface.side_effect = InterfaceNotImplemented
+    patch_cryptography_ec.EllipticCurve.__abstractmethods__ = set("invalidSetup")
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     with pytest.raises(NotSupportedError) as excinfo:
-        _PrehashingAuthenticator(algorithm=MagicMock(), key=sentinel.key)
+        _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     excinfo.match(r"Unsupported signing algorithm info")
 

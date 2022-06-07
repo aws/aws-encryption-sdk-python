@@ -18,6 +18,7 @@ from pytest_mock import mocker  # noqa pylint: disable=unused-import
 import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.internal.crypto.authentication import Verifier
 from aws_encryption_sdk.internal.defaults import ALGORITHM
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from .test_crypto import VALUES
 
@@ -89,12 +90,16 @@ def test_verifier_from_encoded_point(
     patch_ecc_public_numbers_from_compressed_point,
     patch_base64,
     patch_build_hasher,
+    patch_ec
 ):
     mock_point_instance = MagicMock()
     mock_point_instance.public_key.return_value = sentinel.public_key
     patch_ecc_public_numbers_from_compressed_point.return_value = mock_point_instance
     patch_base64.b64decode.return_value = sentinel.compressed_point
-    algorithm = MagicMock()
+
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     verifier = Verifier.from_encoded_point(algorithm=algorithm, encoded_point=sentinel.encoded_point)
 
