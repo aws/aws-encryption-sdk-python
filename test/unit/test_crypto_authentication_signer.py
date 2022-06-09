@@ -1,6 +1,6 @@
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Signer``."""
 import pytest
-from mock import MagicMock, sentinel, patch
+from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.authentication
