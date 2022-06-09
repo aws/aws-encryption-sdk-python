@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto._PrehashingAuthenticater``."""
 import pytest
-from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
