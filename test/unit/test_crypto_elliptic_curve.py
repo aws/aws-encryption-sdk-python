@@ -19,6 +19,7 @@ from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.elliptic_curve
+import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import NotSupportedError
 from aws_encryption_sdk.internal.crypto.elliptic_curve import (
     _ECC_CURVE_PARAMETERS,
@@ -369,8 +370,10 @@ def test_ecc_public_numbers_from_compressed_point(patch_ec, patch_ecc_decode_com
 
 def test_generate_ecc_signing_key_supported(patch_default_backend, patch_ec):
     patch_ec.generate_private_key.return_value = sentinel.raw_signing_key
-    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    patch_ec.EllipticCurve.__abstractmethods__ = {"key_size", "name"}
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     test_signing_key = generate_ecc_signing_key(algorithm=mock_algorithm)
@@ -383,8 +386,9 @@ def test_generate_ecc_signing_key_supported(patch_default_backend, patch_ec):
 
 def test_generate_ecc_signing_key_unsupported(patch_default_backend, patch_ec):
     patch_ec.generate_private_key.return_value = sentinel.raw_signing_key
-    patch_ec.EllipticCurve.__abstractmethods__ = set("notName")
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info = MagicMock(return_value=sentinel.invalid_algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.not_name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.not_key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     with pytest.raises(NotSupportedError) as excinfo:

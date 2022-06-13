@@ -15,6 +15,7 @@ import logging
 from collections import namedtuple
 
 import six
+from aws_encryption_sdk.internal.utils import verify_interface
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
@@ -183,7 +184,6 @@ def generate_ecc_signing_key(algorithm):
     :returns: Generated signing key
     :raises NotSupportedError: if signing algorithm is not supported on this platform
     """
-    for method in ec.EllipticCurve.__abstractmethods__:
-        if not hasattr(algorithm.signing_algorithm_info(), method):
-            raise NotSupportedError("Unsupported signing algorithm info")
+    if not verify_interface(algorithm):
+        raise NotSupportedError("Unsupported signing algorithm info")
     return ec.generate_private_key(curve=algorithm.signing_algorithm_info(), backend=default_backend())
