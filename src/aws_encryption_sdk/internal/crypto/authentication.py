@@ -14,6 +14,7 @@
 import base64
 import logging
 
+from aws_encryption_sdk.internal.utils import verify_interface
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -46,9 +47,8 @@ class _PrehashingAuthenticator(object):
 
     def _set_signature_type(self):
         """Ensures that the algorithm signature type is a known type and sets a reference value."""
-        for method in ec.EllipticCurve.__abstractmethods__:
-            if not hasattr(self.algorithm.signing_algorithm_info(), method):
-                raise NotSupportedError("Unsupported signing algorithm info")
+        if not verify_interface(self.algorithm):
+            raise NotSupportedError("Unsupported signing algorithm info")
         return ec.EllipticCurve
 
     def _build_hasher(self):

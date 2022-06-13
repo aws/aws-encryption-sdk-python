@@ -98,12 +98,13 @@ def test_verifier_from_encoded_point(
 
     patch_ec.EllipticCurve.__abstractmethods__ = set()
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = True
+    mock_algorithm_info.return_value.key_size = True
     algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     verifier = Verifier.from_encoded_point(algorithm=algorithm, encoded_point=sentinel.encoded_point)
 
     patch_base64.b64decode.assert_called_once_with(sentinel.encoded_point)
-    algorithm.signing_algorithm_info.assert_called_once_with()
     patch_ecc_public_numbers_from_compressed_point.assert_called_once_with(
         curve=algorithm.signing_algorithm_info.return_value, compressed_point=sentinel.compressed_point
     )

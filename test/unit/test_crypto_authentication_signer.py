@@ -68,6 +68,8 @@ def test_f_signer_key_bytes():
 def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
     patch_ec.EllipticCurve.__abstractmethods__ = set()
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = True
+    mock_algorithm_info.return_value.key_size = True
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)

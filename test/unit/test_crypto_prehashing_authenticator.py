@@ -69,6 +69,8 @@ def test_set_signature_type_elliptic_curve(
     patch_cryptography_ec.generate_private_key.return_value = sentinel.raw_signing_key
     patch_cryptography_ec.EllipticCurve.__abstractmethods__ = set()
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
@@ -78,8 +80,9 @@ def test_set_signature_type_elliptic_curve(
 def test_set_signature_type_unknown(
     patch_build_hasher, patch_cryptography_ec
 ):
-    patch_cryptography_ec.EllipticCurve.__abstractmethods__ = set("invalidSetup")
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm_info = MagicMock(return_value=sentinel.not_algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm_info.return_value.not_name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.not_key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     with pytest.raises(NotSupportedError) as excinfo:
         _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
