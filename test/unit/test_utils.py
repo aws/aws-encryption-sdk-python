@@ -20,7 +20,7 @@ from mock import MagicMock, patch, sentinel
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
 from aws_encryption_sdk.internal.utils import verify_ec_interface
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
@@ -42,7 +42,7 @@ def test_prep_stream_data_passthrough():
     assert_prepped_stream_identity(test, io.BytesIO)
 
 
-def test_verify_interface(patch_ec):
+def test_verify_ec_interface(patch_ec):
     patch_ec.EllipticCurve.__abstractmethods__ = set(("key_size", "name"))
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     mock_algorithm_info.return_value.name = True
