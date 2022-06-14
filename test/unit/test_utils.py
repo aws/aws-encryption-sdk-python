@@ -20,8 +20,8 @@ from mock import MagicMock, patch, sentinel
 import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
-from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
-from aws_encryption_sdk.internal.utils import verify_interface
+from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE, MESSAGE_ID_LENGTH
+from aws_encryption_sdk.internal.utils import verify_ec_interface
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
@@ -49,7 +49,7 @@ def test_verify_interface(patch_ec):
     mock_algorithm_info.return_value.key_size = True
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
-    implemented = verify_interface(algorithm=_algorithm)
+    implemented = verify_ec_interface(algorithm=_algorithm)
 
     assert implemented is True
 
