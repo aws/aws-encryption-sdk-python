@@ -42,7 +42,7 @@ def test_prep_stream_data_passthrough():
     assert_prepped_stream_identity(test, io.BytesIO)
 
 
-def test_verify_interface(patch_ec):
+def test_verify_ec_interface(patch_ec):
     patch_ec.EllipticCurve.__abstractmethods__ = set(("key_size", "name"))
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     mock_algorithm_info.return_value.name = True
