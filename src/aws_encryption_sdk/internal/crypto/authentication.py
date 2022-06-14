@@ -14,11 +14,12 @@
 import base64
 import logging
 
-from aws_encryption_sdk.internal.utils import verify_interface
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
+
+from aws_encryption_sdk.internal.utils import verify_interface
 
 from ...exceptions import NotSupportedError
 from .elliptic_curve import (
