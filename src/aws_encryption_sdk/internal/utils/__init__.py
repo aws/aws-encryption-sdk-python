@@ -164,7 +164,7 @@ def source_data_key_length_check(source_data_key, algorithm):
         )
 
 
-def verify_interface(algorithm):
+def verify_ec_interface(algorithm):
     """Validates that the provided EllipticCurve Algorithm is correctly implemented by
     checking if it implements both of the abstract methods from the EllipticCurve
     abstract class.
