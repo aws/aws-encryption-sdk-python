@@ -16,13 +16,13 @@ import logging
 import os
 
 import six
+from cryptography.hazmat.primitives.asymmetric import ec
 
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.identifiers import ContentAADString, ContentType
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import EncryptedDataKey
-from cryptography.hazmat.primitives.asymmetric import ec
 
 from .streams import InsistentReaderBytesIO
 

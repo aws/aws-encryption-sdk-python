@@ -15,11 +15,12 @@ import logging
 from collections import namedtuple
 
 import six
-from aws_encryption_sdk.internal.utils import verify_interface
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed, decode_dss_signature, encode_dss_signature
 from cryptography.utils import int_from_bytes, int_to_bytes
+
+from aws_encryption_sdk.internal.utils import verify_interface
 
 from ...exceptions import NotSupportedError
 from ..str_ops import to_bytes
