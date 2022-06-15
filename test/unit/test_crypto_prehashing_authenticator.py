@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto._PrehashingAuthenticater``."""
 import pytest
-from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -33,12 +32,6 @@ def patch_set_signature_type(mocker):
 def patch_build_hasher(mocker):
     mocker.patch.object(_PrehashingAuthenticator, "_build_hasher")
     yield _PrehashingAuthenticator._build_hasher
-
-
-@pytest.fixture
-def patch_cryptography_utils_verify_interface(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "verify_interface")
-    yield aws_encryption_sdk.internal.crypto.authentication.verify_interface
 
 
 @pytest.fixture
@@ -71,23 +64,28 @@ def test_init(patch_set_signature_type, patch_build_hasher):
 
 
 def test_set_signature_type_elliptic_curve(
-    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_ec
 ):
-    mock_algorithm = MagicMock()
+    patch_cryptography_ec.generate_private_key.return_value = sentinel.raw_signing_key
+    patch_cryptography_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.key_size = MagicMock(return_value=True)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
-    patch_cryptography_utils_verify_interface.assert_called_once_with(
-        patch_cryptography_ec.EllipticCurve, mock_algorithm.signing_algorithm_info
-    )
     assert test._signature_type is patch_cryptography_ec.EllipticCurve
 
 
 def test_set_signature_type_unknown(
-    patch_build_hasher, patch_cryptography_utils_verify_interface, patch_cryptography_ec
+    patch_build_hasher, patch_cryptography_ec
 ):
-    patch_cryptography_utils_verify_interface.side_effect = InterfaceNotImplemented
+    mock_algorithm_info = MagicMock(return_value=sentinel.not_algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
+    mock_algorithm_info.return_value.not_name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.not_key_size = MagicMock(return_value=True)
+    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     with pytest.raises(NotSupportedError) as excinfo:
-        _PrehashingAuthenticator(algorithm=MagicMock(), key=sentinel.key)
+        _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     excinfo.match(r"Unsupported signing algorithm info")
 

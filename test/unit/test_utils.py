@@ -21,6 +21,7 @@ import aws_encryption_sdk.identifiers
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
 from aws_encryption_sdk.internal.defaults import MAX_FRAME_SIZE
+from aws_encryption_sdk.internal.utils import verify_ec_interface
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo, RawDataKey
 
 from .test_values import VALUES
@@ -29,10 +30,28 @@ from .unit_test_utils import assert_prepped_stream_identity
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
+@pytest.yield_fixture
+def patch_ec(mocker):
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "ec")
+    yield aws_encryption_sdk.internal.crypto.authentication.ec
+
+
 def test_prep_stream_data_passthrough():
     test = aws_encryption_sdk.internal.utils.prep_stream_data(io.BytesIO(b"some data"))
 
     assert_prepped_stream_identity(test, io.BytesIO)
+
+
+def test_verify_ec_interface(patch_ec):
+    patch_ec.EllipticCurve.__abstractmethods__ = set(("key_size", "name"))
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = True
+    mock_algorithm_info.return_value.key_size = True
+    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+
+    implemented = verify_ec_interface(algorithm=_algorithm)
+
+    assert implemented is True
 
 
 @pytest.mark.parametrize("source", (u"some unicode data ловие", b"\x00\x01\x02"))

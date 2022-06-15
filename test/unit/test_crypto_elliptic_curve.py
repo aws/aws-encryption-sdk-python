@@ -15,11 +15,11 @@ import sys
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.utils import InterfaceNotImplemented
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.elliptic_curve
+import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import NotSupportedError
 from aws_encryption_sdk.internal.crypto.elliptic_curve import (
     _ECC_CURVE_PARAMETERS,
@@ -70,12 +70,6 @@ def patch_decode_dss_signature(mocker):
 def patch_ecc_decode_compressed_point(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "_ecc_decode_compressed_point")
     yield aws_encryption_sdk.internal.crypto.elliptic_curve._ecc_decode_compressed_point
-
-
-@pytest.fixture
-def patch_verify_interface(mocker):
-    mocker.patch.object(aws_encryption_sdk.internal.crypto.elliptic_curve, "verify_interface")
-    yield aws_encryption_sdk.internal.crypto.elliptic_curve.verify_interface
 
 
 @pytest.fixture
@@ -374,23 +368,27 @@ def test_ecc_public_numbers_from_compressed_point(patch_ec, patch_ecc_decode_com
     assert test == sentinel.public_numbers_instance
 
 
-def test_generate_ecc_signing_key_supported(patch_default_backend, patch_ec, patch_verify_interface):
+def test_generate_ecc_signing_key_supported(patch_default_backend, patch_ec):
     patch_ec.generate_private_key.return_value = sentinel.raw_signing_key
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info)
+    patch_ec.EllipticCurve.__abstractmethods__ = {"key_size", "name"}
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     test_signing_key = generate_ecc_signing_key(algorithm=mock_algorithm)
 
-    patch_verify_interface.assert_called_once_with(patch_ec.EllipticCurve, mock_algorithm_info)
     patch_ec.generate_private_key.assert_called_once_with(
         curve=sentinel.algorithm_info, backend=patch_default_backend.return_value
     )
     assert test_signing_key is sentinel.raw_signing_key
 
 
-def test_generate_ecc_signing_key_unsupported(patch_default_backend, patch_ec, patch_verify_interface):
-    patch_verify_interface.side_effect = InterfaceNotImplemented
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info)
+def test_generate_ecc_signing_key_unsupported(patch_default_backend, patch_ec):
+    patch_ec.generate_private_key.return_value = sentinel.raw_signing_key
+    mock_algorithm_info = MagicMock(return_value=sentinel.invalid_algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.not_name = MagicMock(return_value=True)
+    mock_algorithm_info.return_value.not_key_size = MagicMock(return_value=True)
     mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
     with pytest.raises(NotSupportedError) as excinfo:
