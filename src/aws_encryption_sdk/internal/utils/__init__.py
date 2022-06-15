@@ -16,6 +16,7 @@ import logging
 import os
 
 import six
+from cryptography.hazmat.primitives.asymmetric import ec
 
 import aws_encryption_sdk.internal.defaults
 from aws_encryption_sdk.exceptions import InvalidDataKeyError, SerializationError, UnknownIdentityError
@@ -161,3 +162,17 @@ def source_data_key_length_check(source_data_key, algorithm):
                 actual=len(source_data_key.data_key), required=algorithm.kdf_input_len
             )
         )
+
+
+def verify_ec_interface(algorithm):
+    """Validates that the provided EllipticCurve Algorithm is correctly implemented by
+    checking if it implements both of the abstract methods from the EllipticCurve
+    abstract class.
+
+    :param algorithm: Algorithm object which directs which Elliptic Curve will be used
+    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    """
+    for method in ec.EllipticCurve.__abstractmethods__:
+        if not hasattr(algorithm.signing_algorithm_info(), method):
+            return False
+    return True

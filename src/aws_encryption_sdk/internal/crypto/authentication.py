@@ -18,7 +18,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
-from cryptography.utils import InterfaceNotImplemented, verify_interface
+
+from aws_encryption_sdk.internal.utils import verify_ec_interface
 
 from ...exceptions import NotSupportedError
 from .elliptic_curve import (
@@ -47,11 +48,9 @@ class _PrehashingAuthenticator(object):
 
     def _set_signature_type(self):
         """Ensures that the algorithm signature type is a known type and sets a reference value."""
-        try:
-            verify_interface(ec.EllipticCurve, self.algorithm.signing_algorithm_info)
-            return ec.EllipticCurve
-        except InterfaceNotImplemented:
+        if not verify_ec_interface(self.algorithm):
             raise NotSupportedError("Unsupported signing algorithm info")
+        return ec.EllipticCurve
 
     def _build_hasher(self):
         """Builds the hasher instance which will calculate the digest of all passed data.

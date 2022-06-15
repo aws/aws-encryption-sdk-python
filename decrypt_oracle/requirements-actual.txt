@@ -1,3 +1,4 @@
 # Requirements for actual package
 chalice
 aws-encryption-sdk~=1.7.1
+cryptography>=2.5.0,<3.3.2

@@ -31,6 +31,12 @@ def patch_default_backend(mocker):
 
 
 @pytest.yield_fixture
+def patch_ec(mocker):
+    mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "ec")
+    yield aws_encryption_sdk.internal.crypto.authentication.ec
+
+
+@pytest.fixture
 def patch_serialization(mocker):
     mocker.patch.object(aws_encryption_sdk.internal.crypto.authentication, "serialization")
     yield aws_encryption_sdk.internal.crypto.authentication.serialization
@@ -71,8 +77,13 @@ def test_f_signer_key_bytes():
     assert test.key_bytes() == VALUES["ecc_private_key_prime_private_bytes"]
 
 
-def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher):
-    _algorithm = MagicMock()
+def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    mock_algorithm_info.return_value.name = True
+    mock_algorithm_info.return_value.key_size = True
+    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+
     signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
 
     patch_serialization.load_der_private_key.assert_called_once_with(
@@ -83,9 +94,12 @@ def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch
     assert signer.key is patch_serialization.load_der_private_key.return_value
 
 
-def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher):
+def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     private_key = MagicMock()
-    signer = Signer(MagicMock(), key=private_key)
+    signer = Signer(algorithm, key=private_key)
 
     test = signer.key_bytes()
 
@@ -98,13 +112,23 @@ def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_buil
 
 
 def test_signer_encoded_public_key(
-    patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_encode_compressed_point, patch_base64
+    patch_default_backend,
+    patch_serialization,
+    patch_build_hasher,
+    patch_ecc_encode_compressed_point,
+    patch_base64,
+    patch_ec
 ):
     patch_ecc_encode_compressed_point.return_value = sentinel.compressed_point
     patch_base64.b64encode.return_value = sentinel.encoded_point
     private_key = MagicMock()
 
-    signer = Signer(MagicMock(), key=private_key)
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+
+    signer = Signer(algorithm, key=private_key)
     test_key = signer.encoded_public_key()
 
     patch_ecc_encode_compressed_point.assert_called_once_with(private_key)
@@ -112,16 +136,21 @@ def test_signer_encoded_public_key(
     assert test_key == sentinel.encoded_point
 
 
-def test_signer_update(patch_default_backend, patch_serialization, patch_build_hasher):
-    signer = Signer(MagicMock(), key=MagicMock())
+def test_signer_update(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    signer = Signer(algorithm, key=MagicMock())
     signer.update(sentinel.data)
     patch_build_hasher.return_value.update.assert_called_once_with(sentinel.data)
 
 
 def test_signer_finalize(
-    patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_static_length_signature
+    patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_static_length_signature, patch_ec
 ):
-    algorithm = MagicMock()
+    patch_ec.EllipticCurve.__abstractmethods__ = set()
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
     private_key = MagicMock()
 
     signer = Signer(algorithm, key=private_key)
