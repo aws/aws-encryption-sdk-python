@@ -2,6 +2,13 @@
 Changelog
 *********
 
+2.5.0 -- 2022-06-20
+===================
+
+Maintenance
+------------------------
+* Pin ``cryptography`` to last version that supports Python2
+
 2.4.0 -- 2021-07-01
 ===================
 
