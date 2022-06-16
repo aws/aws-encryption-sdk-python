@@ -15,6 +15,7 @@ from __future__ import division
 
 import io
 import logging
+from distutils.version import StrictVersion
 
 import attr
 import botocore.client
@@ -823,7 +824,7 @@ def _assert_deprecated_but_not_yet_removed(logcap, instance, attribute_name, err
 
 def _assert_decrypted_and_removed(instance, attribute_name, removed_in):
     assert not hasattr(instance, attribute_name)
-    assert aws_encryption_sdk.__version__ >= removed_in
+    assert StrictVersion(aws_encryption_sdk.__version__) >= StrictVersion(removed_in)
 
 
 @pytest.mark.parametrize("attribute, no_later_than", (("body_start", "1.4.0"), ("body_end", "1.4.0")))
@@ -836,7 +837,7 @@ def test_decryptor_deprecated_attributes(caplog, attribute, no_later_than):
         decrypted = decryptor.read()
 
     assert decrypted == plaintext
-    if aws_encryption_sdk.__version__ < no_later_than:
+    if StrictVersion(aws_encryption_sdk.__version__) < StrictVersion(no_later_than):
         _assert_deprecated_but_not_yet_removed(
             logcap=caplog,
             instance=decryptor,
