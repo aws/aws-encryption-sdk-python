@@ -2,6 +2,14 @@
 Changelog
 *********
 
+3.1.1 -- 2022-06-20
+===================
+
+Maintenance
+-----------
+* Replace deprecated cryptography ``verify_interface`` with ``isinstance``
+  `#467 <https://github.com/aws/aws-encryption-sdk-python/pull/467>`_
+
 3.1.0 -- 2021-11-10
 ===================
 
