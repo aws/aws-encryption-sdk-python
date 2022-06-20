@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    BRANCH: "master"
+    BRANCH: "mainline-1.x"
   secrets-manager:
     TWINE_USERNAME: PyPiAdmin:username 
     TWINE_PASSWORD: PyPiAdmin:password
