@@ -1,4 +1,4 @@
-[MESSAGES CONTROL]
+[MESSAGE CONTROL]
 # Disabling messages that we either don't care about for tests or are necessary to break for tests.
 disable =
     bad-continuation,  # we let black handle this
