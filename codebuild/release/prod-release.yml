@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    BRANCH: "master"
+    BRANCH: "mainline-2.x"
   secrets-manager:
     TWINE_USERNAME: PyPiAdmin:username 
     TWINE_PASSWORD: PyPiAdmin:password
@@ -16,7 +16,7 @@ phases:
       python: latest
   pre_build:
     commands:
-      - git checkout $COMMIT_ID
+      - git checkout $BRANCH
       - FOUND_VERSION=$(sed -n 's/__version__ = "\(.*\)"/\1/p' src/aws_encryption_sdk/identifiers.py)
       - |
         if expr ${FOUND_VERSION} != ${VERSION}; then
