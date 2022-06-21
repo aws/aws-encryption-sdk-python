@@ -16,7 +16,7 @@ phases:
       python: latest
   pre_build:
     commands:
-      - git checkout $BRANCH
+      - git checkout $COMMIT_ID
       - FOUND_VERSION=$(sed -n 's/__version__ = "\(.*\)"/\1/p' src/aws_encryption_sdk/identifiers.py)
       - |
         if expr ${FOUND_VERSION} != ${VERSION}; then
