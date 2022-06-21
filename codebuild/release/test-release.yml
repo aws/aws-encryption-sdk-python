@@ -15,7 +15,7 @@ phases:
     commands:
       - pip install tox
       - git fetch origin $BRANCH:$BRANCH --depth=1
-      - git checkout $BRANCH
+      - git checkout $COMMIT_ID
       - tox -e park
       - tox -e test-release
 
