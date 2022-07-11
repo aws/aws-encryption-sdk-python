@@ -51,7 +51,7 @@ jobs:
             architecture: x86
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.architecture }}
@@ -72,7 +72,7 @@ jobs:
           - test-upstream-requirements-py37
     steps:
         - uses: actions/checkout@v3
-        - uses: actions/setup-python@v1
+        - uses: actions/setup-python@v4.1.0
           with:
             python-version: 3.7
         - run: |
