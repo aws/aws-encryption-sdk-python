@@ -299,10 +299,10 @@ class _EncryptionStream(io.IOBase):
 
     def readline(self):
         """Read a chunk of the output"""
-        _LOGGER.info("reading line")
+        _LOGGER.debug("reading line")
         line = self.read(self.line_length)
         if len(line) < self.line_length:
-            _LOGGER.info("all lines read")
+            _LOGGER.debug("all lines read")
         return line
 
     def readlines(self):
