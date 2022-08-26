@@ -5,7 +5,8 @@ disable =
     missing-docstring,  # we don't write docstrings for tests
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
-    consider-using-f-string # disable until 2022-05-05; 6 months after 3.5 deprecation
+    consider-using-f-string, # disable until 2022-05-05; 6 months after 3.5 deprecation
+    missing-timeout # disabling until we come up with a reasonable number
 
 [FORMAT]
 max-line-length = 120

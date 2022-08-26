@@ -4,8 +4,8 @@ env:
   variables:
     BRANCH: "master"
   secrets-manager:
-    TWINE_USERNAME: TestPyPiCryptoTools:username 
-    TWINE_PASSWORD: TestPyPiCryptoTools:password
+    TWINE_USERNAME: TestPyPiAPIToken:username 
+    TWINE_PASSWORD: TestPyPiAPIToken:password
 
 phases:
   install:
