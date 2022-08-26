@@ -2,6 +2,20 @@
 Changelog
 *********
 
+1.10.1 -- 2022-08-30
+====================
+
+Deprecation Announcement
+------------------------
+The AWS Encryption SDK for Python Major Version 1 is End of Support.
+It will no longer receive security updates or bug fixes.
+Consider updating to the latest version of the AWS Encryption SDK for Python.
+
+Maintenance
+-----------
+* Emit Deprecation Warning on library initialization
+
+
 1.10.0 -- 2022-06-20
 ====================
 
