@@ -25,6 +25,7 @@ def test_all_vectors(vector):
         decrypt_endpoint(),
         data=vector.ciphertext,
         headers={"Content-Type": "application/octet-stream", "Accept": "application/octet-stream"},
+        timeout=120  # 2 minutes
     )
     assert response.status_code == 200
     assert response.content == vector.plaintext
