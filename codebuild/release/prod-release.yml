@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   secrets-manager:
-    TWINE_USERNAME: PyPiAdmin:username 
-    TWINE_PASSWORD: PyPiAdmin:password
+    TWINE_USERNAME: PyPiAPIToken:username 
+    TWINE_PASSWORD: PyPiAPIToken:password
 
 phases:
   install:
