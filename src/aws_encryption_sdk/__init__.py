@@ -37,9 +37,9 @@ from aws_encryption_sdk.streaming_client import (  # noqa
 )
 
 warnings.warn(
-    'This major version (1.x) of the AWS Encryption SDK for Python has reached End-of-Support.\n' +
-    'It will no longer receive security updates or bug fixes.\n' +
-    'Consider updating to the latest version of the AWS Encryption SDK.',
+    'This major version (1.x) of the AWS Encryption SDK for Python has reached End-of-Support.\n'
+    + 'It will no longer receive security updates or bug fixes.\n'
+    + 'Consider updating to the latest version of the AWS Encryption SDK.',
     DeprecationWarning,
 )
 
