@@ -14,6 +14,7 @@ Consider updating to the latest version of the AWS Encryption SDK for Python.
 Maintenance
 ------------------------
 * Emit Deprecation Warning on library initialization
+* Update ``cryptography`` range to greater than or equal to 2.5.0 less than 37
 
 2.5.0 -- 2022-06-20
 ===================
