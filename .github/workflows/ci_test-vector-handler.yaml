@@ -45,8 +45,8 @@ jobs:
           aws-access-key-id: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.architecture }}
@@ -72,8 +72,8 @@ jobs:
           - flake8-tests
           - pylint-tests
     steps:
-        - uses: actions/checkout@v2
-        - uses: actions/setup-python@v1
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
           with:
             python-version: 3.8
         - run: |
