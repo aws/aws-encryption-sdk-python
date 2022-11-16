@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          # The oracle runs in a Python 3.6 Lamba
-          python-version: 3.6
+          # The oracle will run on a Python 3.9 Lamba
+          python-version: 3.9
       - run: |
           python -m pip install --upgrade pip
           pip install --upgrade -r dev_requirements/ci-requirements.txt
@@ -41,7 +41,7 @@ jobs:
         - uses: actions/checkout@v3
         - uses: actions/setup-python@v4
           with:
-            python-version: 3.8
+            python-version: 3.9
         - run: |
             python -m pip install --upgrade pip
             pip install --upgrade -r dev_requirements/ci-requirements.txt
