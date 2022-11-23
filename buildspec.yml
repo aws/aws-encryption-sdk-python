@@ -7,8 +7,6 @@ batch:
       buildspec: codebuild/py36/integ.yml
     - identifier: py36_examples
       buildspec: codebuild/py36/examples.yml
-    - identifier: py36_awses_local
-      buildspec: codebuild/py36/awses_local.yml
 
     - identifier: py37_integ
       buildspec: codebuild/py37/integ.yml
