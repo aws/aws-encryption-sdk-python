@@ -3,11 +3,6 @@ version: 0.2
 batch:
   fast-fail: false
   build-list:
-    - identifier: py36_integ
-      buildspec: codebuild/py36/integ.yml
-    - identifier: py36_examples
-      buildspec: codebuild/py36/examples.yml
-
     - identifier: py37_integ
       buildspec: codebuild/py37/integ.yml
     - identifier: py37_examples
