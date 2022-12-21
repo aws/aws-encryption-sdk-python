@@ -10,5 +10,5 @@ phases:
       python: latest
   build:
     commands:
-      - pip install tox
+      - pip install "tox < 4.0"
       - tox
