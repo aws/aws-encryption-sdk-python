@@ -60,8 +60,8 @@ def basic_decrypt() -> Response:
     APP.log.debug(APP.current_request.raw_body)
 
     try:
-        // The decrypt oracle needs to be able to decrypt any message
-        // it does not encrypt messages for anyone.
+        # The decrypt oracle needs to be able to decrypt any message 
+        # it does not encrypt messages for anyone.
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
         ciphertext = APP.current_request.raw_body
         plaintext, _header = client.decrypt(source=ciphertext, key_provider=_master_key_provider())
