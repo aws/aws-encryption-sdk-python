@@ -20,5 +20,5 @@ phases:
     commands:
       - pyenv install 3.9.7
       - pyenv local 3.9.7
-      - pip install tox tox-pyenv
+      - pip install "tox < 4.0"
       - tox
