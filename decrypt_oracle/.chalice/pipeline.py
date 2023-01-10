@@ -23,7 +23,7 @@ from troposphere import GetAtt, Ref, Sub, Template, codebuild, codepipeline, iam
 
 APPLICATION_NAME = "AwsEncryptionSdkDecryptOraclePython"
 PIPELINE_STACK_NAME = "{}DeployPipeline".format(APPLICATION_NAME)
-CODEBUILD_IMAGE = "aws/codebuild/python:3.6.5"
+CODEBUILD_IMAGE = "aws/codebuild/standard:5.0"
 BUILDSPEC = "decrypt_oracle/.chalice/buildspec.yaml"
 GITHUB_REPO = "aws-encryption-sdk-python"
 WAITER_CONFIG = dict(Delay=10)

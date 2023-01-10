@@ -16,6 +16,7 @@ import logging
 import os
 
 import aws_encryption_sdk
+from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.key_providers.kms import DiscoveryAwsKmsMasterKeyProvider
 from chalice import Chalice, Response
 
@@ -59,7 +60,9 @@ def basic_decrypt() -> Response:
     APP.log.debug(APP.current_request.raw_body)
 
     try:
-        client = aws_encryption_sdk.EncryptionSDKClient()
+        # The decrypt oracle needs to be able to decrypt any message
+        # it does not encrypt messages for anyone.
+        client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
         ciphertext = APP.current_request.raw_body
         plaintext, _header = client.decrypt(source=ciphertext, key_provider=_master_key_provider())
         APP.log.debug("Plaintext:")

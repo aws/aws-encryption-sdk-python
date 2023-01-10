@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - pip install tox
+      - pip install "tox < 4.0"
     runtime-versions:
       python: latest
   pre_build:
@@ -13,7 +13,7 @@ phases:
       - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
       - pyenv install 3.8.12
       - pyenv local 3.8.12
-      - pip install tox tox-pyenv
+      - pip install "tox < 4.0"
   build:
     commands:
       - NUM_RETRIES=3

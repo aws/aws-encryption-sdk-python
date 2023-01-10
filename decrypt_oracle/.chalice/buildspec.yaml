@@ -2,7 +2,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - pip install tox
+      - pip install "tox < 4.0"
   build:
     commands:
       - cd decrypt_oracle

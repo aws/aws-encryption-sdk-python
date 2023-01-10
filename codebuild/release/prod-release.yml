@@ -10,7 +10,7 @@ env:
 phases:
   install:
     commands:
-      - pip install tox
+      - pip install "tox < 4.0"
       - pip install --upgrade pip
     runtime-versions:
       python: latest
