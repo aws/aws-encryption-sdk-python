@@ -32,7 +32,7 @@ jobs:
           - 3.8
           - 3.9
           - 3.10
-          - 3.11
+          - "3.11"
           - 3.x  # Ideally, we would skip if 3.x is 3.11
         architecture:
           - x64
@@ -95,7 +95,7 @@ jobs:
         - uses: actions/checkout@v3
         - uses: actions/setup-python@v4
           with:
-            python-version: 3.11
+            python-version: "3.11"
         - run: |
             python -m pip install --upgrade pip
             pip install --upgrade -r dev_requirements/ci-requirements.txt
