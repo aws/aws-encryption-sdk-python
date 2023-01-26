@@ -5,7 +5,7 @@ flake8==4.0.1
 flake8-bugbear==22.9.11
 flake8-docstrings==1.6.0
 flake8-print==4.0.0
-isort==5.10.1
+isort==5.11.4
 pyflakes==2.4.0
 pylint==2.13.5
 readme_renderer==37.3
