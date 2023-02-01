@@ -7,7 +7,7 @@ flake8-docstrings==1.6.0
 flake8-print==5.0.0
 isort==5.11.4
 pyflakes==2.4.0
-pylint==2.13.5
+pylint==2.16.0
 readme_renderer==37.3
 seed-isort-config==2.2.0
 vulture==2.6
