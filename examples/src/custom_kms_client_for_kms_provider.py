@@ -11,12 +11,15 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Example showing how to customize the AWS KMS Client."""
+import boto3
+
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-import boto3
+
 
 # Create a new class that extends the AWS KMS Provider you need to use
 class CustomKMSClientMasterKeyProvider(aws_encryption_sdk.StrictAwsKmsMasterKeyProvider):
+    """Custom region-specific client which extends the StrictAwsKmsMasterKeyProvider"""
 
     # Override `add_regional_client` to use whatever configuration you need
     def add_regional_client(self, region_name):
@@ -34,6 +37,7 @@ class CustomKMSClientMasterKeyProvider(aws_encryption_sdk.StrictAwsKmsMasterKeyP
             )
             self._register_client(client, region_name)
             self._regional_clients[region_name] = client
+
 
 # This is just an example of using the above master key provider
 def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
@@ -71,4 +75,3 @@ def encrypt_decrypt(key_arn, source_plaintext, botocore_session=None):
         pair in encrypted_message_header.encryption_context.items()
         for pair in decrypted_message_header.encryption_context.items()
     )
-
