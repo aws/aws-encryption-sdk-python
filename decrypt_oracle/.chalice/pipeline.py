@@ -26,7 +26,7 @@ PIPELINE_STACK_NAME = "{}DeployPipeline".format(APPLICATION_NAME)
 CODEBUILD_IMAGE = "aws/codebuild/standard:5.0"
 BUILDSPEC = "decrypt_oracle/.chalice/buildspec.yaml"
 GITHUB_REPO = "aws-encryption-sdk-python"
-WAITER_CONFIG = dict(Delay=10)
+WAITER_CONFIG = {"Delay": 10}
 _LOGGER = logging.getLogger("Decrypt Oracle Build Pipeline Deployer")
 
 
@@ -35,7 +35,7 @@ class AllowEverywhere(AWS.Statement):
 
     def __init__(self, *args, **kwargs):
         """Set up override values."""
-        my_kwargs = dict(Effect=AWS.Allow, Resource=["*"])
+        my_kwargs = {"Effect": AWS.Allow, "Resource": ["*"]}
         my_kwargs.update(kwargs)
         super().__init__(*args, **my_kwargs)
 
@@ -167,13 +167,13 @@ def _pipeline(
                 ActionTypeId=codepipeline.ActionTypeId(
                     Category="Source", Owner="ThirdParty", Version="1", Provider="GitHub"
                 ),
-                Configuration=dict(
-                    Owner=github_owner,
-                    Repo=GITHUB_REPO,
-                    OAuthToken=Ref(github_access_token),
-                    Branch=github_branch,
-                    PollForSourceChanges=True,
-                ),
+                Configuration={
+                    "Owner": github_owner,
+                    "Repo": GITHUB_REPO,
+                    "OAuthToken": Ref(github_access_token),
+                    "Branch": github_branch,
+                    "PollForSourceChanges": True,
+                },
             )
         ],
     )
@@ -191,7 +191,7 @@ def _pipeline(
                 ActionTypeId=codepipeline.ActionTypeId(
                     Category="Build", Owner="AWS", Version="1", Provider="CodeBuild"
                 ),
-                Configuration=dict(ProjectName=Ref(codebuild_builder)),
+                Configuration={"ProjectName": Ref(codebuild_builder)},
             )
         ],
     )
@@ -200,25 +200,25 @@ def _pipeline(
         RunOrder="1",
         ActionTypeId=codepipeline.ActionTypeId(Category="Deploy", Owner="AWS", Version="1", Provider="CloudFormation"),
         InputArtifacts=[codepipeline.InputArtifacts(Name=_compiled_cfn_template)],
-        Configuration=dict(
-            ActionMode="CHANGE_SET_REPLACE",
-            ChangeSetName=_changeset_name,
-            RoleArn=GetAtt(cfn_role, "Arn"),
-            Capabilities="CAPABILITY_IAM",
-            StackName=_stack_name,
-            TemplatePath="{}::decrypt_oracle/transformed.yaml".format(_compiled_cfn_template),
-        ),
+        Configuration={
+            "ActionMode": "CHANGE_SET_REPLACE",
+            "ChangeSetName": _changeset_name,
+            "RoleArn": GetAtt(cfn_role, "Arn"),
+            "Capabilities": "CAPABILITY_IAM",
+            "StackName": _stack_name,
+            "TemplatePath": "{}::decrypt_oracle/transformed.yaml".format(_compiled_cfn_template),
+        },
     )
     deploy_changeset = codepipeline.Actions(
         Name="Deploy",
         RunOrder="2",
         ActionTypeId=codepipeline.ActionTypeId(Category="Deploy", Owner="AWS", Version="1", Provider="CloudFormation"),
-        Configuration=dict(
-            ActionMode="CHANGE_SET_EXECUTE",
-            ChangeSetName=_changeset_name,
-            StackName=_stack_name,
-            OutputFileName="StackOutputs.json",
-        ),
+        Configuration={
+            "ActionMode": "CHANGE_SET_EXECUTE",
+            "ChangeSetName": _changeset_name,
+            "StackName": _stack_name,
+            "OutputFileName": "StackOutputs.json",
+        },
         OutputArtifacts=[codepipeline.OutputArtifacts(Name="AppDeploymentValues")],
     )
     deploy = codepipeline.Stages(Name="Deploy", Actions=[stage_changeset, deploy_changeset])
@@ -272,8 +272,7 @@ def _stack_exists(cloudformation) -> bool:
             return False
         raise
 
-    else:
-        return True
+    return True
 
 
 def _update_existing_stack(cloudformation, template: Template, github_token: str) -> None:
@@ -284,7 +283,7 @@ def _update_existing_stack(cloudformation, template: Template, github_token: str
     cloudformation.update_stack(
         StackName=PIPELINE_STACK_NAME,
         TemplateBody=template.to_json(),
-        Parameters=[dict(ParameterKey="GithubPersonalToken", ParameterValue=github_token)],
+        Parameters=[{"ParameterKey": "GithubPersonalToken", "ParameterValue": github_token}],
         Capabilities=["CAPABILITY_IAM"],
     )
     _LOGGER.info("Waiting for stack update to complete...")
@@ -301,7 +300,7 @@ def _deploy_new_stack(cloudformation, template: Template, github_token: str) -> 
     cloudformation.create_stack(
         StackName=PIPELINE_STACK_NAME,
         TemplateBody=template.to_json(),
-        Parameters=[dict(ParameterKey="GithubPersonalToken", ParameterValue=github_token)],
+        Parameters=[{"ParameterKey": "GithubPersonalToken", "ParameterValue": github_token}],
         Capabilities=["CAPABILITY_IAM"],
     )
     _LOGGER.info("Waiting for stack to deploy...")
