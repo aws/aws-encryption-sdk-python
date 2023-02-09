@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 """Example showing how to customize the AWS KMS Client."""
 import boto3
+from botocore.config import Config
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
@@ -31,9 +32,8 @@ class CustomKMSClientMasterKeyProvider(aws_encryption_sdk.StrictAwsKmsMasterKeyP
             client = session.client(
                 'kms',
                 region_name=region_name,
-                config=self._user_agent_adding_config,
                 # Add additional custom client configuration here
-                connect_timeout=10
+                config=Config(connection_timeout=10).merge(self._user_agent_adding_config)
             )
             self._register_client(client, region_name)
             self._regional_clients[region_name] = client
