@@ -307,6 +307,11 @@ Processing each frame in a framed message involves a certain amount of overhead.
 increasing the frame size can offer potentially significant performance gains.  We recommend that you tune these values
 to your use-case in order to obtain peak performance.
 
+Thread safety
+==========================
+The clients are all thread safe, yes, with one minor qualifier. Instances of `KMSMasterKeyProvider` should not be shared between threads, for the reasons outlined in the `boto3 docs <http://boto3.readthedocs.io/en/latest/guide/resources.html#multithreading-multiprocessing>`_ . We do create `new boto3 sessions <https://github.com/awslabs/aws-encryption-sdk-python/blob/master/src/aws_encryption_sdk/key_providers/kms.py#L114>`_  for each `KMSMasterKeyProvider` instance regional client, so you don't need to worry about issues below that level. As long as you create a new `KMSMasterKeyProvider` for each thread, you should be fine.
+
+If you are using data key caching, however, caches can be shared across threads without issue, though if you want to share entries in that cache across threads you will need to be careful (see explanation about `partition name <http://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_ ).
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
 .. _cryptography: https://cryptography.io/en/latest/
