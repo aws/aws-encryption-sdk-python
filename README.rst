@@ -319,7 +319,9 @@ a new  `BaseKMSMasterKeyProvider` per thread is sufficient.
 
 (The `BaseKMSMasterKeyProvider` is the internal parent class of all the KMS Providers.)
 
-If you are using data key caching, however, caches can be shared across threads without issue, though if you want to share entries in that cache across threads you will need to be careful (see explanation about `partition name <http://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_ ).
+Finally, while the `CryptoMaterialsCache` is thread safe, 
+sharing entries in that cache across threads needs to be done carefully
+(see the !Note about partition name [in the API Docs](https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager)).
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
 .. _cryptography: https://cryptography.io/en/latest/
