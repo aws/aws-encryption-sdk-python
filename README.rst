@@ -309,7 +309,15 @@ to your use-case in order to obtain peak performance.
 
 Thread safety
 ==========================
-The clients are all thread safe, yes, with one minor qualifier. Instances of `KMSMasterKeyProvider` should not be shared between threads, for the reasons outlined in the `boto3 docs <http://boto3.readthedocs.io/en/latest/guide/resources.html#multithreading-multiprocessing>`_ . We do create `new boto3 sessions <https://github.com/awslabs/aws-encryption-sdk-python/blob/master/src/aws_encryption_sdk/key_providers/kms.py#L114>`_  for each `KMSMasterKeyProvider` instance regional client, so you don't need to worry about issues below that level. As long as you create a new `KMSMasterKeyProvider` for each thread, you should be fine.
+The `EncryptionSDKClient` and all provided`CryptoMaterialsManager` are thread safe.
+But instances of `BaseKMSMasterKeyProvider` MUST not be shared between threads, 
+for the reasons outlined in (the boto3 docs)[https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html#multithreading-or-multiprocessing-with-resources].
+
+Because the `BaseKMSMaterKeyProvider` creates a [new boto3 sessions](https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674) per region,
+users do not need to create a client for every region in every thread;
+a new  `BaseKMSMasterKeyProvider` per thread is sufficient.
+
+(The `BaseKMSMasterKeyProvider` is the internal parent class of all the KMS Providers.)
 
 If you are using data key caching, however, caches can be shared across threads without issue, though if you want to share entries in that cache across threads you will need to be careful (see explanation about `partition name <http://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_ ).
 
