@@ -1,7 +1,7 @@
 bandit==1.7.4
 black==22.3.0
 doc8==0.10.1
-flake8==4.0.1
+flake8==6.0.0
 flake8-bugbear==22.9.11
 flake8-docstrings==1.6.0
 flake8-print==5.0.0
