@@ -310,7 +310,7 @@ to your use-case in order to obtain peak performance.
 Thread safety
 ==========================
 The ``EncryptionSDKClient`` and all provided ``CryptoMaterialsManager`` are thread safe.
-But instances of ``BaseKMSMasterKeyProvider`` MUST not be shared between threads, 
+But instances of ``BaseKMSMasterKeyProvider`` MUST not be shared between threads,
 for the reasons outlined in `the boto3 docs <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html#multithreading-or-multiprocessing-with-resources>`_.
 
 Because the ``BaseKMSMaterKeyProvider`` creates a `new boto3 sessions <https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674>`_ per region,
@@ -319,7 +319,7 @@ a new  ``BaseKMSMasterKeyProvider`` per thread is sufficient.
 
 (The ``BaseKMSMasterKeyProvider`` is the internal parent class of all the KMS Providers.)
 
-Finally, while the ``CryptoMaterialsCache`` is thread safe, 
+Finally, while the ``CryptoMaterialsCache`` is thread safe,
 sharing entries in that cache across threads needs to be done carefully
 (see the !Note about partition name `in the API Docs <https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_).
 
