@@ -225,11 +225,11 @@ class _EncryptionStream(io.IOBase):
     def __exit__(self, exc_type, exc_value, traceback):
         """Handles closing of stream upon exist of with block."""
         try:
-            self.close()
+            return self.close()
         except AWSEncryptionSDKClientError:
             # All known exceptions in close are safe to ignore.
             # Only raise unknown exceptions in close.
-            _LOGGER.exception("Error on closing")
+            return False
         return False
 
     def readable(self):
