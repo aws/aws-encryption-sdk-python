@@ -1,5 +1,5 @@
 bandit==1.7.4
-black==22.3.0
+black==23.9.1
 doc8==0.10.1
 flake8==4.0.1
 flake8-bugbear==22.9.11
