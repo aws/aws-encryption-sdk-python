@@ -43,7 +43,7 @@ def test_ecc_static_length_signature(algorithm):
 
 
 def test_signer_key_bytes_cycle():
-    key = ec.generate_private_key(curve=ec.SECP384R1, backend=default_backend())
+    key = ec.generate_private_key(curve=ec.SECP384R1(), backend=default_backend())
     signer = Signer(algorithm=aws_encryption_sdk.Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384, key=key)
     key_bytes = signer.key_bytes()
     new_signer = Signer.from_key_bytes(
