@@ -30,7 +30,20 @@ batch:
     - identifier: py310_awses_latest
       buildspec: codebuild/py310/awses_local.yml
 
+    - identifier: py311_integ
+      buildspec: codebuild/py311/integ.yml
+    - identifier: py311_examples
+      buildspec: codebuild/py311/examples.yml
+    - identifier: py311_awses_latest
+      buildspec: codebuild/py311/awses_local.yml
 
+    - identifier: py312_integ
+      buildspec: codebuild/py312/integ.yml
+    - identifier: py312_examples
+      buildspec: codebuild/py312/examples.yml
+    - identifier: py312_awses_latest
+      buildspec: codebuild/py312/awses_local.yml
+      
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
 

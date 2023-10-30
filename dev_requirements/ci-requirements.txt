@@ -1,1 +1,2 @@
+setuptools
 tox==3.27.1
