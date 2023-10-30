@@ -19,11 +19,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 def test_abstracts():
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(TypeError, match='instantiate abstract class CryptoMaterialsManager') as excinfo:
         CryptoMaterialsManager()
-
-    excinfo.match(
-        r"Can't instantiate abstract class CryptoMaterialsManager with abstract methods {}".format(
-            ", ".join(["decrypt_materials", "get_encryption_materials"])
-        )
-    )
+    method_names = ["decrypt_materials", "get_encryption_materials"]
+    exception = str(excinfo.value)
+    for name in method_names:
+        if exception.rfind(name) == -1:
+            raise AssertionError("{} missing from Exception Message".format(name))
