@@ -17,11 +17,9 @@ env:
 phases:
   install:
     runtime-versions:
-      python: latest
+      python: 3.8
   build:
     commands:
-      - pyenv install 3.8.12
-      - pyenv local 3.8.12
       - pip install "tox < 4.0"
       - cd test_vector_handlers
       - tox

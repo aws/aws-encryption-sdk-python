@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py37-awses_local"
+    TOXENV: "py312-awses_local"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
@@ -17,9 +17,14 @@ env:
 phases:
   install:
     runtime-versions:
-      python: 3.7
+      python: latest
   build:
     commands:
+      - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
+      - pyenv install 3.12.0
+      - pyenv local 3.12.0
+      - pip install --upgrade pip
+      - pip install setuptools
       - pip install "tox < 4.0"
       - cd test_vector_handlers
       - tox
