@@ -76,7 +76,8 @@ class Signer(_PrehashingAuthenticator):
         :param bytes key_bytes: Raw signing key
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
-        key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+        # key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+        key = serialization.load_pem_private_key(data=key_bytes, password=None, backend=default_backend())
         return cls(algorithm, key)
 
     def key_bytes(self):
@@ -140,6 +141,7 @@ class Verifier(_PrehashingAuthenticator):
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
+        print(f"from_encoded_point {encoded_point=}")
         return cls(
             algorithm=algorithm,
             key=_ecc_public_numbers_from_compressed_point(
@@ -157,8 +159,10 @@ class Verifier(_PrehashingAuthenticator):
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
+        print(f"{algorithm=}")
+        print(f"{key_bytes=}")
         return cls(
-            algorithm=algorithm, key=serialization.load_der_public_key(data=key_bytes, backend=default_backend())
+            algorithm=algorithm, key=serialization.load_pem_public_key(data=key_bytes, backend=default_backend())
         )
 
     def key_bytes(self):
