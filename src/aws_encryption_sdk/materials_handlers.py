@@ -48,7 +48,6 @@ class EncryptionMaterialsHandler:
         Create EncryptionMaterialsHandler.
         :param materials: Underlying encryption materials
         """
-        
         if isinstance(materials, Native_EncryptionMaterials):
             self.native_materials = materials
         elif isinstance(materials, MPL_EncryptionMaterials):
@@ -58,10 +57,7 @@ class EncryptionMaterialsHandler:
 
     @property
     def algorithm(self) -> Algorithm:
-        """
-        Materials' native Algorithm.
-        """
-
+        """Materials' native Algorithm."""
         if hasattr(self, "native_materials"):
             return self.native_materials.algorithm
         else:
@@ -73,10 +69,7 @@ class EncryptionMaterialsHandler:
 
     @property
     def encryption_context(self) -> dict[str, str]:
-        """
-        Materials' encryption context.
-        """
-
+        """Materials' encryption context."""
         if hasattr(self, "native_materials"):
             return self.native_materials.encryption_context
         else:
@@ -84,10 +77,7 @@ class EncryptionMaterialsHandler:
 
     @property
     def encrypted_data_keys(self) -> list[Native_EncryptedDataKey]:
-        """
-        Materials' encrypted data keys.
-        """
-
+        """Materials' encrypted data keys."""
         if hasattr(self, "native_materials"):
             return self.native_materials.encrypted_data_keys
         else:
@@ -103,10 +93,7 @@ class EncryptionMaterialsHandler:
 
     @property
     def data_encryption_key(self) -> DataKey:
-        """
-        Materials' data encryption key.
-        """
-
+        """Materials' data encryption key."""
         if hasattr(self, "native_materials"):
             return self.native_materials.data_encryption_key
         else:
@@ -126,10 +113,7 @@ class EncryptionMaterialsHandler:
 
     @property
     def signing_key(self) -> bytes:
-        """
-        Materials' signing key.
-        """
-
+        """Materials' signing key."""
         if hasattr(self, "native_materials"):
             return self.native_materials.signing_key
         else:
@@ -155,7 +139,6 @@ class DecryptionMaterialsHandler:
         Create DecryptionMaterialsHandler.
         :param materials: Underlying decryption materials
         """
-
         if isinstance(materials, Native_DecryptionMaterials):
             self.native_materials = materials
         elif isinstance(materials, MPL_DecryptionMaterials):
@@ -165,10 +148,7 @@ class DecryptionMaterialsHandler:
 
     @property
     def data_key(self) -> DataKey:
-        """
-        Materials' data key.
-        """
-
+        """Materials' data key."""
         if hasattr(self, "native_materials"):
             return self.native_materials.data_key
         else:
@@ -186,10 +166,7 @@ class DecryptionMaterialsHandler:
 
     @property
     def verification_key(self) -> bytes:
-        """
-        Materials' verification key.
-        """
-
+        """Materials' verification key."""
         if hasattr(self, "native_materials"):
             return self.native_materials.verification_key
         else:

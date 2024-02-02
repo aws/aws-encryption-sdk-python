@@ -85,11 +85,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _exactly_one_arg_is_not_None(*args):
-    '''
+    """
     Private helper function.
     Returns `True` if exactly one item in the list is not `None`.
     Returns `False` otherwise.
-    '''
+    """
     # Have not found any `not None`
     found_one = False
     for arg in args:

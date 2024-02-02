@@ -63,6 +63,11 @@ class CMMHandler(CryptoMaterialsManager):
         self,
         cmm: 'CryptoMaterialsManager | ICryptographicMaterialsManager'
     ):
+        """
+        Create DecryptionMaterialsHandler.
+        :param cmm: Underlying cryptographic materials manager
+        """
+
         if isinstance(cmm, CryptoMaterialsManager):
             self.native_cmm = cmm
         elif isinstance(cmm, ICryptographicMaterialsManager):
@@ -78,7 +83,6 @@ class CMMHandler(CryptoMaterialsManager):
         Returns an EncryptionMaterialsHandler for the configured CMM.
         :param request: Request for encryption materials
         """
-
         if (self._is_using_native_cmm()):
             return EncryptionMaterialsHandler(self.native_cmm.get_encryption_materials(request))
         else:
@@ -130,7 +134,6 @@ class CMMHandler(CryptoMaterialsManager):
         Returns a DecryptionMaterialsHandler for the configured CMM.
         :param request: Request for decryption materials
         """
-
         if (self._is_using_native_cmm()):
             return DecryptionMaterialsHandler(self.native_cmm.decrypt_materials(request))
         else:
