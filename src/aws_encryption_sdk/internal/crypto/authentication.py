@@ -141,7 +141,6 @@ class Verifier(_PrehashingAuthenticator):
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
-        print(f"from_encoded_point {encoded_point=}")
         return cls(
             algorithm=algorithm,
             key=_ecc_public_numbers_from_compressed_point(
@@ -159,8 +158,6 @@ class Verifier(_PrehashingAuthenticator):
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
-        print(f"{algorithm=}")
-        print(f"{key_bytes=}")
         return cls(
             algorithm=algorithm, key=serialization.load_pem_public_key(data=key_bytes, backend=default_backend())
         )

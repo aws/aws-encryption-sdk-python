@@ -139,40 +139,61 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
         hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
+    def _has_mpl_attrs_post_init(self):
+
+        def _exactly_one_arg_is_not_None(*args):
+            '''
+            Private helper function.
+            Returns `True` if exactly one item in the list is not `None`.
+            Returns `False` otherwise.
+            '''
+            # Have not found any `not None`
+            found_one = False
+            for arg in args:
+                if arg is not None:
+                    if found_one == False:
+                        # Have not already found a `not None`, found a `not None` => only one `not None` (so far)
+                        found_one = True
+                    else:
+                        # Already found a `not None`, found another `not None` => not exactly one `not None`
+                        return False
+            return found_one
+
+        if not _exactly_one_arg_is_not_None(self.materials_manager, self.key_provider, self.keyring):
+            raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
+        if self.materials_manager is None:
+            if self.key_provider is not None:
+                # No CMM, provided (legacy) native `key_provider` => create (legacy) native DefaultCryptoMaterialsManager
+                self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+            elif self.keyring is not None:
+                # No CMM, provided MPL keyring => create MPL's DefaultCryptographicMaterialsManager
+                try:
+                    assert isinstance(self.keyring, IKeyring)
+                except AssertionError as e:
+                    raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. Found {keyring.__class__.__name__=}")
+                
+                mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                    config=MaterialProvidersConfig()
+                )
+                cmm = mat_prov.create_default_cryptographic_materials_manager(CreateDefaultCryptographicMaterialsManagerInput(keyring=self.keyring))
+                cmm_handler: CryptoMaterialsManager = CMMHandler(cmm)
+                self.materials_manager = cmm_handler
+
+    def _no_mpl_attrs_post_init(self):
+        both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
+        neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
+
+        if both_cmm_and_mkp_defined or neither_cmm_nor_mkp_defined:
+            raise TypeError("Exactly one of materials_manager or key_provider must be provided")
+        if self.materials_manager is None:
+            self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+
     def __attrs_post_init__(self):
         """Normalize inputs to crypto material manager."""
         if _has_mpl:
-            all_cmm_and_mkp_and_keyring_defined = all([
-                self.materials_manager is not None,
-                self.key_provider is not None,
-                self.keyring is not None,
-            ])
-            none_cmm_nor_mkp_nor_keyring_defined = all([
-                self.materials_manager is None,
-                self.key_provider is None,
-                self.keyring is None,
-            ])
-
-            if all_cmm_and_mkp_and_keyring_defined or none_cmm_nor_mkp_nor_keyring_defined:
-                raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
-            if self.materials_manager is None:
-                if self.key_provider is not None:
-                    self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
-                elif self.keyring is not None:
-                    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
-                        config=MaterialProvidersConfig()
-                    )
-                    cmm = mat_prov.create_default_cryptographic_materials_manager(CreateDefaultCryptographicMaterialsManagerInput(keyring=self.keyring))
-                    cmm_handler: CryptoMaterialsManager = CMMHandler(cmm)
-                    self.materials_manager = cmm_handler
+            self._has_mpl_attrs_post_init()
         elif not _has_mpl:
-            both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
-            neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
-
-            if both_cmm_and_mkp_defined or neither_cmm_nor_mkp_defined:
-                raise TypeError("Exactly one of materials_manager or key_provider must be provided")
-            if self.materials_manager is None:
-                self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+            self._no_mpl_attrs_post_init()
 
 
 class _EncryptionStream(io.IOBase):
@@ -387,8 +408,10 @@ class EncryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` TODO-MPL content
-    :type keyring: TODO-MPL
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -440,8 +463,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` TODO-MPL content
-    :type keyring: TODO-MPL
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -782,8 +807,10 @@ class DecryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `keyring`, `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` TODO-MPL content
-    :type keyring: TODO-MPL
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -820,8 +847,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` TODO-MPL content
-    :type keyring: TODO-MPL
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
