@@ -67,7 +67,6 @@ class CMMHandler(CryptoMaterialsManager):
         Create DecryptionMaterialsHandler.
         :param cmm: Underlying cryptographic materials manager
         """
-
         if isinstance(cmm, CryptoMaterialsManager):
             self.native_cmm = cmm
         elif isinstance(cmm, ICryptographicMaterialsManager):
