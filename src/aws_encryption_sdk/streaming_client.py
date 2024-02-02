@@ -68,12 +68,12 @@ from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterials
 from aws_encryption_sdk.structures import MessageHeader
 try:
     import aws_cryptographic_materialproviders
-    from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.client import AwsCryptographicMaterialProviders
-    from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.models import (
+    from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import (
         CreateDefaultCryptographicMaterialsManagerInput
     )
-    from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references import (
+    from aws_cryptographic_materialproviders.mpl.references import (
         IKeyring,
     )
     from aws_encryption_sdk.cmm_handler import CMMHandler
@@ -411,7 +411,7 @@ class EncryptorConfig(_ClientConfig):
     :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -466,7 +466,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -810,7 +810,7 @@ class DecryptorConfig(_ClientConfig):
     :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -850,7 +850,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.references.IKeyring
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -1082,7 +1082,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """Closes out the stream."""
         _LOGGER.debug("Closing stream")
         if not hasattr(self, "footer"):
-            raise SerializationError("Footer not read")
+            raise SerializationError("Footer not read, message may be corrupted or data key may be incorrect")
         super(StreamDecryptor, self).close()
 
 
