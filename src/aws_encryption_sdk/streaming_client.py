@@ -67,7 +67,6 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
 try:
-    import aws_cryptographic_materialproviders
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.models import (
@@ -77,12 +76,31 @@ try:
         IKeyring,
     )
     from aws_encryption_sdk.cmm_handler import CMMHandler
-        
+
     _has_mpl = True
-except ImportError as e:
+except ImportError:
     _has_mpl = False
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _exactly_one_arg_is_not_None(*args):
+    '''
+    Private helper function.
+    Returns `True` if exactly one item in the list is not `None`.
+    Returns `False` otherwise.
+    '''
+    # Have not found any `not None`
+    found_one = False
+    for arg in args:
+        if arg is not None:
+            if found_one is False:
+                # Have not already found a `not None`, found a `not None` => only one `not None` (so far)
+                found_one = True
+            else:
+                # Already found a `not None`, found another `not None` => not exactly one `not None`
+                return False
+    return found_one
 
 
 @attr.s(hash=True)  # pylint: disable=too-many-instance-attributes
@@ -140,42 +158,30 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def _has_mpl_attrs_post_init(self):
-
-        def _exactly_one_arg_is_not_None(*args):
-            '''
-            Private helper function.
-            Returns `True` if exactly one item in the list is not `None`.
-            Returns `False` otherwise.
-            '''
-            # Have not found any `not None`
-            found_one = False
-            for arg in args:
-                if arg is not None:
-                    if found_one == False:
-                        # Have not already found a `not None`, found a `not None` => only one `not None` (so far)
-                        found_one = True
-                    else:
-                        # Already found a `not None`, found another `not None` => not exactly one `not None`
-                        return False
-            return found_one
-
         if not _exactly_one_arg_is_not_None(self.materials_manager, self.key_provider, self.keyring):
             raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
         if self.materials_manager is None:
             if self.key_provider is not None:
-                # No CMM, provided (legacy) native `key_provider` => create (legacy) native DefaultCryptoMaterialsManager
-                self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+                # No CMM, provided legacy native `key_provider` => create legacy native DefaultCryptoMaterialsManager
+                self.materials_manager = DefaultCryptoMaterialsManager(
+                    master_key_provider=self.key_provider
+                )
             elif self.keyring is not None:
                 # No CMM, provided MPL keyring => create MPL's DefaultCryptographicMaterialsManager
                 try:
                     assert isinstance(self.keyring, IKeyring)
-                except AssertionError as e:
-                    raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. Found {self.keyring.__class__.__name__=}")
-                
+                except AssertionError:
+                    raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. \
+                                     Found {self.keyring.__class__.__name__=}")
+
                 mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
                     config=MaterialProvidersConfig()
                 )
-                cmm = mat_prov.create_default_cryptographic_materials_manager(CreateDefaultCryptographicMaterialsManagerInput(keyring=self.keyring))
+                cmm = mat_prov.create_default_cryptographic_materials_manager(
+                    CreateDefaultCryptographicMaterialsManagerInput(
+                        keyring=self.keyring
+                    )
+                )
                 cmm_handler: CryptoMaterialsManager = CMMHandler(cmm)
                 self.materials_manager = cmm_handler
 

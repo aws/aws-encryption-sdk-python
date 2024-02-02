@@ -5,7 +5,7 @@ try:
         EncryptionMaterials as MPL_EncryptionMaterials,
         EncryptedDataKey as MPL_EncryptedDataKey,
     )
-except ImportError as e:
+except ImportError:
     pass
 
 from aws_encryption_sdk.materials_managers import (
@@ -21,13 +21,12 @@ from aws_encryption_sdk.structures import (
     EncryptedDataKey as Native_EncryptedDataKey,
     MasterKeyInfo,
 )
-from aws_encryption_sdk.internal.crypto.authentication import (
-    Signer
-)
+
 
 def _mpl_algorithm_id_to_native_algorithm_id(mpl_algorithm_id: str):
     # MPL algorithm suite ID == hex(native algorithm suite ID)
     return int(mpl_algorithm_id, 16)
+
 
 class EncryptionMaterialsHandler:
     '''
@@ -48,6 +47,7 @@ class EncryptionMaterialsHandler:
             self.mpl_materials = materials
         else:
             raise ValueError(f"Invalid EncryptionMaterials passed to EncryptionMaterialsHandler: {materials=}")
+
     @property
     def algorithm(self) -> Algorithm:
         if hasattr(self, "native_materials"):
@@ -58,14 +58,14 @@ class EncryptionMaterialsHandler:
                     self.mpl_materials.algorithm_suite.id.value
                 )
             )
-        
+
     @property
     def encryption_context(self) -> dict[str, str]:
         if hasattr(self, "native_materials"):
             return self.native_materials.encryption_context
         else:
             return self.mpl_materials.encryption_context
-        
+
     @property
     def encrypted_data_keys(self) -> list[Native_EncryptedDataKey]:
         if hasattr(self, "native_materials"):
@@ -80,7 +80,7 @@ class EncryptionMaterialsHandler:
                 encrypted_data_key=mpl_edk.ciphertext,
             ) for mpl_edk in mpl_edk_list}
             return key_blob_list
-        
+
     @property
     def data_encryption_key(self) -> DataKey:
         if hasattr(self, "native_materials"):
@@ -97,16 +97,17 @@ class EncryptionMaterialsHandler:
                     key_info=b''
                 ),
                 data_key=mpl_dek,
-                encrypted_data_key=b'', # No encrypted DEK
+                encrypted_data_key=b'',  # No encrypted DEK
             )
-        
+
     @property
     def signing_key(self) -> bytes:
         if hasattr(self, "native_materials"):
             return self.native_materials.signing_key
         else:
             return self.mpl_materials.signing_key
-        
+
+
 class DecryptionMaterialsHandler:
     native_materials: Native_DecryptionMaterials
     mpl_materials: 'MPL_DecryptionMaterials'
@@ -121,7 +122,7 @@ class DecryptionMaterialsHandler:
             self.mpl_materials = materials
         else:
             raise ValueError(f"Invalid DecryptionMaterials passed to DecryptionMaterialsHandler: {materials=}")
-        
+
     @property
     def data_key(self) -> DataKey:
         if hasattr(self, "native_materials"):
@@ -138,7 +139,7 @@ class DecryptionMaterialsHandler:
                 data_key=self.mpl_materials.plaintext_data_key,
                 encrypted_data_key=b'',
             )
-        
+
     @property
     def verification_key(self) -> bytes:
         if hasattr(self, "native_materials"):
