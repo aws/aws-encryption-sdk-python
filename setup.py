@@ -39,8 +39,7 @@ setup(
     keywords="aws-encryption-sdk aws kms encryption",
     license="Apache License 2.0",
     install_requires=get_requirements(),
-    # TODO: Point at main once Python is merged into main.
-    # PyPI will not accept a package that declares dependencies using direct URLs.
+    # TODO: Point at MPL main branch once Python MPL is merged into main.
     extras_require={
         "MPL": ["aws-cryptographic-material-providers @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@lucmcdon/python-mpl#subdirectory=AwsCryptographicMaterialProviders/runtimes/python"],
     },
