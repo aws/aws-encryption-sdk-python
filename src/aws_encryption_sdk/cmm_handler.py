@@ -1,3 +1,5 @@
+"""Retrieves encryption/decryption materials from an underlying materials provider."""
+
 # These dependencies are only loaded if you install the MPL.
 try:
     from aws_cryptographic_materialproviders.mpl.errors import (
@@ -42,6 +44,15 @@ from aws_encryption_sdk.identifiers import (
 
 # TODO-MPL Should this implement interface..? seems like yes since it implements all of interface methods
 class CMMHandler(CryptoMaterialsManager):
+    """
+    In instances where encryption materials may be provided by either
+    an implementation of the native
+        `aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager`
+    or an implementation of the MPL's
+        `aws_cryptographic_materialproviders.mpl.references.ICryptographicMaterialsManager`,
+    this provides the correct materials based on the underlying materials manager.
+    """
+
     native_cmm: CryptoMaterialsManager
     mpl_cmm: 'ICryptographicMaterialsManager'
 
@@ -57,15 +68,17 @@ class CMMHandler(CryptoMaterialsManager):
         elif isinstance(cmm, ICryptographicMaterialsManager):
             self.mpl_cmm = cmm
         else:
-            raise ValueError(f"Invalid CMM passed to CMMHander: {cmm=}")
+            raise ValueError(f"Invalid CMM passed to CMMHandler: {cmm=}")
 
     def get_encryption_materials(
         self,
         request: EncryptionMaterialsRequest
     ) -> EncryptionMaterialsHandler:
-        '''
+        """
         Returns an EncryptionMaterialsHandler for the configured CMM.
-        '''
+        :param request: Request for encryption materials
+        """
+
         if (self._is_using_native_cmm()):
             return EncryptionMaterialsHandler(self.native_cmm.get_encryption_materials(request))
         else:
@@ -113,9 +126,11 @@ class CMMHandler(CryptoMaterialsManager):
         self,
         request: DecryptionMaterialsRequest
     ) -> DecryptionMaterialsHandler:
-        '''
+        """
         Returns a DecryptionMaterialsHandler for the configured CMM.
-        '''
+        :param request: Request for decryption materials
+        """
+
         if (self._is_using_native_cmm()):
             return DecryptionMaterialsHandler(self.native_cmm.decrypt_materials(request))
         else:

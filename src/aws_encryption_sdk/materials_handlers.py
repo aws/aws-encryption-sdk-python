@@ -1,3 +1,4 @@
+"""Provides encryption/decryption materials from an underlying materials provider."""
 # These dependencies are only loaded if you install the MPL.
 try:
     from aws_cryptographic_materialproviders.mpl.models import (
@@ -29,11 +30,13 @@ def _mpl_algorithm_id_to_native_algorithm_id(mpl_algorithm_id: str):
 
 
 class EncryptionMaterialsHandler:
-    '''
+    """
     In instances where encryption materials may be provided by either
-    the native `aws_encryption_sdk.materials_managers.Native_EncryptionMaterials`
-    or the MPL's `aws_cryptographic_materialproviders.mpl.models`
-    '''
+    the native `aws_encryption_sdk.materials_managers.EncryptionMaterials`
+    or the MPL's `aws_cryptographic_materialproviders.mpl.models.EncryptionMaterials`,
+    this provides the correct materials based on the configured materials provider.
+    """
+
     native_materials: Native_EncryptionMaterials
     mpl_materials: 'MPL_EncryptionMaterials'
 
@@ -41,6 +44,11 @@ class EncryptionMaterialsHandler:
         self,
         materials: 'Native_EncryptionMaterials | MPL_EncryptionMaterials'
     ):
+        """
+        Create EncryptionMaterialsHandler.
+        :param materials: Underlying encryption materials
+        """
+        
         if isinstance(materials, Native_EncryptionMaterials):
             self.native_materials = materials
         elif isinstance(materials, MPL_EncryptionMaterials):
@@ -50,6 +58,10 @@ class EncryptionMaterialsHandler:
 
     @property
     def algorithm(self) -> Algorithm:
+        """
+        Materials' native Algorithm.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.algorithm
         else:
@@ -61,6 +73,10 @@ class EncryptionMaterialsHandler:
 
     @property
     def encryption_context(self) -> dict[str, str]:
+        """
+        Materials' encryption context.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.encryption_context
         else:
@@ -68,6 +84,10 @@ class EncryptionMaterialsHandler:
 
     @property
     def encrypted_data_keys(self) -> list[Native_EncryptedDataKey]:
+        """
+        Materials' encrypted data keys.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.encrypted_data_keys
         else:
@@ -83,6 +103,10 @@ class EncryptionMaterialsHandler:
 
     @property
     def data_encryption_key(self) -> DataKey:
+        """
+        Materials' data encryption key.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.data_encryption_key
         else:
@@ -102,6 +126,10 @@ class EncryptionMaterialsHandler:
 
     @property
     def signing_key(self) -> bytes:
+        """
+        Materials' signing key.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.signing_key
         else:
@@ -109,6 +137,13 @@ class EncryptionMaterialsHandler:
 
 
 class DecryptionMaterialsHandler:
+    """
+    In instances where decryption materials may be provided by either
+    the native `aws_encryption_sdk.materials_managers.DecryptionMaterials`
+    or the MPL's `aws_cryptographic_materialproviders.mpl.models.DecryptionMaterials`,
+    this provides the correct materials based on the configured materials provider.
+    """
+
     native_materials: Native_DecryptionMaterials
     mpl_materials: 'MPL_DecryptionMaterials'
 
@@ -116,6 +151,11 @@ class DecryptionMaterialsHandler:
         self,
         materials: 'Native_DecryptionMaterials | MPL_DecryptionMaterials'
     ):
+        """
+        Create DecryptionMaterialsHandler.
+        :param materials: Underlying decryption materials
+        """
+
         if isinstance(materials, Native_DecryptionMaterials):
             self.native_materials = materials
         elif isinstance(materials, MPL_DecryptionMaterials):
@@ -125,6 +165,10 @@ class DecryptionMaterialsHandler:
 
     @property
     def data_key(self) -> DataKey:
+        """
+        Materials' data key.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.data_key
         else:
@@ -142,6 +186,10 @@ class DecryptionMaterialsHandler:
 
     @property
     def verification_key(self) -> bytes:
+        """
+        Materials' verification key.
+        """
+
         if hasattr(self, "native_materials"):
             return self.native_materials.verification_key
         else:
