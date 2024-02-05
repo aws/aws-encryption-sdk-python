@@ -172,7 +172,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                     assert isinstance(self.keyring, IKeyring)
                 except AssertionError:
                     raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. \
-                                     Found {self.keyring.__class__.__name__=}")
+                                     Found {self.keyring.__class__.__name__}")
 
                 mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
                     config=MaterialProvidersConfig()
