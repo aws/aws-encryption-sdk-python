@@ -165,12 +165,10 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                 # No CMM, provided legacy native `key_provider` => create legacy native DefaultCryptoMaterialsManager
                 self.materials_manager = DefaultCryptoMaterialsManager(
                     master_key_provider=self.key_provider
-                )
+                ) 
             elif self.keyring is not None:
                 # No CMM, provided MPL keyring => create MPL's DefaultCryptographicMaterialsManager
-                try:
-                    assert isinstance(self.keyring, IKeyring)
-                except AssertionError:
+                if not isinstance(self.keyring, IKeyring):
                     raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. \
                                      Found {self.keyring.__class__.__name__}")
 

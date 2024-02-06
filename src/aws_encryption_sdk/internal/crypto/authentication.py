@@ -173,7 +173,7 @@ class Verifier(_PrehashingAuthenticator):
         else:
             raise ValueError("Unsupported verification key encoding: {}".format(encoding))
         return cls(
-            algorithm=algorithm, key=serialization.load_pem_public_key(data=key_bytes, backend=default_backend())
+            algorithm=algorithm, key=key
         )
     
     def key_bytes(self):
