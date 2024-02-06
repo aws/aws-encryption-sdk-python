@@ -167,9 +167,9 @@ class Verifier(_PrehashingAuthenticator):
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
         if encoding == serialization.Encoding.DER:
-            key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+            key = serialization.load_der_private_key(data=key_bytes, backend=default_backend())
         elif encoding == serialization.Encoding.PEM:
-            key = serialization.load_pem_private_key(data=key_bytes, password=None, backend=default_backend())
+            key = serialization.load_pem_private_key(data=key_bytes, backend=default_backend())
         else:
             raise ValueError("Unsupported verification key encoding: {}".format(encoding))
         return cls(
