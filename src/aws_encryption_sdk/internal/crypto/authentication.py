@@ -78,12 +78,7 @@ class Signer(_PrehashingAuthenticator):
         :type encoding: cryptography.hazmat.primitives.serialization.encoding
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
-        if encoding == serialization.Encoding.DER:
-            key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
-        elif encoding == serialization.Encoding.PEM:
-            key = serialization.load_pem_private_key(data=key_bytes, password=None, backend=default_backend())
-        else:
-            raise ValueError("Unsupported signing key encoding: {}".format(encoding))
+        key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
         return cls(algorithm, key)
 
     def key_bytes(self, encoding=serialization.Encoding.DER):
@@ -166,14 +161,8 @@ class Verifier(_PrehashingAuthenticator):
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
-        if encoding == serialization.Encoding.DER:
-            key = serialization.load_der_private_key(data=key_bytes, backend=default_backend())
-        elif encoding == serialization.Encoding.PEM:
-            key = serialization.load_pem_private_key(data=key_bytes, backend=default_backend())
-        else:
-            raise ValueError("Unsupported verification key encoding: {}".format(encoding))
         return cls(
-            algorithm=algorithm, key=key
+            algorithm=algorithm, key=serialization.load_der_public_key(data=key_bytes, backend=default_backend())
         )
     
     def key_bytes(self):
