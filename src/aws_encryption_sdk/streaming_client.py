@@ -18,6 +18,7 @@ import hmac
 import io
 import logging
 import math
+import base64
 
 import attr
 import six
@@ -77,14 +78,14 @@ try:
         IKeyring,
     )
 
-    _has_mpl = True
+    HAS_MPL = True
 except ImportError:
-    _has_mpl = False
+    HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _exactly_one_arg_is_not_None(*args):
+def _exactly_one_arg_is_not_none(*args):
     """
     Private helper function.
     Returns `True` if exactly one item in the list is not `None`.
@@ -146,7 +147,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     key_provider = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
-    if _has_mpl:
+    if HAS_MPL:
         keyring = attr.ib(
             hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(IKeyring))
         )
@@ -158,14 +159,14 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def _has_mpl_attrs_post_init(self):
-        if not _exactly_one_arg_is_not_None(self.materials_manager, self.key_provider, self.keyring):
+        if not _exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
             raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
         if self.materials_manager is None:
             if self.key_provider is not None:
                 # No CMM, provided legacy native `key_provider` => create legacy native DefaultCryptoMaterialsManager
                 self.materials_manager = DefaultCryptoMaterialsManager(
                     master_key_provider=self.key_provider
-                ) 
+                )
             elif self.keyring is not None:
                 # No CMM, provided MPL keyring => create MPL's DefaultCryptographicMaterialsManager
                 if not isinstance(self.keyring, IKeyring):
@@ -194,9 +195,9 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
 
     def __attrs_post_init__(self):
         """Normalize inputs to crypto material manager."""
-        if _has_mpl:
+        if HAS_MPL:
             self._has_mpl_attrs_post_init()
-        elif not _has_mpl:
+        elif not HAS_MPL:
             self._no_mpl_attrs_post_init()
 
 
@@ -918,7 +919,6 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         else:
             # MPL verification key is NOT key bytes, it is bytes of the compressed point
             # TODO-MPL: clean this up, least-privilege violation
-            import base64
             if (isinstance(self.config.materials_manager, CMMHandler)
                     and hasattr(self.config.materials_manager, "mpl_cmm")):
                 self.verifier = Verifier.from_encoded_point(

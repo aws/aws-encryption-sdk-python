@@ -85,38 +85,35 @@ class CMMHandler(CryptoMaterialsManager):
         Returns an EncryptionMaterialsHandler for the configured CMM.
         :param request: Request for encryption materials
         """
-        if (self._is_using_native_cmm()):
+        if self._is_using_native_cmm():
             return EncryptionMaterialsHandler(self.native_cmm.get_encryption_materials(request))
         else:
             try:
-                input: GetEncryptionMaterialsInput = CMMHandler._create_mpl_get_encryption_materials_input_from_request(
+                mpl_input: GetEncryptionMaterialsInput = CMMHandler._native_to_mpl_get_encryption_materials(
                     request
                 )
-                output: GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(input)
-                return EncryptionMaterialsHandler(output.encryption_materials)
-            except AwsCryptographicMaterialProvidersException as e:
+                mpl_output: GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
+                return EncryptionMaterialsHandler(mpl_output.encryption_materials)
+            except AwsCryptographicMaterialProvidersException as mpl_exception:
                 # Wrap MPL error into the ESDK error type
                 # so customers only have to catch ESDK error types.
-                raise AWSEncryptionSDKClientError(e)
+                raise AWSEncryptionSDKClientError(mpl_exception)
 
     @staticmethod
-    def _create_mpl_get_encryption_materials_input_from_request(
+    def _native_to_mpl_get_encryption_materials(
         request: EncryptionMaterialsRequest
     ) -> 'GetEncryptionMaterialsInput':
         output: GetEncryptionMaterialsInput = GetEncryptionMaterialsInput(
             encryption_context=request.encryption_context,
-            commitment_policy=CMMHandler._map_native_commitment_policy_to_mpl_commitment_policy(
+            commitment_policy=CMMHandler._native_to_mpl_commmitment_policy(
                 request.commitment_policy
             ),
-            # TODO double check this
-            # optional... maybe this needs to be kwargs??
-            # algorithm_suite_id=request.algorithm.algorithm_id,
             max_plaintext_length=request.plaintext_length,
         )
         return output
 
     @staticmethod
-    def _map_native_commitment_policy_to_mpl_commitment_policy(
+    def _native_to_mpl_commmitment_policy(
         native_commitment_policy: CommitmentPolicy
     ) -> 'CommitmentPolicyESDK':
         if native_commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT:
@@ -136,17 +133,18 @@ class CMMHandler(CryptoMaterialsManager):
         Returns a DecryptionMaterialsHandler for the configured CMM.
         :param request: Request for decryption materials
         """
-        if (self._is_using_native_cmm()):
+        if self._is_using_native_cmm():
             return DecryptionMaterialsHandler(self.native_cmm.decrypt_materials(request))
         else:
             try:
-                input: 'DecryptMaterialsInput' = CMMHandler._create_mpl_decrypt_materials_input_from_request(request)
-                output: 'DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(input)
-                return DecryptionMaterialsHandler(output.decryption_materials)
-            except AwsCryptographicMaterialProvidersException as e:
+                mpl_input: 'DecryptMaterialsInput' = \
+                    CMMHandler._create_mpl_decrypt_materials_input_from_request(request)
+                mpl_output: 'DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
+                return DecryptionMaterialsHandler(mpl_output.decryption_materials)
+            except AwsCryptographicMaterialProvidersException as mpl_exception:
                 # Wrap MPL error into the ESDK error type
                 # so customers only have to catch ESDK error types.
-                raise AWSEncryptionSDKClientError(e)
+                raise AWSEncryptionSDKClientError(mpl_exception)
 
     @staticmethod
     def _native_algorithm_id_to_mpl_algorithm_id(native_algorithm_id: str) -> 'AlgorithmSuiteIdESDK':
@@ -167,7 +165,7 @@ class CMMHandler(CryptoMaterialsManager):
             algorithm_suite_id=CMMHandler._native_algorithm_id_to_mpl_algorithm_id(
                 request.algorithm.algorithm_id
             ),
-            commitment_policy=CMMHandler._map_native_commitment_policy_to_mpl_commitment_policy(
+            commitment_policy=CMMHandler._native_to_mpl_commmitment_policy(
                 request.commitment_policy
             ),
             encrypted_data_keys=list_edks,
