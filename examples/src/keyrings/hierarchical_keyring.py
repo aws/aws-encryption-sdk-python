@@ -35,7 +35,6 @@ def encrypt_and_decrypt_with_keyring(
     kms_key_id: str
 ):
     """Creates a hierarchical keyring using the provided resources, then encrypts and decrypts a string with it."""
-
     # 1. Instantiate the encryption SDK client.
     #    This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
     #    which enforces that this client only encrypts using committing algorithm suites and enforces
