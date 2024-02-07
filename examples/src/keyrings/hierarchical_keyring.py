@@ -48,8 +48,8 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 2. Create boto3 clients for DynamoDB and KMS.
-    ddb_client = boto3.client('dynamodb')
-    kms_client = boto3.client('kms')
+    ddb_client = boto3.client('dynamodb', region_name="us-west-2")
+    kms_client = boto3.client('kms', region_name="us-west-2")
 
     # 3. Configure your KeyStore resource.
     #    This SHOULD be the same configuration that you used
