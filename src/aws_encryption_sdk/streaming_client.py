@@ -919,7 +919,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # MPL verification key is NOT key bytes, it is bytes of the compressed point
             # TODO-MPL: clean this up, least-privilege violation
             import base64
-            if hasattr(self.config.materials_manager, "mpl_cmm"):
+            if (isinstance(self.config.materials_manager, CMMHandler)
+                    and hasattr(self.config.materials_manager, "mpl_cmm")):
                 self.verifier = Verifier.from_encoded_point(
                     algorithm=header.algorithm,
                     encoded_point=base64.b64encode(decryption_materials.verification_key)

@@ -68,26 +68,24 @@ class Signer(_PrehashingAuthenticator):
     """
 
     @classmethod
-    def from_key_bytes(cls, algorithm, key_bytes, encoding=serialization.Encoding.DER):
+    def from_key_bytes(cls, algorithm, key_bytes):
         """Builds a `Signer` from an algorithm suite and a raw signing key.
 
         :param algorithm: Algorithm on which to base signer
         :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param bytes key_bytes: Raw signing key
-        :param encoding: Encoding used for key bytes
-        :type encoding: cryptography.hazmat.primitives.serialization.encoding
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
         key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
         return cls(algorithm, key)
 
-    def key_bytes(self, encoding=serialization.Encoding.DER):
+    def key_bytes(self):
         """Returns the raw signing key.
 
         :rtype: bytes
         """
         return self.key.private_bytes(
-            encoding=encoding,
+            encoding=serialization.Encoding.DER,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
@@ -150,21 +148,19 @@ class Verifier(_PrehashingAuthenticator):
         )
 
     @classmethod
-    def from_key_bytes(cls, algorithm, key_bytes, encoding=serialization.Encoding.DER):
+    def from_key_bytes(cls, algorithm, key_bytes):
         """Creates a `Verifier` object based on the supplied algorithm and raw verification key.
 
         :param algorithm: Algorithm on which to base verifier
         :type algorithm: aws_encryption_sdk.identifiers.Algorithm
         :param bytes encoded_point: Raw verification key
-        :param encoding: Encoding used for key bytes
-        :type encoding: cryptography.hazmat.primitives.serialization.encoding
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
         """
         return cls(
             algorithm=algorithm, key=serialization.load_der_public_key(data=key_bytes, backend=default_backend())
         )
-    
+
     def key_bytes(self):
         """Returns the raw verification key.
 
