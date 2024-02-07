@@ -49,7 +49,7 @@ static_plaintext = (
 
 from integration_test_utils import (  # noqa pylint: disable=unused-import,import-error
     get_cmk_arn,
-    get_mrk_arn,
     get_second_cmk_arn,
+    get_mrk_arn,
     get_second_mrk_arn,
 )
