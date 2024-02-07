@@ -39,6 +39,7 @@ setup(
     keywords="aws-encryption-sdk aws kms encryption",
     license="Apache License 2.0",
     install_requires=get_requirements(),
+    # pylint: disable=fixme
     # TODO: Point at MPL main branch once Python MPL is merged into main.
     extras_require={
         "MPL": ["aws-cryptographic-material-providers @" \

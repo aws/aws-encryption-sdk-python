@@ -2,6 +2,8 @@
 
 # These dependencies are only loaded if you install the MPL.
 try:
+    # pylint seems to struggle with this condition import
+    # pylint: disable=unused-import
     from aws_cryptographic_materialproviders.mpl.errors import (
         AwsCryptographicMaterialProvidersException
     )
