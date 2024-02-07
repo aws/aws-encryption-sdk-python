@@ -56,13 +56,13 @@ jobs:
             architecture: x86
           # MPL is not supported on <3.11
           - python: 3.7
-            optional_mpl_dependency: mpl
+            optional_mpl_dependency: -mpl
           - python: 3.8
-            optional_mpl_dependency: mpl
+            optional_mpl_dependency: -mpl
           - python: 3.9
-            optional_mpl_dependency: mpl
+            optional_mpl_dependency: -mpl
           - python: 3.10
-            optional_mpl_dependency: mpl
+            optional_mpl_dependency: -mpl
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
