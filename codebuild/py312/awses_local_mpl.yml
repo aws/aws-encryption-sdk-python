@@ -22,7 +22,7 @@ phases:
   build:
     commands:
       - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
-      - pyenv install 3.12.0
+      - pyenv install --skip-existing 3.12.0
       - pyenv local 3.12.0
       - pip install --upgrade pip
       - pip install setuptools
