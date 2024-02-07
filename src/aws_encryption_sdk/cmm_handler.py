@@ -2,49 +2,31 @@
 
 # These dependencies are only loaded if you install the MPL.
 try:
-    # pylint seems to struggle with this condition import
+    # pylint seems to struggle with this conditional import
     # pylint: disable=unused-import
-    from aws_cryptographic_materialproviders.mpl.errors import (
-        AwsCryptographicMaterialProvidersException
-    )
-    from aws_cryptographic_materialproviders.mpl.references import (
-        ICryptographicMaterialsManager,
-    )
+    from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
     from aws_cryptographic_materialproviders.mpl.models import (
-        GetEncryptionMaterialsInput,
-        GetEncryptionMaterialsOutput,
+        AlgorithmSuiteIdESDK,
+        CommitmentPolicyESDK,
         DecryptMaterialsInput,
         DecryptMaterialsOutput,
         EncryptedDataKey as MPL_EncryptedDataKey,
-        CommitmentPolicyESDK,
-        AlgorithmSuiteIdESDK,
+        GetEncryptionMaterialsInput,
+        GetEncryptionMaterialsOutput,
     )
+    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
 
 except ImportError:
     pass
 
 from typing import List
 
-from aws_encryption_sdk.exceptions import (
-    AWSEncryptionSDKClientError,
-)
-from aws_encryption_sdk.materials_managers import (
-    DecryptionMaterialsRequest,
-    EncryptionMaterialsRequest,
-)
-from aws_encryption_sdk.materials_managers.base import (
-    CryptoMaterialsManager,
-)
-from aws_encryption_sdk.materials_handlers import (
-    EncryptionMaterialsHandler,
-    DecryptionMaterialsHandler,
-)
-from aws_encryption_sdk.structures import (
-    EncryptedDataKey as Native_EncryptedDataKey,
-)
-from aws_encryption_sdk.identifiers import (
-    CommitmentPolicy,
-)
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
+from aws_encryption_sdk.identifiers import CommitmentPolicy
+from aws_encryption_sdk.materials_handlers import DecryptionMaterialsHandler, EncryptionMaterialsHandler
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
 
 
 # TODO-MPL Should this implement interface..? seems like yes since it implements all of interface methods

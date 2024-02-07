@@ -3,27 +3,20 @@
 try:
     from aws_cryptographic_materialproviders.mpl.models import (
         DecryptionMaterials as MPL_DecryptionMaterials,
-        EncryptionMaterials as MPL_EncryptionMaterials,
         EncryptedDataKey as MPL_EncryptedDataKey,
+        EncryptionMaterials as MPL_EncryptionMaterials,
     )
 except ImportError:
     pass
 
 from typing import Dict, List, Set
 
+from aws_encryption_sdk.identifiers import Algorithm, AlgorithmSuite
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials as Native_DecryptionMaterials,
     EncryptionMaterials as Native_EncryptionMaterials,
 )
-from aws_encryption_sdk.identifiers import (
-    Algorithm,
-    AlgorithmSuite,
-)
-from aws_encryption_sdk.structures import (
-    DataKey,
-    EncryptedDataKey as Native_EncryptedDataKey,
-    MasterKeyInfo,
-)
+from aws_encryption_sdk.structures import DataKey, EncryptedDataKey as Native_EncryptedDataKey, MasterKeyInfo
 
 
 def _mpl_algorithm_id_to_native_algorithm_id(mpl_algorithm_id: str):

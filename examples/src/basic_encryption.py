@@ -51,8 +51,3 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     assert all(
         pair in decrypted_header.encryption_context.items() for pair in encryptor_header.encryption_context.items()
     )
-
-cycle_string(
-    "arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f",
-    "abcdefg",
-)

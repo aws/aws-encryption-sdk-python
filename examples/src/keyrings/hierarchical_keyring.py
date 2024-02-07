@@ -4,43 +4,32 @@
 
 
 """Example showing basic encryption and decryption of a value already in memory."""
-import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
-import boto3
-
 import sys
 
-from aws_encryption_sdk.exceptions import (
-    AWSEncryptionSDKClientError,
-    SerializationError,
-)
+import boto3
+
+import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError, SerializationError
 
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
 
 import aws_cryptographic_materialproviders
-
+from aws_cryptographic_materialproviders.keystore.client import KeyStore
+from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
+from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
 from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import (
-    CreateAwsKmsHierarchicalKeyringInput,
     CacheTypeDefault,
+    CreateAwsKmsHierarchicalKeyringInput,
     DefaultCache,
     GetBranchKeyIdInput,
     GetBranchKeyIdOutput,
 )
-from aws_cryptographic_materialproviders.mpl.references import (
-    IKeyring,
-    IBranchKeyIdSupplier,
-)
-
-from aws_cryptographic_materialproviders.keystore.client import KeyStore
-from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-from aws_cryptographic_materialproviders.keystore.models import (
-    CreateKeyInput,
-    KMSConfigurationKmsKeyArn,
-)
+from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 
 EXAMPLE_DATA: bytes = b"Hello World"
 
@@ -241,6 +230,7 @@ def encrypt_and_decrypt_with_keyring(
 
 # hack in a test
 import botocore
+
 encrypt_and_decrypt_with_keyring(
     "KeyStoreDdbTable",
     "KeyStoreDdbTable",

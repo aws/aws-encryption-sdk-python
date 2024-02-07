@@ -14,16 +14,17 @@
 from __future__ import division
 
 import abc
+import base64
 import hmac
 import io
 import logging
 import math
-import base64
 
 import attr
 import six
 
 import aws_encryption_sdk.internal.utils
+from aws_encryption_sdk.cmm_handler import CMMHandler
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
     AWSEncryptionSDKClientError,
@@ -67,16 +68,12 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, En
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
-from aws_encryption_sdk.cmm_handler import CMMHandler
+
 try:
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.mpl.models import (
-        CreateDefaultCryptographicMaterialsManagerInput
-    )
-    from aws_cryptographic_materialproviders.mpl.references import (
-        IKeyring,
-    )
+    from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
 
     HAS_MPL = True
 except ImportError:
