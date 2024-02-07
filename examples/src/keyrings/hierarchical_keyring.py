@@ -4,11 +4,6 @@
 import sys
 
 import boto3
-
-import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-
 from aws_cryptographic_materialproviders.keystore.client import KeyStore
 from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
 from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
@@ -23,6 +18,10 @@ from aws_cryptographic_materialproviders.mpl.models import (
 )
 from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 
+import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
+
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
@@ -35,6 +34,7 @@ def encrypt_and_decrypt_with_keyring(
     logical_key_store_name: str,
     kms_key_id: str
 ):
+    """Creates a hierarchical keyring using the provided resources, then encrypts and decrypts a string with it."""
 
     # 1. Instantiate the encryption SDK client.
     #    This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,

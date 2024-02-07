@@ -16,7 +16,6 @@ import pytest
 from ..src.data_key_caching_basic import encrypt_with_caching
 from .examples_test_utils import get_cmk_arn
 
-
 pytestmark = [pytest.mark.examples]
 
 

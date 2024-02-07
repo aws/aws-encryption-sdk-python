@@ -19,7 +19,6 @@ import pytest
 from ..src.basic_file_encryption_with_raw_key_provider import cycle_file
 from .examples_test_utils import static_plaintext
 
-
 pytestmark = [pytest.mark.examples]
 
 
