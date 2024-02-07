@@ -1,8 +1,5 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
-
-
 """Example showing basic encryption and decryption of a value already in memory."""
 import sys
 
@@ -10,13 +7,8 @@ import boto3
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError, SerializationError
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
-module_root_dir = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(module_root_dir)
-
-import aws_cryptographic_materialproviders
 from aws_cryptographic_materialproviders.keystore.client import KeyStore
 from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
 from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
@@ -31,13 +23,18 @@ from aws_cryptographic_materialproviders.mpl.models import (
 )
 from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 
+module_root_dir = '/'.join(__file__.split("/")[:-1])
+
+sys.path.append(module_root_dir)
+
 EXAMPLE_DATA: bytes = b"Hello World"
 
+
 def encrypt_and_decrypt_with_keyring(
-        key_store_table_name: str,
-        logical_key_store_name: str,
-        kms_key_id: str
-    ):
+    key_store_table_name: str,
+    logical_key_store_name: str,
+    kms_key_id: str
+):
 
     # 1. Instantiate the encryption SDK client.
     #    This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
@@ -90,7 +87,7 @@ def encrypt_and_decrypt_with_keyring(
 
             if b"tenant" not in encryption_context:
                 raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
-            
+
             tenant_key_id: str = encryption_context.get(b"tenant")
             branch_key_id: str
 
@@ -227,12 +224,3 @@ def encrypt_and_decrypt_with_keyring(
     assert plaintext_bytes_B == EXAMPLE_DATA
 
 # Also, a thread-safe example ig
-
-# hack in a test
-import botocore
-
-encrypt_and_decrypt_with_keyring(
-    "KeyStoreDdbTable",
-    "KeyStoreDdbTable",
-    "arn:aws:kms:us-west-2:370957321024:key/9d989aa2-2f9c-438c-a745-cc57d3ad0126"
-)
