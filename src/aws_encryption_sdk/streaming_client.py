@@ -24,7 +24,7 @@ import attr
 import six
 
 import aws_encryption_sdk.internal.utils
-from aws_encryption_sdk.cmm_handler import CMMHandler
+from aws_encryption_sdk.mpl.cmm_handler import CMMHandler
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
     AWSEncryptionSDKClientError,
