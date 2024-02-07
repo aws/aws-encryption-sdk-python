@@ -17,8 +17,11 @@ try:
         CommitmentPolicyESDK,
         AlgorithmSuiteIdESDK,
     )
+
 except ImportError:
     pass
+
+from typing import List
 
 from aws_encryption_sdk.exceptions import (
     AWSEncryptionSDKClientError,
@@ -72,7 +75,7 @@ class CMMHandler(CryptoMaterialsManager):
         elif isinstance(cmm, ICryptographicMaterialsManager):
             self.mpl_cmm = cmm
         else:
-            raise ValueError(f"Invalid CMM passed to CMMHandler: {cmm=}")
+            raise ValueError(f"Invalid CMM passed to CMMHandler. cmm: {cmm}")
 
     def get_encryption_materials(
         self,
@@ -115,7 +118,7 @@ class CMMHandler(CryptoMaterialsManager):
     @staticmethod
     def _map_native_commitment_policy_to_mpl_commitment_policy(
         native_commitment_policy: CommitmentPolicy
-    ) -> CommitmentPolicyESDK:
+    ) -> 'CommitmentPolicyESDK':
         if native_commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT:
             return CommitmentPolicyESDK(value="FORBID_ENCRYPT_ALLOW_DECRYPT")
         elif native_commitment_policy == CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT:
@@ -123,7 +126,7 @@ class CMMHandler(CryptoMaterialsManager):
         elif native_commitment_policy == CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT:
             return CommitmentPolicyESDK(value="REQUIRE_ENCRYPT_REQUIRE_DECRYPT")
         else:
-            raise ValueError(f"Invalid {native_commitment_policy=}")
+            raise ValueError(f"Invalid native_commitment_policy: {native_commitment_policy}")
 
     def decrypt_materials(
         self,
@@ -146,7 +149,7 @@ class CMMHandler(CryptoMaterialsManager):
                 raise AWSEncryptionSDKClientError(e)
 
     @staticmethod
-    def _native_algorithm_id_to_mpl_algorithm_id(native_algorithm_id: str) -> AlgorithmSuiteIdESDK:
+    def _native_algorithm_id_to_mpl_algorithm_id(native_algorithm_id: str) -> 'AlgorithmSuiteIdESDK':
         # MPL algorithm suite ID = hexstr(native_algorithm_id) padded to 4 digits post-`x`.
         return AlgorithmSuiteIdESDK(f"{native_algorithm_id:#0{6}x}")
 
@@ -154,7 +157,7 @@ class CMMHandler(CryptoMaterialsManager):
     def _create_mpl_decrypt_materials_input_from_request(
         request: DecryptionMaterialsRequest
     ) -> 'DecryptMaterialsInput':
-        key_blob_list: list[Native_EncryptedDataKey] = request.encrypted_data_keys
+        key_blob_list: List[Native_EncryptedDataKey] = request.encrypted_data_keys
         list_edks = [MPL_EncryptedDataKey(
             key_provider_id=key_blob.key_provider.provider_id,
             key_provider_info=key_blob.key_provider.key_info,

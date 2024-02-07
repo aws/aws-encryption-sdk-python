@@ -66,6 +66,7 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, En
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
+from aws_encryption_sdk.cmm_handler import CMMHandler
 try:
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
@@ -75,7 +76,6 @@ try:
     from aws_cryptographic_materialproviders.mpl.references import (
         IKeyring,
     )
-    from aws_encryption_sdk.cmm_handler import CMMHandler
 
     _has_mpl = True
 except ImportError:

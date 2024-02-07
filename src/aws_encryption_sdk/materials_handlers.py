@@ -9,6 +9,8 @@ try:
 except ImportError:
     pass
 
+from typing import Dict, List
+
 from aws_encryption_sdk.materials_managers import (
     DecryptionMaterials as Native_DecryptionMaterials,
     EncryptionMaterials as Native_EncryptionMaterials,
@@ -53,7 +55,7 @@ class EncryptionMaterialsHandler:
         elif isinstance(materials, MPL_EncryptionMaterials):
             self.mpl_materials = materials
         else:
-            raise ValueError(f"Invalid EncryptionMaterials passed to EncryptionMaterialsHandler: {materials=}")
+            raise ValueError(f"Invalid EncryptionMaterials passed to EncryptionMaterialsHandler. materials: {materials}")
 
     @property
     def algorithm(self) -> Algorithm:
@@ -68,7 +70,7 @@ class EncryptionMaterialsHandler:
             )
 
     @property
-    def encryption_context(self) -> dict[str, str]:
+    def encryption_context(self) -> Dict[str, str]:
         """Materials' encryption context."""
         if hasattr(self, "native_materials"):
             return self.native_materials.encryption_context
@@ -76,12 +78,12 @@ class EncryptionMaterialsHandler:
             return self.mpl_materials.encryption_context
 
     @property
-    def encrypted_data_keys(self) -> list[Native_EncryptedDataKey]:
+    def encrypted_data_keys(self) -> List[Native_EncryptedDataKey]:
         """Materials' encrypted data keys."""
         if hasattr(self, "native_materials"):
             return self.native_materials.encrypted_data_keys
         else:
-            mpl_edk_list: list[MPL_EncryptedDataKey] = self.mpl_materials.encrypted_data_keys
+            mpl_edk_list: List[MPL_EncryptedDataKey] = self.mpl_materials.encrypted_data_keys
             key_blob_list: set[Native_EncryptedDataKey] = {Native_EncryptedDataKey(
                 key_provider=MasterKeyInfo(
                     provider_id=mpl_edk.key_provider_id,
@@ -144,7 +146,7 @@ class DecryptionMaterialsHandler:
         elif isinstance(materials, MPL_DecryptionMaterials):
             self.mpl_materials = materials
         else:
-            raise ValueError(f"Invalid DecryptionMaterials passed to DecryptionMaterialsHandler: {materials=}")
+            raise ValueError(f"Invalid DecryptionMaterials passed to DecryptionMaterialsHandler. materials: {materials}")
 
     @property
     def data_key(self) -> DataKey:
