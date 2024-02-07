@@ -45,12 +45,24 @@ jobs:
 # Enable them once we sort how to provide them.
 #          - integ
 #          - examples
+        optional_dependency:
+          - ""
+          - mpl
         exclude:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
           - os: macos-latest
             architecture: x86
+          # MPL is not supported on <3.11
+          - python: 3.7
+            optional_dependency: mpl
+          - python: 3.8
+            optional_dependency: mpl
+          - python: 3.9
+            optional_dependency: mpl
+          - python: 3.10
+            optional_dependency: mpl
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
