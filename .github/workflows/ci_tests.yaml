@@ -45,9 +45,9 @@ jobs:
 # Enable them once we sort how to provide them.
 #          - integ
 #          - examples
-        optional_dependency:
+        optional_mpl_dependency:
           - ""
-          - mpl
+          - -mpl
         exclude:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
@@ -56,13 +56,13 @@ jobs:
             architecture: x86
           # MPL is not supported on <3.11
           - python: 3.7
-            optional_dependency: mpl
+            optional_mpl_dependency: mpl
           - python: 3.8
-            optional_dependency: mpl
+            optional_mpl_dependency: mpl
           - python: 3.9
-            optional_dependency: mpl
+            optional_mpl_dependency: mpl
           - python: 3.10
-            optional_dependency: mpl
+            optional_mpl_dependency: mpl
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -74,7 +74,7 @@ jobs:
           pip install --upgrade -r dev_requirements/ci-requirements.txt
       - name: run test
         env:
-          TOXENV: ${{ matrix.category }}
+          TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
         run: tox -- -vv
   upstream-py37:
     runs-on: ubuntu-latest
@@ -114,5 +114,5 @@ jobs:
             pip install --upgrade -r dev_requirements/ci-requirements.txt
         - name: run test
           env:
-            TOXENV: ${{ matrix.category }}
+            TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
           run: tox -- -vv
