@@ -1,7 +1,7 @@
 """Unit test suite for the hierarchical keyring example."""
 import pytest
 
-from ..src.keyrings.hierarchical_keyring import encrypt_and_decrypt_with_keyring
+from ...src.keyrings.hierarchical_keyring import encrypt_and_decrypt_with_keyring
 
 pytestmark = [pytest.mark.examples]
 
