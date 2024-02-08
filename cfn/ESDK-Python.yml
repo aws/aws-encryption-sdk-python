@@ -18,7 +18,7 @@ Parameters:
     Description: The number of builds you expect to run in a batch
 
 Metadata: 
-  AWS::CloudFormation::Interface:
+  AWS::CloudFormation::Interface: 
     ParameterGroups: 
       - 
         Label: 
@@ -337,5 +337,22 @@ Resources:
                 "kms:DescribeKey"
               ]
             }
+          ]
+        }
+
+  CodeBuildCISTSAllow:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub CodeBuildCISTSAllow-${ProjectName}
+      Path: /service-role/
+      PolicyDocument: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Action": "sts:AssumeRole",
+                  "Resource": "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Java-Role-us-west-2"
+              }
           ]
         }
