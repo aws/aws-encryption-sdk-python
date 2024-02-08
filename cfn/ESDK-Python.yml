@@ -18,7 +18,7 @@ Parameters:
     Description: The number of builds you expect to run in a batch
 
 Metadata: 
-  AWS::CloudFormation::Interface: 
+  AWS::CloudFormation::Interface:
     ParameterGroups: 
       - 
         Label: 
