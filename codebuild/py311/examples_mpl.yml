@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py311-examples-mpl"
+    # No TOXENV; examples using the MPL switch envs
     REGION: "us-west-2"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
@@ -20,4 +20,6 @@ phases:
   build:
     commands:
       - pip install "tox < 4.0"
-      - tox
+      - tox -e py311-examples-mpl
+      - tox -e py311-examples-mpl-keystore
+
