@@ -26,4 +26,4 @@ phases:
       - pip install setuptools
       - pip install "tox < 4.0"
       - tox -e py312-examples-mpl
-      - tox -e py312-examples-mpl-keystore
+      - tox -e py312-examples-mpl-keyring
