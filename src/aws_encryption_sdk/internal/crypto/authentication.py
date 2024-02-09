@@ -68,7 +68,7 @@ class Signer(_PrehashingAuthenticator):
     """
 
     @classmethod
-    def from_key_bytes(cls, algorithm, key_bytes):
+    def from_key_bytes(cls, algorithm, key_bytes, encoding=serialization.Encoding.DER):
         """Builds a `Signer` from an algorithm suite and a raw signing key.
 
         :param algorithm: Algorithm on which to base signer
@@ -76,7 +76,12 @@ class Signer(_PrehashingAuthenticator):
         :param bytes key_bytes: Raw signing key
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
-        key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+        if encoding == serialization.Encoding.DER:
+            key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
+        elif serialization.Encoding.PEM:
+            key = serialization.load_pem_private_key(data=key_bytes, password=None, backend=default_backend())
+        else:
+            raise ValueError(f"Unsupported encoding for Signer: {encoding}")
         return cls(algorithm, key)
 
     def key_bytes(self):

@@ -23,6 +23,8 @@ import math
 import attr
 import six
 
+from cryptography.hazmat.primitives import serialization
+
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.mpl.cmm_handler import CMMHandler
 from aws_encryption_sdk.exceptions import (
@@ -555,9 +557,18 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
-            self.signer = Signer.from_key_bytes(
-                algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
-            )
+            # MPL verification key is NOT key bytes, it is bytes of the compressed point
+            # TODO-MPL: clean this up, least-privilege violation.
+            if (isinstance(self.config.materials_manager, CMMHandler)
+                    and hasattr(self.config.materials_manager, "mpl_cmm")):
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key,
+                    encoding=serialization.Encoding.PEM,
+                )
+            else:
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
+                )
         aws_encryption_sdk.internal.utils.validate_frame_length(
             frame_length=self.config.frame_length, algorithm=self._encryption_materials.algorithm
         )
