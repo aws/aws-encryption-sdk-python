@@ -26,4 +26,12 @@ phases:
       - pip install setuptools
       - pip install "tox < 4.0"
       - tox -e py312-examples-mpl
+      # Assume special role
+      - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-Py311ExamplesMpl")
+      - export TMP_ROLE
+      - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
+      - aws sts get-caller-identity
+      # Run special role-specific examples
       - tox -e py312-examples-mpl-keyring
