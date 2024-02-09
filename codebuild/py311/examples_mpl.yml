@@ -29,5 +29,5 @@ phases:
       - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
       - aws sts get-caller-identity
       # Run special role-specific examples
-      - tox -e py311-examples-mpl-keyring
+      - tox -e py311-mplexamples-mpl
 
