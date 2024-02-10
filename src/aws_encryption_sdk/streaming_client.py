@@ -71,15 +71,15 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
 
-try:
+from aws_encryption_sdk.mpl import mpl_import_handler
+if mpl_import_handler.has_mpl():
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
-
-    HAS_MPL = True
-except ImportError:
-    HAS_MPL = False
+    _HAS_MPL = True
+else:
+    _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     key_provider = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
-    if HAS_MPL:
+    if _HAS_MPL:
         keyring = attr.ib(
             hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(IKeyring))
         )
@@ -194,9 +194,9 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
 
     def __attrs_post_init__(self):
         """Normalize inputs to crypto material manager."""
-        if HAS_MPL:
+        if _HAS_MPL:
             self._has_mpl_attrs_post_init()
-        elif not HAS_MPL:
+        else:
             self._no_mpl_attrs_post_init()
 
 

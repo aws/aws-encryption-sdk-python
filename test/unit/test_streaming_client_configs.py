@@ -154,3 +154,6 @@ def test_client_config_converts(kwargs, stream_type):
     assert isinstance(test.source, stream_type)
     if test.key_provider is not None:
         assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
+
+def test_GIVEN_has_mpl_WHEN_import_THEN_imports_mpl_modules():
+    
