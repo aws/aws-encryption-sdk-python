@@ -1095,7 +1095,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """Closes out the stream."""
         _LOGGER.debug("Closing stream")
         if not hasattr(self, "footer"):
-            raise SerializationError("Footer not read, message may be corrupted or data key may be incorrect")
+            raise SerializationError("Footer not read")
         super(StreamDecryptor, self).close()
 
 

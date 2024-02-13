@@ -17,6 +17,8 @@ import pytest
 from mock import patch
 from importlib import reload
 
+from mock import Mock
+
 import aws_encryption_sdk.streaming_client
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
@@ -24,6 +26,15 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 @patch.object(aws_encryption_sdk.streaming_client.mpl_import_handler, "has_mpl")
 def test_GIVEN_has_mpl_returns_True_WHEN_import_streaming_client_THEN_imports_mpl_modules(has_mpl_mock):
     has_mpl_mock.return_value = True
+
+    # Mock any imports used in the try/catch block
+    # If more imports are added there, then this needs to be expanded
+    # This unit test should pass even if the MPL is not installed
+    import sys
+    sys.modules['aws_cryptographic_materialproviders.mpl.client'] = Mock()
+    sys.modules['aws_cryptographic_materialproviders.mpl.config'] = Mock()
+    sys.modules['aws_cryptographic_materialproviders.mpl.models'] = Mock()
+    sys.modules['aws_cryptographic_materialproviders.mpl.references'] = Mock()
 
     # Reload module given the mock
     reload(aws_encryption_sdk.streaming_client)

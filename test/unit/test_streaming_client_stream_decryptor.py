@@ -767,4 +767,4 @@ class TestStreamDecryptor(object):
         )
         with pytest.raises(SerializationError) as excinfo:
             test_decryptor.close()
-        excinfo.match("Footer not read, message may be corrupted or data key may be incorrect")
+        excinfo.match("Footer not read")
