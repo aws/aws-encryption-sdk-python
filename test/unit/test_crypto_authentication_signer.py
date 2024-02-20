@@ -81,7 +81,13 @@ def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
-    signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
+    # signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
+
+    signer = Signer.from_key_bytes(
+        algorithm=_algorithm,
+        key_bytes=sentinel.key_bytes,
+        encoding=patch_serialization.encoding.DER
+    )
 
     patch_serialization.load_der_private_key.assert_called_once_with(
         data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
