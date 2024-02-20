@@ -76,9 +76,7 @@ class CMMHandler(CryptoMaterialsManager):
                 mpl_input: GetEncryptionMaterialsInput = CMMHandler._native_to_mpl_get_encryption_materials(
                     request
                 )
-                print(f"mpl_input: {mpl_input}")
                 mpl_output: GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
-                print(f"mpl_output: {mpl_output}")
                 return EncryptionMaterialsHandler(mpl_output.encryption_materials)
             except AwsCryptographicMaterialProvidersException as mpl_exception:
                 # Wrap MPL error into the ESDK error type

@@ -77,6 +77,7 @@ def encrypt_and_decrypt_with_keyring(
 
     class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
         """Example implementation of a branch key ID supplier."""
+
         branch_key_id_for_tenant_A: str
         branch_key_id_for_tenant_B: str
 

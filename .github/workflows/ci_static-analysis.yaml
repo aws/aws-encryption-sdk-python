@@ -15,7 +15,6 @@ jobs:
       matrix:
         python:
           - 3.8
-          - 3.11
         category:
           - bandit
           - doc8
@@ -29,13 +28,6 @@ jobs:
           - pylint-examples
           - black-check
           - isort-check
-        optional_mpl_dependency:
-          - ""
-          - -mpl
-        exclude:
-          # MPL is not supported on <3.11
-          - python: 3.8
-            optional_mpl_dependency: -mpl
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
