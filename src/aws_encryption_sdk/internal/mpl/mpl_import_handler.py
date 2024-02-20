@@ -17,5 +17,5 @@ def _import_mpl():
     This only exists to help with unit test coverage.
     This is not directly tested.
     """
-    # noqa pylint:disable=unused-import,import-outside-toplevel,import-error
-    import aws_cryptographic_materialproviders
+    # pylint:disable=unused-import,import-outside-toplevel,import-error
+    import aws_cryptographic_materialproviders  # noqa F401
