@@ -12,35 +12,21 @@
 # language governing permissions and limitations under the License.
 """Test suite to verify the mpl_import_handler module handles importing the MPL correctly."""
 import pytest
+from aws_cryptographic_materialproviders.mpl.models import (
+    EncryptionMaterials as MPL_EncryptionMaterials,
+    GetEncryptionMaterialsInput,
+    GetEncryptionMaterialsOutput,
+)
+from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
 from mock import MagicMock, patch
 
-from aws_encryption_sdk.mpl.cmm_handler import CMMHandler
-
-from aws_encryption_sdk.mpl.materials_handlers import DecryptionMaterialsHandler, EncryptionMaterialsHandler
-from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
-from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
-from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-
+from aws_encryption_sdk.internal.mpl.cmm_handler import CMMHandler
+from aws_encryption_sdk.internal.mpl.materials_handlers import EncryptionMaterialsHandler
 from aws_encryption_sdk.materials_managers import (
-    DecryptionMaterials as Native_DecryptionMaterials,
     EncryptionMaterials as Native_EncryptionMaterials,
+    EncryptionMaterialsRequest,
 )
-
-from aws_cryptographic_materialproviders.mpl.models import (
-        AlgorithmSuiteIdESDK,
-        CommitmentPolicyESDK,
-        DecryptMaterialsInput,
-        DecryptMaterialsOutput,
-        EncryptedDataKey as MPL_EncryptedDataKey,
-        GetEncryptionMaterialsInput,
-        GetEncryptionMaterialsOutput,
-    )
-
-from aws_cryptographic_materialproviders.mpl.models import (
-        DecryptionMaterials as MPL_DecryptionMaterials,
-        EncryptedDataKey as MPL_EncryptedDataKey,
-        EncryptionMaterials as MPL_EncryptionMaterials,
-    )
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 
 mock_native_cmm = MagicMock(__class__=CryptoMaterialsManager)
 mock_mpl_cmm = MagicMock(__class__=ICryptographicMaterialsManager)
@@ -68,7 +54,9 @@ def test_GIVEN_unknown_CMM_WHEN_create_CMMHandler_THEN_raise_ValueError():
 
 
 @patch.object(mock_native_cmm, "get_encryption_materials")
-def test_GIVEN_native_CMM_WHEN_get_encryption_materials_THEN_return_native_encryption_materials(mock_get_encryption_materials):
+def test_GIVEN_native_CMM_WHEN_get_encryption_materials_THEN_return_native_encryption_materials(
+    mock_get_encryption_materials
+):
     # Mock: native_cmm.get_encryption_materials returns mock native encryption materials
     mock_get_encryption_materials.return_value = mock_native_encryption_materials
 
@@ -84,17 +72,16 @@ def test_GIVEN_native_CMM_WHEN_get_encryption_materials_THEN_return_native_encry
 
 
 @patch.object(mock_mpl_cmm, "get_encryption_materials")
-@patch("aws_encryption_sdk.mpl.cmm_handler.CMMHandler._native_to_mpl_get_encryption_materials")
+@patch("aws_encryption_sdk.internal.mpl.cmm_handler.CMMHandler._native_to_mpl_get_encryption_materials")
 def test_GIVEN_mpl_CMM_WHEN_get_encryption_materials_THEN_return_mpl_encryption_materials(
     mock_native_to_mpl_get_encryption_materials,
     mock_get_encryption_materials,
-    
 ):
     # Mock: mpl_cmm.get_encryption_materials returns mock MPL encryption materials
     mock_get_encryption_materials_output = MagicMock(__class__=GetEncryptionMaterialsOutput)
     mock_get_encryption_materials_output.encryption_materials = mock_mpl_encryption_materials
     mock_get_encryption_materials.return_value = mock_get_encryption_materials_output
-    
+
     # Mock: CMMHandler._native_to_mpl_get_encryption_materials creates a GetEncryptionMaterialsInput
     mock_get_encryption_materials_input = MagicMock(__class__=GetEncryptionMaterialsInput)
     mock_native_to_mpl_get_encryption_materials.return_value = mock_get_encryption_materials_input
@@ -108,4 +95,3 @@ def test_GIVEN_mpl_CMM_WHEN_get_encryption_materials_THEN_return_mpl_encryption_
     assert test.mpl_materials == mock_mpl_encryption_materials
     # Verify we actually called `get_encryption_materials`
     mock_mpl_cmm.get_encryption_materials.assert_called_once_with(mock_get_encryption_materials_input)
-

@@ -4,23 +4,28 @@
 import sys
 
 import boto3
-from aws_cryptographic_materialproviders.keystore.client import KeyStore
-from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
-from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
-    CacheTypeDefault,
-    CreateAwsKmsHierarchicalKeyringInput,
-    DefaultCache,
-    GetBranchKeyIdInput,
-    GetBranchKeyIdOutput,
-)
-from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
+from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
+from aws_encryption_sdk.internal.mpl import mpl_import_handler
+
+if mpl_import_handler.has_mpl():
+    # noqa pylint: disable=import-error
+    from aws_cryptographic_materialproviders.keystore.client import KeyStore
+    from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
+    from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
+    from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import (
+        CacheTypeDefault,
+        CreateAwsKmsHierarchicalKeyringInput,
+        DefaultCache,
+        GetBranchKeyIdInput,
+        GetBranchKeyIdOutput,
+    )
+    from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
@@ -71,6 +76,7 @@ def encrypt_and_decrypt_with_keyring(
     branch_key_id_B: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
 
     class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
+        """Example implementation of a branch key ID supplier."""
         branch_key_id_for_tenant_A: str
         branch_key_id_for_tenant_B: str
 
@@ -80,9 +86,11 @@ def encrypt_and_decrypt_with_keyring(
 
         def get_branch_key_id(
             self,
-            input: GetBranchKeyIdInput
+            # Change this to `native_input`
+            input: GetBranchKeyIdInput  # noqa pylint: disable=redefined-builtin
         ) -> GetBranchKeyIdOutput:
-            encryption_context: dict[str, str] = input.encryption_context
+            """Returns branch key ID from the tenant ID in input's encryption context."""
+            encryption_context: Dict[str, str] = input.encryption_context
 
             if b"tenant" not in encryption_context:
                 raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
@@ -128,7 +136,7 @@ def encrypt_and_decrypt_with_keyring(
     # The Branch Key Id supplier uses the encryption context to determine which branch key id will
     # be used to encrypt data.
     # Create encryption context for TenantA
-    encryption_context_A: dict[str, str] = {
+    encryption_context_A: Dict[str, str] = {
         "tenant": "TenantA",
         "encryption": "context",
         "is not": "secret",
@@ -138,7 +146,7 @@ def encrypt_and_decrypt_with_keyring(
     }
 
     # Create encryption context for TenantB
-    encryption_context_B: dict[str, str] = {
+    encryption_context_B: Dict[str, str] = {
         "tenant": "TenantB",
         "encryption": "context",
         "is not": "secret",
@@ -191,8 +199,6 @@ def encrypt_and_decrypt_with_keyring(
         input=keyring_input_B
     )
 
-    # TODO: Run the decrypt, get expected exception type
-    # This should fail
     try:
         client.decrypt(
             source=ciphertext_A,
@@ -201,7 +207,7 @@ def encrypt_and_decrypt_with_keyring(
     except AWSEncryptionSDKClientError:
         pass
 
-    # # This should fail
+    # This should fail
     try:
         client.decrypt(
             source=ciphertext_B,
@@ -221,5 +227,3 @@ def encrypt_and_decrypt_with_keyring(
         keyring=hierarchical_keyring_B
     )
     assert plaintext_bytes_B == EXAMPLE_DATA
-
-# Also, a thread-safe example ig

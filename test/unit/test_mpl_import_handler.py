@@ -14,18 +14,20 @@
 import pytest
 from mock import patch
 
-from aws_encryption_sdk.mpl import mpl_import_handler
+from aws_encryption_sdk.internal.mpl import mpl_import_handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
-@patch("aws_encryption_sdk.mpl.mpl_import_handler._import_mpl")
+
+@patch("aws_encryption_sdk.internal.mpl.mpl_import_handler._import_mpl")
 def test_GIVEN_import_mpl_succeeds_WHEN_call_has_mpl_THEN_return_True(import_mock):
     # Mock a successful import of `aws_cryptographic_material_providers`
     import_mock.return_value = None  # No exception means successful import
 
     assert mpl_import_handler.has_mpl() is True
 
-@patch("aws_encryption_sdk.mpl.mpl_import_handler._import_mpl")
+
+@patch("aws_encryption_sdk.internal.mpl.mpl_import_handler._import_mpl")
 def test_GIVEN_import_mpl_fails_WHEN_call_has_mpl_THEN_return_False(import_mock):
     # Mock not having a `aws_cryptographic_material_providers` module,
     # even if it is installed in the Python environment

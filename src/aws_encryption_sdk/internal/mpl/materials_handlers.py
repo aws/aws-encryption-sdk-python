@@ -48,8 +48,8 @@ class EncryptionMaterialsHandler:
         elif isinstance(materials, MPL_EncryptionMaterials):
             self.mpl_materials = materials
         else:
-            raise ValueError("Invalid EncryptionMaterials passed to EncryptionMaterialsHandler. " \
-                            f"materials: {materials}")
+            raise ValueError("Invalid EncryptionMaterials passed to EncryptionMaterialsHandler. "
+                             f"materials: {materials}")
 
     @property
     def algorithm(self) -> Algorithm:

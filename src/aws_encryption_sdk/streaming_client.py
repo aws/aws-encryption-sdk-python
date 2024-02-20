@@ -22,11 +22,9 @@ import math
 
 import attr
 import six
-
 from cryptography.hazmat.primitives import serialization
 
 import aws_encryption_sdk.internal.utils
-from aws_encryption_sdk.mpl.cmm_handler import CMMHandler
 from aws_encryption_sdk.exceptions import (
     ActionNotAllowedError,
     AWSEncryptionSDKClientError,
@@ -60,6 +58,8 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
+from aws_encryption_sdk.internal.mpl import mpl_import_handler
+from aws_encryption_sdk.internal.mpl.cmm_handler import CMMHandler
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
     validate_commitment_policy_on_encrypt,
@@ -71,8 +71,8 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
 
-from aws_encryption_sdk.mpl import mpl_import_handler
 if mpl_import_handler.has_mpl():
+    # noqa pylint: disable=import-error
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput

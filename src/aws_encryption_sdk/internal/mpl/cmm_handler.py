@@ -23,7 +23,7 @@ from typing import List
 
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 from aws_encryption_sdk.identifiers import CommitmentPolicy
-from aws_encryption_sdk.mpl.materials_handlers import DecryptionMaterialsHandler, EncryptionMaterialsHandler
+from aws_encryption_sdk.internal.mpl.materials_handlers import DecryptionMaterialsHandler, EncryptionMaterialsHandler
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey

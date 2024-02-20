@@ -13,6 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        python:
+          - 3.8
+          - 3.11
         category:
           - bandit
           - doc8
@@ -26,15 +29,22 @@ jobs:
           - pylint-examples
           - black-check
           - isort-check
+        optional_mpl_dependency:
+          - ""
+          - -mpl
+        exclude:
+          # MPL is not supported on <3.11
+          - python: 3.8
+            optional_mpl_dependency: -mpl
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python }}
       - run: |
           python -m pip install --upgrade pip
           pip install --upgrade -r dev_requirements/ci-requirements.txt
       - name: run test
         env:
-          TOXENV: ${{ matrix.category }}
+          TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
         run: tox -- -vv

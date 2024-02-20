@@ -11,17 +11,17 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.streaming_client MPL import logic."""
-import io
 
-import pytest
-from mock import patch
+import sys
 from importlib import reload
 
-from mock import Mock
+import pytest
+from mock import Mock, patch
 
 import aws_encryption_sdk.streaming_client
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
 
 @patch.object(aws_encryption_sdk.streaming_client.mpl_import_handler, "has_mpl")
 def test_GIVEN_has_mpl_returns_True_WHEN_import_streaming_client_THEN_imports_mpl_modules(has_mpl_mock):
@@ -30,7 +30,6 @@ def test_GIVEN_has_mpl_returns_True_WHEN_import_streaming_client_THEN_imports_mp
     # Mock any imports used in the try/catch block
     # If more imports are added there, then this needs to be expanded
     # This unit test should pass even if the MPL is not installed
-    import sys
     sys.modules['aws_cryptographic_materialproviders.mpl.client'] = Mock()
     sys.modules['aws_cryptographic_materialproviders.mpl.config'] = Mock()
     sys.modules['aws_cryptographic_materialproviders.mpl.models'] = Mock()
@@ -41,6 +40,7 @@ def test_GIVEN_has_mpl_returns_True_WHEN_import_streaming_client_THEN_imports_mp
 
     assert hasattr(aws_encryption_sdk.streaming_client, "_HAS_MPL")
     assert aws_encryption_sdk.streaming_client._HAS_MPL is True
+
 
 @patch.object(aws_encryption_sdk.streaming_client.mpl_import_handler, "has_mpl")
 def test_GIVEN_has_mpl_returns_False_WHEN_import_streaming_client_THEN_does_not_import_mpl_modules(has_mpl_mock):
