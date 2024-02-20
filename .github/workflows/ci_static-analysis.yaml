@@ -38,5 +38,5 @@ jobs:
           pip install --upgrade -r dev_requirements/ci-requirements.txt
       - name: run test
         env:
-          TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
+          TOXENV: ${{ matrix.category }}
         run: tox -- -vv

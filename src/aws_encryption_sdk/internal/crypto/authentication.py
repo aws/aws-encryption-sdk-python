@@ -78,7 +78,7 @@ class Signer(_PrehashingAuthenticator):
         """
         if encoding == serialization.Encoding.DER:
             key = serialization.load_der_private_key(data=key_bytes, password=None, backend=default_backend())
-        elif serialization.Encoding.PEM:
+        elif encoding == serialization.Encoding.PEM:
             key = serialization.load_pem_private_key(data=key_bytes, password=None, backend=default_backend())
         else:
             raise ValueError(f"Unsupported encoding for Signer: {encoding}")
