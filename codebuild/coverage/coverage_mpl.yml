@@ -7,7 +7,7 @@ env:
 phases:
   install:
     runtime-versions:
-      python: latest
+      python: 3.11
   build:
     commands:
       - pip install "tox < 4.0"

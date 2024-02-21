@@ -81,8 +81,10 @@ def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
-    # signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
-
+    # Explicitly pass in patched serialization module.
+    # Patching the module introduces namespace issues
+    # which causes the method's `isinstance` checks to fail
+    # by changing the namespace from `serialization.Encoding.DER` to `Encoding.DER`.
     signer = Signer.from_key_bytes(
         algorithm=_algorithm,
         key_bytes=sentinel.key_bytes,

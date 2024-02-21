@@ -15,8 +15,6 @@ from aws_cryptographic_materialproviders.mpl.models import (
     CacheTypeDefault,
     CreateAwsKmsHierarchicalKeyringInput,
     DefaultCache,
-    GetBranchKeyIdInput,
-    GetBranchKeyIdOutput,
 )
 from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 from typing import Dict
@@ -24,6 +22,8 @@ from typing import Dict
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
+
+from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
@@ -73,39 +73,6 @@ def encrypt_and_decrypt_with_keyring(
     branch_key_id_A: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
     branch_key_id_B: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
 
-    class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
-        """Example implementation of a branch key ID supplier."""
-
-        branch_key_id_for_tenant_A: str
-        branch_key_id_for_tenant_B: str
-
-        def __init__(self, tenant_1_id, tenant_2_id):
-            self.branch_key_id_for_tenant_A = tenant_1_id
-            self.branch_key_id_for_tenant_B = tenant_2_id
-
-        def get_branch_key_id(
-            self,
-            # Change this to `native_input`
-            input: GetBranchKeyIdInput  # noqa pylint: disable=redefined-builtin
-        ) -> GetBranchKeyIdOutput:
-            """Returns branch key ID from the tenant ID in input's encryption context."""
-            encryption_context: Dict[str, str] = input.encryption_context
-
-            if b"tenant" not in encryption_context:
-                raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
-
-            tenant_key_id: str = encryption_context.get(b"tenant")
-            branch_key_id: str
-
-            if tenant_key_id == b"TenantA":
-                branch_key_id = self.branch_key_id_for_tenant_A
-            elif tenant_key_id == b"TenantB":
-                branch_key_id = self.branch_key_id_for_tenant_B
-            else:
-                raise ValueError(f"Item does not contain valid tenant ID: {tenant_key_id=}")
-
-            return GetBranchKeyIdOutput(branch_key_id=branch_key_id)
-
     # 5. Create a branch key supplier that maps the branch key id to a more readable format
     branch_key_id_supplier: IBranchKeyIdSupplier = ExampleBranchKeyIdSupplier(
         tenant_1_id=branch_key_id_A,
@@ -132,8 +99,10 @@ def encrypt_and_decrypt_with_keyring(
         input=keyring_input
     )
 
-    # The Branch Key Id supplier uses the encryption context to determine which branch key id will
-    # be used to encrypt data.
+    # 7. Create encryption context for both tenants.
+    #    The Branch Key Id supplier uses the encryption context to determine which branch key id will
+    #    be used to encrypt data.
+
     # Create encryption context for TenantA
     encryption_context_A: Dict[str, str] = {
         "tenant": "TenantA",
@@ -154,7 +123,7 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    # Encrypt the data for encryptionContextA & encryptionContextB
+    # 8. Encrypt the data for encryptionContextA & encryptionContextB
     ciphertext_A, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=hierarchical_keyring,
@@ -166,8 +135,8 @@ def encrypt_and_decrypt_with_keyring(
         encryption_context=encryption_context_B
     )
 
-    # To attest that TenantKeyB cannot decrypt a message written by TenantKeyA
-    # let's construct more restrictive hierarchical keyrings.
+    # 9. To attest that TenantKeyB cannot decrypt a message written by TenantKeyA,
+    #    let's construct more restrictive hierarchical keyrings.
     keyring_input_A: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
         key_store=keystore,
         branch_key_id=branch_key_id_A,
@@ -198,6 +167,11 @@ def encrypt_and_decrypt_with_keyring(
         input=keyring_input_B
     )
 
+    # 10. Demonstrate that data encrypted by one tenant's key
+    #     cannot be decrypted with by a keyring specific to another tenant.
+    
+    # Keyring with tenant B's branch key cannot decrypt data encrypted with tenant A's branch key
+    # This will fail and raise a AWSEncryptionSDKClientError, which we swallow ONLY for demonstration purposes.
     try:
         client.decrypt(
             source=ciphertext_A,
@@ -206,7 +180,8 @@ def encrypt_and_decrypt_with_keyring(
     except AWSEncryptionSDKClientError:
         pass
 
-    # This should fail
+    # Keyring with tenant A's branch key cannot decrypt data encrypted with tenant B's branch key.
+    # This will fail and raise a AWSEncryptionSDKClientError, which we swallow ONLY for demonstration purposes.
     try:
         client.decrypt(
             source=ciphertext_B,
@@ -215,7 +190,8 @@ def encrypt_and_decrypt_with_keyring(
     except AWSEncryptionSDKClientError:
         pass
 
-    # These should succeed
+    # 10. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
+    #     and that the decrypted data matches the input data.
     plaintext_bytes_A, _ = client.decrypt(
         source=ciphertext_A,
         keyring=hierarchical_keyring_A
