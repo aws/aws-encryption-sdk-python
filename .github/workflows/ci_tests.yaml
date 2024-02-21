@@ -64,13 +64,16 @@ jobs:
           - python: 3.10
             optional_mpl_dependency: -mpl
     steps:
+      - name: Support longpaths
+        run: |
+          git config --global core.longpaths true
+
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.architecture }}
       - run: |
-          git config --system core.longpaths true
           python -m pip install --upgrade pip
           pip install --upgrade -r dev_requirements/ci-requirements.txt
       - name: run test
