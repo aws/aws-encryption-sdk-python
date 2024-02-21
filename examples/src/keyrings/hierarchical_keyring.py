@@ -169,7 +169,7 @@ def encrypt_and_decrypt_with_keyring(
 
     # 10. Demonstrate that data encrypted by one tenant's key
     #     cannot be decrypted with by a keyring specific to another tenant.
-    
+
     # Keyring with tenant B's branch key cannot decrypt data encrypted with tenant A's branch key
     # This will fail and raise a AWSEncryptionSDKClientError, which we swallow ONLY for demonstration purposes.
     try:

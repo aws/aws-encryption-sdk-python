@@ -164,11 +164,15 @@ def source_data_key_length_check(source_data_key, algorithm):
             )
         )
 
+
 def exactly_one_arg_is_not_none(*args):
     """
     Helper function for internal ESDK logic.
-    Returns `True` if exactly one item in the list is not `None`.
+    Returns `True` if exactly one item in the provided arguments is not `None`.
     Returns `False` otherwise.
+
+    :param args: Input arguments to check
+    :returns: `True` if exactly one item in the provided arguments is not `None`; `False` otherwise
     """
     # Have not found any `not None`
     found_one = False
