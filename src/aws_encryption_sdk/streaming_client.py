@@ -918,7 +918,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self.verifier = None
         else:
             # MPL verification key is NOT key bytes; it is bytes of the compressed point.
-            # If the underlying CMM is from the MPL, load PEM bytes.
+            # If the underlying CMM is from the MPL, load bytes from encoded point.
             if (isinstance(self.config.materials_manager, CMMHandler)
                     and hasattr(self.config.materials_manager, "mpl_cmm")):
                 self.verifier = Verifier.from_encoded_point(
