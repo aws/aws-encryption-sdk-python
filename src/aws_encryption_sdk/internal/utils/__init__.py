@@ -163,3 +163,21 @@ def source_data_key_length_check(source_data_key, algorithm):
                 actual=len(source_data_key.data_key), required=algorithm.kdf_input_len
             )
         )
+
+def exactly_one_arg_is_not_none(*args):
+    """
+    Helper function for internal ESDK logic.
+    Returns `True` if exactly one item in the list is not `None`.
+    Returns `False` otherwise.
+    """
+    # Have not found any `not None`
+    found_one = False
+    for arg in args:
+        if arg is not None:
+            if found_one is False:
+                # Have not already found a `not None`, found a `not None` => only one `not None` (so far)
+                found_one = True
+            else:
+                # Already found a `not None`, found another `not None` => not exactly one `not None`
+                return False
+    return found_one

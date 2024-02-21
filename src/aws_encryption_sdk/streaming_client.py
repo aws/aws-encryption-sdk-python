@@ -59,6 +59,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_open,
 )
 from aws_encryption_sdk.internal.mpl.cmm_handler import CMMHandler
+from aws_encryption_sdk.internal.utils import exactly_one_arg_is_not_none
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
     validate_commitment_policy_on_encrypt,
@@ -82,25 +83,6 @@ except ImportError:
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _exactly_one_arg_is_not_none(*args):
-    """
-    Private helper function.
-    Returns `True` if exactly one item in the list is not `None`.
-    Returns `False` otherwise.
-    """
-    # Have not found any `not None`
-    found_one = False
-    for arg in args:
-        if arg is not None:
-            if found_one is False:
-                # Have not already found a `not None`, found a `not None` => only one `not None` (so far)
-                found_one = True
-            else:
-                # Already found a `not None`, found another `not None` => not exactly one `not None`
-                return False
-    return found_one
 
 
 @attr.s(hash=True)  # pylint: disable=too-many-instance-attributes
@@ -147,6 +129,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
     if _HAS_MPL:
+        # Keyrings are only available if the MPL is installed in the runtime
         keyring = attr.ib(
             hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(IKeyring))
         )
@@ -158,10 +141,13 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def _has_mpl_attrs_post_init(self):
+        """If the MPL is present in the runtime, perform MPL-specific post-init logic
+        to validate the new object has a valid state.
+        """
         if not hasattr(self, "keyring"):
             self._no_mpl_attrs_post_init()
             return
-        if not _exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
+        if not exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
             raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
         if self.materials_manager is None:
             if self.key_provider is not None:
@@ -187,6 +173,9 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                 self.materials_manager = cmm_handler
 
     def _no_mpl_attrs_post_init(self):
+        """If the MPL is NOT present in the runtime, perform post-init logic
+        to validate the new object has a valid state.
+        """
         both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
         neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
 
@@ -560,8 +549,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
-            # MPL verification key is NOT key bytes, it is bytes of the compressed point
-            # TODO-MPL: clean this up, least-privilege violation.
+            # MPL verification key is PEM bytes, not DER bytes.
+            # If the underlying CMM is from the MPL, load PEM bytes.
             if (isinstance(self.config.materials_manager, CMMHandler)
                     and hasattr(self.config.materials_manager, "mpl_cmm")):
                 self.signer = Signer.from_key_bytes(
@@ -928,8 +917,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if decryption_materials.verification_key is None:
             self.verifier = None
         else:
-            # MPL verification key is NOT key bytes, it is bytes of the compressed point
-            # TODO-MPL: clean this up, least-privilege violation.
+            # MPL verification key is NOT key bytes; it is bytes of the compressed point.
+            # If the underlying CMM is from the MPL, load PEM bytes.
             if (isinstance(self.config.materials_manager, CMMHandler)
                     and hasattr(self.config.materials_manager, "mpl_cmm")):
                 self.verifier = Verifier.from_encoded_point(

@@ -29,7 +29,6 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
 
 
-# TODO-MPL Should this implement interface...? seems like yes since it implements all of interface methods
 class CMMHandler(CryptoMaterialsManager):
     """
     In instances where encryption materials may be provided by either

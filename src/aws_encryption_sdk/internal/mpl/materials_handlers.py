@@ -93,9 +93,6 @@ class EncryptionMaterialsHandler:
         if hasattr(self, "native_materials"):
             return self.native_materials.data_encryption_key
         else:
-            # TODO-MPL This impl is probably wrong, but works for for now
-            # If this works for all features, great! Remove this comment before launch.
-            # Otherwise, fix the implementation.
             mpl_dek = self.mpl_materials.plaintext_data_key
             return DataKey(
                 # key_provider is unused, but the return type is DataKey
@@ -149,9 +146,6 @@ class DecryptionMaterialsHandler:
         if hasattr(self, "native_materials"):
             return self.native_materials.data_key
         else:
-            # TODO-MPL This impl is probably wrong, but works for for now
-            # If this works for all features, great! Remove this comment before launch.
-            # Otherwise, fix the implementation.
             return DataKey(
                 key_provider=MasterKeyInfo(
                     provider_id="",
