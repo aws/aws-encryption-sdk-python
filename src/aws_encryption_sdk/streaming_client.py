@@ -71,14 +71,14 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
 
-if mpl_import_handler.has_mpl():
+try:
     # noqa pylint: disable=import-error
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
     _HAS_MPL = True
-else:
+except ImportError:
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
