@@ -71,9 +71,9 @@ jobs:
           - python: 3.10
             optional_mpl_dependency: -mpl
           # mpllocal and mplaccept require the MPL to be installed
-          - python: mpllocal
+          - category: mpllocal
             optional_mpl_dependency: ""
-          - python: mplaccept
+          - category: mplaccept
             optional_mpl_dependency: ""
     steps:
       # Support long Dafny filenames (used in MPL and DBESDK repos)
