@@ -24,9 +24,12 @@ jobs:
       fail-fast: true
       matrix:
         os:
-          # - ubuntu-latest
-          - windows-latest
-          # - macos-latest
+          - ubuntu-latest
+          # Windows fails due to "No module named 'Wrappers'"
+          # This SHOULD be fixed once Dafny generates fully-qualified import statements
+          # Disable for now
+          # - windows-latest
+          - macos-latest
         python:
           - 3.7
           - 3.8
