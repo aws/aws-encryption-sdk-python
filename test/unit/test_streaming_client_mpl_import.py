@@ -19,7 +19,9 @@ import aws_encryption_sdk.streaming_client
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-# Check if MPL is installed, and skip tests based on whether it is
+# Check if MPL is installed, and skip tests based on its installation status
+# Ideally, this logic would be based on mocking imports and testing logic,
+# but doing that introduces errors that cause other tests to fail.
 try:
     import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import
     HAS_MPL = True
