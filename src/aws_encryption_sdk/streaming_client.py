@@ -79,7 +79,7 @@ try:
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
     _HAS_MPL = True
 except ImportError as e:
-    print(e)
+    print("IMPORT ERROR" + str(e))
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
