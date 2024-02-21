@@ -1,8 +1,11 @@
+# Runs the same tests as examples in an environment with the MPL installed
+# to assert existing tests continue to pass with the MPL installed.
+# Then, run MPL-specific tests.
 version: 0.2
 
 env:
   variables:
-    # No TOXENV; examples using the MPL switch envs
+    # No TOXENV. This runs multiple environments.
     REGION: "us-west-2"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
@@ -25,13 +28,14 @@ phases:
       - pip install --upgrade pip
       - pip install setuptools
       - pip install "tox < 4.0"
+      # Run non-MPL-specific tests with the MPL installed
       - tox -e py312-examples-mpl
-      # Assume special role
+      # Assume special role to access keystore
       - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-Py311ExamplesMpl")
       - export TMP_ROLE
       - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
       - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
       - aws sts get-caller-identity
-      # Run special role-specific examples
+      # Run MPL-specific tests with special role
       - tox -e py312-mplexamples-mpl

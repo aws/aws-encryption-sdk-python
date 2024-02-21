@@ -1,3 +1,5 @@
+# Runs the same tests as awses_local in an environment with the MPL installed.
+# This asserts existing tests continue to pass with the MPL installed.
 version: 0.2
 
 env:

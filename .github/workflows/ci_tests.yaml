@@ -44,10 +44,14 @@ jobs:
         category:
           - local
           - accept
+          - mpllocal
+          - mplaccept
 # These require credentials.
 # Enable them once we sort how to provide them.
 #          - integ
 #          - examples
+        # Append '-mpl' to some test environments.
+        # This suffix signals to tox to install the MPL in the test environment. 
         optional_mpl_dependency:
           - ""
           - -mpl
@@ -66,7 +70,13 @@ jobs:
             optional_mpl_dependency: -mpl
           - python: 3.10
             optional_mpl_dependency: -mpl
+          # mpllocal and mplaccept require the MPL to be installed
+          - python: mpllocal
+            optional_mpl_dependency: 
+          - python: mplaccept
+            optional_mpl_dependency:
     steps:
+      # Support long Dafny filenames (used in MPL and DBESDK repos)
       - name: Support longpaths
         run: |
           git config --global core.longpaths true
