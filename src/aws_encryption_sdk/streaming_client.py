@@ -158,6 +158,9 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
     def _has_mpl_attrs_post_init(self):
+        if not hasattr(self, "keyring"):
+            self._no_mpl_attrs_post_init()
+            return
         if not _exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
             raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
         if self.materials_manager is None:
