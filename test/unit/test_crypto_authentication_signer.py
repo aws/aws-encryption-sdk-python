@@ -86,7 +86,7 @@ def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch
     signer = Signer.from_key_bytes(
         algorithm=_algorithm,
         key_bytes=sentinel.key_bytes,
-        encoding=patch_serialization.encoding.DER
+        encoding=patch_serialization.Encoding.DER
     )
 
     patch_serialization.load_der_private_key.assert_called_once_with(
