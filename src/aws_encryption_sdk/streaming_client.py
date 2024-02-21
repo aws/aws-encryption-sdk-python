@@ -247,10 +247,7 @@ class _EncryptionStream(io.IOBase):
         ):
             raise TypeError("Can't instantiate abstract class {}".format(cls.__name__))
 
-        if issubclass(StreamEncryptor, _EncryptionStream):
-            instance = super(_EncryptionStream, cls).__new__(cls)
-        else:
-            raise ValueError(f"issubclass {issubclass(StreamEncryptor, _EncryptionStream)}")
+        instance = super().__new__(cls)
 
         config = kwargs.pop("config", None)
         if not isinstance(config, instance._config_class):  # pylint: disable=protected-access
