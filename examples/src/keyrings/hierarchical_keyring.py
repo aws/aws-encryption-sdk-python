@@ -9,23 +9,22 @@ from typing import Dict
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-from aws_encryption_sdk.internal.mpl import mpl_import_handler
 
-if mpl_import_handler.has_mpl():
-    # noqa pylint: disable=import-error
-    from aws_cryptographic_materialproviders.keystore.client import KeyStore
-    from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-    from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
-    from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
-    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.mpl.models import (
-        CacheTypeDefault,
-        CreateAwsKmsHierarchicalKeyringInput,
-        DefaultCache,
-        GetBranchKeyIdInput,
-        GetBranchKeyIdOutput,
-    )
-    from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
+# ignore missing MPL for pylint, but the MPL is required for this example
+# noqa pylint: disable=import-error
+from aws_cryptographic_materialproviders.keystore.client import KeyStore
+from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
+from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
+from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_materialproviders.mpl.models import (
+    CacheTypeDefault,
+    CreateAwsKmsHierarchicalKeyringInput,
+    DefaultCache,
+    GetBranchKeyIdInput,
+    GetBranchKeyIdOutput,
+)
+from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
 
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 

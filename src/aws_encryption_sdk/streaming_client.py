@@ -58,7 +58,6 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
-from aws_encryption_sdk.internal.mpl import mpl_import_handler
 from aws_encryption_sdk.internal.mpl.cmm_handler import CMMHandler
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
@@ -72,13 +71,14 @@ from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterials
 from aws_encryption_sdk.structures import MessageHeader
 
 try:
+    # pylint should pass even if the MPL isn't installed
     # noqa pylint: disable=import-error
     from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
     _HAS_MPL = True
-except ImportError:
+except ImportError as e:
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)

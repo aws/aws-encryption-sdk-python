@@ -23,31 +23,27 @@ import aws_encryption_sdk.streaming_client
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
-@patch.object(aws_encryption_sdk.streaming_client.mpl_import_handler, "has_mpl")
-def test_GIVEN_has_mpl_returns_True_WHEN_import_streaming_client_THEN_imports_mpl_modules(has_mpl_mock):
-    has_mpl_mock.return_value = True
+# Check if MPL is installed, and skip tests based on whether it is
+try:
+    import aws_cryptographic_materialproviders
+    HAS_MPL = True
+except ImportError as e:
+    HAS_MPL = False
 
-    # Mock any imports used in the try/catch block
-    # If more imports are added there, then this needs to be expanded
-    # This unit test should pass even if the MPL is not installed
-    sys.modules['aws_cryptographic_materialproviders.mpl.client'] = Mock()
-    sys.modules['aws_cryptographic_materialproviders.mpl.config'] = Mock()
-    sys.modules['aws_cryptographic_materialproviders.mpl.models'] = Mock()
-    sys.modules['aws_cryptographic_materialproviders.mpl.references'] = Mock()
 
-    # Reload module given the mock
-    reload(aws_encryption_sdk.streaming_client)
+@pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+def test_GIVEN_test_has_mpl_is_True_THEN_streaming_client_has_mpl_is_TRUE():
+    """If the MPL IS installed in the runtime environment,
+    assert the streaming client has _HAS_MPL set to True"""
 
     assert hasattr(aws_encryption_sdk.streaming_client, "_HAS_MPL")
     assert aws_encryption_sdk.streaming_client._HAS_MPL is True
 
 
-@patch.object(aws_encryption_sdk.streaming_client.mpl_import_handler, "has_mpl")
-def test_GIVEN_has_mpl_returns_False_WHEN_import_streaming_client_THEN_does_not_import_mpl_modules(has_mpl_mock):
-    has_mpl_mock.return_value = False
-
-    # Reload module given the mock
-    reload(aws_encryption_sdk.streaming_client)
+@pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
+def test_GIVEN_test_has_mpl_is_False_THEN_streaming_client_has_mpl_is_TRUE():
+    """If the MPL IS NOT installed in the runtime environment,
+    assert the streaming client has _HAS_MPL set to False"""
 
     assert hasattr(aws_encryption_sdk.streaming_client, "_HAS_MPL")
     assert aws_encryption_sdk.streaming_client._HAS_MPL is False

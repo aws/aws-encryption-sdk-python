@@ -10,7 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Test suite to verify the mpl_import_handler module handles importing the MPL correctly."""
+"""Test suite to verify the cmm_handler module delegates correctly."""
 import pytest
 from aws_cryptographic_materialproviders.mpl.models import (
     EncryptionMaterials as MPL_EncryptionMaterials,
