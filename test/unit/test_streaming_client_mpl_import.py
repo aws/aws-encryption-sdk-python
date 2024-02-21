@@ -12,11 +12,7 @@
 # language governing permissions and limitations under the License.
 """Unit test suite to validate aws_encryption_sdk.streaming_client MPL import logic."""
 
-import sys
-from importlib import reload
-
 import pytest
-from mock import Mock, patch
 
 import aws_encryption_sdk.streaming_client
 
@@ -25,14 +21,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 # Check if MPL is installed, and skip tests based on whether it is
 try:
-    import aws_cryptographic_materialproviders
+    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import
     HAS_MPL = True
-except ImportError as e:
+except ImportError:
     HAS_MPL = False
 
 
 @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
-def test_GIVEN_test_has_mpl_is_True_THEN_streaming_client_has_mpl_is_TRUE():
+def test_GIVEN_test_has_mpl_is_True_THEN_streaming_client_has_mpl_is_True():
     """If the MPL IS installed in the runtime environment,
     assert the streaming client has _HAS_MPL set to True"""
 
@@ -41,7 +37,7 @@ def test_GIVEN_test_has_mpl_is_True_THEN_streaming_client_has_mpl_is_TRUE():
 
 
 @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
-def test_GIVEN_test_has_mpl_is_False_THEN_streaming_client_has_mpl_is_TRUE():
+def test_GIVEN_test_has_mpl_is_False_THEN_streaming_client_has_mpl_is_False():
     """If the MPL IS NOT installed in the runtime environment,
     assert the streaming client has _HAS_MPL set to False"""
 

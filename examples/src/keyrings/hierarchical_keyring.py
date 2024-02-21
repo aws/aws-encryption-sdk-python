@@ -4,12 +4,6 @@
 import sys
 
 import boto3
-from typing import Dict
-
-import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-
 # ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
 from aws_cryptographic_materialproviders.keystore.client import KeyStore
@@ -25,6 +19,11 @@ from aws_cryptographic_materialproviders.mpl.models import (
     GetBranchKeyIdOutput,
 )
 from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
+from typing import Dict
+
+import aws_encryption_sdk
+from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
