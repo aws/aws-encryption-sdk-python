@@ -72,9 +72,9 @@ jobs:
             optional_mpl_dependency: -mpl
           # mpllocal and mplaccept require the MPL to be installed
           - python: mpllocal
-            optional_mpl_dependency: 
+            optional_mpl_dependency: ""
           - python: mplaccept
-            optional_mpl_dependency:
+            optional_mpl_dependency: ""
     steps:
       # Support long Dafny filenames (used in MPL and DBESDK repos)
       - name: Support longpaths
