@@ -58,7 +58,6 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
-from aws_encryption_sdk.materials_managers.mpl.cmm import MPLCMMHandler
 from aws_encryption_sdk.internal.utils import exactly_one_arg_is_not_none
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
@@ -79,6 +78,10 @@ try:
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
     _HAS_MPL = True
+
+    # Import internal ESDK modules that depend on the MPL
+    from aws_encryption_sdk.materials_managers.mpl.cmm import MPLCMMHandler
+
 except ImportError:
     _HAS_MPL = False
 
