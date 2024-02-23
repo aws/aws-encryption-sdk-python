@@ -1,23 +1,16 @@
 """Retrieves encryption/decryption materials from the MPL."""
 
-# These dependencies are only loaded if you install the MPL.
-try:
-    # pylint seems to struggle with this conditional import
-    # pylint: disable=unused-import
-    from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
-    from aws_cryptographic_materialproviders.mpl.models import (
-        AlgorithmSuiteIdESDK,
-        CommitmentPolicyESDK,
-        DecryptMaterialsInput,
-        DecryptMaterialsOutput,
-        EncryptedDataKey as MPL_EncryptedDataKey,
-        GetEncryptionMaterialsInput,
-        GetEncryptionMaterialsOutput,
-    )
-    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-    _HAS_MPL = True
-except ImportError:
-    _HAS_MPL = False
+from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
+from aws_cryptographic_materialproviders.mpl.models import (
+    AlgorithmSuiteIdESDK,
+    CommitmentPolicyESDK,
+    DecryptMaterialsInput,
+    DecryptMaterialsOutput,
+    EncryptedDataKey as MPL_EncryptedDataKey,
+    GetEncryptionMaterialsInput,
+    GetEncryptionMaterialsOutput,
+)
+from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
 
 from typing import List
 
@@ -46,9 +39,6 @@ class MPLCMMHandler(CryptoMaterialsManager):
         Create MPLCMMHandler.
         :param mpl_cmm: Underlying MPL cryptographic materials manager
         """
-        if not _HAS_MPL:
-            raise ImportError("You MUST install the aws-cryptographic-material-providers "
-                              f"library to create an instance of {MPLCMMHandler}")
         if isinstance(mpl_cmm, ICryptographicMaterialsManager):
             self.mpl_cmm = mpl_cmm
         else:

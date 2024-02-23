@@ -1,14 +1,10 @@
 """Provides encryption/decryption materials from an underlying materials provider."""
-# These dependencies are only loaded if you install the MPL.
-try:
-    from aws_cryptographic_materialproviders.mpl.models import (
-        DecryptionMaterials as MPL_DecryptionMaterials,
-        EncryptedDataKey as MPL_EncryptedDataKey,
-        EncryptionMaterials as MPL_EncryptionMaterials,
-    )
-    _HAS_MPL = True
-except ImportError:
-    _HAS_MPL = False
+
+from aws_cryptographic_materialproviders.mpl.models import (
+    DecryptionMaterials as MPL_DecryptionMaterials,
+    EncryptedDataKey as MPL_EncryptedDataKey,
+    EncryptionMaterials as MPL_EncryptionMaterials,
+)
 
 from typing import Dict, List, Set
 
@@ -42,9 +38,6 @@ class MPLEncryptionMaterials(Native_EncryptionMaterials):
         Create MPLEncryptionMaterials.
         :param materials: Underlying encryption materials
         """
-        if not _HAS_MPL:
-            raise ImportError("You MUST install the aws-cryptographic-material-providers "
-                              f"library to create an instance of {MPLEncryptionMaterials}")
         if isinstance(mpl_materials, MPL_EncryptionMaterials):
             self.mpl_materials = mpl_materials
         else:
@@ -115,9 +108,6 @@ class MPLDecryptionMaterials(Native_DecryptionMaterials):
         Create MPLDecryptionMaterials.
         :param materials: Underlying decryption materials
         """
-        if not _HAS_MPL:
-            raise ImportError("You MUST install the aws-cryptographic-material-providers "
-                              f"library to create an instance of {MPLDecryptionMaterials}")
         if isinstance(mpl_materials, MPL_DecryptionMaterials):
             self.mpl_materials = mpl_materials
         else:
