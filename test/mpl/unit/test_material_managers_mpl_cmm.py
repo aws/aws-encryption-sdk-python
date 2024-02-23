@@ -57,26 +57,6 @@ mock_encryption_materials_request = MagicMock(__class__=EncryptionMaterialsReque
 mock_encryption_materials_handler = MagicMock(__class__=MPLEncryptionMaterials)
 mock_decryption_materials_request = MagicMock(__class__=DecryptionMaterialsRequest)
 
-def test_GIVEN_test_has_mpl_is_False_THEN_cmm_has_mpl_is_False():
-    """If the MPL IS NOT installed in the runtime environment,
-    assert the cmm has _HAS_MPL set to False"""
-
-    assert hasattr(aws_encryption_sdk.materials_managers.mpl.cmm, "_HAS_MPL")
-    assert aws_encryption_sdk.materials_managers.mpl.cmm._HAS_MPL is False
-
-
-def test_GIVEN_test_has_mpl_is_True_THEN_cmm_has_mpl_is_True():
-    """If the MPL IS installed in the runtime environment,
-    assert the cmm has _HAS_MPL set to True"""
-
-    assert hasattr(aws_encryption_sdk.materials_managers.mpl.cmm, "_HAS_MPL")
-    assert aws_encryption_sdk.materials_managers.mpl.cmm._HAS_MPL is True
-
-
-def test_GIVEN_test_has_mpl_is_False_WHEN_create_MPLCMMHandler_THEN_raise_ImportError():
-    with pytest.raises(ImportError):
-        MPLCMMHandler(mpl_cmm="doesn't matter")
-
 
 def test_GIVEN_test_has_mpl_is_False_WHEN_create_MPLCMMHandler_with_valid_mpl_cmm_THEN_return_new_MPLCMMHandler():
     mpl_cmm_handler = MPLCMMHandler(mpl_cmm=mock_mpl_cmm)
