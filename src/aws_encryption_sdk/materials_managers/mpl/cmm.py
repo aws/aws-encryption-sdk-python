@@ -15,9 +15,9 @@ try:
         GetEncryptionMaterialsOutput,
     )
     from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-
+    _HAS_MPL = True
 except ImportError:
-    pass
+    _HAS_MPL = False
 
 from typing import List
 
@@ -43,9 +43,12 @@ class MPLCMMHandler(CryptoMaterialsManager):
         mpl_cmm: 'ICryptographicMaterialsManager'
     ):
         """
-        Create DecryptionMaterialsHandler.
-        :param cmm: Underlying cryptographic materials manager
+        Create MPLCMMHandler.
+        :param mpl_cmm: Underlying MPL cryptographic materials manager
         """
+        if not _HAS_MPL:
+            raise ImportError("You MUST install the aws-cryptographic-material-providers "
+                              f"library to create an instance of {MPLCMMHandler}")
         if isinstance(mpl_cmm, ICryptographicMaterialsManager):
             self.mpl_cmm = mpl_cmm
         else:
@@ -74,11 +77,12 @@ class MPLCMMHandler(CryptoMaterialsManager):
     def _native_to_mpl_get_encryption_materials(
         request: EncryptionMaterialsRequest
     ) -> 'GetEncryptionMaterialsInput':
+        commitment_policy = MPLCMMHandler._native_to_mpl_commmitment_policy(
+            request.commitment_policy
+        )
         output: GetEncryptionMaterialsInput = GetEncryptionMaterialsInput(
             encryption_context=request.encryption_context,
-            commitment_policy=MPLCMMHandler._native_to_mpl_commmitment_policy(
-                request.commitment_policy
-            ),
+            commitment_policy=commitment_policy,
             max_plaintext_length=request.plaintext_length,
         )
         return output
@@ -101,7 +105,7 @@ class MPLCMMHandler(CryptoMaterialsManager):
         request: DecryptionMaterialsRequest
     ) -> MPLDecryptionMaterials:
         """
-        Returns a DecryptionMaterialsHandler for the configured CMM.
+        Returns a MPLDecryptionMaterials for the configured CMM.
         :param request: Request for decryption materials
         """
         try:

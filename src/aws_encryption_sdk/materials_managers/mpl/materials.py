@@ -6,8 +6,9 @@ try:
         EncryptedDataKey as MPL_EncryptedDataKey,
         EncryptionMaterials as MPL_EncryptionMaterials,
     )
+    _HAS_MPL = True
 except ImportError:
-    pass
+    _HAS_MPL = False
 
 from typing import Dict, List, Set
 
@@ -35,17 +36,20 @@ class MPLEncryptionMaterials(Native_EncryptionMaterials):
 
     def __init__(
         self,
-        materials: 'MPL_EncryptionMaterials'
+        mpl_materials: 'MPL_EncryptionMaterials'
     ):
         """
-        Create MPLEncryptionMaterialsHandler.
+        Create MPLEncryptionMaterials.
         :param materials: Underlying encryption materials
         """
-        if isinstance(materials, MPL_EncryptionMaterials):
-            self.mpl_materials = materials
+        if not _HAS_MPL:
+            raise ImportError("You MUST install the aws-cryptographic-material-providers "
+                              f"library to create an instance of {MPLEncryptionMaterials}")
+        if isinstance(mpl_materials, MPL_EncryptionMaterials):
+            self.mpl_materials = mpl_materials
         else:
-            raise ValueError("Invalid EncryptionMaterials passed to EncryptionMaterialsHandler. "
-                             f"materials: {materials}")
+            raise ValueError("Invalid EncryptionMaterials passed to MPLEncryptionMaterials. "
+                             f"materials: {mpl_materials}")
 
     @property
     def algorithm(self) -> Algorithm:
@@ -105,17 +109,20 @@ class MPLDecryptionMaterials(Native_DecryptionMaterials):
 
     def __init__(
         self,
-        materials: 'MPL_DecryptionMaterials'
+        mpl_materials: 'MPL_DecryptionMaterials'
     ):
         """
-        Create DecryptionMaterialsHandler.
+        Create MPLDecryptionMaterials.
         :param materials: Underlying decryption materials
         """
-        if isinstance(materials, MPL_DecryptionMaterials):
-            self.mpl_materials = materials
+        if not _HAS_MPL:
+            raise ImportError("You MUST install the aws-cryptographic-material-providers "
+                              f"library to create an instance of {MPLDecryptionMaterials}")
+        if isinstance(mpl_materials, MPL_DecryptionMaterials):
+            self.mpl_materials = mpl_materials
         else:
-            raise ValueError(f"Invalid DecryptionMaterials passed to DecryptionMaterialsHandler.\
-                               materials: {materials}")
+            raise ValueError(f"Invalid DecryptionMaterials passed to MPLDecryptionMaterials.\
+                               materials: {mpl_materials}")
 
     @property
     def data_key(self) -> DataKey:
