@@ -108,6 +108,8 @@ batch:
       buildspec: codebuild/coverage/coverage.yml
     - identifier: code_coverage_mpl
       buildspec: codebuild/coverage/coverage_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
 
     - identifier: compliance
       buildspec: codebuild/compliance/compliance.yml
