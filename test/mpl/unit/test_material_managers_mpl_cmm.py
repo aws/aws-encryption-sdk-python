@@ -13,15 +13,6 @@
 """Unit test suite to validate aws_encryption_sdk.materials_managers.mpl.cmm logic."""
 
 import pytest
-from mock import MagicMock, patch
-
-from aws_encryption_sdk.identifiers import CommitmentPolicy
-from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
-from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
-
-pytestmark = [pytest.mark.unit, pytest.mark.local]
-
-
 from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
 from aws_cryptographic_materialproviders.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
@@ -35,19 +26,26 @@ from aws_cryptographic_materialproviders.mpl.models import (
 from aws_cryptographic_materialproviders.mpl.references import (
     ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
 )
+from mock import MagicMock, patch
+
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
+from aws_encryption_sdk.identifiers import CommitmentPolicy
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
+from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
+from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
+
+pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+mock_encryption_materials_request = MagicMock(__class__=EncryptionMaterialsRequest)
+mock_decryption_materials_request = MagicMock(__class__=DecryptionMaterialsRequest)
+
 
 mock_mpl_cmm = MagicMock(__class__=MPL_ICryptographicMaterialsManager)
 mock_mpl_encryption_materials = MagicMock(__class__=MPL_EncryptionMaterials)
 mock_mpl_decrypt_materials = MagicMock(__class__=MPL_DecryptionMaterials)
 
-
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
-from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
-
-mock_encryption_materials_request = MagicMock(__class__=EncryptionMaterialsRequest)
-mock_encryption_materials_handler = MagicMock(__class__=EncryptionMaterialsFromMPL)
-mock_decryption_materials_request = MagicMock(__class__=DecryptionMaterialsRequest)
 
 mock_edk = MagicMock(__class__=Native_EncryptedDataKey)
 mock_mpl_key_provider_id = MagicMock(__class__=str)
