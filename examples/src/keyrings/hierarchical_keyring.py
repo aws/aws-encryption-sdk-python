@@ -4,12 +4,12 @@
 import sys
 
 import boto3
-# ignore missing MPL for pylint, but the MPL is required for this example
+# Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-from aws_cryptographic_materialproviders.keystore.client import KeyStore
+from aws_cryptographic_materialproviders.keystore import KeyStore
 from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
 from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
-from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import (
     CacheTypeDefault,
