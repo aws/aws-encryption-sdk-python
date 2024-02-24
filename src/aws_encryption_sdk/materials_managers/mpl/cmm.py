@@ -19,7 +19,6 @@ from aws_cryptographic_materialproviders.mpl.references import (
     ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
 )
 # noqa pylint: enable=import-error,unused-import
-
 # pylint and isort disagree on where this should go. Choose isort and disable pylint for this.
 from typing import List  # noqa pylint: disable=wrong-import-order
 
@@ -29,9 +28,6 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, En
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
 from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
-
-# noqa pylint: enable=import-error,unused-import
-
 
 
 class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):

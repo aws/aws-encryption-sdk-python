@@ -9,8 +9,6 @@ from aws_cryptographic_materialproviders.mpl.models import (
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
 )
-# noqa pylint: enable=import-error
-
 # pylint and isort disagree on where this should go. Choose isort and disable pylint for this.
 from typing import Dict, List, Set  # noqa pylint: disable=wrong-import-order
 
