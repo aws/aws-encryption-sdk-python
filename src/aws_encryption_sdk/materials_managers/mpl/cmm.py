@@ -1,4 +1,7 @@
-"""Retrieves encryption/decryption materials from the MPL."""
+"""Retrieves encryption/decryption materials from the MPL and interfaces them to EDK components.
+
+The aws-cryptographic-materials-library MUST be installed to use this module.
+"""
 
 from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
 from aws_cryptographic_materialproviders.mpl.models import (
@@ -54,9 +57,10 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         :param request: Request for encryption materials
         """
         try:
-            mpl_input: MPL_GetEncryptionMaterialsInput = CryptoMaterialsManagerFromMPL._native_to_mpl_get_encryption_materials(
-                request
-            )
+            mpl_input: MPL_GetEncryptionMaterialsInput = \
+                CryptoMaterialsManagerFromMPL._native_to_mpl_get_encryption_materials(
+                    request
+                )
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
             return EncryptionMaterialsFromMPL(mpl_output.encryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:

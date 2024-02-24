@@ -19,14 +19,11 @@ import base64
 
 import attr
 import six
-
 from awses_test_vectors.internal.aws_kms import arn_from_key_id
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import dictionary_validator, membership_validator, validate_manifest_type
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
-    from typing import Dict, Iterable, Optional, cast  # noqa pylint: disable=unused-import
-
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         AWS_KMS_KEY_SPEC,
         KEY_SPEC,
@@ -34,6 +31,7 @@ try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
         MANIFEST_VERSION,
         MANUAL_KEY_SPEC,
     )
+    from typing import Dict, Iterable, Optional, cast  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass

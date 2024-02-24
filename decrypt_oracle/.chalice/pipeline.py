@@ -2,7 +2,6 @@
 import argparse
 import getpass
 import logging
-from typing import Iterable
 
 import boto3
 import troposphere
@@ -20,6 +19,7 @@ from awacs import (
 )
 from botocore.exceptions import ClientError
 from troposphere import GetAtt, Ref, Sub, Template, codebuild, codepipeline, iam, s3
+from typing import Iterable
 
 APPLICATION_NAME = "AwsEncryptionSdkDecryptOraclePython"
 PIPELINE_STACK_NAME = "{}DeployPipeline".format(APPLICATION_NAME)

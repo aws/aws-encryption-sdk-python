@@ -15,13 +15,14 @@ try:
     from aws_encryption_sdk.identifiers import AlgorithmSuite
 except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
+
+from awses_test_vectors.internal.defaults import ENCODING
+
 from aws_encryption_sdk.key_providers.kms import (
     DiscoveryAwsKmsMasterKeyProvider,
     MRKAwareDiscoveryAwsKmsMasterKeyProvider,
     StrictAwsKmsMasterKeyProvider,
 )
-
-from awses_test_vectors.internal.defaults import ENCODING
 
 # This lets us easily use a single boto3 client per region for all KMS master keys.
 KMS_MASTER_KEY_PROVIDER = DiscoveryAwsKmsMasterKeyProvider()

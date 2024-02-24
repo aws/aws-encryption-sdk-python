@@ -1,4 +1,7 @@
-"""Provides encryption/decryption materials from an underlying materials provider."""
+"""Provides encryption/decryption materials from an underlying materials provider from the MPL.
+
+The aws-cryptographic-materials-library MUST be installed to use this module.
+"""
 
 from aws_cryptographic_materialproviders.mpl.models import (
     DecryptionMaterials as MPL_DecryptionMaterials,
