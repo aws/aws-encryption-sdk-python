@@ -18,7 +18,9 @@ import botocore.session
 import pytest
 
 from ..src.basic_file_encryption_with_multiple_providers import cycle_file
-from .examples_test_utils import get_cmk_arn, static_plaintext
+from .examples_test_utils import get_cmk_arn
+from .examples_test_utils import static_plaintext
+
 
 pytestmark = [pytest.mark.examples]
 

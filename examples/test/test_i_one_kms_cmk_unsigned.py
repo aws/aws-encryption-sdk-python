@@ -16,7 +16,9 @@ import botocore.session
 import pytest
 
 from ..src.one_kms_cmk_unsigned import encrypt_decrypt
-from .examples_test_utils import get_cmk_arn, static_plaintext
+from .examples_test_utils import get_cmk_arn
+from .examples_test_utils import static_plaintext
+
 
 pytestmark = [pytest.mark.examples]
 

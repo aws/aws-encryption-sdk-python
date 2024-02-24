@@ -10,10 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""Unit test suite to validate aws_encryption_sdk.materials_managers.mpl.cmm logic.
-
-The aws-cryptographic-materials-library MUST be installed to run tests in this module.
-"""
+"""Unit test suite to validate aws_encryption_sdk.materials_managers.mpl.cmm logic."""
 
 import pytest
 from aws_cryptographic_materialproviders.mpl.models import (
@@ -21,7 +18,7 @@ from aws_cryptographic_materialproviders.mpl.models import (
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
 )
-from mock import MagicMock, patch
+from mock import MagicMock, PropertyMock, patch
 from typing import Dict, List, Set
 
 import aws_encryption_sdk.materials_managers.mpl.materials

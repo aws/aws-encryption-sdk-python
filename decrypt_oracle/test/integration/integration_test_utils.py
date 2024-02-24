@@ -15,11 +15,10 @@ import base64
 import json
 import os
 from collections import namedtuple
-
-import pytest
 from typing import Any, Callable, Iterable, Optional, Text
 
 import aws_encryption_sdk
+import pytest
 from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.key_providers.kms import StrictAwsKmsMasterKeyProvider
 

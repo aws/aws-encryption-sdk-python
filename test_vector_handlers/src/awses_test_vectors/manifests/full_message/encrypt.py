@@ -19,7 +19,9 @@ import json
 import os
 
 import attr
+import aws_encryption_sdk
 import six
+
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
     algorithm_suite_from_string_id,
@@ -32,8 +34,6 @@ from awses_test_vectors.internal.util import (
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
-import aws_encryption_sdk
-
 try:
     from aws_encryption_sdk.identifiers import AlgorithmSuite, CommitmentPolicy
 except ImportError:
@@ -41,11 +41,12 @@ except ImportError:
 
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
+
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         ENCRYPT_SCENARIO_SPEC,
         PLAINTEXTS_SPEC,
     )
-    from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass

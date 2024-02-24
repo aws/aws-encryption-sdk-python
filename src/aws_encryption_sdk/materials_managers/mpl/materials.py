@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 """Provides encryption/decryption materials from an underlying materials provider from the MPL.
 
 The aws-cryptographic-materials-library MUST be installed to use this module.
 """
 # pylint should pass even if the MPL isn't installed
 # noqa pylint: disable=import-error
+=======
+"""Provides encryption/decryption materials from an underlying materials provider."""
+
+>>>>>>> parent of 22eabb6 (fix)
 from aws_cryptographic_materialproviders.mpl.models import (
     DecryptionMaterials as MPL_DecryptionMaterials,
     EncryptedDataKey as MPL_EncryptedDataKey,

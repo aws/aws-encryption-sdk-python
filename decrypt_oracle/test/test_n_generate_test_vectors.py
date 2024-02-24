@@ -15,15 +15,14 @@ import base64
 import binascii
 import json
 import os
-
-import pytest
-from aws_encryption_sdk_decrypt_oracle.key_providers.counting import CountingMasterKey
-from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 from typing import Dict, Iterable, Text
 
 import aws_encryption_sdk
+import pytest
 from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.key_providers.kms import KMSMasterKey
+from aws_encryption_sdk_decrypt_oracle.key_providers.counting import CountingMasterKey
+from aws_encryption_sdk_decrypt_oracle.key_providers.null import NullMasterKey
 
 from .integration.integration_test_utils import test_vectors_filename
 

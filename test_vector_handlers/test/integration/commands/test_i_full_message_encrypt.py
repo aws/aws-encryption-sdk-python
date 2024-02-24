@@ -14,6 +14,7 @@
 Integration tests for ``awses_test_vectors.commands``.
 """
 import pytest
+
 from awses_test_vectors.commands import full_message_decrypt, full_message_decrypt_generate, full_message_encrypt
 
 from ..integration_test_utils import (  # noqa pylint: disable=unused-import

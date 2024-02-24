@@ -22,6 +22,11 @@ from copy import copy
 
 import attr
 import six
+from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
+
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
     dictionary_validator,
@@ -40,11 +45,6 @@ from awses_test_vectors.manifests.full_message.decrypt import (
 from awses_test_vectors.manifests.full_message.encrypt import MessageEncryptionTestScenario
 from awses_test_vectors.manifests.keys import KeysManifest
 
-from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
-from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
-from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
-from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
-
 try:
     from aws_encryption_sdk.identifiers import AlgorithmSuite
 except ImportError:
@@ -53,11 +53,12 @@ except ImportError:
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
+
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         ENCRYPT_SCENARIO_SPEC,
         PLAINTEXTS_SPEC,
     )
-    from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass

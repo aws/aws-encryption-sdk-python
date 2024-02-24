@@ -555,7 +555,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # MPL verification key is PEM bytes, not DER bytes.
             # If the underlying CMM is from the MPL, load PEM bytes.
             if (_HAS_MPL
-                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
                 self.signer = Signer.from_key_bytes(
                     algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key,
                     encoding=serialization.Encoding.PEM,
@@ -923,7 +923,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # MPL verification key is NOT key bytes; it is bytes of the compressed point.
             # If the underlying CMM is from the MPL, load bytes from encoded point.
             if (_HAS_MPL
-                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
                 self.verifier = Verifier.from_encoded_point(
                     algorithm=header.algorithm,
                     encoded_point=base64.b64encode(decryption_materials.verification_key)

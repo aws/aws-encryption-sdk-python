@@ -15,11 +15,10 @@ import json
 import logging
 import os
 
-from chalice import Chalice, Response
-
 import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.key_providers.kms import DiscoveryAwsKmsMasterKeyProvider
+from chalice import Chalice, Response
 
 from .key_providers.counting import CountingMasterKey
 from .key_providers.null import NullMasterKey
