@@ -22,10 +22,10 @@ from aws_cryptographic_materialproviders.mpl.models import (
     EncryptionMaterials as MPL_EncryptionMaterials,
 )
 from mock import MagicMock, patch
-from typing import Dict, List, Set
+from typing import Dict
 
 import aws_encryption_sdk.materials_managers.mpl.materials
-from aws_encryption_sdk.identifiers import Algorithm, AlgorithmSuite
+from aws_encryption_sdk.identifiers import AlgorithmSuite
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
 
@@ -48,11 +48,11 @@ mock_mpl_ciphertext = MagicMock(__class__=bytes)
 mock_edk.ciphertext = mock_mpl_ciphertext
 
 
-def test_GIVEN_valid_mpl_materials_WHEN_create_EncryptionMaterialsFromMPL_THEN_return_new_CryptoMaterialsManagerFromMPL():
+def test_GIVEN_mpl_materials_WHEN_create_EncryptionMaterialsFromMPL_THEN_return_new_CryptoMaterialsManagerFromMPL():
     # Given: valid mpl_materials
     # When: create EncryptionMaterialsFromMPL
     mpl_encryption_materials = EncryptionMaterialsFromMPL(mpl_materials=mock_mpl_encryption_materials)
-    
+
     # Then: EncryptionMaterialsFromMPL is valid
     assert mpl_encryption_materials.mpl_materials == mock_mpl_encryption_materials
 
@@ -93,7 +93,7 @@ def test_GIVEN_valid_mpl_algorithm_id_WHEN_EncryptionMaterials_get_algorithm_THE
     # When: Get algorithm
     mpl_encryption_materials = EncryptionMaterialsFromMPL(mpl_materials=mock_mpl_encryption_materials)
     output = mpl_encryption_materials.algorithm
-    
+
     # Then: output is valid
     assert output == mock_algorithm()  # property calls automatically, we need to call the mock
 
@@ -112,12 +112,12 @@ def test_GIVEN_valid_encryption_context_WHEN_EncryptionMaterials_get_encryption_
 
 
 def test_GIVEN_valid_edks_WHEN_EncryptionMaterials_get_edks_THEN_returns_edks():
-    
+
     # Given: lists of mocked EDKs of various lengths
     no_mock_edks = []
-    one_mock_edk = [ mock_edk ]
-    two_mocked_edks = [ mock_edk, mock_edk ]
-    for mock_edks in [ no_mock_edks, one_mock_edk, two_mocked_edks ]:
+    one_mock_edk = [mock_edk]
+    two_mocked_edks = [mock_edk, mock_edk]
+    for mock_edks in [no_mock_edks, one_mock_edk, two_mocked_edks]:
         mock_mpl_encryption_materials.encrypted_data_keys = mock_edks
 
         # When: get EDKs
