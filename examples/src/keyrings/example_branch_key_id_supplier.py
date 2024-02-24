@@ -18,11 +18,10 @@ class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
 
     def get_branch_key_id(
         self,
-        # TODO-MPL: Change this to `native_input` in Smithy-Dafny
-        input: GetBranchKeyIdInput  # noqa pylint: disable=redefined-builtin
+        param: GetBranchKeyIdInput
     ) -> GetBranchKeyIdOutput:
         """Returns branch key ID from the tenant ID in input's encryption context."""
-        encryption_context: Dict[str, str] = input.encryption_context
+        encryption_context: Dict[str, str] = param.encryption_context
 
         if b"tenant" not in encryption_context:
             raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")

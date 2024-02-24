@@ -21,7 +21,7 @@ def _mpl_algorithm_id_to_native_algorithm_id(mpl_algorithm_id: str) -> int:
     return int(mpl_algorithm_id, 16)
 
 
-class MPLEncryptionMaterials(Native_EncryptionMaterials):
+class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
     """
     In instances where encryption materials are be provided by
     the MPL's `aws_cryptographic_materialproviders.mpl.models.EncryptionMaterials`,
@@ -35,13 +35,13 @@ class MPLEncryptionMaterials(Native_EncryptionMaterials):
         mpl_materials: 'MPL_EncryptionMaterials'
     ):
         """
-        Create MPLEncryptionMaterials.
+        Create EncryptionMaterialsFromMPL.
         :param materials: Underlying encryption materials
         """
         if isinstance(mpl_materials, MPL_EncryptionMaterials):
             self.mpl_materials = mpl_materials
         else:
-            raise ValueError("Invalid EncryptionMaterials passed to MPLEncryptionMaterials. "
+            raise ValueError("Invalid EncryptionMaterials passed to EncryptionMaterialsFromMPL. "
                              f"materials: {mpl_materials}")
 
     @property
@@ -91,7 +91,7 @@ class MPLEncryptionMaterials(Native_EncryptionMaterials):
         return self.mpl_materials.signing_key
 
 
-class MPLDecryptionMaterials(Native_DecryptionMaterials):
+class DecryptionMaterialsFromMPL(Native_DecryptionMaterials):
     """
     In instances where decryption materials are be provided by
     the MPL's `aws_cryptographic_materialproviders.mpl.models.DecryptionMaterials`,
@@ -105,13 +105,13 @@ class MPLDecryptionMaterials(Native_DecryptionMaterials):
         mpl_materials: 'MPL_DecryptionMaterials'
     ):
         """
-        Create MPLDecryptionMaterials.
+        Create DecryptionMaterialsFromMPL.
         :param materials: Underlying decryption materials
         """
         if isinstance(mpl_materials, MPL_DecryptionMaterials):
             self.mpl_materials = mpl_materials
         else:
-            raise ValueError(f"Invalid DecryptionMaterials passed to MPLDecryptionMaterials.\
+            raise ValueError(f"Invalid DecryptionMaterials passed to DecryptionMaterialsFromMPL.\
                                materials: {mpl_materials}")
 
     @property
