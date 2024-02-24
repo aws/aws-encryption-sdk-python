@@ -15,13 +15,9 @@
 import pytest
 from mock import MagicMock, patch
 
-
 from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
-from aws_encryption_sdk.materials_managers.mpl.materials import (
-    EncryptionMaterialsFromMPL,
-    DecryptionMaterialsFromMPL,
-)
+from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -30,8 +26,8 @@ from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMater
 from aws_cryptographic_materialproviders.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
     CommitmentPolicyESDK as MPL_CommitmentPolicyESDK,
-    DecryptMaterialsInput as MPL_DecryptMaterialsInput,
     DecryptionMaterials as MPL_DecryptionMaterials,
+    DecryptMaterialsInput as MPL_DecryptMaterialsInput,
     EncryptionMaterials as MPL_EncryptionMaterials,
     GetEncryptionMaterialsInput as MPL_GetEncryptionMaterialsInput,
     GetEncryptionMaterialsOutput as MPL_GetEncryptionMaterialsOutput,
@@ -46,12 +42,8 @@ mock_mpl_decrypt_materials = MagicMock(__class__=MPL_DecryptionMaterials)
 
 
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-from aws_encryption_sdk.materials_managers import (
-    EncryptionMaterialsRequest,
-    DecryptionMaterialsRequest,
-)
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
-
 
 mock_encryption_materials_request = MagicMock(__class__=EncryptionMaterialsRequest)
 mock_encryption_materials_handler = MagicMock(__class__=EncryptionMaterialsFromMPL)

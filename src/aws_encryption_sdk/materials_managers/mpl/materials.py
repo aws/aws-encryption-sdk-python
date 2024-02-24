@@ -5,7 +5,6 @@ from aws_cryptographic_materialproviders.mpl.models import (
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
 )
-
 from typing import Dict, List, Set
 
 from aws_encryption_sdk.identifiers import Algorithm, AlgorithmSuite

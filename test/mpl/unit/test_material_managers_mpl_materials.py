@@ -13,15 +13,12 @@
 """Unit test suite to validate aws_encryption_sdk.materials_managers.mpl.cmm logic."""
 
 import pytest
-from mock import MagicMock, patch, PropertyMock
+from mock import MagicMock, PropertyMock, patch
 from typing import Dict, List, Set
 
 import aws_encryption_sdk.materials_managers.mpl.materials
-from aws_encryption_sdk.materials_managers.mpl.materials import (
-    EncryptionMaterialsFromMPL,
-    DecryptionMaterialsFromMPL,
-)
 from aws_encryption_sdk.identifiers import Algorithm, AlgorithmSuite
+from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
@@ -36,10 +33,7 @@ mock_mpl_encryption_materials = MagicMock(__class__=MPL_EncryptionMaterials)
 mock_mpl_decrypt_materials = MagicMock(__class__=MPL_DecryptionMaterials)
 
     
-from aws_encryption_sdk.materials_managers import (
-    EncryptionMaterialsRequest,
-    DecryptionMaterialsRequest,
-)
+from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 
 mock_encryption_materials_request = MagicMock(__class__=EncryptionMaterialsRequest)
 mock_encryption_materials_handler = MagicMock(__class__=EncryptionMaterialsFromMPL)

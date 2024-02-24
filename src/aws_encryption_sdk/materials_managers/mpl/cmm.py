@@ -11,16 +11,15 @@ from aws_cryptographic_materialproviders.mpl.models import (
     GetEncryptionMaterialsOutput as MPL_GetEncryptionMaterialsOutput,
 )
 from aws_cryptographic_materialproviders.mpl.references import (
-    ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager
+    ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
 )
-
 from typing import List
 
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 from aws_encryption_sdk.identifiers import CommitmentPolicy
-from aws_encryption_sdk.materials_managers.mpl.materials import EncryptionMaterialsFromMPL, DecryptionMaterialsFromMPL
 from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, EncryptionMaterialsRequest
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.mpl.materials import DecryptionMaterialsFromMPL, EncryptionMaterialsFromMPL
 from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDataKey
 
 
