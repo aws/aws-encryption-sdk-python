@@ -2,12 +2,14 @@
 
 The aws-cryptographic-materials-library MUST be installed to use this module.
 """
-
+# pylint should pass even if the MPL isn't installed
+# noqa pylint: disable=import-error
 from aws_cryptographic_materialproviders.mpl.models import (
     DecryptionMaterials as MPL_DecryptionMaterials,
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
 )
+# noqa pylint: enable=import-error
 from typing import Dict, List, Set
 
 from aws_encryption_sdk.identifiers import Algorithm, AlgorithmSuite
