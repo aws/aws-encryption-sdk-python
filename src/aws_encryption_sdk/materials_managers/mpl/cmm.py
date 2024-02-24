@@ -1,3 +1,5 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Retrieves encryption/decryption materials from the MPL and interfaces them to EDK components.
 
 The aws-cryptographic-materials-library MUST be installed to use this module.

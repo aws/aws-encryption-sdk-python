@@ -1,3 +1,5 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Provides encryption/decryption materials from an underlying materials provider from the MPL.
 
 The aws-cryptographic-materials-library MUST be installed to use this module.

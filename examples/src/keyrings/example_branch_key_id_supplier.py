@@ -1,3 +1,5 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Example implementation of a branch key ID supplier."""
 
 from aws_cryptographic_materialproviders.mpl.models import GetBranchKeyIdInput, GetBranchKeyIdOutput
