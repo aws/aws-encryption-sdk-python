@@ -73,8 +73,9 @@ from aws_encryption_sdk.structures import MessageHeader
 try:
     # pylint should pass even if the MPL isn't installed
     # noqa pylint: disable=import-error
-    from aws_cryptographic_materialproviders.mpl.client import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
     from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import IKeyring
     _HAS_MPL = True
@@ -147,9 +148,6 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
         """If the MPL is present in the runtime, perform MPL-specific post-init logic
         to validate the new object has a valid state.
         """
-        if not hasattr(self, "keyring"):
-            self._no_mpl_attrs_post_init()
-            return
         if not exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
             raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
         if self.materials_manager is None:
@@ -159,21 +157,21 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                     master_key_provider=self.key_provider
                 )
             elif self.keyring is not None:
-                # No CMM, provided MPL keyring => create MPL's DefaultCryptographicMaterialsManager
-                if not isinstance(self.keyring, IKeyring):
-                    raise ValueError(f"Argument provided to keyring MUST be a {IKeyring}. \
-                                     Found {self.keyring.__class__.__name__}")
-
-                mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
-                    config=MaterialProvidersConfig()
-                )
-                cmm = mat_prov.create_default_cryptographic_materials_manager(
-                    CreateDefaultCryptographicMaterialsManagerInput(
-                        keyring=self.keyring
+                try:
+                    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                        config=MaterialProvidersConfig()
                     )
-                )
-                cmm_handler: CryptoMaterialsManager = CryptoMaterialsManagerFromMPL(cmm)
-                self.materials_manager = cmm_handler
+                    cmm = mat_prov.create_default_cryptographic_materials_manager(
+                        CreateDefaultCryptographicMaterialsManagerInput(
+                            keyring=self.keyring
+                        )
+                    )
+                    cmm_handler: CryptoMaterialsManager = CryptoMaterialsManagerFromMPL(cmm)
+                    self.materials_manager = cmm_handler
+                except AwsCryptographicMaterialProvidersException as mpl_exception:
+                    # Wrap MPL error into the ESDK error type
+                    # so customers only have to catch ESDK error types.
+                    raise AWSEncryptionSDKClientError(mpl_exception)                    
 
     def _no_mpl_attrs_post_init(self):
         """If the MPL is NOT present in the runtime, perform post-init logic

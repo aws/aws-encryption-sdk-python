@@ -33,14 +33,36 @@ from .test_values import VALUES
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
+# Check if MPL is installed, and skip tests based on its installation status
+# Ideally, this logic would be based on mocking imports and testing logic,
+# but doing that introduces errors that cause other tests to fail.
+try:
+    from aws_cryptographic_materialproviders.mpl.references import (
+        IKeyring,
+    )
+    HAS_MPL = True
+
+    from aws_encryption_sdk.materials_managers.mpl.cmm import (
+        CryptoMaterialsManagerFromMPL,
+    )
+except ImportError:
+    HAS_MPL = False
+
+
 class TestStreamDecryptor(object):
     @pytest.fixture(autouse=True)
     def apply_fixtures(self):
         self.mock_key_provider = MagicMock(__class__=MasterKeyProvider)
         self.mock_materials_manager = MagicMock(__class__=CryptoMaterialsManager)
-        self.mock_materials_manager.decrypt_materials.return_value = MagicMock(
+        self.mock_decrypt_materials = MagicMock(
             data_key=VALUES["data_key_obj"], verification_key=sentinel.verification_key
         )
+        self.mock_materials_manager.decrypt_materials.return_value = self.mock_decrypt_materials
+        
+        if HAS_MPL:
+            self.mock_mpl_materials_manager = MagicMock(__class__=CryptoMaterialsManagerFromMPL)
+            self.mock_mpl_materials_manager.decrypt_materials.return_value = self.mock_decrypt_materials
+
         self.mock_header = MagicMock()
         self.mock_header.version = SerializationVersion.V1
         self.mock_header.algorithm = MagicMock(
@@ -212,6 +234,114 @@ class TestStreamDecryptor(object):
         )
         assert test_header is self.mock_header
         assert test_header_auth is sentinel.header_auth
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
+    def test_GIVEN_verification_key_AND_no_mpl_WHEN_read_header_THEN_calls_from_key_bytes(
+        self,
+        mock_verifier,
+        *_,
+    ):
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        test_decryptor._read_header()
+
+        mock_verifier.from_key_bytes.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
+        )
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_verification_key_AND_has_mpl_AND_not_MPLCMM_WHEN_read_header_THEN_calls_from_key_bytes(
+        self,
+        mock_verifier,
+        *_,
+    ):
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        test_decryptor._read_header()
+
+        mock_verifier.from_key_bytes.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
+        )
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @patch("base64.b64encode")
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_verification_key_AND_has_mpl_AND_has_MPLCMM_WHEN_read_header_THEN_calls_from_encoded_point(
+        self,
+        mock_b64encoding,
+        mock_verifier,
+        *_,
+    ):
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_mpl_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        test_decryptor._read_header()
+
+        mock_verifier.from_encoded_point.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, encoded_point=mock_b64encoding()
+        )
+
+    # @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    # def test_GIVEN_verification_key_AND_has_mpl_AND_not_MPLCMM_WHEN_read_header_THEN_calls_from_key_bytes(
+    #     self,
+    #     mock_verifier,
+    # ):
+    #     mock_verifier_instance = MagicMock()
+    #     mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+    #     ct_stream = io.BytesIO(VALUES["data_128"])
+    #     mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+    #     test_decryptor = StreamDecryptor(
+    #         materials_manager=self.mock_materials_manager,
+    #         source=ct_stream,
+    #         commitment_policy=mock_commitment_policy,
+    #     )
+    #     test_decryptor.source_stream = ct_stream
+    #     test_decryptor._stream_length = len(VALUES["data_128"])
+
+    #     test_decryptor._read_header()
+
+    #     mock_verifier.from_key_bytes.assert_called_once_with(
+    #         algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
+    #     )
+
 
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     def test_read_header_frame_too_large(self, mock_derive_datakey):
