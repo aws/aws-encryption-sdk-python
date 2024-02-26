@@ -213,7 +213,7 @@ def test_GIVEN_has_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
 
 @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
 @pytest.mark.parametrize(
-    "kwargs, stream_type",
+    "kwargs",
     (
         (dict(source=b"", materials_manager=FakeCryptoMaterialsManager())),
         (dict(source=b"", key_provider=FakeMasterKeyProvider())),
