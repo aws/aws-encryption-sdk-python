@@ -215,17 +215,15 @@ def test_GIVEN_has_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
 @pytest.mark.parametrize(
     "kwargs, stream_type",
     (
-        (dict(source=b"", materials_manager=FakeCryptoMaterialsManager()), io.BytesIO),
-        (dict(source=b"", key_provider=FakeMasterKeyProvider()), io.BytesIO),
-        (dict(source="", materials_manager=FakeCryptoMaterialsManager()), io.BytesIO),
-        (dict(source=io.BytesIO(), materials_manager=FakeCryptoMaterialsManager()), io.BytesIO),
-        (dict(source=six.StringIO(), materials_manager=FakeCryptoMaterialsManager()), six.StringIO),
-        (dict(source=b"", keyring=FakeKeyring()), io.BytesIO),
+        (dict(source=b"", materials_manager=FakeCryptoMaterialsManager())),
+        (dict(source=b"", key_provider=FakeMasterKeyProvider())),
+        (dict(source="", materials_manager=FakeCryptoMaterialsManager())),
+        (dict(source=io.BytesIO(), materials_manager=FakeCryptoMaterialsManager())),
+        (dict(source=six.StringIO(), materials_manager=FakeCryptoMaterialsManager())),
     ),
 )
 def test_client_configs_with_mpl(
     kwargs,
-    stream_type
 ):
     kwargs["commitment_policy"] = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
 
@@ -250,3 +248,29 @@ def test_client_configs_with_mpl(
         assert test.key_provider is not None
         assert test.key_provider == kwargs["key_provider"]
         assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
+
+
+# This needs its own test; pytest parametrize cannot use a conditionally-loaded type
+@pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+def test_keyring_client_config_with_mpl(
+):
+    kwargs = {
+        "source": b"",
+        "keyring": FakeKeyring()
+    }
+
+    test = _ClientConfig(**kwargs)
+    
+    # In all cases, config should have a materials manager
+    assert test.materials_manager is not None
+    
+    # If materials manager was provided, it should be directly used
+    if hasattr(kwargs, "materials_manager"):
+        assert kwargs["materials_manager"] == test.materials_manager
+
+    # If MPL keyring was provided, it should be wrapped in MPL materials manager
+    if hasattr(kwargs, "keyring"):
+        assert test.keyring is not None
+        assert test.keyring == kwargs["keyring"]
+        assert isinstance(test.keyring, IKeyring)
+        assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
