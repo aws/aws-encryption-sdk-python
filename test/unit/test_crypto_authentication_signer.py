@@ -94,11 +94,14 @@ def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
     with patch.object(cryptography.hazmat.primitives, "serialization"):
         # Mock the `serialization.load_der_private_key`
         with patch.object(aws_encryption_sdk.internal.crypto.authentication.serialization, "load_der_private_key") as mock_der:
+            # When: from_key_bytes
             Signer.from_key_bytes(
                 algorithm=_algorithm,
                 key_bytes=sentinel.key_bytes,
+                # Given: No encoding provided => default arg
             )
 
+            # Then: calls load_der_private_key
             mock_der.assert_called_once_with(
                 data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
             )
@@ -113,12 +116,15 @@ def test_GIVEN_PEM_encoding_WHEN_signer_from_key_bytes_THEN_load_pem_private_key
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
+    # When: from_key_bytes
     signer = Signer.from_key_bytes(
         algorithm=_algorithm,
         key_bytes=sentinel.key_bytes,
+        # Given: PEM encoding
         encoding=patch_serialization.Encoding.PEM
     )
 
+    # Then: calls load_pem_private_key
     patch_serialization.load_pem_private_key.assert_called_once_with(
         data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
     )
@@ -136,10 +142,13 @@ def test_GIVEN_unrecognized_encoding_WHEN_signer_from_key_bytes_THEN_raise_Value
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
+    # Then: Raises ValueError
     with pytest.raises(ValueError):
+        # When: from_key_bytes
         signer = Signer.from_key_bytes(
             algorithm=_algorithm,
             key_bytes=sentinel.key_bytes,
+            # Given: Invalid encoding
             encoding="not an encoding"
         )
 

@@ -42,14 +42,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_cryptographic_materialproviders.mpl.references import (
-        IKeyring,
-    )
-    HAS_MPL = True
-
     from aws_encryption_sdk.materials_managers.mpl.cmm import (
         CryptoMaterialsManagerFromMPL,
     )
+    HAS_MPL = True
+
 except ImportError:
     HAS_MPL = False
 
@@ -387,6 +384,7 @@ class TestStreamEncryptor(object):
         test_encryptor._prep_message()
         mock_prep_non_framed.assert_called_once_with()
 
+    # Given: no MPL
     @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
     def test_GIVEN_no_mpl_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_default_encoding(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
@@ -400,17 +398,21 @@ class TestStreamEncryptor(object):
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep message
             test_encryptor._prep_message()
+            # Then: calls from_key_bytes with default encoding
             self.mock_signer.from_key_bytes.assert_called_once_with(
                 algorithm=self.mock_encryption_materials.algorithm,
                 key_bytes=self.mock_encryption_materials.signing_key
             )
 
+    # Given: has MPL
     @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
     def test_GIVEN_has_mpl_AND_not_MPLCMM_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_default_encoding(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
             source=VALUES["data_128"],
+            # Given: native CMM
             materials_manager=self.mock_materials_manager,
             frame_length=self.mock_frame_length,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
@@ -419,17 +421,21 @@ class TestStreamEncryptor(object):
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep_message
             test_encryptor._prep_message()
+            # Then: calls from_key_bytes with default encoding
             self.mock_signer.from_key_bytes.assert_called_once_with(
                 algorithm=self.mock_encryption_materials.algorithm,
                 key_bytes=self.mock_encryption_materials.signing_key
             )
 
+    # Given: has MPL
     @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
-    def test_GIVEN_has_mpl_AND_has_MPLCMM_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_default_encoding(self):
+    def test_GIVEN_has_mpl_AND_has_MPLCMM_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_PEM_encoding(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
             source=VALUES["data_128"],
+            # Given: MPL CMM
             materials_manager=self.mock_mpl_materials_manager,
             frame_length=self.mock_frame_length,
             algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
@@ -438,10 +444,12 @@ class TestStreamEncryptor(object):
         )
         test_encryptor.content_type = ContentType.FRAMED_DATA
         with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep_message
             test_encryptor._prep_message()
             self.mock_signer.from_key_bytes.assert_called_once_with(
                 algorithm=self.mock_encryption_materials.algorithm,
                 key_bytes=self.mock_encryption_materials.signing_key,
+                # Then: calls from_key_bytes with PEM encoding
                 encoding=serialization.Encoding.PEM
             )
 

@@ -193,22 +193,28 @@ def test_client_config_converts(kwargs, stream_type):
         assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
 
 
+# Given: no MPL
 @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
 @patch.object(_ClientConfig, "_no_mpl_attrs_post_init")
 def test_GIVEN_no_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
     mock_no_mpl_attrs_post_init,
 ):
+    # When: attrs_post_init
     _ClientConfig(**BASE_KWARGS)
+    # Then: calls _no_mpl_attrs_post_init
     mock_no_mpl_attrs_post_init.assert_called_once_with()
 
 
+# Given: has MPL
 @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
 @patch.object(_ClientConfig, "_has_mpl_attrs_post_init")
 def test_GIVEN_has_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
-    _has_mpl_attrs_post_init,
+    mock_has_mpl_attrs_post_init,
 ):
+    # When: attrs_post_init
     _ClientConfig(**BASE_KWARGS)
-    _has_mpl_attrs_post_init.assert_called_once_with()
+    # Then: calls _has_mpl_attrs_post_init
+    mock_has_mpl_attrs_post_init.assert_called_once_with()
 
 
 @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
