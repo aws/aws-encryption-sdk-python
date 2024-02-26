@@ -259,7 +259,8 @@ def test_keyring_client_config_with_mpl(
 ):
     kwargs = {
         "source": b"",
-        "keyring": FakeKeyring()
+        "keyring": FakeKeyring(),
+        "commitment_policy": CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     }
 
     test = _ClientConfig(**kwargs)

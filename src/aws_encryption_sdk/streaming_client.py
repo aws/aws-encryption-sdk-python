@@ -171,7 +171,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                 except AwsCryptographicMaterialProvidersException as mpl_exception:
                     # Wrap MPL error into the ESDK error type
                     # so customers only have to catch ESDK error types.
-                    raise AWSEncryptionSDKClientError(mpl_exception)               
+                    raise AWSEncryptionSDKClientError(mpl_exception)
 
     def _no_mpl_attrs_post_init(self):
         """If the MPL is NOT present in the runtime, perform post-init logic
