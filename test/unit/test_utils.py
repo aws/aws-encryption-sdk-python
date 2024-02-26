@@ -268,25 +268,25 @@ class TestUtils(object):
 
     def test_exactly_one_arg_is_not_none(self):
         # No args => no args are not None
-        assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none() is False 
+        assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none() is False
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             None
-        ) is False 
+        ) is False
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             "not None"
-        ) is True 
+        ) is True
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             "not None", "also not None"
-        ) is False 
+        ) is False
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             "not None", None
-        ) is True 
+        ) is True
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             "not None", "also not None"
-        ) is False 
+        ) is False
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             None, "not None"
-        ) is True 
+        ) is True
         assert aws_encryption_sdk.internal.utils.exactly_one_arg_is_not_none(
             None, None
-        ) is False 
+        ) is False

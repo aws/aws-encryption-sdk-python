@@ -13,9 +13,9 @@
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamEncryptor"""
 import io
 
-from cryptography.hazmat.primitives import serialization
 import pytest
 import six
+from cryptography.hazmat.primitives import serialization
 from mock import MagicMock, call, patch, sentinel
 
 import aws_encryption_sdk.internal.defaults
@@ -42,9 +42,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_encryption_sdk.materials_managers.mpl.cmm import (
-        CryptoMaterialsManagerFromMPL,
-    )
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
     HAS_MPL = True
 
 except ImportError:

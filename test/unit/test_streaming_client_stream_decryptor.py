@@ -37,9 +37,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_encryption_sdk.materials_managers.mpl.cmm import (
-        CryptoMaterialsManagerFromMPL,
-    )
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
     HAS_MPL = True
 
 except ImportError:
@@ -55,7 +53,7 @@ class TestStreamDecryptor(object):
             data_key=VALUES["data_key_obj"], verification_key=sentinel.verification_key
         )
         self.mock_materials_manager.decrypt_materials.return_value = self.mock_decrypt_materials
-        
+
         if HAS_MPL:
             self.mock_mpl_materials_manager = MagicMock(__class__=CryptoMaterialsManagerFromMPL)
             self.mock_mpl_materials_manager.decrypt_materials.return_value = self.mock_decrypt_materials
@@ -258,7 +256,7 @@ class TestStreamDecryptor(object):
         # When: read header
         test_decryptor._read_header()
 
-        # Then: calls from_key_bytes 
+        # Then: calls from_key_bytes
         mock_verifier.from_key_bytes.assert_called_once_with(
             algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
         )

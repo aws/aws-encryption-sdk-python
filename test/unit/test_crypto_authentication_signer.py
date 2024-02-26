@@ -11,9 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Signer``."""
-import pytest
-from mock import MagicMock, sentinel, patch
 import cryptography.hazmat.primitives.serialization
+import pytest
+from mock import MagicMock, patch, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.authentication
@@ -76,7 +76,7 @@ def test_f_signer_from_key_bytes():
 def test_f_signer_key_bytes():
     test = Signer(algorithm=ALGORITHM, key=VALUES["ecc_private_key_prime"])
     assert test.key_bytes() == VALUES["ecc_private_key_prime_private_bytes"]
-    
+
 
 def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
     patch_default_backend,
@@ -93,7 +93,10 @@ def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
     # Mock the `serialization.Encoding.DER`
     with patch.object(cryptography.hazmat.primitives, "serialization"):
         # Mock the `serialization.load_der_private_key`
-        with patch.object(aws_encryption_sdk.internal.crypto.authentication.serialization, "load_der_private_key") as mock_der:
+        with patch.object(
+            aws_encryption_sdk.internal.crypto.authentication.serialization,
+            "load_der_private_key"
+        ) as mock_der:
             # When: from_key_bytes
             Signer.from_key_bytes(
                 algorithm=_algorithm,
@@ -106,7 +109,7 @@ def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
                 data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
             )
 
-    
+
 def test_GIVEN_PEM_encoding_WHEN_signer_from_key_bytes_THEN_load_pem_private_key(
     patch_default_backend,
     patch_serialization,
@@ -145,7 +148,7 @@ def test_GIVEN_unrecognized_encoding_WHEN_signer_from_key_bytes_THEN_raise_Value
     # Then: Raises ValueError
     with pytest.raises(ValueError):
         # When: from_key_bytes
-        signer = Signer.from_key_bytes(
+        Signer.from_key_bytes(
             algorithm=_algorithm,
             key_bytes=sentinel.key_bytes,
             # Given: Invalid encoding

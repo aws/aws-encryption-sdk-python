@@ -33,14 +33,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_cryptographic_materialproviders.mpl.references import (
-        IKeyring,
-    )
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
     HAS_MPL = True
 
-    from aws_encryption_sdk.materials_managers.mpl.cmm import (
-        CryptoMaterialsManagerFromMPL,
-    )
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 except ImportError:
     HAS_MPL = False
 
@@ -59,14 +55,15 @@ class FakeMasterKeyProvider(MasterKeyProvider):
 
     def _new_master_key(self, key_id):
         return
-    
+
+
 if HAS_MPL:
     class FakeKeyring(IKeyring):
         def on_encrypt(self, param):
-            return 
-        
+            return
+
         def on_decrypt(self, param):
-            return 
+            return
 
 
 BASE_KWARGS = dict(
@@ -234,10 +231,10 @@ def test_client_configs_with_mpl(
     kwargs["commitment_policy"] = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
 
     test = _ClientConfig(**kwargs)
-    
+
     # In all cases, config should have a materials manager
     assert test.materials_manager is not None
-    
+
     # If materials manager was provided, it should be directly used
     if hasattr(kwargs, "materials_manager"):
         assert kwargs["materials_manager"] == test.materials_manager
@@ -266,10 +263,10 @@ def test_keyring_client_config_with_mpl(
     }
 
     test = _ClientConfig(**kwargs)
-    
+
     # In all cases, config should have a materials manager
     assert test.materials_manager is not None
-    
+
     # If materials manager was provided, it should be directly used
     if hasattr(kwargs, "materials_manager"):
         assert kwargs["materials_manager"] == test.materials_manager
