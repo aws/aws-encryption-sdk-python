@@ -211,6 +211,7 @@ def test_GIVEN_has_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
     _has_mpl_attrs_post_init.assert_called_once_with()
 
 
+@pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
 @pytest.mark.parametrize(
     "kwargs, stream_type",
     (
@@ -222,7 +223,6 @@ def test_GIVEN_has_mpl_WHEN_attrs_post_init_THEN_calls_no_mpl_method(
         (dict(source=b"", keyring=FakeKeyring()), io.BytesIO),
     ),
 )
-@pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
 def test_client_configs_with_mpl(
     kwargs,
     stream_type
