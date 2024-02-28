@@ -76,8 +76,13 @@ try:
     from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
-    from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
-    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+    from aws_cryptographic_materialproviders.mpl.models import (
+        CreateDefaultCryptographicMaterialsManagerInput,
+    )
+    from aws_cryptographic_materialproviders.mpl.references import (
+        ICryptographicMaterialsManager,
+        IKeyring,
+    )
     _HAS_MPL = True
 
     # Import internal ESDK modules that depend on the MPL
@@ -126,9 +131,30 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     max_encrypted_data_keys = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(int))
     )
-    materials_manager = attr.ib(
-        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
-    )
+    if _HAS_MPL:
+        # With the MPL, the provided materials_manager can be an instance of
+        # either the native interface or an MPL interface.
+        # If it implements the MPL interface, this constructor will
+        # internally wrap it in a native interface.
+        materials_manager = attr.ib(
+            hash=True,
+            default=None,
+            validator=attr.validators.optional(
+                attr.validators.instance_of(
+                    (CryptoMaterialsManager, ICryptographicMaterialsManager)
+                )
+            )
+        )
+    else:
+        materials_manager = attr.ib(
+            hash=True,
+            default=None,
+            validator=attr.validators.optional(
+                attr.validators.instance_of(
+                    CryptoMaterialsManager
+                )
+            )
+        )
     key_provider = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
@@ -172,6 +198,12 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                     # Wrap MPL error into the ESDK error type
                     # so customers only have to catch ESDK error types.
                     raise AWSEncryptionSDKClientError(mpl_exception)
+        # TODO-MPL: MUST wrap MPL with native
+        elif (self.materials_manager is not None
+              and isinstance(self.materials_manager, ICryptographicMaterialsManager)):
+            # If the provided materials manager implements an MPL interface,
+            # wrap it in a native interface.
+            self.materials_manager = CryptoMaterialsManagerFromMPL(self.materials_manager)
 
     def _no_mpl_attrs_post_init(self):
         """If the MPL is NOT present in the runtime, perform post-init logic
@@ -596,7 +628,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if hasattr(self._encryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
             self._stored_encryption_context = {}
-            for (k, v) in self._encryption_materials.encryption_context:
+            print(f"{self._encryption_materials.encryption_context=}")
+            for (k, v) in self._encryption_materials.encryption_context.items():
                 if k in self._encryption_materials.required_encryption_context_keys:
                     self._required_encryption_context[k] = v
                 else:
@@ -856,6 +889,11 @@ class DecryptorConfig(_ClientConfig):
     max_body_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
+    encryption_context = attr.ib(
+        hash=False,  # dictionaries are not hashable
+        default=attr.Factory(dict),
+        validator=attr.validators.instance_of(dict),
+    )
 
 
 class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-attributes
@@ -934,13 +972,15 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 )
             )
         
-        if hasattr(self, "encryption_context"):
+        print(f"{self.config.encryption_context=}")
+        
+        if hasattr(self.config, "encryption_context"):
             decrypt_materials_request = DecryptionMaterialsRequest(
                 encrypted_data_keys=header.encrypted_data_keys,
                 algorithm=header.algorithm,
                 encryption_context=header.encryption_context,
                 commitment_policy=self.config.commitment_policy,
-                reproduced_encryption_context=self.encryption_context
+                reproduced_encryption_context=self.config.encryption_context
             )
         else:
             decrypt_materials_request = DecryptionMaterialsRequest(
@@ -949,12 +989,13 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 encryption_context=header.encryption_context,
                 commitment_policy=self.config.commitment_policy,
             )
+        print(f"{decrypt_materials_request=}")
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
 
         if hasattr(decryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
-            for (k, v) in self._encryption_materials.encryption_context:
-                if k in self._encryption_materials.required_encryption_context_keys:
+            for (k, v) in decryption_materials.encryption_context.items():
+                if k in decryption_materials.required_encryption_context_keys:
                     self._required_encryption_context[k] = v
         else:
             self._required_encryption_context = None
@@ -997,7 +1038,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "message. Halting processing of this message."
                 )
 
-        if required_ec_serialized is not None:
+        if self._required_encryption_context is not None:
             required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 self._required_encryption_context
             )

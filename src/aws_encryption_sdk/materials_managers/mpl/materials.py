@@ -144,6 +144,11 @@ class DecryptionMaterialsFromMPL(Native_DecryptionMaterials):
         return self.mpl_materials.verification_key
 
     @property
+    def encryption_context(self) -> Dict[str, str]:
+        """Materials' encryption context."""
+        return self.mpl_materials.encryption_context
+
+    @property
     def required_encryption_context_keys(self) -> bytes:
         """Materials' required encryption context keys."""
         return self.mpl_materials.required_encryption_context_keys
