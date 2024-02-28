@@ -218,7 +218,13 @@ def _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer=Non
     return output
 
 
-def _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer=None):
+def _serialize_header_auth_v2(
+        algorithm,
+        header,
+        data_encryption_key,
+        signer=None,
+        required_encryption_context_bytes=None
+    ):
     """Creates serialized header authentication data for messages in serialization version V2.
 
     :param algorithm: Algorithm to use for encryption
@@ -230,13 +236,22 @@ def _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer=Non
     :returns: Serialized header authentication data
     :rtype: bytes
     """
-    header_auth = encrypt(
-        algorithm=algorithm,
-        key=data_encryption_key,
-        plaintext=b"",
-        associated_data=header,
-        iv=header_auth_iv(algorithm),
-    )
+    if required_encryption_context_bytes is None:
+        header_auth = encrypt(
+            algorithm=algorithm,
+            key=data_encryption_key,
+            plaintext=b"",
+            associated_data=header,
+            iv=header_auth_iv(algorithm),
+        )
+    else:
+        header_auth = encrypt(
+            algorithm=algorithm,
+            key=data_encryption_key,
+            plaintext=b"",
+            associated_data=header + required_encryption_context_bytes,
+            iv=header_auth_iv(algorithm),
+        )
     output = struct.pack(
         ">{tag_len}s".format(tag_len=algorithm.tag_len),
         header_auth.tag,
@@ -246,7 +261,7 @@ def _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer=Non
     return output
 
 
-def serialize_header_auth(version, algorithm, header, data_encryption_key, signer=None):
+def serialize_header_auth(version, algorithm, header, data_encryption_key, signer=None, required_encryption_context_bytes=None):
     """Creates serialized header authentication data.
 
     :param version: The serialization version of the message
@@ -263,7 +278,7 @@ def serialize_header_auth(version, algorithm, header, data_encryption_key, signe
     if version == SerializationVersion.V1:
         return _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer)
     elif version == SerializationVersion.V2:
-        return _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer)
+        return _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer, required_encryption_context_bytes)
     else:
         raise SerializationError("Unrecognized message format version: {}".format(version))
 

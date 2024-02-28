@@ -593,11 +593,23 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.algorithm.message_format_version == 0x02:
             version = SerializationVersion.V2
 
+        if hasattr(self._encryption_materials, "required_encryption_context_keys"):
+            self._required_encryption_context = {}
+            self._stored_encryption_context = {}
+            for (k, v) in self._encryption_materials.encryption_context:
+                if k in self._encryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[k] = v
+                else:
+                    self._stored_encryption_context[k] = v
+        else:
+            self._stored_encryption_context = self._encryption_materials.encryption_context,
+            self._required_encryption_context = None
+
         kwargs = dict(
             version=version,
             algorithm=self._encryption_materials.algorithm,
             message_id=message_id,
-            encryption_context=self._encryption_materials.encryption_context,
+            encryption_context=self._stored_encryption_context,
             encrypted_data_keys=self._encryption_materials.encrypted_data_keys,
             content_type=self.content_type,
             frame_length=self.config.frame_length,
@@ -621,13 +633,27 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     def _write_header(self):
         """Builds the message header and writes it to the output stream."""
         self.output_buffer += serialize_header(header=self._header, signer=self.signer)
-        self.output_buffer += serialize_header_auth(
-            version=self._header.version,
-            algorithm=self._encryption_materials.algorithm,
-            header=self.output_buffer,
-            data_encryption_key=self._derived_data_key,
-            signer=self.signer,
-        )
+
+        if self._required_encryption_context is not None:
+            required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                self._required_encryption_context
+            )
+            self.output_buffer += serialize_header_auth(
+                version=self._header.version,
+                algorithm=self._encryption_materials.algorithm,
+                header=self.output_buffer,
+                data_encryption_key=self._derived_data_key,
+                signer=self.signer,
+                required_encryption_context_bytes=required_ec_serialized,
+            )
+        else:
+            self.output_buffer += serialize_header_auth(
+                version=self._header.version,
+                algorithm=self._encryption_materials.algorithm,
+                header=self.output_buffer,
+                data_encryption_key=self._derived_data_key,
+                signer=self.signer,
+            )
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
@@ -907,14 +933,32 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     found=header.frame_length, custom=self.config.max_body_length
                 )
             )
-
-        decrypt_materials_request = DecryptionMaterialsRequest(
-            encrypted_data_keys=header.encrypted_data_keys,
-            algorithm=header.algorithm,
-            encryption_context=header.encryption_context,
-            commitment_policy=self.config.commitment_policy,
-        )
+        
+        if hasattr(self, "encryption_context"):
+            decrypt_materials_request = DecryptionMaterialsRequest(
+                encrypted_data_keys=header.encrypted_data_keys,
+                algorithm=header.algorithm,
+                encryption_context=header.encryption_context,
+                commitment_policy=self.config.commitment_policy,
+                reproduced_encryption_context=self.encryption_context
+            )
+        else:
+            decrypt_materials_request = DecryptionMaterialsRequest(
+                encrypted_data_keys=header.encrypted_data_keys,
+                algorithm=header.algorithm,
+                encryption_context=header.encryption_context,
+                commitment_policy=self.config.commitment_policy,
+            )
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
+
+        if hasattr(decryption_materials, "required_encryption_context_keys"):
+            self._required_encryption_context = {}
+            for (k, v) in self._encryption_materials.encryption_context:
+                if k in self._encryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[k] = v
+        else:
+            self._required_encryption_context = None
+
         if decryption_materials.verification_key is None:
             self.verifier = None
         else:
@@ -953,7 +997,24 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "message. Halting processing of this message."
                 )
 
-        validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
+        if required_ec_serialized is not None:
+            required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                self._required_encryption_context
+            )
+
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                raw_header=raw_header + required_ec_serialized,
+                data_key=self._derived_data_key
+            )
+        else:
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                raw_header=raw_header,
+                data_key=self._derived_data_key
+            )
 
         return header, header_auth
 

@@ -185,6 +185,7 @@ class EncryptionSDKClient(object):
                 If source_length is not provided and read() is called, will attempt to seek()
                 to the end of the stream and tell() to find the length of source data.
 
+        :param dict encryption_context: Dictionary defining encryption context
         :param int max_body_length: Maximum frame size (or content length for non-framed messages)
             in bytes to read from ciphertext message.
         :returns: Tuple containing the decrypted plaintext and the message header object
