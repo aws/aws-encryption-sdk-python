@@ -198,11 +198,11 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                     # Wrap MPL error into the ESDK error type
                     # so customers only have to catch ESDK error types.
                     raise AWSEncryptionSDKClientError(mpl_exception)
-        # TODO-MPL: MUST wrap MPL with native
+                
+        # If the provided materials_manager is directly from the MPL, wrap it in a native interface
+        # for internal use.
         elif (self.materials_manager is not None
               and isinstance(self.materials_manager, ICryptographicMaterialsManager)):
-            # If the provided materials manager implements an MPL interface,
-            # wrap it in a native interface.
             self.materials_manager = CryptoMaterialsManagerFromMPL(self.materials_manager)
 
     def _no_mpl_attrs_post_init(self):
@@ -625,15 +625,18 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.algorithm.message_format_version == 0x02:
             version = SerializationVersion.V2
 
+        # If the underlying materials_provider provided required_encryption_context_keys
+        # (ex. if the materials_provider is a required encryption context CMM),
+        # then partition the encryption context based on those keys.
         if hasattr(self._encryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
             self._stored_encryption_context = {}
-            print(f"{self._encryption_materials.encryption_context=}")
             for (k, v) in self._encryption_materials.encryption_context.items():
                 if k in self._encryption_materials.required_encryption_context_keys:
                     self._required_encryption_context[k] = v
                 else:
                     self._stored_encryption_context[k] = v
+        # Otherwise, store all encryption context with the message.
         else:
             self._stored_encryption_context = self._encryption_materials.encryption_context,
             self._required_encryption_context = None
@@ -667,6 +670,8 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """Builds the message header and writes it to the output stream."""
         self.output_buffer += serialize_header(header=self._header, signer=self.signer)
 
+        # If there is _required_encryption_context,
+        # serialize it, then authenticate it
         if self._required_encryption_context is not None:
             required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 self._required_encryption_context
@@ -679,6 +684,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 signer=self.signer,
                 required_encryption_context_bytes=required_ec_serialized,
             )
+        # Otherwise, do not pass in any required encryption context
         else:
             self.output_buffer += serialize_header_auth(
                 version=self._header.version,
@@ -884,6 +890,9 @@ class DecryptorConfig(_ClientConfig):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
+    :param dict encryption_context: Dictionary defining encryption context to validate
+            on decrypt. This is ONLY validated on decrypt if using the required encryption
+            context CMM from the aws-cryptographic-materialproviders library.
     """
 
     max_body_length = attr.ib(
@@ -971,9 +980,9 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     found=header.frame_length, custom=self.config.max_body_length
                 )
             )
-        
-        print(f"{self.config.encryption_context=}")
-        
+
+        # If encryption_context is provided on decrypt,
+        # pass it to the DecryptionMaterialsRequest
         if hasattr(self.config, "encryption_context"):
             decrypt_materials_request = DecryptionMaterialsRequest(
                 encrypted_data_keys=header.encrypted_data_keys,
@@ -989,9 +998,12 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 encryption_context=header.encryption_context,
                 commitment_policy=self.config.commitment_policy,
             )
-        print(f"{decrypt_materials_request=}")
+
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
 
+        # If the materials_manager passed required_encryption_context_keys,
+        # get the items out of the encryption_context with the keys.
+        # The items are used in header validation.
         if hasattr(decryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
             for (k, v) in decryption_materials.encryption_context.items():
@@ -1038,7 +1050,12 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "message. Halting processing of this message."
                 )
 
+        # If _required_encryption_context is present,
+        # serialize it and pass it to validate_header.
         if self._required_encryption_context is not None:
+            # The authenticated only encryption context is all encryption context key-value pairs where the
+            # key exists in Required Encryption Context Keys. It is then serialized according to the
+            # message header Key Value Pairs.
             required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 self._required_encryption_context
             )
@@ -1046,6 +1063,9 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             validate_header(
                 header=header,
                 header_auth=header_auth,
+                # When verifying the header, the AAD input to the authenticated encryption algorithm
+                # specified by the algorithm suite is the message header body and the serialized
+                # authenticated only encryption context.
                 raw_header=raw_header + required_ec_serialized,
                 data_key=self._derived_data_key
             )

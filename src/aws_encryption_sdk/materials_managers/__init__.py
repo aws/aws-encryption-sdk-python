@@ -89,7 +89,9 @@ class DecryptionMaterialsRequest(object):
     :param encrypted_data_keys: Set of encrypted data keys
     :type encrypted_data_keys: set of `aws_encryption_sdk.structures.EncryptedDataKey`
     :param dict encryption_context: Encryption context to provide to master keys for underlying decrypt requests
-    :param dict reproduced_encryption_context: TODO
+    :param dict reproduced_encryption_context: Encryption context to provide on decrypt.
+        This is ONLY processed if using the required encryption context CMM from the
+        aws-cryptographic-materialproviders library.
     """
 
     algorithm = attr.ib(validator=attr.validators.instance_of(Algorithm))

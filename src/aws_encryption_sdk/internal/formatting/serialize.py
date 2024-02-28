@@ -219,12 +219,12 @@ def _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer=Non
 
 
 def _serialize_header_auth_v2(
-        algorithm,
-        header,
-        data_encryption_key,
-        signer=None,
-        required_encryption_context_bytes=None
-    ):
+    algorithm,
+    header,
+    data_encryption_key,
+    signer=None,
+    required_encryption_context_bytes=None
+):
     """Creates serialized header authentication data for messages in serialization version V2.
 
     :param algorithm: Algorithm to use for encryption
@@ -233,6 +233,11 @@ def _serialize_header_auth_v2(
     :param bytes data_encryption_key: Data key with which to encrypt message
     :param signer: Cryptographic signer object (optional)
     :type signer: aws_encryption_sdk.Signer
+    :param required_encryption_context_bytes: Serialized encryption context items
+        for all items whose keys are in the required_encryption_context list.
+        This is ONLY processed if using the aws-cryptographic-materialproviders library
+        AND its required encryption context CMM. (optional)
+    :type required_encryption_context_bytes: bytes 
     :returns: Serialized header authentication data
     :rtype: bytes
     """
@@ -249,6 +254,11 @@ def _serialize_header_auth_v2(
             algorithm=algorithm,
             key=data_encryption_key,
             plaintext=b"",
+            # The AAD MUST be the concatenation of the serialized message header body and the serialization
+            # of encryption context to only authenticate. The encryption context to only authenticate MUST
+            # be the encryption context in the encryption materials filtered to only contain key value
+            # pairs listed in the encryption material's required encryption context keys serialized
+            # according to the encryption context serialization specification.
             associated_data=header + required_encryption_context_bytes,
             iv=header_auth_iv(algorithm),
         )
@@ -261,7 +271,14 @@ def _serialize_header_auth_v2(
     return output
 
 
-def serialize_header_auth(version, algorithm, header, data_encryption_key, signer=None, required_encryption_context_bytes=None):
+def serialize_header_auth(
+    version,
+    algorithm,
+    header,
+    data_encryption_key,
+    signer=None,
+    required_encryption_context_bytes=None
+):
     """Creates serialized header authentication data.
 
     :param version: The serialization version of the message
@@ -272,6 +289,12 @@ def serialize_header_auth(version, algorithm, header, data_encryption_key, signe
     :param bytes data_encryption_key: Data key with which to encrypt message
     :param signer: Cryptographic signer object (optional)
     :type signer: aws_encryption_sdk.Signer
+    :param required_encryption_context_bytes: Serialized encryption context items
+        for all items whose keys are in the required_encryption_context list.
+        This is ONLY processed if using the aws-cryptographic-materialproviders library
+        AND its required encryption context CMM
+        AND if using the v2 message format. (optional)
+    :type required_encryption_context_bytes: bytes 
     :returns: Serialized header authentication data
     :rtype: bytes
     """
