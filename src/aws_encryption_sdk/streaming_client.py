@@ -76,9 +76,7 @@ try:
     from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
-    from aws_cryptographic_materialproviders.mpl.models import (
-        CreateDefaultCryptographicMaterialsManagerInput,
-    )
+    from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
     from aws_cryptographic_materialproviders.mpl.references import (
         ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
         IKeyring as MPL_IKeyring,
@@ -631,11 +629,11 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if hasattr(self._encryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
             self._stored_encryption_context = {}
-            for (k, v) in self._encryption_materials.encryption_context.items():
-                if k in self._encryption_materials.required_encryption_context_keys:
-                    self._required_encryption_context[k] = v
+            for (key, value) in self._encryption_materials.encryption_context.items():
+                if key in self._encryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[key] = value
                 else:
-                    self._stored_encryption_context[k] = v
+                    self._stored_encryption_context[key] = value
         # Otherwise, store all encryption context with the message.
         else:
             self._stored_encryption_context = self._encryption_materials.encryption_context
@@ -956,7 +954,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self._prep_non_framed()
         self._message_prepped = True
 
-    def _read_header(self):  # noqa: C901
+    # TODO-MPL: Refactor this function, remove these linter disablers
+    # noqa: C901
+    # pylint: disable=too-many-branches
+    def _read_header(self):
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects

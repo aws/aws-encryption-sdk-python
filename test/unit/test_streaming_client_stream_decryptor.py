@@ -238,7 +238,7 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     # Given: no MPL
     @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
-    def test_GIVEN_verification_key_AND_no_mpl_WHEN_read_header_THEN_calls_from_key_bytes(
+    def test_GIVEN_decrypt_config_has_ec_WHEN_read_header_THEN_calls_decrypt_materials_with_reproduced_ec(
         self,
         mock_verifier,
         mock_decrypt_materials_request,

@@ -223,7 +223,7 @@ def _serialize_header_auth_v2(
     header,
     data_encryption_key,
     signer=None,
-    required_encryption_context_bytes=None
+    required_ec_bytes=None
 ):
     """Creates serialized header authentication data for messages in serialization version V2.
 
@@ -241,7 +241,7 @@ def _serialize_header_auth_v2(
     :returns: Serialized header authentication data
     :rtype: bytes
     """
-    if required_encryption_context_bytes is None:
+    if required_ec_bytes is None:
         header_auth = encrypt(
             algorithm=algorithm,
             key=data_encryption_key,
@@ -259,7 +259,7 @@ def _serialize_header_auth_v2(
             # be the encryption context in the encryption materials filtered to only contain key value
             # pairs listed in the encryption material's required encryption context keys serialized
             # according to the encryption context serialization specification.
-            associated_data=header + required_encryption_context_bytes,
+            associated_data=header + required_ec_bytes,
             iv=header_auth_iv(algorithm),
         )
     output = struct.pack(
@@ -277,7 +277,7 @@ def serialize_header_auth(
     header,
     data_encryption_key,
     signer=None,
-    required_encryption_context_bytes=None
+    required_ec_bytes=None
 ):
     """Creates serialized header authentication data.
 
@@ -302,7 +302,7 @@ def serialize_header_auth(
         return _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer)
     elif version == SerializationVersion.V2:
         return _serialize_header_auth_v2(
-            algorithm, header, data_encryption_key, signer, required_encryption_context_bytes
+            algorithm, header, data_encryption_key, signer, required_ec_bytes
         )
     else:
         raise SerializationError("Unrecognized message format version: {}".format(version))

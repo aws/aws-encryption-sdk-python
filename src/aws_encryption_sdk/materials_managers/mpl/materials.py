@@ -97,6 +97,8 @@ class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
         return self.mpl_materials.signing_key
 
     @property
+    # Pylint thinks this name is too long, but it's the best descriptor for this...
+    # pylint: disable=invalid-name
     def required_encryption_context_keys(self) -> bytes:
         """Materials' required encryption context keys."""
         return self.mpl_materials.required_encryption_context_keys
@@ -148,6 +150,8 @@ class DecryptionMaterialsFromMPL(Native_DecryptionMaterials):
         return self.mpl_materials.encryption_context
 
     @property
+    # Pylint thinks this name is too long, but it's the best descriptor for this...
+    # pylint: disable=invalid-name
     def required_encryption_context_keys(self) -> bytes:
         """Materials' required encryption context keys."""
         return self.mpl_materials.required_encryption_context_keys

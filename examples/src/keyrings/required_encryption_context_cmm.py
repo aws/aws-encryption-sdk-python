@@ -14,24 +14,16 @@ import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import (
-    CacheTypeDefault,
     CreateAwsKmsKeyringInput,
     CreateDefaultCryptographicMaterialsManagerInput,
     CreateRequiredEncryptionContextCMMInput,
-    DefaultCache,
 )
-from aws_cryptographic_materialproviders.mpl.references import (
-    IKeyring,
-    ICryptographicMaterialsManager,
-)
-from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
-from typing import Dict
+from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
+from typing import Dict, List
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-
-from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks
 module_root_dir = '/'.join(__file__.split("/")[:-1])
@@ -98,7 +90,7 @@ def encrypt_and_decrypt_with_keyring(
                 underlying_cmm=underlying_cmm,
             )
         )
-    
+
     # 6. Encrypt the data
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
