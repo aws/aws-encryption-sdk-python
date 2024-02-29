@@ -37,7 +37,7 @@ jobs:
           - os: macos-latest
             architecture: x86
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
