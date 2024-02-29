@@ -1006,9 +1006,9 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         # The items are used in header validation.
         if hasattr(decryption_materials, "required_encryption_context_keys"):
             self._required_encryption_context = {}
-            for (k, v) in decryption_materials.encryption_context.items():
-                if k in decryption_materials.required_encryption_context_keys:
-                    self._required_encryption_context[k] = v
+            for (key, value) in decryption_materials.encryption_context.items():
+                if key in decryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[key] = value
         else:
             self._required_encryption_context = None
 
