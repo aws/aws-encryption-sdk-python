@@ -5,32 +5,81 @@ batch:
   build-list:
     - identifier: py37_integ
       buildspec: codebuild/py37/integ.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py37_examples
       buildspec: codebuild/py37/examples.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py37_awses_local
       buildspec: codebuild/py37/awses_local.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py38_examples
       buildspec: codebuild/py38/examples.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py38_awses_local
       buildspec: codebuild/py38/awses_local.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py39_integ
       buildspec: codebuild/py39/integ.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py39_examples
       buildspec: codebuild/py39/examples.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py39_awses_latest
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py310_integ
       buildspec: codebuild/py310/integ.yml
+      env:
+        image: aws/codebuild/standard:6.0
     - identifier: py310_examples
       buildspec: codebuild/py310/examples.yml
+      env:
+        image: aws/codebuild/standard:6.0
     - identifier: py310_awses_latest
       buildspec: codebuild/py310/awses_local.yml
+      env:
+        image: aws/codebuild/standard:6.0
 
+    - identifier: py311_integ
+      buildspec: codebuild/py311/integ.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_examples
+      buildspec: codebuild/py311/examples.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_awses_latest
+      buildspec: codebuild/py311/awses_local.yml
+      env:
+        image: aws/codebuild/standard:7.0
 
+    - identifier: py312_integ
+      buildspec: codebuild/py312/integ.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_examples
+      buildspec: codebuild/py312/examples.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_awses_latest
+      buildspec: codebuild/py312/awses_local.yml
+      env:
+        image: aws/codebuild/standard:7.0
+      
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
 
