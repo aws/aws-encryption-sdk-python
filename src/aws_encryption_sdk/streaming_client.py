@@ -1003,8 +1003,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
         # Guard against possible misunderstanding of "encryption context on decrypt".
         # The `encryption_context` parameter on the client's `decrypt` method
-        # is ONLY meant to be used in conjunction with a `materials_manager`
-        # that validates the encryption context provided to the decrypt method
+        #   is ONLY meant to be used in conjunction with a `materials_manager`
+        #   that validates the encryption context provided to the decrypt method.
+        # This guards against accidentially passing encryption context on decrypt
+        #   and not realizing nothing is being validated.
         if hasattr(self.config, "encryption_context"):
             try:
                 assert hasattr(decryption_materials, "required_encryption_context_keys")
