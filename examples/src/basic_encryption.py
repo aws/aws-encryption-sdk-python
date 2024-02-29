@@ -38,7 +38,7 @@ def cycle_string(key_arn, source_plaintext, botocore_session=None):
     ciphertext, encryptor_header = client.encrypt(source=source_plaintext, key_provider=master_key_provider)
 
     # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = client.decrypt(source=ciphertext, key_provider=master_key_provider, encryption_context={"a": "v"})
+    cycled_plaintext, decrypted_header = client.decrypt(source=ciphertext, key_provider=master_key_provider)
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == source_plaintext

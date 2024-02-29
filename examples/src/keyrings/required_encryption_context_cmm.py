@@ -109,7 +109,7 @@ def encrypt_and_decrypt_with_keyring(
         "requiredKey2": "requiredValue2",
     }
 
-    # 8. Decrypt the data
+    # # 8. Decrypt the data
     plaintext_bytes_A, _ = client.decrypt(
         source=ciphertext,
         materials_manager=required_ec_cmm,
@@ -117,14 +117,14 @@ def encrypt_and_decrypt_with_keyring(
     )
     assert plaintext_bytes_A == EXAMPLE_DATA
 
-
-    # 9. If we don't provide the required encryption context, this should fail
+    # 9. If we don't provide the required encryption context,
+    #    decryption will fail.
     try:
         plaintext_bytes_A, _ = client.decrypt(
             source=ciphertext,
             materials_manager=required_ec_cmm,
             # no encryption context while using required encryption context CMM makes decryption fail
         )
-        assert plaintext_bytes_A == EXAMPLE_DATA
+        raise Exception("If this exception is raised, decryption somehow succeeded!")
     except AWSEncryptionSDKClientError:
         pass
