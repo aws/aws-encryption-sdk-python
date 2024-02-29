@@ -954,10 +954,8 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self._prep_non_framed()
         self._message_prepped = True
 
-    # TODO-MPL: Refactor this function, remove these linter disablers
-    # noqa: C901
-    # pylint: disable=too-many-branches
-    def _read_header(self):
+    # TODO-MPL: Refactor this function, remove linter disablers
+    def _read_header(self):  # noqa pylint: disable=too-many-branches
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects
