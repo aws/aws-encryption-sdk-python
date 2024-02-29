@@ -681,7 +681,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 header=self.output_buffer,
                 data_encryption_key=self._derived_data_key,
                 signer=self.signer,
-                required_encryption_context_bytes=required_ec_serialized,
+                required_ec_bytes=required_ec_serialized,
             )
         # Otherwise, do not pass in any required encryption context
         else:
