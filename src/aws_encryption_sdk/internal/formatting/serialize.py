@@ -237,7 +237,7 @@ def _serialize_header_auth_v2(
         for all items whose keys are in the required_encryption_context list.
         This is ONLY processed if using the aws-cryptographic-materialproviders library
         AND its required encryption context CMM. (optional)
-    :type required_encryption_context_bytes: bytes 
+    :type required_encryption_context_bytes: bytes
     :returns: Serialized header authentication data
     :rtype: bytes
     """
@@ -294,14 +294,16 @@ def serialize_header_auth(
         This is ONLY processed if using the aws-cryptographic-materialproviders library
         AND its required encryption context CMM
         AND if using the v2 message format. (optional)
-    :type required_encryption_context_bytes: bytes 
+    :type required_encryption_context_bytes: bytes
     :returns: Serialized header authentication data
     :rtype: bytes
     """
     if version == SerializationVersion.V1:
         return _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer)
     elif version == SerializationVersion.V2:
-        return _serialize_header_auth_v2(algorithm, header, data_encryption_key, signer, required_encryption_context_bytes)
+        return _serialize_header_auth_v2(
+            algorithm, header, data_encryption_key, signer, required_encryption_context_bytes
+        )
     else:
         raise SerializationError("Unrecognized message format version: {}".format(version))
 

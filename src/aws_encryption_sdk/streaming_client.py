@@ -198,7 +198,7 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
                     # Wrap MPL error into the ESDK error type
                     # so customers only have to catch ESDK error types.
                     raise AWSEncryptionSDKClientError(mpl_exception)
-                
+
         # If the provided materials_manager is directly from the MPL, wrap it in a native interface
         # for internal use.
         elif (self.materials_manager is not None
@@ -673,9 +673,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         # If there is _required_encryption_context,
         # serialize it, then authenticate it
         if hasattr(self, "_required_encryption_context"):
-            required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
-                self._required_encryption_context
-            )
+            required_ec_serialized = \
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    self._required_encryption_context
+                )
             self.output_buffer += serialize_header_auth(
                 version=self._header.version,
                 algorithm=self._encryption_materials.algorithm,
@@ -955,7 +956,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self._prep_non_framed()
         self._message_prepped = True
 
-    def _read_header(self):
+    def _read_header(self):  # noqa: C901
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects
@@ -1056,9 +1057,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             # The authenticated only encryption context is all encryption context key-value pairs where the
             # key exists in Required Encryption Context Keys. It is then serialized according to the
             # message header Key Value Pairs.
-            required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
-                self._required_encryption_context
-            )
+            required_ec_serialized = \
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    self._required_encryption_context
+                )
 
             validate_header(
                 header=header,

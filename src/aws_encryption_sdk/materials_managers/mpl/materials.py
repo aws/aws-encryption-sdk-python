@@ -95,7 +95,6 @@ class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
     def signing_key(self) -> bytes:
         """Materials' signing key."""
         return self.mpl_materials.signing_key
-    
 
     @property
     def required_encryption_context_keys(self) -> bytes:
