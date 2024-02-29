@@ -23,5 +23,5 @@ pytestmark = [pytest.mark.examples]
 
 def test_cycle_string():
     plaintext = static_plaintext
-    cmk_arn = "arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f"
+    cmk_arn = get_cmk_arn()
     cycle_string(key_arn=cmk_arn, source_plaintext=plaintext, botocore_session=botocore.session.Session())

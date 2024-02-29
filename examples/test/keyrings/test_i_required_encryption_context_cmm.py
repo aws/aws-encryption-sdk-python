@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Unit test suite for the hierarchical keyring example."""
+"""Test suite for the required encryption context CMM example."""
 import pytest
 
 from ...src.keyrings.required_encryption_context_cmm import encrypt_and_decrypt_with_keyring

@@ -1,6 +1,11 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing basic encryption and decryption of a value already in memory."""
+"""
+Demonstrate an encrypt/decrypt cycle using a Required Encryption Context CMM.
+A required encryption context CMM asks for required keys in the encryption context field
+on encrypt such that they will not be stored on the message, but WILL be included in the header signature.
+On decrypt, the client MUST supply the key/value pair(s) that were not stored to successfully decrypt the message.
+"""
 import sys
 
 import boto3
@@ -28,6 +33,7 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
+# TODO-MPL: Remove this as part of removing PYTHONPATH hacks
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
@@ -51,11 +57,11 @@ def encrypt_and_decrypt_with_keyring(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    # 7. Create an encryption context.
-    #// Most encrypted data should have an associated encryption context
-    #// to protect integrity. This sample uses placeholder values.
-    #// For more information see:
-    #// blogs.aws.amazon.com/security/post/Tx2LZ6WBJJANTNW/How-to-Protect-the-Integrity-of-Your-Encrypted-Data-by-Using-AWS-Key-Management
+    # 2. Create an encryption context.
+    #    Most encrypted data should have an associated encryption context
+    #    to protect integrity. This sample uses placeholder values.
+    #    For more information see:
+    #    blogs.aws.amazon.com/security/post/Tx2LZ6WBJJANTNW/How-to-Protect-the-Integrity-of-Your-Encrypted-Data-by-Using-AWS-Key-Management  # noqa: E501
     encryption_context: Dict[str, str] = {
         "key1": "value1",
         "key2": "value2",
@@ -63,11 +69,11 @@ def encrypt_and_decrypt_with_keyring(
         "requiredKey2": "requiredValue2",
     }
 
-    #// 3. Create list of required encryption context keys.
-    #// This is a list of keys that must be present in the encryption context.
+    # 3. Create list of required encryption context keys.
+    #    This is a list of keys that must be present in the encryption context.
     required_encryption_context_keys: List[str] = ["requiredKey1", "requiredKey2"]
 
-    #// 4. Create the AWS KMS keyring.
+    # 4. Create the AWS KMS keyring.
     mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         config=MaterialProvidersConfig()
     )
@@ -77,7 +83,7 @@ def encrypt_and_decrypt_with_keyring(
     )
     kms_keyring: IKeyring = mpl.create_aws_kms_keyring(keyring_input)
 
-    #// 5. Create the required encryption context CMM.
+    # 5. Create the required encryption context CMM.
     underlying_cmm: ICryptographicMaterialsManager = \
         mpl.create_default_cryptographic_materials_manager(
             CreateDefaultCryptographicMaterialsManagerInput(
@@ -100,16 +106,16 @@ def encrypt_and_decrypt_with_keyring(
         encryption_context=encryption_context
     )
 
-    # // 7. Reproduce the encryption context.
-    # // The reproduced encryption context MUST contain a value for
-    # //        every key in the configured required encryption context keys during encryption with
-    # //        Required Encryption Context CMM.
+    # 7. Reproduce the encryption context.
+    #    The reproduced encryption context MUST contain a value for
+    #    every key in the configured required encryption context keys during encryption with
+    #    Required Encryption Context CMM.
     reproduced_encryption_context: Dict[str, str] = {
         "requiredKey1": "requiredValue1",
         "requiredKey2": "requiredValue2",
     }
 
-    # # 8. Decrypt the data
+    # 8. Decrypt the data
     plaintext_bytes_A, _ = client.decrypt(
         source=ciphertext,
         materials_manager=required_ec_cmm,
@@ -117,13 +123,13 @@ def encrypt_and_decrypt_with_keyring(
     )
     assert plaintext_bytes_A == EXAMPLE_DATA
 
-    # 9. If we don't provide the required encryption context,
+    # 9. Extra: Demonstrate that if we don't provide the required encryption context,
     #    decryption will fail.
     try:
         plaintext_bytes_A, _ = client.decrypt(
             source=ciphertext,
             materials_manager=required_ec_cmm,
-            # no encryption context while using required encryption context CMM makes decryption fail
+            # No encryption context while using required encryption context CMM makes decryption fail.
         )
         raise Exception("If this exception is raised, decryption somehow succeeded!")
     except AWSEncryptionSDKClientError:
