@@ -11,7 +11,7 @@ phases:
       - git clone https://github.com/aws-samples/busy-engineers-document-bucket.git
       - cd busy-engineers-document-bucket/exercises/python/encryption-context-complete
       - sed -i "s/aws_encryption_sdk/aws_encryption_sdk==$VERSION/" requirements-dev.txt
-      - pyenv install 3.8.12
+      - pyenv install --skip-existing 3.8.12
       - pyenv local 3.8.12
       - pip install "tox < 4.0"
   build:

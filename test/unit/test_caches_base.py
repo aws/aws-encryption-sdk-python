@@ -19,18 +19,16 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 
 
 def test_abstracts():
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(TypeError, match='instantiate abstract class CryptoMaterialsCache') as excinfo:
         CryptoMaterialsCache()
 
-    excinfo.match(
-        r"Can't instantiate abstract class CryptoMaterialsCache with abstract methods {}".format(
-            ", ".join(
-                [
-                    "get_decryption_materials",
-                    "get_encryption_materials",
-                    "put_decryption_materials",
-                    "put_encryption_materials",
-                ]
-            )
-        )
-    )
+    exception = str(excinfo.value)
+    method_names = [
+        "get_decryption_materials",
+        "get_encryption_materials",
+        "put_decryption_materials",
+        "put_encryption_materials"
+    ]
+    for name in method_names:
+        if exception.rfind(name) == -1:
+            raise AssertionError("{} missing from Exception Message".format(name))
