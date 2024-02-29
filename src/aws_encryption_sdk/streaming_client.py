@@ -638,7 +638,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     self._stored_encryption_context[k] = v
         # Otherwise, store all encryption context with the message.
         else:
-            self._stored_encryption_context = self._encryption_materials.encryption_context,
+            self._stored_encryption_context = self._encryption_materials.encryption_context
             self._required_encryption_context = None
 
         kwargs = dict(
@@ -1000,6 +1000,19 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             )
 
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
+
+        # Guard against possible misunderstanding of "encryption context on decrypt".
+        # The `encryption_context` parameter on the client's `decrypt` method
+        # is ONLY meant to be used in conjunction with a `materials_manager`
+        # that validates the encryption context provided to the decrypt method
+        if hasattr(self.config, "encryption_context"):
+            try:
+                assert hasattr(decryption_materials, "required_encryption_context_keys")
+            except AssertionError as e:
+                raise ValueError("encryption_context on decrypt is not supported with the configured CMM: "
+                                 f"{self.config.materials_manager}. "
+                                 "You MUST pass a CMM that supports required encryption context keys to "
+                                 "validate encryption context on decrypt.")
 
         # If the materials_manager passed required_encryption_context_keys,
         # get the items out of the encryption_context with the keys.
