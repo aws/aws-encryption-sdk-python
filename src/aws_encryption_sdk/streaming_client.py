@@ -672,7 +672,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
         # If there is _required_encryption_context,
         # serialize it, then authenticate it
-        if self._required_encryption_context is not None:
+        if hasattr(self, "_required_encryption_context"):
             required_ec_serialized = aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
                 self._required_encryption_context
             )
