@@ -323,7 +323,9 @@ def serialize_header_auth(
     :rtype: bytes
     """
     if version == SerializationVersion.V1:
-        return _serialize_header_auth_v1(algorithm, header, data_encryption_key, signer)
+        return _serialize_header_auth_v1(
+            algorithm, header, data_encryption_key, signer, required_ec_bytes
+        )
     elif version == SerializationVersion.V2:
         return _serialize_header_auth_v2(
             algorithm, header, data_encryption_key, signer, required_ec_bytes
