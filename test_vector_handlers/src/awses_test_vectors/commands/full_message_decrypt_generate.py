@@ -39,9 +39,16 @@ def cli(args=None):
         dest="json_indent",
         help="Output human-readable JSON",
     )
+    parser.add_argument(
+        "--keyrings",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Use keyring interfaces to encrypt",
+    )
 
     parsed = parser.parse_args(args)
 
-    encrypt_manifest = MessageDecryptionGenerationManifest.from_file(parsed.input)
+    encrypt_manifest = MessageDecryptionGenerationManifest.from_file(parsed.input, parsed.keyrings)
 
     encrypt_manifest.run_and_write_to_dir(target_directory=parsed.output, json_indent=parsed.json_indent)

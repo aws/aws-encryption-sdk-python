@@ -35,6 +35,9 @@ from awses_test_vectors.internal.util import (
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
+from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_provider_from_master_key_specs
+
+
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
 
@@ -202,6 +205,7 @@ class MessageDecryptionTestScenario(object):
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
     master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.instance_of(MessageDecryptionTestResult))
+    keyrings = attr.ib(validator=attr.validators.instance_of(bool))
     decryption_method = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod))
     )
@@ -216,6 +220,7 @@ class MessageDecryptionTestScenario(object):
         result,  # type: MessageDecryptionTestResult
         master_key_specs,  # type: Iterable[MasterKeySpec]
         master_key_provider_fn,  # type: Callable
+        keyrings,  # type: bool
         decryption_method=None,  # type: Optional[DecryptionMethod]
         description=None,  # type: Optional[str]
     ):  # noqa=D107
@@ -231,6 +236,7 @@ class MessageDecryptionTestScenario(object):
         self.master_key_provider_fn = master_key_provider_fn
         self.decryption_method = decryption_method
         self.description = description
+        self.keyrings = keyrings
         attr.validate(self)
 
     @classmethod
@@ -240,6 +246,8 @@ class MessageDecryptionTestScenario(object):
         plaintext_reader,  # type: Callable[[str], bytes]
         ciphertext_reader,  # type: Callable[[str], bytes]
         keys,  # type: KeysManifest
+        keyrings,  # type: bool
+        keys_uri,  # type: str
     ):
         # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
@@ -252,10 +260,18 @@ class MessageDecryptionTestScenario(object):
         :rtype: MessageDecryptionTestScenario
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
-        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
+        if keyrings:
+            master_key_specs = [KeyringSpec.from_scenario(spec) for spec in raw_master_key_specs]
+        else:
+            master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
+
+        print(f"{master_key_specs=}")
 
         def master_key_provider_fn():
-            return master_key_provider_from_master_key_specs(keys, master_key_specs)
+            if keyrings:
+                return keyring_provider_from_master_key_specs(keys_uri, master_key_specs)
+            else:
+                return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
@@ -268,6 +284,7 @@ class MessageDecryptionTestScenario(object):
             master_key_specs=master_key_specs,
             master_key_provider_fn=master_key_provider_fn,
             result=result,
+            keyrings=keyrings,
             decryption_method=decryption_method,
             description=scenario.get("description"),
         )
@@ -292,16 +309,27 @@ class MessageDecryptionTestScenario(object):
         return spec
 
     def _one_shot_decrypt(self):
+        keyring = self.master_key_provider_fn()
+        print(f"{keyring=}")
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
+        if self.keyrings:
+            return client.decrypt(source=self.ciphertext, keyring=keyring)
+        else:
+            return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
 
     def _streaming_decrypt(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        with client.stream(source=self.ciphertext, mode="d", key_provider=self.master_key_provider_fn()) as decryptor:
-            for chunk in decryptor:
-                result.extend(chunk)
-            return result, decryptor.header
+        if self.keyrings:
+            with client.stream(source=self.ciphertext, mode="d", keyring=self.master_key_provider_fn()) as decryptor:
+                for chunk in decryptor:
+                    result.extend(chunk)
+                return result, decryptor.header
+        else:
+            with client.stream(source=self.ciphertext, mode="d", key_provider=self.master_key_provider_fn()) as decryptor:
+                for chunk in decryptor:
+                    result.extend(chunk)
+                return result, decryptor.header
 
     def _streaming_decrypt_unsigned(self):
         result = bytearray()
@@ -388,11 +416,12 @@ class MessageDecryptionManifest(object):
         return {"manifest": manifest_spec, "client": client_spec, "keys": self.keys_uri, "tests": test_specs}
 
     @classmethod
-    def from_file(cls, input_file):
+    def from_file(cls, input_file, keyrings):
         # type: (IO) -> MessageDecryptionManifest
         """Load from a file containing a full message decrypt manifest.
 
         :param file input_file: File object for file containing JSON manifest
+        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
         :return: Loaded manifest
         :rtype: MessageDecryptionManifest
         """
@@ -407,6 +436,10 @@ class MessageDecryptionManifest(object):
         version = raw_manifest["manifest"]["version"]  # type: int
         keys_uri = raw_manifest["keys"]  # type: str
 
+        keys_uri = raw_manifest["keys"]
+        keys_filename = keys_uri.replace("file://", "")
+        joined = os.path.join(parent_dir, keys_filename)
+
         raw_keys_manifest = json.loads(root_reader(keys_uri).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
 
@@ -415,10 +448,31 @@ class MessageDecryptionManifest(object):
         raw_scenarios = raw_manifest["tests"]  # type: Dict[str, DECRYPT_SCENARIO_SPEC]
         test_scenarios = {
             name: MessageDecryptionTestScenario.from_scenario(
-                scenario=scenario, plaintext_reader=root_reader, ciphertext_reader=root_reader, keys=keys
+                scenario=scenario,
+                plaintext_reader=root_reader,
+                ciphertext_reader=root_reader,
+                keys=keys,
+                keyrings=False,
+                keys_uri=joined,
             )
             for name, scenario in raw_scenarios.items()
         }
+        # If optional keyrings argument is true,
+        # also add scenarios to decrypt with keyrings.
+        if keyrings:
+            keyrings_test_scenarios = {
+                name + "-keyring": MessageDecryptionTestScenario.from_scenario(
+                    scenario=scenario,
+                    plaintext_reader=root_reader,
+                    ciphertext_reader=root_reader,
+                    keys=keys,
+                    keyrings=True,
+                    keys_uri=joined,
+                )
+                for name, scenario in raw_scenarios.items()
+            }
+            # Merge into test_scenarios
+            test_scenarios = {**keyrings_test_scenarios, **test_scenarios}
 
         return cls(
             keys_uri=keys_uri,

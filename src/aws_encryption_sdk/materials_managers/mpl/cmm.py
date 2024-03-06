@@ -85,6 +85,9 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             encryption_context=request.encryption_context,
             commitment_policy=commitment_policy,
             max_plaintext_length=request.plaintext_length,
+            algorithm_suite_id=CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
+                request.algorithm.algorithm_id
+            )
         )
         return output
 
@@ -112,6 +115,8 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         try:
             mpl_input: 'MPL_DecryptMaterialsInput' = \
                 CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(request)
+            print(f"{mpl_input=}")
+            print(f"{self.mpl_cmm._impl.__dict__=}")
             mpl_output: 'MPL_DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
             return DecryptionMaterialsFromMPL(mpl_output.decryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:

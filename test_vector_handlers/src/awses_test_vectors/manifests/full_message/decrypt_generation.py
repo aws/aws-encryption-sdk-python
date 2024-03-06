@@ -23,9 +23,24 @@ from copy import copy
 import attr
 import six
 from aws_encryption_sdk.caches.local import LocalCryptoMaterialsCache
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
+
+from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_materialproviders.mpl.references import (
+    IKeyring,
+    CryptographicMaterialsManager,
+)
+from aws_cryptographic_materialproviders.mpl.models import (
+    CreateDefaultCryptographicMaterialsManagerInput,
+)
+from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+
+from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_provider_from_master_key_specs
+
 
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
@@ -92,9 +107,23 @@ class TamperingMethod:
 
         return: a list of (ciphertext, result) pairs
         """
-        materials_manager = DefaultCryptoMaterialsManager(
-            generation_scenario.encryption_scenario.master_key_provider_fn()
-        )
+        tmp = generation_scenario.encryption_scenario.master_key_provider_fn()
+        if isinstance(tmp, MasterKeyProvider):
+            materials_manager = DefaultCryptoMaterialsManager(
+                tmp
+            )
+        elif isinstance(tmp, IKeyring):
+            mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
+            mpl_cmm = mpl.create_default_cryptographic_materials_manager(
+                CreateDefaultCryptographicMaterialsManagerInput(
+                    keyring=tmp
+                )
+            )
+            materials_manager = CryptoMaterialsManagerFromMPL(
+                mpl_cmm=mpl_cmm
+            )
+        else:
+            raise ValueError(f"Unrecognized master_key_provider_fn return type: {str(tmp)}")
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(materials_manager)
         if generation_scenario.result:
             expected_result = generation_scenario.result
@@ -334,30 +363,40 @@ class MessageDecryptionTestScenarioGenerator(object):
     decryption_master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
     decryption_master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(MessageDecryptionTestResult)))
+    keyrings = attr.ib(validator=attr.validators.instance_of(bool))
 
     @classmethod
-    def from_scenario(cls, scenario, keys, plaintexts):
+    def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
         """Load from a scenario specification.
 
         :param dict scenario: Scenario specification JSON
         :param KeysManifest keys: Loaded keys
         :param dict plaintexts: Mapping of plaintext names to plaintext values
+        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
         :return: Loaded test scenario
         :rtype: MessageDecryptionTestScenarioGenerator
         """
         encryption_scenario_spec = scenario["encryption-scenario"]
-        encryption_scenario = MessageEncryptionTestScenario.from_scenario(encryption_scenario_spec, keys, plaintexts)
+        encryption_scenario = MessageEncryptionTestScenario.from_scenario(encryption_scenario_spec, keys, plaintexts, keyrings, keys_uri)
         tampering = scenario.get("tampering")
         tampering_method = TamperingMethod.from_tampering_spec(tampering)
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         if "decryption-master-keys" in scenario:
-            decryption_master_key_specs = [
-                MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-            ]
+            if keyrings:
+                decryption_master_key_specs = [
+                    KeyringSpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+                ]
+            else:
+                decryption_master_key_specs = [
+                    MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+                ]
 
             def decryption_master_key_provider_fn():
-                return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
+                if keyrings:
+                    return keyring_provider_from_master_key_specs(keys_uri, decryption_master_key_specs)
+                else:
+                    return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
 
         else:
             decryption_master_key_specs = encryption_scenario.master_key_specs
@@ -372,6 +411,7 @@ class MessageDecryptionTestScenarioGenerator(object):
             decryption_master_key_specs=decryption_master_key_specs,
             decryption_master_key_provider_fn=decryption_master_key_provider_fn,
             result=result,
+            keyrings=keyrings,
         )
 
     def run(self, ciphertext_writer, plaintext_uri):
@@ -400,6 +440,7 @@ class MessageDecryptionTestScenarioGenerator(object):
                 master_key_provider_fn=self.decryption_master_key_provider_fn,
                 decryption_method=self.decryption_method,
                 result=expected_result,
+                keyrings=self.keyrings,
             ),
         )
 
@@ -414,12 +455,14 @@ class MessageDecryptionGenerationManifest(object):
     :param KeysManifest keys: Loaded keys
     :param dict plaintexts: Mapping of plaintext names to plaintext values
     :param dict tests: Mapping of test scenario names to :class:`MessageDecryptionGenerationManifest`s
+    :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
     """
 
     version = attr.ib(validator=membership_validator(SUPPORTED_VERSIONS))
     keys = attr.ib(validator=attr.validators.instance_of(KeysManifest))
     plaintexts = attr.ib(validator=dictionary_validator(six.string_types, six.binary_type))
     tests = attr.ib(validator=dictionary_validator(six.string_types, MessageDecryptionTestScenarioGenerator))
+    keyrings = attr.ib(validator=attr.validators.instance_of(bool))
     type_name = "awses-decrypt-generate"
 
     @staticmethod
@@ -434,11 +477,12 @@ class MessageDecryptionGenerationManifest(object):
         return {name: os.urandom(size) for name, size in plaintexts_specs.items()}
 
     @classmethod
-    def from_file(cls, input_file):
+    def from_file(cls, input_file, keyrings):
         # type: (IO) -> MessageDecryptionGenerationManifest
         """Load from a file containing a full message encrypt manifest.
 
         :param file input_file: File object for file containing JSON manifest
+        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
         :return: Loaded manifest
         :rtype: MessageEncryptionManifest
         """
@@ -449,18 +493,27 @@ class MessageDecryptionGenerationManifest(object):
 
         parent_dir = os.path.abspath(os.path.dirname(input_file.name))
         reader = file_reader(parent_dir)
-        raw_keys_manifest = json.loads(reader(raw_manifest["keys"]).decode(ENCODING))
+        keys_uri = raw_manifest["keys"]
+        keys_filename = keys_uri.replace("file://", "")
+        print(f"{parent_dir=}")
+        print(f"{input_file=}")
+        print(f"{keys_uri=}")
+        print(f"{parent_dir+keys_uri=}")
+        print(f"{os.path.join(parent_dir, keys_uri)=}")
+        joined = os.path.join(parent_dir, keys_filename)
+        raw_keys_manifest = json.loads(reader(keys_uri).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
         plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
         tests = {}
+        # For some bizarre reason, the 
         for name, scenario in raw_manifest["tests"].items():
             try:
                 tests[name] = MessageDecryptionTestScenarioGenerator.from_scenario(
-                    scenario=scenario, keys=keys, plaintexts=plaintexts
+                    scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=joined,
                 )
             except NotImplementedError:
                 continue
-        return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests)
+        return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests, keyrings=keyrings)
 
     def run_and_write_to_dir(self, target_directory, json_indent=None):
         # type: (str, Optional[int]) -> None
