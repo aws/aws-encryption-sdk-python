@@ -40,12 +40,13 @@ except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 
 try:
-    import aws_cryptographic_materialproviders
-except ImportError as e:
-    print("IMPORT OOPS")
-    print(e)
+    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
-from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_provider_from_master_key_specs
+    _HAS_MPL = True
+
+except ImportError as e:
+    _HAS_MPL = False
+
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import IO, Callable, Dict, Iterable, Optional  # noqa pylint: disable=unused-import
@@ -226,7 +227,7 @@ class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
             print(e)
 
         def keyring_provider_fn():
-            return keyring_provider_from_master_key_specs(keys_uri, master_key_specs)
+            return keyring_from_master_key_specs(keys_uri, master_key_specs)
 
         return cls(
             plaintext_name=scenario["plaintext"],

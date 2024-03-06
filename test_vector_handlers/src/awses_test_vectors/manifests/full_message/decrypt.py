@@ -35,7 +35,13 @@ from awses_test_vectors.internal.util import (
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
-from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_provider_from_master_key_specs
+try:
+    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
+
+    _HAS_MPL = True
+
+except ImportError as e:
+    _HAS_MPL = False
 
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -195,6 +201,7 @@ class MessageDecryptionTestScenario(object):
     :param master_key_specs: Iterable of master key specifications
     :type master_key_specs: iterable of :class:`MasterKeySpec`
     :param Callable master_key_provider_fn:
+    :param bool keyrings: True if should decrypt with keyring interfaces; False otherwise
     :param str description: Description of test scenario (optional)
     """
 
@@ -260,16 +267,15 @@ class MessageDecryptionTestScenario(object):
         :rtype: MessageDecryptionTestScenario
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
-        if keyrings:
-            master_key_specs = [KeyringSpec.from_scenario(spec) for spec in raw_master_key_specs]
-        else:
-            master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
-
-        print(f"{master_key_specs=}")
+        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
+        # if keyrings:
+        #     master_key_specs = [KeyringSpec.from_scenario(spec) for spec in raw_master_key_specs]
+        # else:
+        #     master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
 
         def master_key_provider_fn():
             if keyrings:
-                return keyring_provider_from_master_key_specs(keys_uri, master_key_specs)
+                return keyring_from_master_key_specs(keys_uri, master_key_specs)
             else:
                 return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
@@ -309,28 +315,30 @@ class MessageDecryptionTestScenario(object):
         return spec
 
     def _one_shot_decrypt(self):
-        keyring = self.master_key_provider_fn()
-        print(f"{keyring=}")
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
         if self.keyrings:
-            return client.decrypt(source=self.ciphertext, keyring=keyring)
+            return client.decrypt(source=self.ciphertext, keyring=self.master_key_provider_fn())
         else:
             return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
 
     def _streaming_decrypt(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
-        if self.keyrings:
-            with client.stream(source=self.ciphertext, mode="d", keyring=self.master_key_provider_fn()) as decryptor:
-                for chunk in decryptor:
-                    result.extend(chunk)
-                return result, decryptor.header
-        else:
-            with client.stream(source=self.ciphertext, mode="d", key_provider=self.master_key_provider_fn()) as decryptor:
-                for chunk in decryptor:
-                    result.extend(chunk)
-                return result, decryptor.header
 
+        kwargs = {
+            "source": self.ciphertext,
+            "mode": "d"
+        }
+        if self.keyrings:
+            kwargs["keyring"] = self.master_key_provider_fn()
+        else:
+            kwargs["key_provider"] = self.master_key_provider_fn()
+
+        with client.stream(**kwargs) as decryptor:
+            for chunk in decryptor:
+                result.extend(chunk)
+            return result, decryptor.header
+        
     def _streaming_decrypt_unsigned(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
@@ -421,7 +429,7 @@ class MessageDecryptionManifest(object):
         """Load from a file containing a full message decrypt manifest.
 
         :param file input_file: File object for file containing JSON manifest
-        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
+        :param bool keyrings: True if should decrypt with keyring interfaces; False otherwise
         :return: Loaded manifest
         :rtype: MessageDecryptionManifest
         """
@@ -436,9 +444,10 @@ class MessageDecryptionManifest(object):
         version = raw_manifest["manifest"]["version"]  # type: int
         keys_uri = raw_manifest["keys"]  # type: str
 
+        # MPL TestVector keyring needs to know the path to the keys file
         keys_uri = raw_manifest["keys"]
         keys_filename = keys_uri.replace("file://", "")
-        joined = os.path.join(parent_dir, keys_filename)
+        keys_abs_path = os.path.join(parent_dir, keys_filename)
 
         raw_keys_manifest = json.loads(root_reader(keys_uri).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
@@ -453,7 +462,7 @@ class MessageDecryptionManifest(object):
                 ciphertext_reader=root_reader,
                 keys=keys,
                 keyrings=False,
-                keys_uri=joined,
+                keys_uri=keys_abs_path,
             )
             for name, scenario in raw_scenarios.items()
         }
@@ -467,11 +476,11 @@ class MessageDecryptionManifest(object):
                     ciphertext_reader=root_reader,
                     keys=keys,
                     keyrings=True,
-                    keys_uri=joined,
+                    keys_uri=keys_abs_path,
                 )
                 for name, scenario in raw_scenarios.items()
             }
-            # Merge into test_scenarios
+            # Merge keyring scenarios into test_scenarios
             test_scenarios = {**keyrings_test_scenarios, **test_scenarios}
 
         return cls(

@@ -15,6 +15,12 @@ import argparse
 
 from awses_test_vectors.manifests.full_message.decrypt_generation import MessageDecryptionGenerationManifest
 
+try:
+    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import
+    _HAS_MPL = True
+except Exception as e:
+    _HAS_MPL = False
+
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
@@ -48,6 +54,9 @@ def cli(args=None):
     )
 
     parsed = parser.parse_args(args)
+
+    if parsed.keyrings and not _HAS_MPL:
+        raise ImportError("The --keyrings flag requires the aws-cryptographic-material-providers library.")
 
     encrypt_manifest = MessageDecryptionGenerationManifest.from_file(parsed.input, parsed.keyrings)
 

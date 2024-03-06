@@ -28,18 +28,23 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.references import (
-    IKeyring,
-    CryptographicMaterialsManager,
-)
-from aws_cryptographic_materialproviders.mpl.models import (
-    CreateDefaultCryptographicMaterialsManagerInput,
-)
-from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+try:
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.references import (
+        IKeyring,
+        CryptographicMaterialsManager,
+    )
+    from aws_cryptographic_materialproviders.mpl.models import (
+        CreateDefaultCryptographicMaterialsManagerInput,
+    )
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
-from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_provider_from_master_key_specs
+    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
+
+    _HAS_MPL = True
+except ImportError as e:
+    _HAS_MPL = False
 
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -107,23 +112,23 @@ class TamperingMethod:
 
         return: a list of (ciphertext, result) pairs
         """
-        tmp = generation_scenario.encryption_scenario.master_key_provider_fn()
-        if isinstance(tmp, MasterKeyProvider):
+        key_provider = generation_scenario.encryption_scenario.master_key_provider_fn()
+        if isinstance(key_provider, MasterKeyProvider):
             materials_manager = DefaultCryptoMaterialsManager(
-                tmp
+                key_provider
             )
-        elif isinstance(tmp, IKeyring):
+        elif isinstance(key_provider, IKeyring):
             mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
             mpl_cmm = mpl.create_default_cryptographic_materials_manager(
                 CreateDefaultCryptographicMaterialsManagerInput(
-                    keyring=tmp
+                    keyring=key_provider
                 )
             )
             materials_manager = CryptoMaterialsManagerFromMPL(
                 mpl_cmm=mpl_cmm
             )
         else:
-            raise ValueError(f"Unrecognized master_key_provider_fn return type: {str(tmp)}")
+            raise ValueError(f"Unrecognized master_key_provider_fn return type: {str(key_provider)}")
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(materials_manager)
         if generation_scenario.result:
             expected_result = generation_scenario.result
@@ -355,6 +360,7 @@ class MessageDecryptionTestScenarioGenerator(object):
     :type decryption_master_key_specs: iterable of :class:`MasterKeySpec`
     :param Callable decryption_master_key_provider_fn:
     :param result:
+    :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
     """
 
     encryption_scenario = attr.ib(validator=attr.validators.instance_of(MessageEncryptionTestScenario))
@@ -373,28 +379,39 @@ class MessageDecryptionTestScenarioGenerator(object):
         :param KeysManifest keys: Loaded keys
         :param dict plaintexts: Mapping of plaintext names to plaintext values
         :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
+        :param string keys_uri: Filepath to keys manifest. Used by MPL TestVector keyring constructor.
         :return: Loaded test scenario
         :rtype: MessageDecryptionTestScenarioGenerator
         """
         encryption_scenario_spec = scenario["encryption-scenario"]
-        encryption_scenario = MessageEncryptionTestScenario.from_scenario(encryption_scenario_spec, keys, plaintexts, keyrings, keys_uri)
+        encryption_scenario = MessageEncryptionTestScenario.from_scenario(
+            encryption_scenario_spec,
+            keys,
+            plaintexts,
+            keyrings,
+            keys_uri,
+        )
         tampering = scenario.get("tampering")
         tampering_method = TamperingMethod.from_tampering_spec(tampering)
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         if "decryption-master-keys" in scenario:
-            if keyrings:
-                decryption_master_key_specs = [
-                    KeyringSpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-                ]
-            else:
-                decryption_master_key_specs = [
-                    MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-                ]
+            decryption_master_key_specs = [
+                MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+            ]
+
+            # if keyrings:
+            #     decryption_master_key_specs = [
+            #         KeyringSpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+            #     ]
+            # else:
+            #     decryption_master_key_specs = [
+            #         MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+            #     ]
 
             def decryption_master_key_provider_fn():
                 if keyrings:
-                    return keyring_provider_from_master_key_specs(keys_uri, decryption_master_key_specs)
+                    return keyring_from_master_key_specs(keys_uri, decryption_master_key_specs)
                 else:
                     return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
 
@@ -493,23 +510,20 @@ class MessageDecryptionGenerationManifest(object):
 
         parent_dir = os.path.abspath(os.path.dirname(input_file.name))
         reader = file_reader(parent_dir)
+
+        # MPL TestVector keyring needs to know the path to the keys file
         keys_uri = raw_manifest["keys"]
         keys_filename = keys_uri.replace("file://", "")
-        print(f"{parent_dir=}")
-        print(f"{input_file=}")
-        print(f"{keys_uri=}")
-        print(f"{parent_dir+keys_uri=}")
-        print(f"{os.path.join(parent_dir, keys_uri)=}")
-        joined = os.path.join(parent_dir, keys_filename)
+        keys_abs_path = os.path.join(parent_dir, keys_filename)
+
         raw_keys_manifest = json.loads(reader(keys_uri).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
         plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
         tests = {}
-        # For some bizarre reason, the 
         for name, scenario in raw_manifest["tests"].items():
             try:
                 tests[name] = MessageDecryptionTestScenarioGenerator.from_scenario(
-                    scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=joined,
+                    scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=keys_abs_path,
                 )
             except NotImplementedError:
                 continue
