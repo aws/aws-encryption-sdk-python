@@ -84,7 +84,9 @@ class MessageEncryptionTestScenario(object):
     algorithm = attr.ib(validator=attr.validators.instance_of(AlgorithmSuite))
     frame_size = attr.ib(validator=attr.validators.instance_of(int))
     encryption_context = attr.ib(validator=dictionary_validator(six.string_types, six.string_types))
-    master_key = attr.ib(validator=attr.validators.instance_of(bool))
+    master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
+    master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
+    keyrings = attr.ib(validator=attr.validators.instance_of(bool))
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
@@ -113,11 +115,9 @@ class MessageEncryptionTestScenario(object):
             algorithm=algorithm,
             frame_size=scenario["frame-size"],
             encryption_context=scenario["encryption-context"],
-            master_key=True,
             master_key_specs=master_key_specs,
             master_key_provider_fn=master_key_provider_fn,
             keyrings=keyrings,
-            keys_uri=keys_uri,
         )
 
     def run(self, materials_manager=None):
