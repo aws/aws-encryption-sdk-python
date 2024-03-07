@@ -188,7 +188,7 @@ class DecryptionMethod(Enum):
 
 @attr.s(init=False)
 class MessageDecryptionTestScenario(object):
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-instance-attributes
     """Data class for a single full message decrypt test scenario.
 
     Handles serialization and deserialization to and from manifest specs.
@@ -266,16 +266,11 @@ class MessageDecryptionTestScenario(object):
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
-        # if keyrings:
-        #     master_key_specs = [KeyringSpec.from_scenario(spec) for spec in raw_master_key_specs]
-        # else:
-        #     master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
 
         def master_key_provider_fn():
             if keyrings:
                 return keyring_from_master_key_specs(keys_uri, master_key_specs)
-            else:
-                return master_key_provider_from_master_key_specs(keys, master_key_specs)
+            return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
@@ -316,8 +311,7 @@ class MessageDecryptionTestScenario(object):
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
         if self.keyrings:
             return client.decrypt(source=self.ciphertext, keyring=self.master_key_provider_fn())
-        else:
-            return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
+        return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
 
     def _streaming_decrypt(self):
         result = bytearray()
@@ -423,6 +417,7 @@ class MessageDecryptionManifest(object):
 
     @classmethod
     def from_file(cls, input_file, keyrings):
+        # noqa pylint disable=too-many-locals
         # type: (IO) -> MessageDecryptionManifest
         """Load from a file containing a full message decrypt manifest.
 

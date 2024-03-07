@@ -370,6 +370,7 @@ class MessageDecryptionTestScenarioGenerator(object):
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
+        # noqa pylint disable=too-many-arguments,too-many-locals
         """Load from a scenario specification.
 
         :param dict scenario: Scenario specification JSON
@@ -397,20 +398,10 @@ class MessageDecryptionTestScenarioGenerator(object):
                 MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
             ]
 
-            # if keyrings:
-            #     decryption_master_key_specs = [
-            #         KeyringSpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-            #     ]
-            # else:
-            #     decryption_master_key_specs = [
-            #         MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-            #     ]
-
             def decryption_master_key_provider_fn():
                 if keyrings:
                     return keyring_from_master_key_specs(keys_uri, decryption_master_key_specs)
-                else:
-                    return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
+                return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
 
         else:
             decryption_master_key_specs = encryption_scenario.master_key_specs
