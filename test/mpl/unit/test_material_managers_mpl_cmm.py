@@ -111,9 +111,12 @@ def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_ra
 
 
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+       "._native_algorithm_id_to_mpl_algorithm_id")
+@patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
        "._native_to_mpl_commmitment_policy")
 def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_materials_THEN_returns_MPL_GetEncryptionMaterialsInput(  # noqa: E501
-    mock_mpl_commitment_policy
+    mock_mpl_commitment_policy,
+    mock_mpl_algorithm,
 ):
     # Given: commitment policy is some MPL ESDK commitment policy
     mock_commitment_policy = MagicMock(__class__=MPL_CommitmentPolicyESDK)
@@ -129,6 +132,7 @@ def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_mat
     assert output.encryption_context == mock_encryption_materials_request.encryption_context
     assert output.commitment_policy == mock_commitment_policy
     assert output.max_plaintext_length == mock_encryption_materials_request.plaintext_length
+    assert output.algorithm_suite_id == mock_mpl_algorithm()
 
 
 def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commmitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_FORBID_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
