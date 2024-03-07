@@ -36,6 +36,13 @@ def cli(args=None):
     parser.add_argument(
         "--input", required=True, type=argparse.FileType("r"), help="Existing full message encrypt manifest"
     )
+    parser.add_argument(
+        "--keyrings",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Use keyring interfaces to encrypt",
+    )
 
     parsed = parser.parse_args(args)
 
