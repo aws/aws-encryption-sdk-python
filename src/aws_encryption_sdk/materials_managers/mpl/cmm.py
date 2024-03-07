@@ -81,13 +81,19 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         commitment_policy = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(
             request.commitment_policy
         )
+        mpl_input_kwargs = {
+            "encryption_context": request.encryption_context,
+            "commitment_policy": commitment_policy,
+            "max_plaintext_length": request.plaintext_length,
+        }
+        if request.algorithm is not None:
+            mpl_input_kwargs["algorithm_suite_id"] = \
+                CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
+                    request.algorithm.algorithm_id
+                )
+
         output: MPL_GetEncryptionMaterialsInput = MPL_GetEncryptionMaterialsInput(
-            encryption_context=request.encryption_context,
-            commitment_policy=commitment_policy,
-            max_plaintext_length=request.plaintext_length,
-            algorithm_suite_id=CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
-                request.algorithm.algorithm_id
-            )
+            **mpl_input_kwargs
         )
         return output
 
