@@ -49,6 +49,6 @@ def cli(args=None):
     if parsed.keyrings and not _HAS_MPL:
         raise ImportError("The --keyrings flag requires the aws-cryptographic-material-providers library.")
 
-    encrypt_manifest = MessageEncryptionManifest.from_file(parsed.input)
+    encrypt_manifest = MessageEncryptionManifest.from_file(parsed.input, parsed.keyrings)
 
     encrypt_manifest.run()

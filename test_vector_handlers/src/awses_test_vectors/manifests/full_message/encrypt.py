@@ -290,11 +290,12 @@ class MessageEncryptionManifest(object):
         return {name: os.urandom(size) for name, size in plaintexts_specs.items()}
 
     @classmethod
-    def from_file(cls, input_file):
+    def from_file(cls, input_file, keyrings):
         # type: (IO) -> MessageEncryptionManifest
         """Load frome a file containing a full message encrypt manifest.
 
         :param file input_file: File object for file containing JSON manifest
+        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
         :return: Loaded manifest
         :rtype: MessageEncryptionManifest
         """
@@ -305,14 +306,20 @@ class MessageEncryptionManifest(object):
 
         parent_dir = os.path.abspath(os.path.dirname(input_file.name))
         reader = file_reader(parent_dir)
-        raw_keys_manifest = json.loads(reader(raw_manifest["keys"]).decode(ENCODING))
+
+        # MPL TestVector keyring needs to know the path to the keys file
+        keys_uri = raw_manifest["keys"]
+        keys_filename = keys_uri.replace("file://", "")
+        keys_abs_path = os.path.join(parent_dir, keys_filename)
+
+        raw_keys_manifest = json.loads(reader(keys_uri).decode(ENCODING))
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
         plaintexts = cls._generate_plaintexts(raw_manifest["plaintexts"])
         tests = {}
         for name, scenario in raw_manifest["tests"].items():
             try:
                 tests[name] = MessageEncryptionTestScenario.from_scenario(
-                    scenario=scenario, keys=keys, plaintexts=plaintexts
+                    scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=keys_abs_path
                 )
             except NotImplementedError:
                 continue
