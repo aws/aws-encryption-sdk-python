@@ -36,7 +36,7 @@ from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:
-    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
+    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
     _HAS_MPL = True
 except ImportError:
     _HAS_MPL = False
@@ -265,7 +265,14 @@ class MessageDecryptionTestScenario(object):
         :rtype: MessageDecryptionTestScenario
         """
         raw_master_key_specs = scenario["master-keys"]  # type: Iterable[MASTER_KEY_SPEC]
-        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs]
+        if keyrings:
+            master_key_specs = [
+                KeyringSpec.from_scenario(spec) for spec in raw_master_key_specs
+            ]
+        else:
+            master_key_specs = [
+                MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs
+            ]
 
         def master_key_provider_fn():
             if keyrings:

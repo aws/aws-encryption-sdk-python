@@ -78,6 +78,10 @@ batch:
       buildspec: codebuild/py311/awses_local_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_mplawses_latest_mpl
+      buildspec: codebuild/py311/mplawses_local_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
 
     - identifier: py312_integ
       buildspec: codebuild/py312/integ.yml
@@ -101,6 +105,10 @@ batch:
         image: aws/codebuild/standard:7.0
     - identifier: py312_awses_latest_mpl
       buildspec: codebuild/py312/awses_local_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_mplawses_latest_mpl
+      buildspec: codebuild/py312/mplawses_local_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
       

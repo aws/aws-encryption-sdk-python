@@ -40,7 +40,7 @@ except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 
 try:
-    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
+    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 except ImportError:
     pass
 
@@ -100,7 +100,15 @@ class MessageEncryptionTestScenario(object):
         :rtype: MessageEncryptionTestScenario
         """
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
-        master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]]
+
+        if keyrings:
+            master_key_specs = [
+                KeyringSpec.from_scenario(spec) for spec in scenario["master-keys"]
+            ]
+        else:
+            master_key_specs = [
+                MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]
+            ]
 
         def master_key_provider_fn():
             if keyrings:

@@ -39,7 +39,7 @@ try:
     )
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
-    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
+    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 except ImportError:
     pass
 
@@ -394,9 +394,14 @@ class MessageDecryptionTestScenarioGenerator(object):
         decryption_method_spec = scenario.get("decryption-method")
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         if "decryption-master-keys" in scenario:
-            decryption_master_key_specs = [
-                MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
-            ]
+            if keyrings:
+                decryption_master_key_specs = [
+                    KeyringSpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+                ]
+            else:
+                decryption_master_key_specs = [
+                    MasterKeySpec.from_scenario(spec) for spec in scenario["decryption-master-keys"]
+                ]
 
             def decryption_master_key_provider_fn():
                 if keyrings:
