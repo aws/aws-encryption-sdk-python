@@ -37,10 +37,8 @@ from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_pr
 
 try:
     from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
-
     _HAS_MPL = True
-
-except ImportError as e:
+except ImportError:
     _HAS_MPL = False
 
 

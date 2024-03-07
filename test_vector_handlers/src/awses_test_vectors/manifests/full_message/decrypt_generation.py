@@ -33,7 +33,6 @@ try:
     from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
     from aws_cryptographic_materialproviders.mpl.references import (
         IKeyring,
-        CryptographicMaterialsManager,
     )
     from aws_cryptographic_materialproviders.mpl.models import (
         CreateDefaultCryptographicMaterialsManagerInput,
@@ -41,10 +40,8 @@ try:
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
     from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
-
-    _HAS_MPL = True
-except ImportError as e:
-    _HAS_MPL = False
+except ImportError:
+    pass
 
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -527,7 +524,13 @@ class MessageDecryptionGenerationManifest(object):
                 )
             except NotImplementedError:
                 continue
-        return cls(version=raw_manifest["manifest"]["version"], keys=keys, plaintexts=plaintexts, tests=tests, keyrings=keyrings)
+        return cls(
+            version=raw_manifest["manifest"]["version"],
+            keys=keys,
+            plaintexts=plaintexts,
+            ests=tests,
+            keyrings=keyrings,
+        )
 
     def run_and_write_to_dir(self, target_directory, json_indent=None):
         # type: (str, Optional[int]) -> None

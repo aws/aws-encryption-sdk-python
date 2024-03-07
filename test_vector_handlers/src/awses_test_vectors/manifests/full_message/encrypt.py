@@ -40,12 +40,9 @@ except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 
 try:
-    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
-
-    _HAS_MPL = True
-
-except ImportError as e:
-    _HAS_MPL = False
+    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
+except ImportError:
+    pass
 
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
