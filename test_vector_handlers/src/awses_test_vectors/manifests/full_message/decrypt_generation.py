@@ -370,7 +370,7 @@ class MessageDecryptionTestScenarioGenerator(object):
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
-        # noqa pylint disable=too-many-arguments,too-many-locals
+        # pylint: disable=too-many-arguments,too-many-locals
         """Load from a scenario specification.
 
         :param dict scenario: Scenario specification JSON

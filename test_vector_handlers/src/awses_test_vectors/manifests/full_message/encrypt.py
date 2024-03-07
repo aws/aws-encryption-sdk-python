@@ -87,7 +87,7 @@ class MessageEncryptionTestScenario(object):
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
-        # noqa pylint disable=too-many-arguments
+        # pylint: disable=too-many-arguments
         # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes], bool, str) -> MessageEncryptionTestScenario
         """Load from a scenario specification.
 

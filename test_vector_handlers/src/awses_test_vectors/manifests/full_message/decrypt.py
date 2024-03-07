@@ -417,7 +417,7 @@ class MessageDecryptionManifest(object):
 
     @classmethod
     def from_file(cls, input_file, keyrings):
-        # noqa pylint disable=too-many-locals
+        # pylint: disable=too-many-locals
         # type: (IO) -> MessageDecryptionManifest
         """Load from a file containing a full message decrypt manifest.
 
