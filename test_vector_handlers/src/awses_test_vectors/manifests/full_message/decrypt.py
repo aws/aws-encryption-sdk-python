@@ -36,7 +36,7 @@ from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
 try:
-    from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
+    from awses_test_vectors.manifests.mpl_keyring import keyring_from_master_key_specs
 
     _HAS_MPL = True
 
@@ -338,7 +338,7 @@ class MessageDecryptionTestScenario(object):
             for chunk in decryptor:
                 result.extend(chunk)
             return result, decryptor.header
-        
+
     def _streaming_decrypt_unsigned(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)

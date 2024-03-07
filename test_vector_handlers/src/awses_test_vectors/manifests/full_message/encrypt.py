@@ -100,7 +100,6 @@ class MessageEncryptionTestScenario(object):
         """
 
         if keyrings:
-            print("KEYRINGS")
             return MessageEncryptionWithKeyringsTestScenario.from_scenario(
                 scenario, keys_uri, plaintexts
             )
@@ -206,8 +205,6 @@ class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
 
     @classmethod
     def from_scenario(cls, scenario, keys_uri, plaintexts):
-        print("FROM_SCENARIO")
-        print(f"{len(scenario['master-keys'])=}")
         # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> MessageEncryptionTestScenario
         """Load from a scenario specification.
 
@@ -217,14 +214,9 @@ class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
         :return: Loaded test scenario
         :rtype: MessageEncryptionTestScenario
         """
-        print("1")
         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
-        print("2")
         # manifest still keys these as `master-keys` even though these are keyrings
-        try:
-            master_key_specs = [KeyringSpec.from_scenario(spec) for spec in scenario["master-keys"]]
-        except Exception as e:
-            print(e)
+        master_key_specs = [KeyringSpec.from_scenario(spec) for spec in scenario["master-keys"]]
 
         def keyring_provider_fn():
             return keyring_from_master_key_specs(keys_uri, master_key_specs)
@@ -255,7 +247,6 @@ class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
             commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
 
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
-        print(f"{self.algorithm=}")
         encrypt_kwargs = dict(
             source=self.plaintext,
             algorithm=self.algorithm,
