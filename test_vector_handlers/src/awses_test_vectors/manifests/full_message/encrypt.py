@@ -88,60 +88,14 @@ class MessageEncryptionTestScenario(object):
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
-        # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes], bool) -> MessageEncryptionTestScenario
+        # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes], bool, str) -> MessageEncryptionTestScenario
         """Load from a scenario specification.
 
         :param dict scenario: Scenario specification JSON
         :param KeysManifest keys: Loaded keys
         :param dict plaintexts: Mapping of plaintext names to plaintext values
-        :param bool keyrings: True if should encrypt with master key interfaces; False otherwise
-        :return: Loaded test scenario
-        :rtype: MessageEncryptionTestScenario
-        """
-
-        if keyrings:
-            return MessageEncryptionWithKeyringsTestScenario.from_scenario(
-                scenario, keys_uri, plaintexts
-            )
-        else:
-            return MessageEncryptionWithMasterKeysTestScenario.from_scenario(
-                scenario, keys, plaintexts
-            )
-
-    def run(self, materials_manager=None):
-        """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
-        a :class:`MessageDecryptionTestScenario` that describes the matching decrypt scenario.
-
-        :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
-            return a URI locating the written data
-        :param str plaintext_uri: URI locating the written plaintext data for this scenario
-        :return: Decrypt test scenario that describes the generated scenario
-        :rtype: MessageDecryptionTestScenario
-        """
-        raise NotImplementedError("MUST specify keyrings bool")
-
-
-@attr.s
-class MessageEncryptionWithMasterKeysTestScenario(MessageEncryptionTestScenario):
-    # pylint: disable=too-many-instance-attributes
-    """Data class for a single full message decrypt test scenario that uses master keys.
-
-    :param master_key_specs: Iterable of loaded master key specifications
-    :type master_key_specs: iterable of :class:`MasterKeySpec`
-    :param Callable master_key_provider_fn:
-    """
-
-    master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
-
-    @classmethod
-    def from_scenario(cls, scenario, keys, plaintexts):
-        # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> MessageEncryptionTestScenario
-        """Load from a scenario specification.
-
-        :param dict scenario: Scenario specification JSON
-        :param KeysManifest keys: Loaded keys
-        :param dict plaintexts: Mapping of plaintext names to plaintext values
+        :param bool keyrings: True if should encrypt with keyring interfaces; False otherwise
+        :param str keys_uri: Path to the keys manifest
         :return: Loaded test scenario
         :rtype: MessageEncryptionTestScenario
         """
@@ -149,6 +103,8 @@ class MessageEncryptionWithMasterKeysTestScenario(MessageEncryptionTestScenario)
         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]]
 
         def master_key_provider_fn():
+            if keyrings:
+                return keyring_from_master_key_specs(keys_uri, master_key_specs)
             return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(
@@ -160,6 +116,8 @@ class MessageEncryptionWithMasterKeysTestScenario(MessageEncryptionTestScenario)
             master_key=True,
             master_key_specs=master_key_specs,
             master_key_provider_fn=master_key_provider_fn,
+            keyrings=keyrings,
+            keys_uri=keys_uri,
         )
 
     def run(self, materials_manager=None):
@@ -185,80 +143,152 @@ class MessageEncryptionWithMasterKeysTestScenario(MessageEncryptionTestScenario)
         )
         if materials_manager:
             encrypt_kwargs["materials_manager"] = materials_manager
+        elif self.keyrings:
+            encrypt_kwargs["keyring"] = self.master_key_provider_fn()
         else:
             encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
         ciphertext, _header = client.encrypt(**encrypt_kwargs)
         return ciphertext
 
-@attr.s
-class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
-    # pylint: disable=too-many-instance-attributes
-    """Data class for a single full message decrypt test scenario that uses keyrings.
 
-    :param master_key_specs: Iterable of loaded master key specifications
-    :type master_key_specs: iterable of :class:`MasterKeySpec`
-    :param Callable master_key_provider_fn:
-    """
+# @attr.s
+# class MessageEncryptionWithMasterKeysTestScenario(MessageEncryptionTestScenario):
+#     # pylint: disable=too-many-instance-attributes
+#     """Data class for a single full message decrypt test scenario that uses master keys.
 
-    master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
-    master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
+#     :param master_key_specs: Iterable of loaded master key specifications
+#     :type master_key_specs: iterable of :class:`MasterKeySpec`
+#     :param Callable master_key_provider_fn:
+#     """
 
-    @classmethod
-    def from_scenario(cls, scenario, keys_uri, plaintexts):
-        # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> MessageEncryptionTestScenario
-        """Load from a scenario specification.
+#     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
+#     master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
 
-        :param dict scenario: Scenario specification JSON
-        :param KeysManifest keys: Loaded keys
-        :param dict plaintexts: Mapping of plaintext names to plaintext values
-        :return: Loaded test scenario
-        :rtype: MessageEncryptionTestScenario
-        """
-        algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
-        # manifest still keys these as `master-keys` even though these are keyrings
-        master_key_specs = [KeyringSpec.from_scenario(spec) for spec in scenario["master-keys"]]
+#     @classmethod
+#     def from_scenario(cls, scenario, keys, plaintexts):
+#         # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> MessageEncryptionTestScenario
+#         """Load from a scenario specification.
 
-        def keyring_provider_fn():
-            return keyring_from_master_key_specs(keys_uri, master_key_specs)
+#         :param dict scenario: Scenario specification JSON
+#         :param KeysManifest keys: Loaded keys
+#         :param dict plaintexts: Mapping of plaintext names to plaintext values
+#         :return: Loaded test scenario
+#         :rtype: MessageEncryptionTestScenario
+#         """
+#         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
+#         master_key_specs = [MasterKeySpec.from_scenario(spec) for spec in scenario["master-keys"]]
 
-        return cls(
-            plaintext_name=scenario["plaintext"],
-            plaintext=plaintexts[scenario["plaintext"]],
-            algorithm=algorithm,
-            frame_size=scenario["frame-size"],
-            encryption_context=scenario["encryption-context"],
-            master_key=True,
-            master_key_specs=master_key_specs,
-            master_key_provider_fn=keyring_provider_fn,
-        )
+#         def master_key_provider_fn():
+#             return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
-    def run(self, materials_manager=None):
-        """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
-        a :class:`MessageDecryptionTestScenario` that describes the matching decrypt scenario.
+#         return cls(
+#             plaintext_name=scenario["plaintext"],
+#             plaintext=plaintexts[scenario["plaintext"]],
+#             algorithm=algorithm,
+#             frame_size=scenario["frame-size"],
+#             encryption_context=scenario["encryption-context"],
+#             master_key=True,
+#             master_key_specs=master_key_specs,
+#             master_key_provider_fn=master_key_provider_fn,
+#         )
 
-        :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
-            return a URI locating the written data
-        :param str plaintext_uri: URI locating the written plaintext data for this scenario
-        :return: Decrypt test scenario that describes the generated scenario
-        :rtype: MessageDecryptionTestScenario
-        """
-        commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
-        if self.algorithm.is_committing():
-            commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
+#     def run(self, materials_manager=None):
+#         """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
+#         a :class:`MessageDecryptionTestScenario` that describes the matching decrypt scenario.
 
-        client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
-        encrypt_kwargs = dict(
-            source=self.plaintext,
-            algorithm=self.algorithm,
-            frame_length=self.frame_size,
-            encryption_context=self.encryption_context,
-        )
-        if materials_manager:
-            encrypt_kwargs["materials_manager"] = materials_manager
-        else:
-            encrypt_kwargs["keyring"] = self.keyring_provider_fn()
-        ciphertext, _header = client.encrypt(**encrypt_kwargs)
-        return ciphertext
+#         :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
+#             return a URI locating the written data
+#         :param str plaintext_uri: URI locating the written plaintext data for this scenario
+#         :return: Decrypt test scenario that describes the generated scenario
+#         :rtype: MessageDecryptionTestScenario
+#         """
+#         commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+#         if self.algorithm.is_committing():
+#             commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
+
+#         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+#         encrypt_kwargs = dict(
+#             source=self.plaintext,
+#             algorithm=self.algorithm,
+#             frame_length=self.frame_size,
+#             encryption_context=self.encryption_context,
+#         )
+#         if materials_manager:
+#             encrypt_kwargs["materials_manager"] = materials_manager
+#         else:
+#             encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
+#         ciphertext, _header = client.encrypt(**encrypt_kwargs)
+#         return ciphertext
+
+# @attr.s
+# class MessageEncryptionWithKeyringsTestScenario(MessageEncryptionTestScenario):
+#     # pylint: disable=too-many-instance-attributes
+#     """Data class for a single full message decrypt test scenario that uses keyrings.
+
+#     :param master_key_specs: Iterable of loaded master key specifications
+#     :type master_key_specs: iterable of :class:`MasterKeySpec`
+#     :param Callable master_key_provider_fn:
+#     """
+
+#     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
+#     master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
+
+#     @classmethod
+#     def from_scenario(cls, scenario, keys_uri, plaintexts):
+#         # type: (ENCRYPT_SCENARIO_SPEC, KeysManifest, Dict[str, bytes]) -> MessageEncryptionTestScenario
+#         """Load from a scenario specification.
+
+#         :param dict scenario: Scenario specification JSON
+#         :param KeysManifest keys: Loaded keys
+#         :param dict plaintexts: Mapping of plaintext names to plaintext values
+#         :return: Loaded test scenario
+#         :rtype: MessageEncryptionTestScenario
+#         """
+#         algorithm = algorithm_suite_from_string_id(scenario["algorithm"])
+#         # manifest still keys these as `master-keys` even though these are keyrings
+#         master_key_specs = [KeyringSpec.from_scenario(spec) for spec in scenario["master-keys"]]
+
+#         def keyring_provider_fn():
+#             return keyring_from_master_key_specs(keys_uri, master_key_specs)
+
+#         return cls(
+#             plaintext_name=scenario["plaintext"],
+#             plaintext=plaintexts[scenario["plaintext"]],
+#             algorithm=algorithm,
+#             frame_size=scenario["frame-size"],
+#             encryption_context=scenario["encryption-context"],
+#             master_key=True,
+#             master_key_specs=master_key_specs,
+#             master_key_provider_fn=keyring_provider_fn,
+#         )
+
+#     def run(self, materials_manager=None):
+#         """Run this scenario, writing the resulting ciphertext with ``ciphertext_writer`` and returning
+#         a :class:`MessageDecryptionTestScenario` that describes the matching decrypt scenario.
+
+#         :param callable ciphertext_writer: Callable that will write the requested named ciphertext and
+#             return a URI locating the written data
+#         :param str plaintext_uri: URI locating the written plaintext data for this scenario
+#         :return: Decrypt test scenario that describes the generated scenario
+#         :rtype: MessageDecryptionTestScenario
+#         """
+#         commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+#         if self.algorithm.is_committing():
+#             commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
+
+#         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+#         encrypt_kwargs = dict(
+#             source=self.plaintext,
+#             algorithm=self.algorithm,
+#             frame_length=self.frame_size,
+#             encryption_context=self.encryption_context,
+#         )
+#         if materials_manager:
+#             encrypt_kwargs["materials_manager"] = materials_manager
+#         else:
+#             encrypt_kwargs["keyring"] = self.keyring_provider_fn()
+#         ciphertext, _header = client.encrypt(**encrypt_kwargs)
+#         return ciphertext
 
 @attr.s
 class MessageEncryptionManifest(object):

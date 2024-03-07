@@ -16,9 +16,9 @@ import argparse
 from awses_test_vectors.manifests.full_message.decrypt_generation import MessageDecryptionGenerationManifest
 
 try:
-    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import
+    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import,import-error
     _HAS_MPL = True
-except Exception as e:
+except ImportError:
     _HAS_MPL = False
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules

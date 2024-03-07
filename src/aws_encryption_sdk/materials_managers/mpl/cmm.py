@@ -90,7 +90,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             mpl_input_kwargs["algorithm_suite_id"] = \
                 CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
                     request.algorithm.algorithm_id
-                )
+            )
 
         output: MPL_GetEncryptionMaterialsInput = MPL_GetEncryptionMaterialsInput(
             **mpl_input_kwargs
