@@ -519,7 +519,7 @@ class MessageDecryptionGenerationManifest(object):
             version=raw_manifest["manifest"]["version"],
             keys=keys,
             plaintexts=plaintexts,
-            ests=tests,
+            tests=tests,
             keyrings=keyrings,
         )
 

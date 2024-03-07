@@ -96,7 +96,7 @@ def test_GIVEN_valid_request_WHEN_get_encryption_materials_THEN_return_Encryptio
 
 
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
-       "._native_to_mpl_commmitment_policy")
+       "._native_to_mpl_get_encryption_materials")
 def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_raise_ESDKException(
     _
 ):
