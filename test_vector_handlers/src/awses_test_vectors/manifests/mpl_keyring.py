@@ -22,19 +22,12 @@ from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
         GetKeyDescriptionOutput,
         TestVectorKeyringInput,
     )
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-    aws_cryptography_materialproviderstestvectorkeys.client import (
-        KeyVectors,
-    )
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-    aws_cryptography_materialproviderstestvectorkeys.config import (
-        KeyVectorsConfig
-    )
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
+from awses_test_vectors.internal.keyvectors_provider import KeyVectorsProvider
 from awses_test_vectors.manifests.keys import KeysManifest  # noqa pylint disable=unused-import
 
 import json
@@ -56,32 +49,65 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
 
-    def keyring(self, keys_uri):
+    def keyring(self, keys, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
 
         :param str keys_uri: Path to the keys manifest
         """
 
-        keyvectors = KeyVectors(KeyVectorsConfig(key_manifest_path=keys_uri))
+        '''
+        encryptmaterials keyProviderInfo = rsa-4096-public'
+        MUST be private.
+        somehow, it is writing "rsa-4096-public".
+        
+        '''
+
+        print(f"{keys=}")
+
+        keyvectors = KeyVectorsProvider.get_keyvectors(keys_path=keys_uri)
 
         # Construct the input to KeyVectorsConfig
-        input_as_dict = {
+        input_kwargs = {
             "type": self.type_name,
             "key": self.key_name,
             "provider-id": self.provider_id,
             "encryption-algorithm": self.encryption_algorithm,
-            "padding-algorithm": self.padding_algorithm,
-            "padding-hash": self.padding_hash
+            
         }
+        if self.padding_algorithm is not None and self.padding_algorithm is not "":
+            input_kwargs["padding-algorithm"] = self.padding_algorithm
+        if self.padding_hash is not None:
+            input_kwargs["padding-hash"] = self.padding_hash
+
+        # Normalize input for MPL
+        if input_kwargs["type"] == "raw" \
+                and input_kwargs["encryption-algorithm"] == "rsa":
+            if input_kwargs["key"] == "rsa-4096-private" \
+                and (mode == "decrypt-generate" or mode == "encrypt"):
+                print(f"changed private to public")
+                input_kwargs["key"] = "rsa-4096-public"
+            # if input_kwargs["key"] == "rsa-4096-private" \
+            #     and (mode == "decrypt"):
+            #     input_kwargs["provider-id"] = "rsa-4096-public"
+            if "padding-hash" not in input_kwargs:
+                print("added paddinghash")
+                input_kwargs["padding-hash"] = "sha1"
+
+        print(f"keyring {input_kwargs=}")
+
         # stringify the dict
-        input_as_string = json.dumps(input_as_dict)
+        input_as_string = json.dumps(input_kwargs)
         # convert to unicode code point (expected representation)
         encoded_json = [ord(c) for c in input_as_string]
 
         output: GetKeyDescriptionOutput = keyvectors.get_key_description(
             GetKeyDescriptionInput(json=encoded_json)
         )
+
+        print(f"{output.key_description.value=}")
+
+        keyvectors
 
         keyring: IKeyring = keyvectors.create_test_vector_keyring(
             TestVectorKeyringInput(
@@ -92,7 +118,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         return keyring
 
 
-def keyring_from_master_key_specs(keys_uri, master_key_specs):
+def keyring_from_master_key_specs(keys, keys_uri, master_key_specs, mode):
     # type: (str, list[KeyringSpec]) -> IKeyring
     """Build and combine all keyrings identified by the provided specs and
     using the provided keys.
@@ -103,7 +129,7 @@ def keyring_from_master_key_specs(keys_uri, master_key_specs):
     :return: Master key provider combining all loaded master keys
     :rtype: IKeyring
     """
-    keyrings = [spec.keyring(keys_uri) for spec in master_key_specs]
+    keyrings = [spec.keyring(keys, keys_uri, mode) for spec in master_key_specs]
     primary = keyrings[0]
     others = keyrings[1:]
 

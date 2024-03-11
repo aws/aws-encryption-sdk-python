@@ -68,6 +68,11 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                     request
                 )
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
+
+            print(f"{mpl_output.as_dict()=}")
+
+            mpl_output.encryption_materials.encrypted_data_keys[0].key_provider_info = b"rsa-4096-private"
+
             return EncryptionMaterialsFromMPL(mpl_output.encryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:
             # Wrap MPL error into the ESDK error type
@@ -118,15 +123,23 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         Returns a DecryptionMaterialsFromMPL for the configured CMM.
         :param request: Request for decryption materials
         """
+        from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.errors import CollectionOfErrors as COE
         try:
             mpl_input: 'MPL_DecryptMaterialsInput' = \
                 CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(request)
+            print(f"{mpl_input.as_dict()=}")
+            # input()
             mpl_output: 'MPL_DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
+            print(f"{mpl_output.as_dict()=}")
+            # input()
             return DecryptionMaterialsFromMPL(mpl_output.decryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:
             # Wrap MPL error into the ESDK error type
             # so customers only have to catch ESDK error types.
             raise AWSEncryptionSDKClientError(mpl_exception)
+        except COE as coe:
+            print(f"{coe.list=}")
+            raise AWSEncryptionSDKClientError(coe)
 
     @staticmethod
     def _native_algorithm_id_to_mpl_algorithm_id(native_algorithm_id: str) -> 'MPL_AlgorithmSuiteIdESDK':

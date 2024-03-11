@@ -405,7 +405,7 @@ class MessageDecryptionTestScenarioGenerator(object):
 
             def decryption_master_key_provider_fn():
                 if keyrings:
-                    return keyring_from_master_key_specs(keys_uri, decryption_master_key_specs)
+                    return keyring_from_master_key_specs(keys, keys_uri, decryption_master_key_specs, "decrypt-generation")
                 return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
 
         else:
