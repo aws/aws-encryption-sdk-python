@@ -84,7 +84,9 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
 
         if input_kwargs["type"] == "raw" \
                 and input_kwargs["encryption-algorithm"] == "rsa":
-            # Weird hack #1.
+            # Weird hack #1:
+            # Gets public key for encryption instead of private key.
+            # 
             # If generating decrypt vectors (i.e. encrypting)
             # and the manifest specified an RSA private key,
             # change the input to KeyVectors to a public key.
@@ -114,33 +116,36 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             )
         )
 
-        # Weird hack #2.
-        # Generating decrypt vectors for RSA keys.
-        # The MPL sets the encrypting keyring's keyName to "rsa-4096-private",
-        # somewhat undoing weird hack #1.
+        # Weird hack #2:
+        # Sets keyProviderInfo to "private" even though the material is "public".
+        # 
         # Weird hack #1 allows the encrypting keyring to be created with a public key.
-        # However, it also changes the keyName of the encrypting keyring,
-        # which is changed back with this hack.
+        # However, it also changes the keyName of the encrypting keyring.
+        # This hack changes it back.
+        # 
         # If this is not done, then decryption fails
         # (for BOTH native master keys and MPL keyrings)
         # with error 
         # native master keys: "Unable to decrypt any data key"
         # MPL: "Raw RSA Key was unable to decrypt any encrypted data key"
         # 
-        # digging, they key is unable to decrypt 
+        # Digging, the keyring is unable to decrypt in the MPL
         # because the EDK keyProviderInfo differs from the keyring keyName,
         # and this check fails:
         # https://github.com/aws/aws-cryptographic-material-providers-library/blob/bd549c88cefc93ba8a2d204bd23134b3b12c69fb/AwsCryptographicMaterialProviders/dafny/AwsCryptographicMaterialProviders/src/Keyrings/RawRSAKeyring.dfy#L382
         # due to the two variables not being equal:
         # edk.keyProviderInfo='rsa-4096-public'
-        # decrypting keyring.keyName='rsa-4096-private'
+        # keyring.keyName='rsa-4096-private'
         # 
-        # changing the encrypting keyring's keyName back to 'rsa-4096-private' 
-        # (somewhat undoing weird hack #1)
-        # sets edk.keyProviderInfo='rsa-4096-private',
-        # which allows this check to pass on decrypt.
-        # This "works" because all of the test vectors pass with these two hacks.
-        # But this seems weird.
+        # Changing the encrypting keyring's keyName back to 'rsa-4096-private' 
+        # sets any EDKs this keyring encrypts to now have 
+        # keyName="rsa-4096-private".
+        # However, keyvectors has still retrieved the public key material to encrypt with.
+        # So it any EDKs it encrypts will use the public material, but have keyName="rsa-4096-private".
+        # 
+        # This configuration seems to be correct, because 
+        # all of the test vectors (master keys and MPL) pass with these two hacks.
+        # But this seems weird, and we didn't have to do this in Java.
         import _dafny
         import UTF8
 
