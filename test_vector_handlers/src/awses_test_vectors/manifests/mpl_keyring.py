@@ -82,22 +82,22 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         if self.padding_hash is not None:
             input_kwargs["padding-hash"] = self.padding_hash
 
-        # Normalize input for MPL
         if input_kwargs["type"] == "raw" \
                 and input_kwargs["encryption-algorithm"] == "rsa":
+            # Weird hack #1.
+            # If generating decrypt vectors (i.e. encrypting)
+            # and the manifest specified an RSA private key,
+            # change the input to KeyVectors to a public key.
+            # KeyVectors requires a public key to encrypt.
+            # If this is not done, then keyring.OnEncrypt fails with
+            # "A RawRSAKeyring without a public key cannot provide OnEncrypt"
             if input_kwargs["key"] == "rsa-4096-private" \
                 and (mode == "decrypt-generate" or mode == "encrypt"):
-                print(f"changed private to public")
                 changed = True
                 input_kwargs["key"] = "rsa-4096-public"
-            # if input_kwargs["key"] == "rsa-4096-private" \
-            #     and (mode == "decrypt"):
-            #     input_kwargs["provider-id"] = "rsa-4096-public"
+            # Specify default padding-hash
             if "padding-hash" not in input_kwargs:
-                print("added paddinghash")
                 input_kwargs["padding-hash"] = "sha1"
-
-        print(f"keyring {input_kwargs=}")
 
         # stringify the dict
         input_as_string = json.dumps(input_kwargs)
@@ -108,16 +108,39 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             GetKeyDescriptionInput(json=encoded_json)
         )
 
-        print(f"{output.key_description.value=}")
-
-        keyvectors
-
         keyring: IKeyring = keyvectors.create_test_vector_keyring(
             TestVectorKeyringInput(
                 key_description=output.key_description
             )
         )
 
+        # Weird hack #2.
+        # Generating decrypt vectors for RSA keys.
+        # The MPL sets the encrypting keyring's keyName to "rsa-4096-private",
+        # somewhat undoing weird hack #1.
+        # Weird hack #1 allows the encrypting keyring to be created with a public key.
+        # However, it also changes the keyName of the encrypting keyring,
+        # which is changed back with this hack.
+        # If this is not done, then decryption fails
+        # (for BOTH native master keys and MPL keyrings)
+        # with error 
+        # native master keys: "Unable to decrypt any data key"
+        # MPL: "Raw RSA Key was unable to decrypt any encrypted data key"
+        # 
+        # digging, they key is unable to decrypt 
+        # because the EDK keyProviderInfo differs from the keyring keyName,
+        # and this check fails:
+        # https://github.com/aws/aws-cryptographic-material-providers-library/blob/bd549c88cefc93ba8a2d204bd23134b3b12c69fb/AwsCryptographicMaterialProviders/dafny/AwsCryptographicMaterialProviders/src/Keyrings/RawRSAKeyring.dfy#L382
+        # due to the two variables not being equal:
+        # edk.keyProviderInfo='rsa-4096-public'
+        # decrypting keyring.keyName='rsa-4096-private'
+        # 
+        # changing the encrypting keyring's keyName back to 'rsa-4096-private' 
+        # (somewhat undoing weird hack #1)
+        # sets edk.keyProviderInfo='rsa-4096-private',
+        # which allows this check to pass on decrypt.
+        # This "works" because all of the test vectors pass with these two hacks.
+        # But this seems weird.
         import _dafny
         import UTF8
 
@@ -126,9 +149,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
                 if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
                         and (mode == "decrypt-generate" or mode == "encrypt"):
                         if changed:
-                            print("YES")
-                            # input()
-                            print(f"changed public to private")
                             keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
 
@@ -146,13 +166,7 @@ def keyring_from_master_key_specs(keys, keys_uri, master_key_specs, mode):
     :return: Master key provider combining all loaded master keys
     :rtype: IKeyring
     """
-    # print(f"{master_key_specs=}")
-    # input()
     keyrings = [spec.keyring(keys, keys_uri, mode) for spec in master_key_specs]
-    # print(f"speckeyrings {keyrings=}")
-    # input()
-    # print(f"speckeys {keys=}")
-    # input()
     primary = keyrings[0]
     others = keyrings[1:]
 
