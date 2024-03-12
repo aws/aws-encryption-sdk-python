@@ -67,6 +67,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
 
         keyvectors = KeyVectorsProvider.get_keyvectors(keys_path=keys_uri)
 
+        changed = False
+
         # Construct the input to KeyVectorsConfig
         input_kwargs = {
             "type": self.type_name,
@@ -86,6 +88,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             if input_kwargs["key"] == "rsa-4096-private" \
                 and (mode == "decrypt-generate" or mode == "encrypt"):
                 print(f"changed private to public")
+                changed = True
                 input_kwargs["key"] = "rsa-4096-public"
             # if input_kwargs["key"] == "rsa-4096-private" \
             #     and (mode == "decrypt"):
@@ -115,6 +118,20 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             )
         )
 
+        import _dafny
+        import UTF8
+
+        if hasattr(keyring, "_impl"):
+            if hasattr(keyring._impl, "_keyName"):
+                if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
+                        and (mode == "decrypt-generate" or mode == "encrypt"):
+                        if changed:
+                            print("YES")
+                            # input()
+                            print(f"changed public to private")
+                            keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
+
+
         return keyring
 
 
@@ -129,7 +146,13 @@ def keyring_from_master_key_specs(keys, keys_uri, master_key_specs, mode):
     :return: Master key provider combining all loaded master keys
     :rtype: IKeyring
     """
+    # print(f"{master_key_specs=}")
+    # input()
     keyrings = [spec.keyring(keys, keys_uri, mode) for spec in master_key_specs]
+    # print(f"speckeyrings {keyrings=}")
+    # input()
+    # print(f"speckeys {keys=}")
+    # input()
     primary = keyrings[0]
     others = keyrings[1:]
 

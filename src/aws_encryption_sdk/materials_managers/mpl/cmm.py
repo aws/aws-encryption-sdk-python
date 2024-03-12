@@ -67,11 +67,25 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 CryptoMaterialsManagerFromMPL._native_to_mpl_get_encryption_materials(
                     request
                 )
+                
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
 
-            print(f"{mpl_output.as_dict()=}")
+            print(f"get {mpl_output=}")
 
-            mpl_output.encryption_materials.encrypted_data_keys[0].key_provider_info = b"rsa-4096-private"
+            # ????????????????????????????
+            # kpis = set()
+            # for edk in mpl_output.encryption_materials.encrypted_data_keys:
+            #     kpis.add(edk.key_provider_info)
+
+            # print(kpis)
+            # input
+            
+            # if len(kpis) == 1:
+            #     for edk in mpl_output.encryption_materials.encrypted_data_keys:
+            #         if edk.key_provider_info == b"rsa-4096-public":
+            #             edk.key_provider_info = b"rsa-4096-private"
+
+            # mpl_output.encryption_materials.encrypted_data_keys[0].key_provider_info = b"rsa-4096-private"
 
             return EncryptionMaterialsFromMPL(mpl_output.encryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:
@@ -139,7 +153,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             raise AWSEncryptionSDKClientError(mpl_exception)
         except COE as coe:
             print(f"{coe.list=}")
-            raise AWSEncryptionSDKClientError(coe)
+            # raise AWSEncryptionSDKClientError(coe)
 
     @staticmethod
     def _native_algorithm_id_to_mpl_algorithm_id(native_algorithm_id: str) -> 'MPL_AlgorithmSuiteIdESDK':
