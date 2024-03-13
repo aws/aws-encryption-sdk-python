@@ -18,20 +18,33 @@ import os
 import pytest
 
 
-def vectors_dir():
-    here = os.path.abspath(os.path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def legacy_vectors_dir():
     return os.path.abspath(os.path.join(here, "..", "aws-crypto-tools-test-vector-framework"))
+
+
+def mpl_vectors_dir():
+    return os.path.abspath(os.path.join(here, "..", "golden-manifest-TODORENAMEANDGETFROMGHA"))
 
 
 @pytest.fixture
 def full_message_encrypt_vectors():
     return os.path.join(
-        vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0003-awses-message-encryption.v2.json"
+        legacy_vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0003-awses-message-encryption.v2.json"
     )
 
 
 @pytest.fixture
 def full_message_decrypt_generation_vectors():
     return os.path.join(
-        vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0006-awses-message-decryption-generation.v2.json"
+        legacy_vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0006-awses-message-decryption-generation.v2.json"
+    )
+
+
+@pytest.fixture
+def full_message_decrypt_generation_vectors():
+    return os.path.join(
+        mpl_vectors_dir(), "manifest.json"
     )

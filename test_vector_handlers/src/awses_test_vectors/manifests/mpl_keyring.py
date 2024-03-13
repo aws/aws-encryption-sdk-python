@@ -156,7 +156,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
                         if changed:
                             keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
-
         return keyring
 
 

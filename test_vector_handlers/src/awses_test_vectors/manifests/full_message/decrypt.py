@@ -56,7 +56,7 @@ except ImportError:  # pragma: no cover
 
 CLIENT_NAME = "aws/aws-encryption-sdk-python"
 CURRENT_VERSION = 2
-SUPPORTED_VERSIONS = (2,)
+SUPPORTED_VERSIONS = (2,4,)
 
 
 @attr.s(init=False)
