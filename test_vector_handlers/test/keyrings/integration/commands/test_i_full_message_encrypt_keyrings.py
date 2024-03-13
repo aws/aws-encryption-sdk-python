@@ -28,7 +28,7 @@ pytestmark = [pytest.mark.integ]
 
 def test_full_message_encrypt_canonical_full(full_message_encrypt_vectors):
     full_message_encrypt.cli(["--input", full_message_encrypt_vectors])
-    full_message_encrypt.cli(["--input", full_message_encrypt_vectors], "--keyrings")
+    full_message_encrypt.cli(["--input", full_message_encrypt_vectors, "--keyrings"])
 
 
 def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generation_vectors):

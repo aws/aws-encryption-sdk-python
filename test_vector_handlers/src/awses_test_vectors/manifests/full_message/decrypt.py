@@ -452,6 +452,57 @@ class MessageDecryptionTestScenario(object):
     def _streaming_decrypt_unsigned(self):
         result = bytearray()
         client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT)
+
+        stream_kwargs = {
+            "source": self.ciphertext,
+            "mode": "decrypt-unsigned",
+        }
+
+        if self.cmm_type == "Default":
+            if self.keyrings:
+                stream_kwargs["keyring"] = self.master_key_provider_fn()
+            else:
+                stream_kwargs["key_provider"] = self.master_key_provider_fn()
+        elif self.cmm_type == "RequiredEncryptionContext":
+            # We need to make a custom CMM and pass it into the client
+            if not self.keyrings:
+                raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
+
+            from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+            from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+            from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
+            from aws_cryptographic_materialproviders.mpl.models import (
+                CreateDefaultCryptographicMaterialsManagerInput,
+                CreateRequiredEncryptionContextCMMInput,
+            )
+
+
+            mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                config=MaterialProvidersConfig()
+            )
+
+            underlying_cmm: ICryptographicMaterialsManager = \
+                mpl.create_default_cryptographic_materials_manager(
+                    CreateDefaultCryptographicMaterialsManagerInput(
+                        keyring=self.master_key_provider_fn()
+                    )
+                )
+
+            required_ec_cmm: ICryptographicMaterialsManager = \
+                mpl.create_required_encryption_context_cmm(
+                    CreateRequiredEncryptionContextCMMInput(
+                        # Currently, the test vector manifest requires that 
+                        # if using the required encryption context CMM,
+                        # both and only "key1" and "key2" are required.
+                        required_encryption_context_keys=["key1", "key2"],
+                        underlying_cmm=underlying_cmm,
+                    )
+                )
+            
+            stream_kwargs["materials_manager"] = required_ec_cmm
+            stream_kwargs["encryption_context"] = self.encryption_context
+
+
         with client.stream(
             source=self.ciphertext, mode="decrypt-unsigned", key_provider=self.master_key_provider_fn()
         ) as decryptor:
