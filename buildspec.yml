@@ -58,12 +58,24 @@ batch:
       buildspec: codebuild/py311/integ.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_integ_mpl
+      buildspec: codebuild/py311/integ_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
     - identifier: py311_examples
       buildspec: codebuild/py311/examples.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_examples_mpl
+      buildspec: codebuild/py311/examples_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
     - identifier: py311_awses_latest
       buildspec: codebuild/py311/awses_local.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_awses_latest_mpl
+      buildspec: codebuild/py311/awses_local_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
 
@@ -71,17 +83,33 @@ batch:
       buildspec: codebuild/py312/integ.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py312_integ_mpl
+      buildspec: codebuild/py312/integ_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
     - identifier: py312_examples
       buildspec: codebuild/py312/examples.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_examples_mpl
+      buildspec: codebuild/py312/examples_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
     - identifier: py312_awses_latest
       buildspec: codebuild/py312/awses_local.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py312_awses_latest_mpl
+      buildspec: codebuild/py312/awses_local_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
       
     - identifier: code_coverage
       buildspec: codebuild/coverage/coverage.yml
+    - identifier: code_coverage_mpl
+      buildspec: codebuild/coverage/coverage_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
 
     - identifier: compliance
       buildspec: codebuild/compliance/compliance.yml

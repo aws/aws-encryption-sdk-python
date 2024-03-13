@@ -1,4 +1,4 @@
 boto3>=1.10.0
-cryptography>=3.4.0
+cryptography>=3.4.6
 attrs>=17.4.0
 wrapt>=1.10.11

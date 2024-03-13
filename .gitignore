@@ -19,8 +19,9 @@ docs/build
 __pycache__
 *.egg-info
 
-# Coverage.py
-.coverage*
+# Coverage.py, NOT .coveragerc nor .coveragercmpl
+.coverage
+.coverage.py
 
 # MyPy
 .mypy_cache

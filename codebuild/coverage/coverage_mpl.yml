@@ -1,0 +1,14 @@
+version: 0.2
+
+env:
+  variables:
+    TOXENV: "mplcoverage-mpl"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+  build:
+    commands:
+      - pip install "tox < 4.0"
+      - tox

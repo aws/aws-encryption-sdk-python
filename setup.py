@@ -39,6 +39,13 @@ setup(
     keywords="aws-encryption-sdk aws kms encryption",
     license="Apache License 2.0",
     install_requires=get_requirements(),
+    # pylint: disable=fixme
+    # TODO: Point at MPL main branch once Python MPL is merged into main.
+    extras_require={
+        "MPL": ["aws-cryptographic-material-providers @" \
+                "git+https://github.com/aws/aws-cryptographic-material-providers-library.git@" \
+                "lucmcdon/python-mpl#subdirectory=AwsCryptographicMaterialProviders/runtimes/python"],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -49,6 +56,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Security",
         "Topic :: Security :: Cryptography",

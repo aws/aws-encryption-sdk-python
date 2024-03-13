@@ -14,6 +14,7 @@
 from __future__ import division
 
 import abc
+import base64
 import hmac
 import io
 import logging
@@ -21,6 +22,7 @@ import math
 
 import attr
 import six
+from cryptography.hazmat.primitives import serialization
 
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
@@ -56,6 +58,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
+from aws_encryption_sdk.internal.utils import exactly_one_arg_is_not_none
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
     validate_commitment_policy_on_encrypt,
@@ -66,6 +69,22 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, En
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
+
+try:
+    # pylint should pass even if the MPL isn't installed
+    # noqa pylint: disable=import-error
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
+    from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+    _HAS_MPL = True
+
+    # Import internal ESDK modules that depend on the MPL
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+
+except ImportError:
+    _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,6 +132,11 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     key_provider = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
+    if _HAS_MPL:
+        # Keyrings are only available if the MPL is installed in the runtime
+        keyring = attr.ib(
+            hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(IKeyring))
+        )
     source_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
@@ -120,8 +144,39 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
         hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
-    def __attrs_post_init__(self):
-        """Normalize inputs to crypto material manager."""
+    def _has_mpl_attrs_post_init(self):
+        """If the MPL is present in the runtime, perform MPL-specific post-init logic
+        to validate the new object has a valid state.
+        """
+        if not exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
+            raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
+        if self.materials_manager is None:
+            if self.key_provider is not None:
+                # No CMM, provided legacy native `key_provider` => create legacy native DefaultCryptoMaterialsManager
+                self.materials_manager = DefaultCryptoMaterialsManager(
+                    master_key_provider=self.key_provider
+                )
+            elif self.keyring is not None:
+                try:
+                    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                        config=MaterialProvidersConfig()
+                    )
+                    cmm = mat_prov.create_default_cryptographic_materials_manager(
+                        CreateDefaultCryptographicMaterialsManagerInput(
+                            keyring=self.keyring
+                        )
+                    )
+                    cmm_handler: CryptoMaterialsManager = CryptoMaterialsManagerFromMPL(cmm)
+                    self.materials_manager = cmm_handler
+                except AwsCryptographicMaterialProvidersException as mpl_exception:
+                    # Wrap MPL error into the ESDK error type
+                    # so customers only have to catch ESDK error types.
+                    raise AWSEncryptionSDKClientError(mpl_exception)
+
+    def _no_mpl_attrs_post_init(self):
+        """If the MPL is NOT present in the runtime, perform post-init logic
+        to validate the new object has a valid state.
+        """
         both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
         neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
 
@@ -129,6 +184,13 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
             raise TypeError("Exactly one of materials_manager or key_provider must be provided")
         if self.materials_manager is None:
             self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+
+    def __attrs_post_init__(self):
+        """Normalize inputs to crypto material manager."""
+        if _HAS_MPL:
+            self._has_mpl_attrs_post_init()
+        else:
+            self._no_mpl_attrs_post_init()
 
 
 class _EncryptionStream(io.IOBase):
@@ -343,6 +405,10 @@ class EncryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -394,6 +460,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -480,9 +550,18 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
-            self.signer = Signer.from_key_bytes(
-                algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
-            )
+            # MPL verification key is PEM bytes, not DER bytes.
+            # If the underlying CMM is from the MPL, load PEM bytes.
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key,
+                    encoding=serialization.Encoding.PEM,
+                )
+            else:
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
+                )
         aws_encryption_sdk.internal.utils.validate_frame_length(
             frame_length=self.config.frame_length, algorithm=self._encryption_materials.algorithm
         )
@@ -729,11 +808,15 @@ class DecryptorConfig(_ClientConfig):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
+        (either `keyring`, `materials_manager` or `key_provider` required)
     :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
+        (either `keyring`, `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -770,6 +853,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_materialproviders.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -831,9 +918,18 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if decryption_materials.verification_key is None:
             self.verifier = None
         else:
-            self.verifier = Verifier.from_key_bytes(
-                algorithm=header.algorithm, key_bytes=decryption_materials.verification_key
-            )
+            # MPL verification key is NOT key bytes; it is bytes of the compressed point.
+            # If the underlying CMM is from the MPL, load bytes from encoded point.
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                self.verifier = Verifier.from_encoded_point(
+                    algorithm=header.algorithm,
+                    encoded_point=base64.b64encode(decryption_materials.verification_key)
+                )
+            else:
+                self.verifier = Verifier.from_key_bytes(
+                    algorithm=header.algorithm, key_bytes=decryption_materials.verification_key
+                )
         if self.verifier is not None:
             self.verifier.update(raw_header)
 
