@@ -34,7 +34,6 @@ def test_full_message_encrypt_canonical_full(full_message_encrypt_vectors):
 def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generation_vectors):
     # Generate vectors using keyring interfaces
     keyring_output_dir = tmpdir.join("output-keyrings")
-    print("Generating vectors with keyrings... ", end="")
     full_message_decrypt_generate.cli([
         "--output",
         str(keyring_output_dir),
@@ -42,9 +41,7 @@ def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generati
         full_message_decrypt_generation_vectors,
         "--keyrings"
     ])
-    print("done")
 
-    print("Generating vectors with master keys... ", end="")
     # Generate vectors using master key interfaces
     master_key_output_dir = tmpdir.join("output-master-key")
     full_message_decrypt_generate.cli([
@@ -53,27 +50,16 @@ def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generati
         "--input",
         full_message_decrypt_generation_vectors
     ])
-    print("done")
 
     # Validate that vectors generated using keyring interfaces
     # can be decrypted by BOTH keyring and master key interfaces
     keyring_decrypt_manifest_file = keyring_output_dir.join("manifest.json")
-    print("Decrypting keyring-encrypted vectors with keyrings... ", end="")
     full_message_decrypt.cli(["--input", str(keyring_decrypt_manifest_file), "--keyrings"])
-    print("done")
-
-    print("Decrypting keyring-encrypted vectors with master keys... ", end="")
     full_message_decrypt.cli(["--input", str(keyring_decrypt_manifest_file)])
-    print("done")
 
     # Validate that vectors generated using master key interfaces
     # can be decrypted by BOTH keyring and master key interfaces
     master_key_decrypt_manifest_file = keyring_output_dir.join("manifest.json")
 
-    print("Decrypting master key-encrypted vectors with keyrings... ", end="")
     full_message_decrypt.cli(["--input", str(master_key_decrypt_manifest_file), "--keyrings"])
-    print("done")
-
-    print("Decrypting master key-encrypted vectors with master keys... ", end="")
     full_message_decrypt.cli(["--input", str(master_key_decrypt_manifest_file)])
-    print("done")

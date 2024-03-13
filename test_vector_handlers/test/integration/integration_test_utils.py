@@ -43,7 +43,10 @@ def full_message_encrypt_vectors():
 @pytest.fixture
 def full_message_decrypt_generation_vectors():
     return os.path.join(
-        legacy_vectors_dir(), "features", "CANONICAL-GENERATED-MANIFESTS", "0006-awses-message-decryption-generation.v2.json"
+        legacy_vectors_dir(),
+        "features",
+        "CANONICAL-GENERATED-MANIFESTS",
+        "0006-awses-message-decryption-generation.v2.json"
     )
 
 
