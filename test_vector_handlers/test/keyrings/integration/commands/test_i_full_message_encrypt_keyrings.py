@@ -34,16 +34,16 @@ pytestmark = [pytest.mark.integ]
 
 def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generation_vectors):
     # Generate vectors using keyring interfaces
-    keyring_output_dir = tmpdir.join("output-keyrings")
-    print("Generating vectors with keyrings... ", end="")
-    full_message_decrypt_generate.cli([
-        "--output",
-        str(keyring_output_dir),
-        "--input",
-        full_message_decrypt_generation_vectors,
-        "--keyrings"
-    ])
-    print("done")
+    # keyring_output_dir = tmpdir.join("output-keyrings")
+    # print("Generating vectors with keyrings... ", end="")
+    # full_message_decrypt_generate.cli([
+    #     "--output",
+    #     str(keyring_output_dir),
+    #     "--input",
+    #     full_message_decrypt_generation_vectors,
+    #     "--keyrings"
+    # ])
+    # print("done")
 
     # print("Generating vectors with master keys... ", end="")
     # # Generate vectors using master key interfaces

@@ -451,6 +451,8 @@ class MessageDecryptionTestScenarioGenerator(object):
                 decryption_method=self.decryption_method,
                 result=expected_result,
                 keyrings=self.keyrings,
+                cmm_type="Default",
+                encryption_context={}
             ),
         )
 

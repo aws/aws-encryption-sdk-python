@@ -29,6 +29,10 @@ def mpl_vectors_dir():
     return os.path.abspath(os.path.join(here, "..", "golden-manifest-TODORENAMEANDGETFROMGHA"))
 
 
+def required_ec_vectors_dir():
+    return os.path.abspath(os.path.join(here, "..", "required-ec-TODORENAMEANDGETFROMGHA"))
+
+
 @pytest.fixture
 def full_message_encrypt_vectors():
     return os.path.join(
@@ -44,7 +48,14 @@ def full_message_decrypt_generation_vectors():
 
 
 @pytest.fixture
-def full_message_decrypt_generation_vectors():
+def mpl_decrypt_vectors():
     return os.path.join(
         mpl_vectors_dir(), "manifest.json"
+    )
+
+
+@pytest.fixture
+def required_encryption_context_cmm_decrypt_vectors():
+    return os.path.join(
+        required_ec_vectors_dir(), "manifest.json"
     )
