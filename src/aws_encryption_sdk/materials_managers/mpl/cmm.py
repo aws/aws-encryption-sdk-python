@@ -70,8 +70,6 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
 
-            print(f"get {mpl_output=}")
-
             # ????????????????????????????
             # kpis = set()
             # for edk in mpl_output.encryption_materials.encrypted_data_keys:
