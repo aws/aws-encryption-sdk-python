@@ -139,10 +139,10 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         try:
             mpl_input: 'MPL_DecryptMaterialsInput' = \
                 CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(request)
-            print(f"{mpl_input.as_dict()=}")
+            # print(f"{mpl_input.as_dict()=}")
             # input()
             mpl_output: 'MPL_DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
-            print(f"{mpl_output.as_dict()=}")
+            # print(f"{mpl_output.as_dict()=}")
             # input()
             return DecryptionMaterialsFromMPL(mpl_output.decryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:
@@ -150,7 +150,8 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             # so customers only have to catch ESDK error types.
             raise AWSEncryptionSDKClientError(mpl_exception)
         except COE as coe:
-            print(f"{coe.list=}")
+            # print(f"{coe.list=}")
+            pass
             # raise AWSEncryptionSDKClientError(coe)
 
     @staticmethod
