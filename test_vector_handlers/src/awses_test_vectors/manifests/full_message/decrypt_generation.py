@@ -41,6 +41,11 @@ try:
 
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
+    from aws_encryption_sdk.materials_managers.mpl.materials import (
+        EncryptionMaterialsFromMPL
+    )
+    from awses_test_vectors.internal.half_signing_mpl_materials import HalfSigningEncryptionMaterialsFromMPL
+
     _HAS_MPL = True
 except ImportError:
     _HAS_MPL = False
@@ -297,7 +302,6 @@ class HalfSigningTamperingMethod(TamperingMethod):
             generation_scenario.decryption_test_scenario_pair(ciphertext_writer, ciphertext_to_decrypt, expected_result)
         ]
 
-
 class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
     """
     Custom CMM that generates materials for an unsigned algorithm suite
@@ -340,6 +344,11 @@ class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
             signing_request.algorithm = AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
 
             result = self.wrapped_default_cmm.get_encryption_materials(signing_request)
+
+            if _HAS_MPL:
+                if isinstance(result, EncryptionMaterialsFromMPL):
+                    result = HalfSigningEncryptionMaterialsFromMPL(result)
+
             result.algorithm = request.algorithm
             result.signing_key = None
 
