@@ -40,8 +40,10 @@ try:
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
+
+    _HAS_MPL = True
 except ImportError:
-    pass
+    _HAS_MPL = False
 
 
 from awses_test_vectors.internal.defaults import ENCODING
@@ -314,7 +316,18 @@ class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
         Create a new CMM that wraps a new DefaultCryptoMaterialsManager
         based on the given master key provider.
         """
-        self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
+        if isinstance(master_key_provider, MasterKeyProvider):
+            self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
+        elif _HAS_MPL and isinstance(master_key_provider, IKeyring):
+            mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
+            mpl_cmm = mpl.create_default_cryptographic_materials_manager(
+                CreateDefaultCryptographicMaterialsManagerInput(
+                    keyring=master_key_provider
+                )
+            )
+            self.wrapped_default_cmm = CryptoMaterialsManagerFromMPL(mpl_cmm=mpl_cmm)
+        else:
+            raise TypeError(f"Unrecognized master_key_provider type: {master_key_provider}")
 
     def get_encryption_materials(self, request):
         """
@@ -405,7 +418,7 @@ class MessageDecryptionTestScenarioGenerator(object):
 
             def decryption_master_key_provider_fn():
                 if keyrings:
-                    return keyring_from_master_key_specs(keys, keys_uri, decryption_master_key_specs, "decrypt-generation")
+                    return keyring_from_master_key_specs(keys_uri, decryption_master_key_specs, "decrypt-generation")
                 return master_key_provider_from_master_key_specs(keys, decryption_master_key_specs)
 
         else:

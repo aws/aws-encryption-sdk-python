@@ -14,8 +14,11 @@
 
 This REQUIRES the aws-cryptographic-material-providers library.
 """
+import json
 import attr
 
+# Ignore missing MPL for pylint, but the MPL is required for this example
+# noqa pylint: disable=import-error
 from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
     aws_cryptography_materialproviderstestvectorkeys.models import (
         GetKeyDescriptionInput,
@@ -27,10 +30,12 @@ from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConf
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
-from awses_test_vectors.internal.keyvectors_provider import KeyVectorsProvider
-from awses_test_vectors.manifests.keys import KeysManifest  # noqa pylint disable=unused-import
+import _dafny
+import UTF8
 
-import json
+from awses_test_vectors.internal.keyvectors_provider import KeyVectorsProvider
+from awses_test_vectors.manifests.keys import KeysManifest
+
 
 from .master_key import MasterKeySpec
 
@@ -49,24 +54,18 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
 
-    def keyring(self, keys, keys_uri, mode):
+    def keyring(self, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
 
         :param str keys_uri: Path to the keys manifest
         """
 
-        '''
-        encryptmaterials keyProviderInfo = rsa-4096-public'
-        MUST be private.
-        somehow, it is writing "rsa-4096-public".
-        
-        '''
-
-
         keyvectors = KeyVectorsProvider.get_keyvectors(keys_path=keys_uri)
 
-        changed = False
+        # Variable to flag whether we changed anything in weird hack #1.
+        # Signals to weird hack #2 whether it should execute.
+        changed_key_name_from_private_to_public = False
 
         # Construct the input to KeyVectorsConfig
         input_kwargs = {
@@ -74,7 +73,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             "key": self.key_name,
             "provider-id": self.provider_id,
             "encryption-algorithm": self.encryption_algorithm,
-            
+
         }
         if self.padding_algorithm is not None and self.padding_algorithm != "":
             input_kwargs["padding-algorithm"] = self.padding_algorithm
@@ -85,7 +84,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
                 and input_kwargs["encryption-algorithm"] == "rsa":
             # Weird hack #1:
             # Gets public key for encryption instead of private key.
-            # 
+            #
             # If generating decrypt vectors (i.e. encrypting)
             # and the manifest specified an RSA private key,
             # change the input to KeyVectors to a public key.
@@ -93,8 +92,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             # If this is not done, then keyring.OnEncrypt fails with
             # "A RawRSAKeyring without a public key cannot provide OnEncrypt"
             if input_kwargs["key"] == "rsa-4096-private" \
-                and (mode == "decrypt-generate" or mode == "encrypt"):
-                changed = True
+                and mode in ("decrypt-generate", "encrypt"):
+                changed_key_name_from_private_to_public = True
                 input_kwargs["key"] = "rsa-4096-public"
             # Specify default padding-hash
             if "padding-hash" not in input_kwargs:
@@ -117,17 +116,17 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
 
         # Weird hack #2:
         # Sets keyProviderInfo to "private" even though the material is "public".
-        # 
+        #
         # Weird hack #1 allows the encrypting keyring to be created with a public key.
         # However, it also changes the keyName of the encrypting keyring.
         # This hack changes it back.
-        # 
+        #
         # If this is not done, then decryption fails
         # (for BOTH native master keys and MPL keyrings)
-        # with error 
+        # with error
         # native master keys: "Unable to decrypt any data key"
         # MPL: "Raw RSA Key was unable to decrypt any encrypted data key"
-        # 
+        #
         # Digging, the keyring is unable to decrypt in the MPL
         # because the EDK keyProviderInfo differs from the keyring keyName,
         # and this check fails:
@@ -135,30 +134,28 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         # due to the two variables not being equal:
         # edk.keyProviderInfo='rsa-4096-public'
         # keyring.keyName='rsa-4096-private'
-        # 
-        # Changing the encrypting keyring's keyName back to 'rsa-4096-private' 
-        # sets any EDKs this keyring encrypts to now have 
+        #
+        # Changing the encrypting keyring's keyName back to 'rsa-4096-private'
+        # sets any EDKs this keyring encrypts to now have
         # keyName="rsa-4096-private".
         # However, keyvectors has still retrieved the public key material to encrypt with.
         # So it any EDKs it encrypts will use the public material, but have keyName="rsa-4096-private".
-        # 
-        # This configuration seems to be correct, because 
+        #
+        # This configuration seems to be correct, because
         # all of the test vectors (master keys and MPL) pass with these two hacks.
         # But this seems weird, and we didn't have to do this in Java.
-        import _dafny
-        import UTF8
-
-        if hasattr(keyring, "_impl"):
-            if hasattr(keyring._impl, "_keyName"):
+        if hasattr(keyring, "_impl"):  # pylint: disable=protected-access
+            if hasattr(keyring._impl, "_keyName"):  # pylint: disable=protected-access
                 if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
-                        and (mode == "decrypt-generate" or mode == "encrypt"):
-                        if changed:
-                            keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
+                    and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
+                    if changed_key_name_from_private_to_public:
+                        # pylint: disable=protected-access
+                        keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
         return keyring
 
 
-def keyring_from_master_key_specs(keys, keys_uri, master_key_specs, mode):
+def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):
     # type: (str, list[KeyringSpec]) -> IKeyring
     """Build and combine all keyrings identified by the provided specs and
     using the provided keys.
@@ -169,7 +166,7 @@ def keyring_from_master_key_specs(keys, keys_uri, master_key_specs, mode):
     :return: Master key provider combining all loaded master keys
     :rtype: IKeyring
     """
-    keyrings = [spec.keyring(keys, keys_uri, mode) for spec in master_key_specs]
+    keyrings = [spec.keyring(keys_uri, mode) for spec in master_key_specs]
     primary = keyrings[0]
     others = keyrings[1:]
 

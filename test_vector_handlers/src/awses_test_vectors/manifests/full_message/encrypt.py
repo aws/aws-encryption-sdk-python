@@ -112,7 +112,7 @@ class MessageEncryptionTestScenario(object):
 
         def master_key_provider_fn():
             if keyrings:
-                return keyring_from_master_key_specs(keys, keys_uri, master_key_specs, "encrypt")
+                return keyring_from_master_key_specs(keys_uri, master_key_specs, "encrypt")
             return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         return cls(

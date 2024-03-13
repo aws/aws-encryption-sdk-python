@@ -37,6 +37,14 @@ from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_pr
 
 try:
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
+    from aws_cryptographic_materialproviders.mpl.models import (
+        CreateDefaultCryptographicMaterialsManagerInput,
+        CreateRequiredEncryptionContextCMMInput,
+    )
+
     _HAS_MPL = True
 except ImportError:
     _HAS_MPL = False
@@ -262,6 +270,7 @@ class MessageDecryptionTestScenario(object):
         keyrings,  # type: bool
         keys_uri,  # type: str
     ):
+        # pylint: disable=too-many-locals
         # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
 
@@ -284,7 +293,7 @@ class MessageDecryptionTestScenario(object):
 
         def master_key_provider_fn():
             if keyrings:
-                return keyring_from_master_key_specs(keys, keys_uri, master_key_specs, "decrypt")
+                return keyring_from_master_key_specs(keys_uri, master_key_specs, "decrypt")
             return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
         decryption_method_spec = scenario.get("decryption-method")
@@ -293,7 +302,7 @@ class MessageDecryptionTestScenario(object):
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
 
         encryption_context = scenario["encryption-context"]
-        
+
         # MPL test vectors add CMM types to the test vectors manifests
         if "cmm" in scenario:
             if scenario["cmm"] == "Default":
@@ -350,19 +359,13 @@ class MessageDecryptionTestScenario(object):
             if self.keyrings:
                 return client.decrypt(source=self.ciphertext, keyring=self.master_key_provider_fn())
             return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
-        elif self.cmm_type == "RequiredEncryptionContext":
+        if self.cmm_type == "RequiredEncryptionContext":
             # We need to make a custom CMM and pass it into the client
             if not self.keyrings:
                 raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
-
-            from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-            from aws_cryptographic_materialproviders.mpl.models import (
-                CreateDefaultCryptographicMaterialsManagerInput,
-                CreateRequiredEncryptionContextCMMInput,
-            )
-
+            if not _HAS_MPL:
+                raise ValueError("Must install the aws-cryptographic-material-providers library"
+                                 "to use RequiredEncryptionContext")
 
             mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
                 config=MaterialProvidersConfig()
@@ -378,19 +381,22 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that 
+                        # Currently, the test vector manifest requires that
                         # if using the required encryption context CMM,
                         # both and only "key1" and "key2" are required.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )
                 )
-                        
+
             return client.decrypt(
                 source=self.ciphertext,
                 materials_manager=required_ec_cmm,
                 encryption_context = self.encryption_context,
             )
+
+        # If the cmm type was not in if/elif above, raise error
+        raise ValueError(f"Unrecognized cmm_type: {self.cmm_type}")
 
     def _streaming_decrypt(self):
         result = bytearray()
@@ -409,15 +415,9 @@ class MessageDecryptionTestScenario(object):
             # We need to make a custom CMM and pass it into the client
             if not self.keyrings:
                 raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
-
-            from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-            from aws_cryptographic_materialproviders.mpl.models import (
-                CreateDefaultCryptographicMaterialsManagerInput,
-                CreateRequiredEncryptionContextCMMInput,
-            )
-
+            if not _HAS_MPL:
+                raise ValueError("Must install the aws-cryptographic-material-providers library"
+                                 "to use RequiredEncryptionContext")
 
             mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
                 config=MaterialProvidersConfig()
@@ -433,16 +433,18 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that 
+                        # Currently, the test vector manifest requires that
                         # if using the required encryption context CMM,
                         # both and only "key1" and "key2" are required.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )
                 )
-            
+
             kwargs["materials_manager"] = required_ec_cmm
             kwargs["encryption_context"] = self.encryption_context
+        else:
+            raise ValueError(f"Unrecognized cmm_type: {self.cmm_type}")
 
         with client.stream(**kwargs) as decryptor:
             for chunk in decryptor:
@@ -467,15 +469,9 @@ class MessageDecryptionTestScenario(object):
             # We need to make a custom CMM and pass it into the client
             if not self.keyrings:
                 raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
-
-            from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-            from aws_cryptographic_materialproviders.mpl.models import (
-                CreateDefaultCryptographicMaterialsManagerInput,
-                CreateRequiredEncryptionContextCMMInput,
-            )
-
+            if not _HAS_MPL:
+                raise ValueError("Must install the aws-cryptographic-material-providers library"
+                                 "to use RequiredEncryptionContext")
 
             mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
                 config=MaterialProvidersConfig()
@@ -491,16 +487,18 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that 
+                        # Currently, the test vector manifest requires that
                         # if using the required encryption context CMM,
                         # both and only "key1" and "key2" are required.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )
                 )
-            
+
             stream_kwargs["materials_manager"] = required_ec_cmm
             stream_kwargs["encryption_context"] = self.encryption_context
+        else:
+            raise ValueError(f"Unrecognized cmm_type: {self.cmm_type}")
 
         with client.stream(**stream_kwargs) as decryptor:
             for chunk in decryptor:
