@@ -22,7 +22,6 @@ from ....integration.integration_test_utils import (  # noqa pylint: disable=unu
     full_message_encrypt_vectors,
 )
 
-import cProfile
 
 pytestmark = [pytest.mark.integ]
 
