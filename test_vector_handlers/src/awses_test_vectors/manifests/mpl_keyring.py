@@ -77,7 +77,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             "encryption-algorithm": self.encryption_algorithm,
             
         }
-        if self.padding_algorithm is not None and self.padding_algorithm is not "":
+        if self.padding_algorithm is not None and self.padding_algorithm != "":
             input_kwargs["padding-algorithm"] = self.padding_algorithm
         if self.padding_hash is not None:
             input_kwargs["padding-hash"] = self.padding_hash
