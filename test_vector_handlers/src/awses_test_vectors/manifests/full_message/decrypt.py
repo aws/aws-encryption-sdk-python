@@ -352,7 +352,8 @@ class MessageDecryptionTestScenario(object):
             return client.decrypt(source=self.ciphertext, key_provider=self.master_key_provider_fn())
         elif self.cmm_type == "RequiredEncryptionContext":
             # We need to make a custom CMM and pass it into the client
-            assert self.keyrings
+            if not self.keyrings:
+                raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
 
             from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
             from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
@@ -406,7 +407,8 @@ class MessageDecryptionTestScenario(object):
                 kwargs["key_provider"] = self.master_key_provider_fn()
         elif self.cmm_type == "RequiredEncryptionContext":
             # We need to make a custom CMM and pass it into the client
-            assert self.keyrings
+            if not self.keyrings:
+                raise ValueError("Must provide keyrings arg to use RequiredEncryptionContext")
 
             from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
             from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
