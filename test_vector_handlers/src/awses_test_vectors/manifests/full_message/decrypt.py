@@ -502,10 +502,7 @@ class MessageDecryptionTestScenario(object):
             stream_kwargs["materials_manager"] = required_ec_cmm
             stream_kwargs["encryption_context"] = self.encryption_context
 
-
-        with client.stream(
-            source=self.ciphertext, mode="decrypt-unsigned", key_provider=self.master_key_provider_fn()
-        ) as decryptor:
+        with client.stream(**stream_kwargs) as decryptor:
             for chunk in decryptor:
                 result.extend(chunk)
             return result, decryptor.header
