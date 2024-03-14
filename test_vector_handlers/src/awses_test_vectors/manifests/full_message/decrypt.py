@@ -64,7 +64,7 @@ except ImportError:  # pragma: no cover
 
 CLIENT_NAME = "aws/aws-encryption-sdk-python"
 CURRENT_VERSION = 2
-SUPPORTED_VERSIONS = (2,4,)
+SUPPORTED_VERSIONS = (2, 4,)
 
 
 @attr.s(init=False)
@@ -392,7 +392,7 @@ class MessageDecryptionTestScenario(object):
             return client.decrypt(
                 source=self.ciphertext,
                 materials_manager=required_ec_cmm,
-                encryption_context = self.encryption_context,
+                encryption_context=self.encryption_context,
             )
 
         # If the cmm type was not in if/elif above, raise error

@@ -302,6 +302,7 @@ class HalfSigningTamperingMethod(TamperingMethod):
             generation_scenario.decryption_test_scenario_pair(ciphertext_writer, ciphertext_to_decrypt, expected_result)
         ]
 
+
 class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
     """
     Custom CMM that generates materials for an unsigned algorithm suite

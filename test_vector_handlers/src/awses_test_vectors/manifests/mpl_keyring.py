@@ -34,7 +34,7 @@ import _dafny
 import UTF8
 
 from awses_test_vectors.internal.keyvectors_provider import KeyVectorsProvider
-from awses_test_vectors.manifests.keys import KeysManifest
+from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 
 
 from .master_key import MasterKeySpec
@@ -92,7 +92,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             # If this is not done, then keyring.OnEncrypt fails with
             # "A RawRSAKeyring without a public key cannot provide OnEncrypt"
             if input_kwargs["key"] == "rsa-4096-private" \
-                and mode in ("decrypt-generate", "encrypt"):
+                    and mode in ("decrypt-generate", "encrypt"):
                 changed_key_name_from_private_to_public = True
                 input_kwargs["key"] = "rsa-4096-public"
             # Specify default padding-hash
@@ -147,7 +147,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         if hasattr(keyring, "_impl"):  # pylint: disable=protected-access
             if hasattr(keyring._impl, "_keyName"):  # pylint: disable=protected-access
                 if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
-                    and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
+                        and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
                     if changed_key_name_from_private_to_public:
                         # pylint: disable=protected-access
                         keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value

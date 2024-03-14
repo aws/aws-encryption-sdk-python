@@ -12,6 +12,7 @@ from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
 
 keyvectors_instances = {}
 
+
 # pylint: disable=too-few-public-methods
 class KeyVectorsProvider:
     """Singleton manager for the KeyVectors client."""
@@ -21,6 +22,6 @@ class KeyVectorsProvider:
     @classmethod
     def get_keyvectors(cls, keys_path):
         """Returns the singleton KeyVectors client."""
-        if not keys_path in keyvectors_instances:
+        if keys_path not in keyvectors_instances:
             keyvectors_instances[keys_path] = KeyVectors(KeyVectorsConfig(key_manifest_path=keys_path))
         return keyvectors_instances[keys_path]
