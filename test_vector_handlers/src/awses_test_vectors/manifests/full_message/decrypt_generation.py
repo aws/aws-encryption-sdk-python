@@ -171,7 +171,7 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         # Use a caching CMM to avoid generating a new data key every time.
         if isinstance(master_key_provider, MasterKeyProvider):
             cache = LocalCryptoMaterialsCache(10)
-            cmm = CachingCryptoMaterialsManager(
+            caching_cmm = CachingCryptoMaterialsManager(
                 master_key_provider=master_key_provider,
                 cache=cache,
                 max_age=60.0,
