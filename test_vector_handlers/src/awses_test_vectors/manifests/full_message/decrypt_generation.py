@@ -191,7 +191,7 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
             cmm = CryptoMaterialsManagerFromMPL(mpl_cmm=mpl_cmm)
         else:
             raise TypeError(f"Unrecognized master_key_provider type: {master_key_provider}")
-        
+
         return [
             self.run_scenario_with_new_provider_info(
                 ciphertext_writer, generation_scenario, cmm, new_provider_info
@@ -203,10 +203,18 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         self, ciphertext_writer, generation_scenario, materials_manager, new_provider_info
     ):
         """Run with tampering for a specific new provider info value"""
-        if _HAS_MPL and isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
-            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(materials_manager, new_provider_info)
+        if isinstance(materials_manager, CryptoMaterialsManager):
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(
+                materials_manager,
+                new_provider_info
+            )
+        elif _HAS_MPL and isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(
+                materials_manager,
+                new_provider_info
+            )
         else:
-            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(materials_manager, new_provider_info)
+            raise TypeError(f"Unrecognized materials_manager type: {materials_manager}")
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
         expected_result = MessageDecryptionTestResult.expect_error(
             "Incorrect encrypted data key provider info: " + new_provider_info

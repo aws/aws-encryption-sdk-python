@@ -38,7 +38,7 @@ phases:
       - VECTOR_ZIP=$CODEBUILD_SRC_DIR/v4-Net-4.0.1.zip
       - VECTORS_URL=https://github.com/aws/aws-encryption-sdk-dafny/raw/mainline/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors/resources/v4-Net-4.0.1.zip
       - curl -s --output $VECTOR_ZIP --location $VECTORS_URL
-      - UNZIPPED_VECTORS_DIR=$CODEBUILD_SRC_DIR/test_vector_handlers/tmp/net_401_vectors
+      - UNZIPPED_VECTORS_DIR=$CODEBUILD_SRC_DIR/test_vector_handlers/net_401_vectors
       - unzip $VECTOR_ZIP -d $UNZIPPED_VECTORS_DIR
     commands:
       # NOTE: We need to pass the absolute path of the vectors
