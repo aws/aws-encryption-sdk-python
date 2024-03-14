@@ -1,4 +1,4 @@
-# Runs MPL-specific test vectors.
+# Runs test vectors using MPL constructs.
 version: 0.2
 
 env:

@@ -200,7 +200,10 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         self, ciphertext_writer, generation_scenario, materials_manager, new_provider_info
     ):
         """Run with tampering for a specific new provider info value"""
-        tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(materials_manager, new_provider_info)
+        if isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(materials_manager, new_provider_info)
+        else:
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(materials_manager, new_provider_info)
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
         expected_result = MessageDecryptionTestResult.expect_error(
             "Incorrect encrypted data key provider info: " + new_provider_info
@@ -211,6 +214,37 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
 
 
 class ProviderInfoChangingCryptoMaterialsManager(CryptoMaterialsManager):
+    """
+    Custom CMM that modifies the provider info field on EDKS.
+
+    THIS IS ONLY USED TO CREATE INVALID MESSAGES and should never be used in
+    production!
+    """
+
+    wrapped_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManager))
+    new_provider_info = attr.ib(validator=attr.validators.instance_of(six.string_types))
+
+    def __init__(self, materials_manager, new_provider_info):
+        """Create a new CMM that wraps a the given CMM."""
+        self.wrapped_cmm = materials_manager
+        self.new_provider_info = new_provider_info
+
+    def get_encryption_materials(self, request):
+        """
+        Request materials from the wrapped CMM, and then change the provider info
+        on each EDK.
+        """
+        result = self.wrapped_cmm.get_encryption_materials(request)
+        for encrypted_data_key in result.encrypted_data_keys:
+            encrypted_data_key.key_provider.key_info = self.new_provider_info
+        return result
+
+    def decrypt_materials(self, request):
+        """Thunks to the wrapped CMM"""
+        return self.wrapped_cmm.decrypt_materials(request)
+    
+
+class ProviderInfoChangingCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFromMPL):
     """
     Custom CMM that modifies the provider info field on EDKS.
 

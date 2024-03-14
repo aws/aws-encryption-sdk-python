@@ -15,6 +15,28 @@ batch:
       buildspec: codebuild/py37/awses_local.yml
       env:
         image: aws/codebuild/standard:5.0
+    - identifier: py37_decrypt_dafny_esdk_vectors
+      buildspec: codebuild/py37/decrypt_dafny_esdk_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py37_decrypt_net_401_vectors
+      buildspec: codebuild/py37/decrypt_net_401_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py37_generate_decrypt_vectors
+      buildspec: codebuild/py37/generate_decrypt_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py37_decrypt_generated
+      depend-on: py37_generate_decrypt_vectors
+      buildspec: codebuild/py37/decrypt_generated_with_python.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py37_decrypt_generated_js
+      depend-on: py37_generate_decrypt_vectors
+      buildspec: codebuild/py37/decrypt_generated_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml
@@ -28,6 +50,28 @@ batch:
       buildspec: codebuild/py38/awses_local.yml
       env:
         image: aws/codebuild/standard:5.0
+    - identifier: py38_decrypt_dafny_esdk_vectors
+      buildspec: codebuild/py38/decrypt_dafny_esdk_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py38_decrypt_net_401_vectors
+      buildspec: codebuild/py38/decrypt_net_401_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py38_generate_decrypt_vectors
+      buildspec: codebuild/py38/generate_decrypt_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py38_decrypt_generated
+      depend-on: py38_generate_decrypt_vectors
+      buildspec: codebuild/py38/decrypt_generated_with_python.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py38_decrypt_generated_js
+      depend-on: py38_generate_decrypt_vectors
+      buildspec: codebuild/py38/decrypt_generated_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py39_integ
       buildspec: codebuild/py39/integ.yml
@@ -38,6 +82,28 @@ batch:
       env:
         image: aws/codebuild/standard:5.0
     - identifier: py39_awses_latest
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py39_decrypt_dafny_esdk_vectors
+      buildspec: codebuild/py39/decrypt_dafny_esdk_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py39_decrypt_net_401_vectors
+      buildspec: codebuild/py39/decrypt_net_401_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py39_generate_decrypt_vectors
+      buildspec: codebuild/py39/generate_decrypt_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py39_decrypt_generated
+      depend-on: py39_generate_decrypt_vectors
+      buildspec: codebuild/py39/decrypt_generated_with_python.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py39_decrypt_generated_js
+      depend-on: py39_generate_decrypt_vectors
+      buildspec: codebuild/py39/decrypt_generated_with_js.yml
       env:
         image: aws/codebuild/standard:5.0
 
@@ -53,6 +119,28 @@ batch:
       buildspec: codebuild/py310/awses_local.yml
       env:
         image: aws/codebuild/standard:6.0
+    - identifier: py310_decrypt_dafny_esdk_vectors
+      buildspec: codebuild/py310/decrypt_dafny_esdk_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py310_decrypt_net_401_vectors
+      buildspec: codebuild/py310/decrypt_net_401_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py310_generate_decrypt_vectors
+      buildspec: codebuild/py310/generate_decrypt_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py310_decrypt_generated
+      depend-on: py310_generate_decrypt_vectors
+      buildspec: codebuild/py310/decrypt_generated_with_python.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py310_decrypt_generated_js
+      depend-on: py310_generate_decrypt_vectors
+      buildspec: codebuild/py310/decrypt_generated_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py311_integ
       buildspec: codebuild/py311/integ.yml
@@ -82,6 +170,60 @@ batch:
       buildspec: codebuild/py311/mplawses_local_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_decrypt_dafny_esdk_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_dafny_esdk_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_net_401_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_net_401_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_net_401_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_net_401_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/generate_decrypt_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_masterkey
+      depend-on: py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_keyrings
+      depend-on: py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_js
+      depend-on: py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/generate_decrypt_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_masterkey
+      depend-on: py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_keyrings
+      depend-on: py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_js
+      depend-on: py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     - identifier: py312_integ
       buildspec: codebuild/py312/integ.yml
