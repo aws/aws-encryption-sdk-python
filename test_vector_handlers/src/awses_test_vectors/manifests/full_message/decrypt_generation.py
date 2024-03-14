@@ -247,6 +247,8 @@ class ProviderInfoChangingCryptoMaterialsManager(CryptoMaterialsManager):
 class ProviderInfoChangingCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFromMPL):
     """
     Custom CMM that modifies the provider info field on EDKS.
+    This extends CryptoMaterialsManagerFromMPL so ESDK-internal checks
+    follow MPL logic.
 
     THIS IS ONLY USED TO CREATE INVALID MESSAGES and should never be used in
     production!
