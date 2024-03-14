@@ -475,7 +475,7 @@ def deserialize_frame(stream, header, verifier=None):
     frame_data["iv"] = frame_iv
     if final_frame is True:
         (content_length,) = unpack_values(">I", stream, verifier)
-        if content_length >= header.frame_length:
+        if content_length > header.frame_length:
             raise SerializationError(
                 "Invalid final frame length: {final} >= {normal}".format(
                     final=content_length, normal=header.frame_length
