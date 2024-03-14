@@ -124,7 +124,7 @@ class TamperingMethod:
             materials_manager = DefaultCryptoMaterialsManager(
                 key_provider
             )
-        elif isinstance(key_provider, IKeyring):
+        elif _HAS_MPL and isinstance(key_provider, IKeyring):
             mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
             mpl_cmm = mpl.create_default_cryptographic_materials_manager(
                 CreateDefaultCryptographicMaterialsManagerInput(
@@ -203,7 +203,7 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         self, ciphertext_writer, generation_scenario, materials_manager, new_provider_info
     ):
         """Run with tampering for a specific new provider info value"""
-        if isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
+        if _HAS_MPL and isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
             tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(materials_manager, new_provider_info)
         else:
             tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(materials_manager, new_provider_info)
