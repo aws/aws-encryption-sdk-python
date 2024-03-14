@@ -253,7 +253,7 @@ class ProviderInfoChangingCryptoMaterialsManager(CryptoMaterialsManager):
     def decrypt_materials(self, request):
         """Thunks to the wrapped CMM"""
         return self.wrapped_cmm.decrypt_materials(request)
-    
+
 
 BITS_PER_BYTE = 8
 

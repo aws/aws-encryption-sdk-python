@@ -22,6 +22,8 @@ import attr
 import aws_encryption_sdk
 import six
 
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
+
 from awses_test_vectors.internal.defaults import ENCODING
 from awses_test_vectors.internal.util import (
     algorithm_suite_from_string_id,
@@ -31,7 +33,6 @@ from awses_test_vectors.internal.util import (
     membership_validator,
     validate_manifest_type,
 )
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
 
@@ -45,7 +46,7 @@ try:
     from aws_cryptographic_materialproviders.mpl.references import (
         IKeyring,
     )
-    
+
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
     _HAS_MPL = True
