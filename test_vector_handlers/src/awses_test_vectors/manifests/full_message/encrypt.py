@@ -41,8 +41,10 @@ except ImportError:
 
 try:
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
+
+    _HAS_MPL = True
 except ImportError:
-    pass
+    _HAS_MPL = False
 
 
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
@@ -149,9 +151,9 @@ class MessageEncryptionTestScenario(object):
         )
         if materials_manager:
             encrypt_kwargs["materials_manager"] = materials_manager
-        elif self.keyrings:
+        elif isinstance(self.master_key_provider_fn(), MasterKeySpec):
             encrypt_kwargs["keyring"] = self.master_key_provider_fn()
-        else:
+        elif _HAS_MPL and isinstance(self.master_key_provider_fn(), KeyringSpec):
             encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
         ciphertext, _header = client.encrypt(**encrypt_kwargs)
         return ciphertext
