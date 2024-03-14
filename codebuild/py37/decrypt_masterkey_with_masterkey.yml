@@ -24,4 +24,4 @@ phases:
       - cd test_vector_handlers
       - |
         tox -- \
-          --input ../tmp/generated/37_masterkey
+          --input tmp/generated/37_masterkey/manifest.json
