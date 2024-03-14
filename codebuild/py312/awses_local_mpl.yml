@@ -1,5 +1,5 @@
-# Runs the same tests as awses_local in an environment with the MPL installed.
-# This asserts existing tests continue to pass with the MPL installed.
+# Runs test vectors using native constructs in an environment with the MPL installed.
+# This asserts that installing the MPL does not change existing behavior.
 version: 0.2
 
 env:

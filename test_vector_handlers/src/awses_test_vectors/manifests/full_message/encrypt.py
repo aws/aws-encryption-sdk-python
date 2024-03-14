@@ -31,8 +31,10 @@ from awses_test_vectors.internal.util import (
     membership_validator,
     validate_manifest_type,
 )
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider
 from awses_test_vectors.manifests.keys import KeysManifest
 from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_provider_from_master_key_specs
+
 
 try:
     from aws_encryption_sdk.identifiers import AlgorithmSuite, CommitmentPolicy
@@ -40,6 +42,10 @@ except ImportError:
     from aws_encryption_sdk.identifiers import Algorithm as AlgorithmSuite
 
 try:
+    from aws_cryptographic_materialproviders.mpl.references import (
+        IKeyring,
+    )
+    
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
     _HAS_MPL = True
@@ -151,9 +157,9 @@ class MessageEncryptionTestScenario(object):
         )
         if materials_manager:
             encrypt_kwargs["materials_manager"] = materials_manager
-        elif isinstance(self.master_key_provider_fn(), MasterKeySpec):
+        elif isinstance(self.master_key_provider_fn(), MasterKeyProvider):
             encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
-        elif _HAS_MPL and isinstance(self.master_key_provider_fn(), KeyringSpec):
+        elif _HAS_MPL and isinstance(self.master_key_provider_fn(), IKeyring):
             encrypt_kwargs["keyring"] = self.master_key_provider_fn()
         else:
             raise TypeError(f"Unrecognized master_key_provider_fn return type: {self.master_key_provider_fn()}")
