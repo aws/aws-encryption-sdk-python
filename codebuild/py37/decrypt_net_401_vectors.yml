@@ -19,11 +19,6 @@ phases:
   install:
     runtime-versions:
       python: 3.7
-    commands:
-      # Get Dafny
-      - curl https://github.com/dafny-lang/dafny/releases/download/v4.2.0/dafny-4.2.0-x64-ubuntu-20.04.zip  -L -o dafny.zip
-      - unzip -qq dafny.zip && rm dafny.zip
-      - export PATH="$PWD/dafny:$PATH"
   pre_build:
     commands:
       # Assume Role to access non-prod resources
