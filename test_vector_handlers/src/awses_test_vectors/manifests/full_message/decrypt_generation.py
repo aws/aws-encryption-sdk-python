@@ -169,16 +169,34 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         master_key_provider = generation_scenario.encryption_scenario.master_key_provider_fn()
 
         # Use a caching CMM to avoid generating a new data key every time.
-        cache = LocalCryptoMaterialsCache(10)
-        caching_cmm = CachingCryptoMaterialsManager(
-            master_key_provider=master_key_provider,
-            cache=cache,
-            max_age=60.0,
-            max_messages_encrypted=100,
-        )
+        if isinstance(master_key_provider, MasterKeyProvider):
+            cache = LocalCryptoMaterialsCache(10)
+            cmm = CachingCryptoMaterialsManager(
+                master_key_provider=master_key_provider,
+                cache=cache,
+                max_age=60.0,
+                max_messages_encrypted=100,
+            )
+            cmm = caching_cmm
+        elif _HAS_MPL and isinstance(master_key_provider, IKeyring):
+            mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
+            mpl_caching_cmm = mpl.create_default_cryptographic_materials_manager(
+                CreateDefaultCryptographicMaterialsManagerInput(
+
+                )
+            )
+            mpl_cmm = mpl.create_default_cryptographic_materials_manager(
+                CreateDefaultCryptographicMaterialsManagerInput(
+                    keyring=master_key_provider
+                )
+            )
+            cmm = CryptoMaterialsManagerFromMPL(mpl_cmm=mpl_cmm)
+        else:
+            raise TypeError(f"Unrecognized master_key_provider type: {master_key_provider}")
+        
         return [
             self.run_scenario_with_new_provider_info(
-                ciphertext_writer, generation_scenario, caching_cmm, new_provider_info
+                ciphertext_writer, generation_scenario, cmm, new_provider_info
             )
             for new_provider_info in self.new_provider_infos
         ]

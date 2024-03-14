@@ -1,6 +1,6 @@
 """Allows overriding the algorithm and signing_key for EncryptionMaterialsFromMPL.
 This must ONLY be used in testing and NOT in production..
-This is used in testing malicious message modification (HalfSigningTampering).
+This is used in message tampering testing.
 """
 # Ignore missing MPL for pylint, but the MPL is required for this class
 # pylint: disable=import-error,no-name-in-module
