@@ -3,9 +3,6 @@ version: 0.2
 
 env:
   variables:
-    git-credential-helper: yes
-    secrets-manager:
-      GH_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token
     TOXENV: "py37-full_decrypt"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
@@ -17,6 +14,9 @@ env:
       arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
     AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_API_DEPLOYMENT_ID: "xi1mwx3ttb"
     AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
+  git-credential-helper: yes
+  secrets-manager:
+    GH_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token
 
 phases:
   install:
