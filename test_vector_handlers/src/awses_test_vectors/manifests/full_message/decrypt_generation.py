@@ -180,11 +180,6 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
             cmm = caching_cmm
         elif _HAS_MPL and isinstance(master_key_provider, IKeyring):
             mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
-            mpl_caching_cmm = mpl.create_default_cryptographic_materials_manager(
-                CreateDefaultCryptographicMaterialsManagerInput(
-
-                )
-            )
             mpl_cmm = mpl.create_default_cryptographic_materials_manager(
                 CreateDefaultCryptographicMaterialsManagerInput(
                     keyring=master_key_provider
