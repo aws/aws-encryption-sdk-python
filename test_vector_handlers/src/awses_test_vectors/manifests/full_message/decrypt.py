@@ -301,7 +301,10 @@ class MessageDecryptionTestScenario(object):
         result_spec = scenario["result"]
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
 
-        encryption_context = scenario["encryption-context"]
+        if "encryption-context" in scenario:
+            encryption_context = scenario["encryption-context"]
+        else:
+            encryption_context = {}
 
         # MPL test vectors add CMM types to the test vectors manifests
         if "cmm" in scenario:
