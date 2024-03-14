@@ -57,7 +57,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     def keyring(self, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
-
         :param str keys_uri: Path to the keys manifest
         """
 

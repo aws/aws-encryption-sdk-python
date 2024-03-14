@@ -21,7 +21,7 @@ class KeyVectorsProvider:
 
     @classmethod
     def get_keyvectors(cls, keys_path):
-        """Returns the singleton KeyVectors client."""
+        """Return the singleton KeyVectors client."""
         if keys_path not in keyvectors_instances:
             keyvectors_instances[keys_path] = KeyVectors(KeyVectorsConfig(key_manifest_path=keys_path))
         return keyvectors_instances[keys_path]
