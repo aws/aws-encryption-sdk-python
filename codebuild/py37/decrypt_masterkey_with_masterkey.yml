@@ -22,5 +22,6 @@ phases:
     commands:
       - pip install "tox < 4.0"
       - cd test_vector_handlers
-      - tox -- \
-        --input ../tmp/generated/37_masterkey
+      - |
+        tox -- \
+          --input ../tmp/generated/37_masterkey
