@@ -22,6 +22,7 @@ phases:
     commands:
       - pip install "tox < 4.0"
       - cd test_vector_handlers
-      - tox -- \
-      --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
-      --output ../tmp/generated/37_masterkey
+      - |
+        tox -- \
+          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
+          --output ../tmp/generated/37_masterkey
