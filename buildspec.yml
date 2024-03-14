@@ -2,7 +2,7 @@ version: 0.2
 
 batch:
   fast-fail: false
-  build-list:
+  build-graph:
     - identifier: py37_integ
       buildspec: codebuild/py37/integ.yml
       env:
