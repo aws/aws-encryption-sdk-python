@@ -152,9 +152,11 @@ class MessageEncryptionTestScenario(object):
         if materials_manager:
             encrypt_kwargs["materials_manager"] = materials_manager
         elif isinstance(self.master_key_provider_fn(), MasterKeySpec):
-            encrypt_kwargs["keyring"] = self.master_key_provider_fn()
-        elif _HAS_MPL and isinstance(self.master_key_provider_fn(), KeyringSpec):
             encrypt_kwargs["key_provider"] = self.master_key_provider_fn()
+        elif _HAS_MPL and isinstance(self.master_key_provider_fn(), KeyringSpec):
+            encrypt_kwargs["keyring"] = self.master_key_provider_fn()
+        else:
+            raise TypeError(f"Unrecognized master_key_provider_fn return type: {self.master_key_provider_fn()}")
         ciphertext, _header = client.encrypt(**encrypt_kwargs)
         return ciphertext
 
