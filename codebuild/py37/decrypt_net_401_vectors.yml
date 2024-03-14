@@ -47,4 +47,4 @@ phases:
       - cd $CODEBUILD_SRC_DIR/test_vector_handlers
       - |
         tox -- \
-          --input $UNZIPPED_VECTORS_DIR
+          --input $UNZIPPED_VECTORS_DIR/manifest.json
