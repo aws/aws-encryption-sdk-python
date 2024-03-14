@@ -150,94 +150,94 @@ batch:
     #   env:
     #     image: aws/codebuild/standard:5.0
 
-    # - identifier: py311_integ
-    #   buildspec: codebuild/py311/integ.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_integ_mpl
-    #   buildspec: codebuild/py311/integ_mpl.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_examples
-    #   buildspec: codebuild/py311/examples.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_examples_mpl
-    #   buildspec: codebuild/py311/examples_mpl.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_awses_latest
-    #   buildspec: codebuild/py311/awses_local.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_awses_latest_mpl
-    #   buildspec: codebuild/py311/awses_local_mpl.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_mplawses_latest_mpl
-    #   buildspec: codebuild/py311/mplawses_local_mpl.yml
-    #   env:
-    #     image: aws/codebuild/standard:7.0
-    # - identifier: py311_decrypt_dafny_esdk_vectors_masterkey
-    #   buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_masterkey.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_dafny_esdk_vectors_keyrings
-    #   buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_keyrings.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_net_401_vectors_masterkey
-    #   buildspec: codebuild/py311/decrypt_net_401_vectors_masterkey.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_net_401_vectors_keyrings
-    #   buildspec: codebuild/py311/decrypt_net_401_vectors_keyrings.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_generate_decrypt_vectors_masterkey
-    #   buildspec: codebuild/py311/generate_decrypt_vectors_masterkey.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_masterkey_with_masterkey
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_masterkey
-    #   buildspec: codebuild/py311/decrypt_masterkey_with_masterkey.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_masterkey_with_keyrings
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_masterkey
-    #   buildspec: codebuild/py311/decrypt_masterkey_with_keyrings.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_masterkey_with_js
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_masterkey
-    #   buildspec: codebuild/py311/decrypt_masterkey_with_js.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_generate_decrypt_vectors_keyrings
-    #   buildspec: codebuild/py311/generate_decrypt_vectors_keyrings.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_keyrings_with_masterkey
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_keyrings
-    #   buildspec: codebuild/py311/decrypt_keyrings_with_masterkey.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_keyrings_with_keyrings
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_keyrings
-    #   buildspec: codebuild/py311/decrypt_keyrings_with_keyrings.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py311_decrypt_keyrings_with_js
-    #   depend-on: 
-    #    - py311_generate_decrypt_vectors_keyrings
-    #   buildspec: codebuild/py311/decrypt_keyrings_with_js.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
+    - identifier: py311_integ
+      buildspec: codebuild/py311/integ.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_integ_mpl
+      buildspec: codebuild/py311/integ_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_examples
+      buildspec: codebuild/py311/examples.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_examples_mpl
+      buildspec: codebuild/py311/examples_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_awses_latest
+      buildspec: codebuild/py311/awses_local.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_awses_latest_mpl
+      buildspec: codebuild/py311/awses_local_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_mplawses_latest_mpl
+      buildspec: codebuild/py311/mplawses_local_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py311_decrypt_dafny_esdk_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_dafny_esdk_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_dafny_esdk_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_net_401_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_net_401_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_net_401_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_net_401_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/generate_decrypt_vectors_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_masterkey
+      depend-on: 
+       - py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_keyrings
+      depend-on: 
+       - py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_masterkey_with_js
+      depend-on: 
+       - py311_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py311/decrypt_masterkey_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/generate_decrypt_vectors_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_masterkey
+      depend-on: 
+       - py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_keyrings
+      depend-on: 
+       - py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_decrypt_keyrings_with_js
+      depend-on: 
+       - py311_generate_decrypt_vectors_keyrings
+      buildspec: codebuild/py311/decrypt_keyrings_with_js.yml
+      env:
+        image: aws/codebuild/standard:5.0
 
     # - identifier: py312_integ
     #   buildspec: codebuild/py312/integ.yml
