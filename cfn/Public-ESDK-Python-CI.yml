@@ -2,10 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "DDB Table and IAM Managed Policies/Role for AWS KMS Hierarchical Keyring Testing"
 
 Parameters:
-  TableName:
-    Type: String
-    Description: Test Table Name
-    Default: HierarchicalKeyringTestTable
   ProjectName:
     Type: String
     Description: A prefix that will be applied to any names
