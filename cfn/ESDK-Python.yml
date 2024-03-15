@@ -186,6 +186,7 @@ Resources:
         - !Ref CryptoToolsKMS
         - !Ref CodeBuildCIBatchPolicy
         - !Ref CodeBuildBasePolicy
+        - !Ref SecretsManagerCIPolicy
         
   CodeBuildBatchPolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -303,6 +304,25 @@ Resources:
               "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiCryptoTools-SxeLBh",
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T",
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/aws-crypto-tools-ci-bot-AGUB3U"
+              ],
+              "Action": "secretsmanager:GetSecretValue"
+            }
+          ]
+        }
+  
+  SecretsManagerCIPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub "CryptoTools-SecretsManager-${ProjectName}-release"
+      Path: "/service-role/"
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/aws-crypto-tools-ci-bot-AGUB3U"
               ],
               "Action": "secretsmanager:GetSecretValue"
