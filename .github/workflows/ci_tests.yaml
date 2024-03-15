@@ -52,7 +52,7 @@ jobs:
           - os: macos-latest
             architecture: x86
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
@@ -64,26 +64,6 @@ jobs:
         env:
           TOXENV: ${{ matrix.category }}
         run: tox -- -vv
-  upstream-py37:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        category:
-          - nocmk
-          - test-upstream-requirements-py37
-    steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-python@v4
-          with:
-            python-version: 3.7
-        - run: |
-            python -m pip install --upgrade pip
-            pip install --upgrade -r dev_requirements/ci-requirements.txt
-        - name: run test
-          env:
-            TOXENV: ${{ matrix.category }}
-          run: tox -- -vv
   upstream-py311:
     runs-on: ubuntu-latest
     strategy:
@@ -93,7 +73,7 @@ jobs:
           - nocmk
           - test-upstream-requirements-py311
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - uses: actions/setup-python@v4
           with:
             python-version: "3.11"
