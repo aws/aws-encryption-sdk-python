@@ -21,7 +21,7 @@ phases:
       python: 3.11
   pre_build:
     commands:
-      # Assume Role to access non-prod resources
+      # Assume Role to access non-prod resource
       - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-TestVectorResources")
       - export TMP_ROLE
       - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
