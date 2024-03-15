@@ -6,10 +6,6 @@ Parameters:
     Type: String
     Description: Test Table Name
     Default: HierarchicalKeyringTestTable
-  KeyStoreTable:
-    Type: String
-    Description: Key Store Test Table Name
-    Default: KeyStoreTestTable
   ProjectName:
     Type: String
     Description: A prefix that will be applied to any names
