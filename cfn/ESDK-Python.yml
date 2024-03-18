@@ -44,7 +44,7 @@ Resources:
         Type: "GITHUB"
       Artifacts: 
         Type: "S3"
-        Location: !GetAtt GeneratedVectorsArtifactsS3Bucket.BucketName
+        Location: !Ref GeneratedVectorsArtifactsS3Bucket.BucketName
         Name: "/"
       Cache: 
         Type: "NO_CACHE"
