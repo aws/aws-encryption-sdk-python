@@ -16,7 +16,7 @@ env:
     AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
   git-credential-helper: yes
   secrets-manager:
-    GH_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token (new token format)
+    GITHUB_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token (new token format)
 
 phases:
   install:
@@ -43,8 +43,6 @@ phases:
         && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
         && sudo apt update \
         && sudo apt install gh -y
-
-      - gh auth status
 
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
