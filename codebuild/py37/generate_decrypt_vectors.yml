@@ -30,5 +30,5 @@ phases:
       - zip -r 37_master.zip 37_masterkey
 artifacts:
   files:
-    - ./37_master.zip
+    - test_vector_handlers/37_master.zip
   name: 37_master.zip
