@@ -30,4 +30,4 @@ phases:
       - zip 37_master.zip 37_masterkey
 artifacts:
   files:
-    - 37_masterkey/**/*
+    - 37_master.zip
