@@ -27,9 +27,7 @@ phases:
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
           --output 37_masterkey
       - ls
-      - cd 37_masterkey
-      - ls
-      - zip 37_master.zip 37_masterkey
+      - zip -r 37_master.zip 37_masterkey
 artifacts:
   files:
     - 37_master.zip
