@@ -44,7 +44,7 @@ phases:
         && sudo apt update \
         && sudo apt install gh -y
 
-      - gh auth login --with-token < token.txt
+      - gh auth login
       - rm token.txt
       - gh auth status
 
