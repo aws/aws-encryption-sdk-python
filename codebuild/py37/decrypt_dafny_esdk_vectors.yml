@@ -42,7 +42,11 @@ phases:
       - |
         MOST_RECENT_RUN_ID='curl -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true" | jq "first(.workflow_runs[] | select(.name=="Daily CI") | .id)"'
       - |
+        echo $MOST_RECENT_RUN_ID
+      - |
         MOST_RECENT_RUN_DOWNLOAD_URL='curl -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs/8282993634/artifacts?name=ubuntu-latest_vector_artifact" | jq ".artifacts[0].archive_download_url"'
+      - |
+        echo $MOST_RECENT_RUN_DOWNLOAD_URL
       - |
         curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" -o ubuntu-latest_test_vector_artifact.zip "$MOST_RECENT_RUN_DOWNLOAD_URL"
       - unzip ubuntu-latest_test_vector_artifact
