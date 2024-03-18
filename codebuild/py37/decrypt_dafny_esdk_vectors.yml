@@ -16,7 +16,7 @@ env:
     AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
   git-credential-helper: yes
   secrets-manager:
-    GH_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token
+    GH_TOKEN: Github/aws-crypto-tools-ci-bot:personal access token (new format)
 
 phases:
   install:
