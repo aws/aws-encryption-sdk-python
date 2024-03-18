@@ -4,7 +4,7 @@ Description: "IAM Managed Policies/Role for AWS KMS Hierarchical Keyring Testing
 Parameters:
   ProjectName:
     Type: String
-    Description: A prefix that will be applied to any names
+    Description: A prefix that will be applied to any resource names
     Default: Public-ESDK-Python
   GitHubRepo:
     Type: String
