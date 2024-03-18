@@ -172,12 +172,15 @@ Resources:
       AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"codebuild.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
       MaxSessionDuration: 3600
       ManagedPolicyArns:
+        # Ideally we would add GeneratedVectorsArtifactsS3BucketPolicy to run test vectors.
+        # However, this role would then have 11 managed policies.
+        # IAM has a limit of 10 managed policies per role.
+        # If we need to add more policies here, we should increase this limit.
         - !Ref CryptoToolsKMS
         - !Ref CodeBuildBatchPolicy
         - !Ref CodeBuildBasePolicy
         - !Ref SecretsManagerPolicy
         - !Ref CodeBuildCISTSAllow
-        - !Ref GeneratedVectorsArtifactsS3BucketPolicy
 
   CodeBuildCIServiceRole:
     Type: "AWS::IAM::Role"
