@@ -175,6 +175,7 @@ Resources:
         - !Ref CodeBuildBasePolicy
         - !Ref SecretsManagerPolicy
         - !Ref CodeBuildCISTSAllow
+        - !Ref GeneratedVectorsArtifactsS3BucketPolicy
 
   CodeBuildCIServiceRole:
     Type: "AWS::IAM::Role"
@@ -189,6 +190,7 @@ Resources:
         - !Ref CodeBuildBasePolicy
         - !Ref SecretsManagerCIPolicy
         - !Ref CodeBuildCISTSAllow
+        - !Ref GeneratedVectorsArtifactsS3BucketPolicy
         
   CodeBuildBatchPolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -379,3 +381,28 @@ Resources:
               }
           ]
         }
+
+  GeneratedVectorsArtifactsS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: generated-vectors-artifacts-bucket
+      LifecycleConfiguration:
+        Rules:
+          - Id: Expire artifacts in 14 days
+            Status: Enabled
+            ExpirationInDays: 14
+
+  GeneratedVectorsArtifactsS3BucketPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: Generated-Vectors-Artifacts-S3-Bucket-Policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+            Resource:
+              - !Join [ "", [ !GetAtt GeneratedVectorsArtifactsS3Bucket.Arn, '/*'] ]
