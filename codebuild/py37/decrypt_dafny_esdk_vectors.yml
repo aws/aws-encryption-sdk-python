@@ -36,17 +36,17 @@ phases:
       - git config --global user.name "aws-crypto-tools-ci-bot"
       - git config --global user.email "no-reply@noemail.local"
 
-      - |
-        sudo mkdir -p -m 755 /etc/apt/keyrings && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
-        && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-        && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-        && sudo apt update \
-        && sudo apt install gh -y
+      # - |
+      #   sudo mkdir -p -m 755 /etc/apt/keyrings && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+      #   && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+      #   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+      #   && sudo apt update \
+      #   && sudo apt install gh -y
 
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
       - |
-        MOST_RECENT_RUN_STUFF=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $(echo ${GITHUB_TOKEN})" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true")
+        MOST_RECENT_RUN_STUFF=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true")
       - |
         echo "DEBUG: Fetching artifact from run $MOST_RECENT_RUN_STUFF"
       - |
