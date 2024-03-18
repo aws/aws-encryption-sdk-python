@@ -36,9 +36,9 @@ phases:
       - git config --global user.name "aws-crypto-tools-ci-bot"
       - git config --global user.email "no-reply@noemail.local"
       - echo $GH_TOKEN > token.txt
-      gh auth login --with-token < token.txt
-      rm token.txt
-      gh auth status
+      - gh auth login --with-token < token.txt
+      - rm token.txt
+      - gh auth status
 
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
