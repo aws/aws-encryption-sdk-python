@@ -36,6 +36,11 @@ phases:
       - git config --global user.name "aws-crypto-tools-ci-bot"
       - git config --global user.email "no-reply@noemail.local"
       - echo $GH_TOKEN > token.txt
+
+      - type -p yum-config-manager >/dev/null || sudo yum install yum-utils
+      - sudo yum-config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+      - sudo yum install gh
+
       - gh auth login --with-token < token.txt
       - rm token.txt
       - gh auth status
