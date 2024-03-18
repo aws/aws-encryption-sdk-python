@@ -43,7 +43,9 @@ Resources:
         ReportBuildStatus: false
         Type: "GITHUB"
       Artifacts: 
-        Type: "NO_ARTIFACTS"
+        Type: "S3"
+        Location: !GetAtt GeneratedVectorsArtifactsS3Bucket.BucketName
+        Name: "/"
       Cache: 
         Type: "NO_CACHE"
       Environment: 
@@ -318,7 +320,7 @@ Resources:
   SecretsManagerCIPolicy:
     Type: "AWS::IAM::ManagedPolicy"
     Properties:
-      ManagedPolicyName: !Sub "CryptoTools-SecretsManager-${ProjectName}-release"
+      ManagedPolicyName: !Sub "CryptoTools-SecretsManagerCI-${ProjectName}-release"
       Path: "/service-role/"
       PolicyDocument: !Sub |
         {
