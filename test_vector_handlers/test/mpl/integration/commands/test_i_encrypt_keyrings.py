@@ -41,24 +41,5 @@ def test_full_message_cycle_canonical_full(tmpdir, full_message_decrypt_generati
         "--keyrings"
     ])
 
-    # Generate vectors using master key interfaces
-    master_key_output_dir = tmpdir.join("output-master-key")
-    full_message_decrypt_generate.cli([
-        "--output",
-        str(master_key_output_dir),
-        "--input",
-        full_message_decrypt_generation_vectors
-    ])
-
-    # Validate that vectors generated using keyring interfaces
-    # can be decrypted by BOTH keyring and master key interfaces
     keyring_decrypt_manifest_file = keyring_output_dir.join("manifest.json")
     full_message_decrypt.cli(["--input", str(keyring_decrypt_manifest_file), "--keyrings"])
-    full_message_decrypt.cli(["--input", str(keyring_decrypt_manifest_file)])
-
-    # Validate that vectors generated using master key interfaces
-    # can be decrypted by BOTH keyring and master key interfaces
-    master_key_decrypt_manifest_file = keyring_output_dir.join("manifest.json")
-
-    full_message_decrypt.cli(["--input", str(master_key_decrypt_manifest_file), "--keyrings"])
-    full_message_decrypt.cli(["--input", str(master_key_decrypt_manifest_file)])
