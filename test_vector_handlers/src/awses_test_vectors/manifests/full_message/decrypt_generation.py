@@ -47,6 +47,7 @@ try:
     from awses_test_vectors.internal.tampering_mpl_materials import (
         HalfSigningEncryptionMaterialsFromMPL,
         ProviderInfoChangingCryptoMaterialsManagerFromMPL,
+        HalfSigningCryptoMaterialsManagerFromMPL,
     )
 
     _HAS_MPL = True
@@ -319,9 +320,20 @@ class HalfSigningTamperingMethod(TamperingMethod):
 
         return: a list of (ciphertext, result) pairs.
         """
-        tampering_materials_manager = HalfSigningCryptoMaterialsManager(
-            generation_scenario.encryption_scenario.master_key_provider_fn()
-        )
+        if isinstance(
+            generation_scenario.encryption_scenario.master_key_provider_fn(),
+            MasterKeyProvider
+        ):
+            tampering_materials_manager = HalfSigningCryptoMaterialsManager(
+                generation_scenario.encryption_scenario.master_key_provider_fn()
+            )
+        elif _HAS_MPL and isinstance(
+            generation_scenario.encryption_scenario.master_key_provider_fn(),
+            IKeyring
+        ):
+            tampering_materials_manager = HalfSigningCryptoMaterialsManagerFromMPL(
+                generation_scenario.encryption_scenario.master_key_provider_fn()
+            )
         ciphertext_to_decrypt = generation_scenario.encryption_scenario.run(tampering_materials_manager)
         expected_result = MessageDecryptionTestResult.expect_error(
             "Unsigned message using a data key with a public key"
@@ -349,18 +361,7 @@ class HalfSigningCryptoMaterialsManager(CryptoMaterialsManager):
         Create a new CMM that wraps a new DefaultCryptoMaterialsManager
         based on the given master key provider.
         """
-        if isinstance(master_key_provider, MasterKeyProvider):
-            self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
-        elif _HAS_MPL and isinstance(master_key_provider, IKeyring):
-            mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
-            mpl_cmm = mpl.create_default_cryptographic_materials_manager(
-                CreateDefaultCryptographicMaterialsManagerInput(
-                    keyring=master_key_provider
-                )
-            )
-            self.wrapped_default_cmm = CryptoMaterialsManagerFromMPL(mpl_cmm=mpl_cmm)
-        else:
-            raise TypeError(f"Unrecognized master_key_provider type: {master_key_provider}")
+        self.wrapped_default_cmm = DefaultCryptoMaterialsManager(master_key_provider)
 
     def get_encryption_materials(self, request):
         """
