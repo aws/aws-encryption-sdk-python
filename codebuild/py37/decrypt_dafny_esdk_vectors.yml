@@ -55,8 +55,10 @@ phases:
           -H "Authorization: token $GITHUB_TOKEN" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           $(echo $MOST_RECENT_RUN_DOWNLOAD_URL | tr -d '"') -o ubuntu-latest_test_vector_artifact.zip
-      # This unzips to `net41/`
+      # This unzips to `net41.zip`
       - unzip ubuntu-latest_test_vector_artifact
+      # This unzips to `net41/`
+      - unzip net41.zip
       - ls
   build:
     commands:
