@@ -18,14 +18,12 @@ phases:
   install:
     runtime-versions:
       python: 3.7
-
-
   pre-build:
     commands:
       # Download generated vectors
       # TODO rewrite URL
-      aws s3 cp s3://generated-vectors-artifacts-bucket/py37_generate_decrypt_vectors/test_vector_handlers/37_master.zip 37_masterkey.zip
-      unzip 37_master.zip
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
+      - unzip 37_masterkey.zip
   build:
     commands:
       - pip install "tox < 4.0"
