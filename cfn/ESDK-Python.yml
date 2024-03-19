@@ -46,6 +46,8 @@ Resources:
         Type: "S3"
         Location: !Ref GeneratedVectorsArtifactsS3Bucket
         Name: "/"
+        NamespaceType: "BUILD_ID"
+        Path: "GeneratedVectors"
       Cache: 
         Type: "NO_CACHE"
       Environment: 
