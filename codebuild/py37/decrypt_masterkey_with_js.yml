@@ -33,7 +33,11 @@ phases:
       - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
       - aws sts get-caller-identity
       - cd $CODEBUILD_SRC_DIR
+
+      # Download generated vectors
+      # TODO rewrite URL
+      aws s3 cp s3://generated-vectors-artifacts-bucket/py37_generate_decrypt_vectors/test_vector_handlers/37_master.zip 37_master.zip
   build:
     commands:
       # Decrypt generated vectors with Javascript ESDK
-      - integration-node decrypt -v ../tmp/generated/37_masterkey
+      - integration-node decrypt -v 37_master.zip
