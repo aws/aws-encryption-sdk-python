@@ -31,4 +31,4 @@ phases:
 artifacts:
   files:
     - test_vector_handlers/311_keyring.zip
-  name: $CODEBUILD_INITIATOR/311_keyring.zip
+  name: $CODEBUILD_INITIATOR
