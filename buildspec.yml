@@ -327,7 +327,7 @@ batch:
     #   buildspec: codebuild/py312/decrypt_keyrings_with_js.yml
     #   env:
     #     image: aws/codebuild/standard:7.0
-      
+    #
     # - identifier: code_coverage
     #   buildspec: codebuild/coverage/coverage.yml
     # - identifier: code_coverage_mpl
