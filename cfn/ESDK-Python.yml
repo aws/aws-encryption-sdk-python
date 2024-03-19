@@ -251,6 +251,7 @@ Resources:
     Properties:
       ManagedPolicyName: !Sub "CodeBuildBasePolicy-${ProjectName}-${AWS::Region}"
       Path: "/service-role/"
+      # TODO: The "arn:aws:s3:::generated-vectors-artifacts-bucket/*" is debug and should be removed
       PolicyDocument: !Sub |
         {
           "Version": "2012-10-17",
