@@ -314,8 +314,7 @@ Resources:
               "Effect": "Allow",
               "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiCryptoTools-SxeLBh",
-                "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T",
-                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/lucasmcdonald3-fgpat-1aAsdO"
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T"
               ],
               "Action": "secretsmanager:GetSecretValue"
             }
@@ -327,6 +326,7 @@ Resources:
     Properties:
       ManagedPolicyName: !Sub "CryptoTools-SecretsManagerCI-${ProjectName}-release"
       Path: "/service-role/"
+      # Policy: Allow access to a Github fine-grained PAT that can read ESDK-Dafny "Daily CI" artifacts
       PolicyDocument: !Sub |
         {
           "Version": "2012-10-17",
