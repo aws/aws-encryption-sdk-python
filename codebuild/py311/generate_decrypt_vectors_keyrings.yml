@@ -28,7 +28,8 @@ phases:
           --output 311_keyring \
           --keyrings
       - zip -r 311_keyring.zip 311_keyring
-  artifacts:
-    files:
-      - test_vector_handlers/311_keyring.zip
-    name: 311_keyring.zip
+artifacts:
+  files:
+    - test_vector_handlers/311_keyring.zip
+  name: $CODEBUILD_BATCH_BUILD_IDENTIFIER/311_keyring.zip
+  discard-paths: yes
