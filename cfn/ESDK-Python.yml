@@ -275,7 +275,8 @@ Resources:
             {
               "Effect": "Allow",
               "Resource": [
-                "arn:aws:s3:::codepipeline-${AWS::Region}-*"
+                "arn:aws:s3:::codepipeline-${AWS::Region}-*",
+                "arn:aws:s3:::generated-vectors-artifacts-bucket/*"
               ],
               "Action": [
                 "s3:PutObject",
