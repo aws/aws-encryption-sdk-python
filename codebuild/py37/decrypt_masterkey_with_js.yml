@@ -36,7 +36,7 @@ phases:
 
       # Download generated vectors
       # TODO rewrite URL
-      aws s3 cp s3://generated-vectors-artifacts-bucket/py37_generate_decrypt_vectors/test_vector_handlers/37_master.zip 37_master.zip
+      aws s3 cp s3://generated-vectors-artifacts-bucket/GeneratedVectors/py37_generate_decrypt_vectors/test_vector_handlers/37_master.zip 37_master.zip
   build:
     commands:
       # Decrypt generated vectors with Javascript ESDK
