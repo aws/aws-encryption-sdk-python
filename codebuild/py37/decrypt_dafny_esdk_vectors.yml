@@ -61,7 +61,7 @@ phases:
     commands:
       # NOTE: We need to pass the absolute path of the vectors
       - pip install "tox < 4.0"
-      - cd /test_vector_handlers
+      - cd test_vector_handlers
       - |
         tox -- \
           --input ../net41/manifest.json
