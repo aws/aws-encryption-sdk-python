@@ -30,5 +30,5 @@ phases:
 artifacts:
   files:
     - test_vector_handlers/311_masterkey.zip
-  name: $CODEBUILD_BATCH_BUILD_IDENTIFIER/311_masterkey.zip
+  name: $CODEBUILD_INITIATOR/311_masterkey.zip
   discard-paths: yes

@@ -31,5 +31,5 @@ phases:
 artifacts:
   files:
     - test_vector_handlers/311_keyring.zip
-  name: $CODEBUILD_BATCH_BUILD_IDENTIFIER/311_keyring.zip
+  name: $CODEBUILD_INITIATOR/311_keyring.zip
   discard-paths: yes
