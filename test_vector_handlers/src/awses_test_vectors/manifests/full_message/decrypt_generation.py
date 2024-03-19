@@ -210,13 +210,13 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
     ):
         print(f"DEBUG: materials_manager is {materials_manager}")
         """Run with tampering for a specific new provider info value"""
-        if isinstance(materials_manager, CryptoMaterialsManager):
-            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(
+        if _HAS_MPL and isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(
                 materials_manager,
                 new_provider_info
             )
-        elif _HAS_MPL and isinstance(materials_manager, CryptoMaterialsManagerFromMPL):
-            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManagerFromMPL(
+        elif isinstance(materials_manager, CryptoMaterialsManager):
+            tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(
                 materials_manager,
                 new_provider_info
             )

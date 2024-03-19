@@ -31,4 +31,3 @@ artifacts:
   files:
     - test_vector_handlers/37_master.zip
   name: $CODEBUILD_BATCH_BUILD_IDENTIFIER/37_master.zip
-  discard-paths: yes
