@@ -46,11 +46,9 @@ phases:
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
       - |
-        MOST_RECENT_RUN_STUFF=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true")
+        MOST_RECENT_RUN_ID=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true" | jq 'first(.workflow_runs[] | select(.name=="Daily CI") | .id)')
       - |
-        echo "DEBUG: Fetching artifact from run $MOST_RECENT_RUN_STUFF"
-      - |
-        MOST_RECENT_RUN_ID=$(echo $MOST_RECENT_RUN_STUFF | jq 'first(.workflow_runs[] | select(.name=="Daily CI") | .id)')
+        echo "DEBUG: Fetching artifact from run $MOST_RECENT_RUN_ID"
       - |
         MOST_RECENT_RUN_DOWNLOAD_URL=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs/8282993634/artifacts?name=ubuntu-latest_vector_artifact" | jq '.artifacts[0].archive_download_url')
       - |
