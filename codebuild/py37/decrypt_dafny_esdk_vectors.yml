@@ -59,14 +59,11 @@ phases:
       - unzip ubuntu-latest_test_vector_artifact
       # This unzips to `net41/`
       - unzip net41.zip -d net41
-      - ls
   build:
     commands:
       # NOTE: We need to pass the absolute path of the vectors
       - pip install "tox < 4.0"
-      - ls
       - cd test_vector_handlers
-      - ls
       - |
         tox -- \
           --input ../net41/manifest.json
