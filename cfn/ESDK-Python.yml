@@ -43,9 +43,7 @@ Resources:
         ReportBuildStatus: false
         Type: "GITHUB"
       Artifacts: 
-        Type: "S3"
-        Location: !Ref GeneratedVectorsArtifactsS3Bucket
-        Name: "/"
+        Type: "NO_ARTIFACTS"
       Cache: 
         Type: "NO_CACHE"
       Environment: 
@@ -251,7 +249,6 @@ Resources:
     Properties:
       ManagedPolicyName: !Sub "CodeBuildBasePolicy-${ProjectName}-${AWS::Region}"
       Path: "/service-role/"
-      # TODO: The "arn:aws:s3:::generated-vectors-artifacts-bucket/*" is debug and should be removed
       PolicyDocument: !Sub |
         {
           "Version": "2012-10-17",
@@ -277,7 +274,6 @@ Resources:
               "Effect": "Allow",
               "Resource": [
                 "arn:aws:s3:::codepipeline-${AWS::Region}-*",
-                "arn:aws:s3:::generated-vectors-artifacts-bucket/*"
               ],
               "Action": [
                 "s3:PutObject",
