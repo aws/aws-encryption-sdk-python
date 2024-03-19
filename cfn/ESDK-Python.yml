@@ -216,8 +216,7 @@ Resources:
               "Action": [
                 "codebuild:StartBuild",
                 "codebuild:StopBuild",
-                "codebuild:RetryBuild",
-                "codebuild:BatchGetBuilds"
+                "codebuild:RetryBuild"
               ]
             }
           ]
