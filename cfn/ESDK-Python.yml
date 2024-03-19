@@ -315,7 +315,7 @@ Resources:
               "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiCryptoTools-SxeLBh",
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T",
-                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/aws-crypto-tools-ci-bot-AGUB3U"
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/lucasmcdonald3-fgpat-1aAsdO"
               ],
               "Action": "secretsmanager:GetSecretValue"
             }
