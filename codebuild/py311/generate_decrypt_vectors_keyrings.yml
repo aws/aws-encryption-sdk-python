@@ -25,5 +25,10 @@ phases:
       - |
         tox -- \
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
-          --output tmp/generated/37_masterkey
-
+          --output 311_keyring \
+          --keyrings
+      - zip -r 311_keyring.zip 311_keyring
+  artifacts:
+    files:
+      - test_vector_handlers/311_keyring.zip
+    name: 311_keyring.zip
