@@ -334,7 +334,7 @@ Resources:
             {
               "Effect": "Allow",
               "Resource": [
-                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/aws-crypto-tools-ci-bot-AGUB3U"
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/lucasmcdonald3-fgpat-1aAsdO"
               ],
               "Action": "secretsmanager:GetSecretValue"
             }
