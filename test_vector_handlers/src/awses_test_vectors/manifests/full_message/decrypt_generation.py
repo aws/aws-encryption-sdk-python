@@ -173,6 +173,8 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         """
         master_key_provider = generation_scenario.encryption_scenario.master_key_provider_fn()
 
+        print(f"DEBUG: mkp gen is {master_key_provider}")
+
         # Use a caching CMM to avoid generating a new data key every time.
         if isinstance(master_key_provider, MasterKeyProvider):
             cache = LocalCryptoMaterialsCache(10)
@@ -194,6 +196,8 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
         else:
             raise TypeError(f"Unrecognized master_key_provider type: {master_key_provider}")
 
+        print(f"DEBUG: cmm gen is {cmm}")
+
         return [
             self.run_scenario_with_new_provider_info(
                 ciphertext_writer, generation_scenario, cmm, new_provider_info
@@ -204,6 +208,7 @@ class ChangeEDKProviderInfoTamperingMethod(TamperingMethod):
     def run_scenario_with_new_provider_info(
         self, ciphertext_writer, generation_scenario, materials_manager, new_provider_info
     ):
+        print(f"DEBUG: materials_manager is {materials_manager}")
         """Run with tampering for a specific new provider info value"""
         if isinstance(materials_manager, CryptoMaterialsManager):
             tampering_materials_manager = ProviderInfoChangingCryptoMaterialsManager(
