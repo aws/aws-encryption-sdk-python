@@ -50,7 +50,8 @@ try:
     )
 
     _HAS_MPL = True
-except ImportError:
+except ImportError as e:
+    print(f"decrypt_generation ImportError: {e}")
     _HAS_MPL = False
 
 
