@@ -11,8 +11,6 @@ env:
       arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
       arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
-    AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_API_DEPLOYMENT_ID: "xi1mwx3ttb"
-    AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
 
 phases:
   install:
@@ -20,8 +18,7 @@ phases:
       python: 3.7
   pre_build:
     commands:
-      # Download generated vectors
-      # TODO rewrite URL
+      # Download previously generated vectors
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
       - unzip 37_masterkey.zip
   build:

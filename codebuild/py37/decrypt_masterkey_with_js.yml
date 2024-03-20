@@ -34,8 +34,7 @@ phases:
       # - aws sts get-caller-identity
       # - cd $CODEBUILD_SRC_DIR
 
-      # Download generated vectors
-      # TODO rewrite URL
+      # Download previously generated vectors
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
       - unzip 37_masterkey.zip
   build:
