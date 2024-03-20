@@ -33,7 +33,7 @@ from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInp
 import _dafny
 import UTF8
 
-from awses_test_vectors.internal.keyvectors_provider import KeyVectorsProvider
+from awses_test_vectors.internal.mpl.keyvectors_provider import KeyVectorsProvider
 from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 
 

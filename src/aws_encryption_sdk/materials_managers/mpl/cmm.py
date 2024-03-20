@@ -67,7 +67,6 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 CryptoMaterialsManagerFromMPL._native_to_mpl_get_encryption_materials(
                     request
                 )
-
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
             return EncryptionMaterialsFromMPL(mpl_output.encryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:

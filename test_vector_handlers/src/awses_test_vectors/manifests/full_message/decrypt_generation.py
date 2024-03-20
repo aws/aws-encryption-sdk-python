@@ -44,7 +44,7 @@ try:
     from aws_encryption_sdk.materials_managers.mpl.materials import (
         EncryptionMaterialsFromMPL
     )
-    from awses_test_vectors.internal.tampering_mpl_materials import (
+    from awses_test_vectors.internal.mpl.tampering_mpl_materials import (
         HalfSigningEncryptionMaterialsFromMPL,
         ProviderInfoChangingCryptoMaterialsManagerFromMPL,
         HalfSigningCryptoMaterialsManagerFromMPL,
