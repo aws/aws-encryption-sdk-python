@@ -29,13 +29,13 @@ batch:
         image: aws/codebuild/standard:5.0
     - identifier: py37_decrypt_masterkey_with_masterkey
       depend-on: 
-       - py37_generate_decrypt_vectors
+       - py37_generate_decrypt_vectors_masterkey
       buildspec: codebuild/py37/decrypt_masterkey_with_masterkey.yml
       env:
         image: aws/codebuild/standard:5.0
     - identifier: py37_decrypt_masterkey_with_js
       depend-on: 
-       - py37_generate_decrypt_vectors
+       - py37_generate_decrypt_vectors_masterkey
       buildspec: codebuild/py37/decrypt_masterkey_with_js.yml
       env:
         image: aws/codebuild/standard:5.0
