@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py37-full_decrypt"
+    TOXENV: "py37-full_encrypt"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
@@ -18,16 +18,15 @@ phases:
   install:
     runtime-versions:
       python: 3.7
-  pre_build:
-    commands:
-      # Download generated vectors
-      # TODO rewrite URL
-      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
-      - unzip 37_masterkey.zip
   build:
     commands:
       - pip install "tox < 4.0"
       - cd test_vector_handlers
       - |
         tox -- \
-          --input ../37_masterkey/manifest.json
+          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0003-awses-message-encryption.v2.json \
+# artifacts:
+#   files:
+#     - test_vector_handlers/37_master.zip
+#   name: $CODEBUILD_INITIATOR/37_master.zip
+#   discard-paths: yes
