@@ -11,8 +11,6 @@ env:
       arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
       arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
-    AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_API_DEPLOYMENT_ID: "xi1mwx3ttb"
-    AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
 
 phases:
   install:
@@ -27,8 +25,4 @@ phases:
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
           --output 311_masterkey
       - zip -r 311_masterkey.zip 311_masterkey
-artifacts:
-  files:
-    - test_vector_handlers/311_masterkey.zip
-  name: $CODEBUILD_INITIATOR/311_masterkey.zip
-  discard-paths: yes
+      - aws s3 cp 311_masterkey.zip s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/311_masterkey.zip
