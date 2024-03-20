@@ -194,6 +194,14 @@ batch:
       buildspec: codebuild/py311/decrypt_net_401_vectors_keyrings.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_encrypt_masterkey
+      buildspec: codebuild/py311/encrypt_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py311_encrypt_keyrings
+      buildspec: codebuild/py311/encrypt_keyrings.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py311_generate_decrypt_vectors_masterkey
       buildspec: codebuild/py311/generate_decrypt_vectors_masterkey.yml
       env:

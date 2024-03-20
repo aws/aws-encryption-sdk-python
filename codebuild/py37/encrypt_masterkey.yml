@@ -22,4 +22,4 @@ phases:
       - cd test_vector_handlers
       - |
         tox -- \
-          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0003-awses-message-encryption.v2.json \
+          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0003-awses-message-encryption.v2.json
