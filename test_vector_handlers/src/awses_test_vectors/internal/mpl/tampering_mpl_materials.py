@@ -89,8 +89,10 @@ class HalfSigningEncryptionMaterialsFromMPL(EncryptionMaterialsFromMPL):
 
     _underlying_materials: EncryptionMaterialsFromMPL
 
-    def __init__(self, underling_materials):
-        self._underlying_materials = underling_materials
+    def __init__(self, underlying_materials):
+        """Creates a HalfSigningEncryptionMaterialsFromMPL wrapper
+        around underlying_materials."""
+        self._underlying_materials = underlying_materials
 
     # pylint thinks EncryptionMaterialsFromMPL.algorithm is a method
     # pylint: disable=invalid-overridden-method
@@ -124,18 +126,22 @@ class HalfSigningEncryptionMaterialsFromMPL(EncryptionMaterialsFromMPL):
 
     @property
     def encryption_context(self):
+        """Get encryption_context from _underlying_materials."""
         return self._underlying_materials.encryption_context
 
     @property
     def encrypted_data_keys(self):
+        """Get encrypted_data_keys from _underlying_materials."""
         return self._underlying_materials.encrypted_data_keys
 
     @property
     def data_encryption_key(self):
+        """Get data_encryption_key from _underlying_materials."""
         return self._underlying_materials.data_encryption_key
 
     @property
     def required_encryption_context_keys(self):
+        """Get required_encryption_context_keys from _underlying_materials."""
         return self._underlying_materials.required_encryption_context_keys
 
 
