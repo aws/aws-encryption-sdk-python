@@ -170,6 +170,10 @@ Resources:
       AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"codebuild.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
       MaxSessionDuration: 3600
       ManagedPolicyArns:
+        # Ideally we would add GeneratedVectorsArtifactsS3BucketPolicy to run test vectors.
+        # However, this role would then have 11 managed policies.
+        # IAM has a limit of 10 managed policies per role.
+        # If we need to add more policies here, we should increase this limit.
         - !Ref CryptoToolsKMS
         - !Ref CodeBuildBatchPolicy
         - !Ref CodeBuildBasePolicy
@@ -187,7 +191,9 @@ Resources:
         - !Ref CryptoToolsKMS
         - !Ref CodeBuildCIBatchPolicy
         - !Ref CodeBuildBasePolicy
+        - !Ref SecretsManagerCIPolicy
         - !Ref CodeBuildCISTSAllow
+        - !Ref GeneratedVectorsArtifactsS3BucketPolicy
         
   CodeBuildBatchPolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -231,7 +237,8 @@ Resources:
               "Action": [
                 "codebuild:StartBuild",
                 "codebuild:StopBuild",
-                "codebuild:RetryBuild"
+                "codebuild:RetryBuild",
+                "codebuild:BatchGetBuilds"
               ]
             }
           ]
@@ -259,7 +266,8 @@ Resources:
               "Action": [
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "logs:GetLogEvents"
               ]
             },
             {
@@ -305,6 +313,26 @@ Resources:
               "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiCryptoTools-SxeLBh",
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T"
+              ],
+              "Action": "secretsmanager:GetSecretValue"
+            }
+          ]
+        }
+  
+  SecretsManagerCIPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub "CryptoTools-SecretsManagerCI-${ProjectName}-release"
+      Path: "/service-role/"
+      # Policy: Allow access to a Github fine-grained PAT that can read ESDK-Dafny "Daily CI" artifacts
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Resource": [
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:Github/lucasmcdonald3-fgpat-1aAsdO"
               ],
               "Action": "secretsmanager:GetSecretValue"
             }
@@ -358,3 +386,28 @@ Resources:
               }
           ]
         }
+
+  GeneratedVectorsArtifactsS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: generated-vectors-artifacts-bucket
+      LifecycleConfiguration:
+        Rules:
+          - Id: Expire artifacts in 14 days
+            Status: Enabled
+            ExpirationInDays: 14
+
+  GeneratedVectorsArtifactsS3BucketPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: Generated-Vectors-Artifacts-S3-Bucket-Policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+            Resource:
+              - !Join [ "", [ !GetAtt GeneratedVectorsArtifactsS3Bucket.Arn, '/*'] ]
