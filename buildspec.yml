@@ -11,20 +11,20 @@ batch:
       buildspec: codebuild/py37/examples.yml
       env:
         image: aws/codebuild/standard:5.0
-    # - identifier: py37_awses_local
-    #   buildspec: codebuild/py37/awses_local.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
-    # - identifier: py37_decrypt_dafny_esdk_vectors
-    #   buildspec: codebuild/py37/decrypt_dafny_esdk_vectors.yml
-    #   env:
-    #     image: aws/codebuild/standard:5.0
+    - identifier: py37_decrypt_dafny_esdk_vectors
+      buildspec: codebuild/py37/decrypt_dafny_esdk_vectors.yml
+      env:
+        image: aws/codebuild/standard:5.0
     - identifier: py37_decrypt_net_401_vectors
       buildspec: codebuild/py37/decrypt_net_401_vectors.yml
       env:
         image: aws/codebuild/standard:5.0
-    - identifier: py37_generate_decrypt_vectors
-      buildspec: codebuild/py37/generate_decrypt_vectors.yml
+    - identifier: py37_encrypt_masterkey
+      buildspec: codebuild/py37/encrypt_masterkey.yml
+      env:
+        image: aws/codebuild/standard:5.0
+    - identifier: py37_generate_decrypt_vectors_masterkey
+      buildspec: codebuild/py37/generate_decrypt_vectors_masterkey.yml
       env:
         image: aws/codebuild/standard:5.0
     - identifier: py37_decrypt_masterkey_with_masterkey
