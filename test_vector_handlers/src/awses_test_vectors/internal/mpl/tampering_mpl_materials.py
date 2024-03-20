@@ -1,9 +1,9 @@
 """Allows using ESDK-MPL interfaces with the tampering tests.
 These must ONLY be used in testing and NOT in production.
 """
+from copy import copy
 import attr
 import six
-from copy import copy
 
 
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
@@ -90,8 +90,9 @@ class HalfSigningEncryptionMaterialsFromMPL(EncryptionMaterialsFromMPL):
     _underlying_materials: EncryptionMaterialsFromMPL
 
     def __init__(self, underlying_materials):
-        """Creates a HalfSigningEncryptionMaterialsFromMPL wrapper
-        around underlying_materials."""
+        """Create a HalfSigningEncryptionMaterialsFromMPL wrapper
+        around underlying_materials.
+        """
         self._underlying_materials = underlying_materials
 
     # pylint thinks EncryptionMaterialsFromMPL.algorithm is a method
