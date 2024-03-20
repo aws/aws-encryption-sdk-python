@@ -50,7 +50,8 @@ try:
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
     _HAS_MPL = True
-except ImportError:
+except ImportError as e:
+    print(f"ImportError: {e}")
     _HAS_MPL = False
 
 

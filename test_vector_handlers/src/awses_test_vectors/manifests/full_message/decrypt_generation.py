@@ -51,7 +51,8 @@ try:
     )
 
     _HAS_MPL = True
-except ImportError:"
+except ImportError as e:
+    print(f"ImportError: {e}")
     _HAS_MPL = False
 
 
