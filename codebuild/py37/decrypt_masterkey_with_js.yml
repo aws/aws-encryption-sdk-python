@@ -35,9 +35,12 @@ phases:
       # - cd $CODEBUILD_SRC_DIR
 
       # Download previously generated vectors
-      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/77b9165380cfad5fe8b18809fe72b7ca7accfa1c/37_masterkey.zip 37_masterkey.zip
+      # Repackage zip in expected format
       - unzip 37_masterkey.zip
+      - cd 37_masterkey
+      - zip -r vectors.zip .
   build:
     commands:
       # Decrypt generated vectors with Javascript ESDK
-      - integration-node decrypt -v 37_masterkey
+      - integration-node decrypt -v vectors.zip
