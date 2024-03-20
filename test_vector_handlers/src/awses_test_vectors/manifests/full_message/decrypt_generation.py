@@ -51,7 +51,7 @@ try:
     )
 
     _HAS_MPL = True
-except ImportError as e:
+except ImportError:"
     _HAS_MPL = False
 
 
