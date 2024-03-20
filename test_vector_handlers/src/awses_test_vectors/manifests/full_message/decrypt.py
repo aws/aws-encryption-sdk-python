@@ -313,7 +313,8 @@ class MessageDecryptionTestScenario(object):
                 cmm_type = scenario["cmm"]
             elif scenario["cmm"] == "RequiredEncryptionContext":
                 # Skip RequiredEncryptionContext CMM for master keys;
-                # This is unsupported for master keys
+                # RequiredEncryptionContext is unsupported for master keys.
+                # Caller logic should expect `None` to mean "no scenario".
                 if keyrings:
                     cmm_type = scenario["cmm"]
                 else:
@@ -384,9 +385,9 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that
-                        # if using the required encryption context CMM,
-                        # both and only "key1" and "key2" are required.
+                        # Currently, the test vector manifest assumes these
+                        # are the only required encryption context keys for any message.
+                        # If this assumption changes, this logic must be augmented.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )
@@ -436,9 +437,9 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that
-                        # if using the required encryption context CMM,
-                        # both and only "key1" and "key2" are required.
+                        # Currently, the test vector manifest assumes these
+                        # are the only required encryption context keys for any message.
+                        # If this assumption changes, this logic must be augmented.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )
@@ -490,9 +491,9 @@ class MessageDecryptionTestScenario(object):
             required_ec_cmm: ICryptographicMaterialsManager = \
                 mpl.create_required_encryption_context_cmm(
                     CreateRequiredEncryptionContextCMMInput(
-                        # Currently, the test vector manifest requires that
-                        # if using the required encryption context CMM,
-                        # both and only "key1" and "key2" are required.
+                        # Currently, the test vector manifest assumes these
+                        # are the only required encryption context keys for any message.
+                        # If this assumption changes, this logic must be augmented.
                         required_encryption_context_keys=["key1", "key2"],
                         underlying_cmm=underlying_cmm,
                     )

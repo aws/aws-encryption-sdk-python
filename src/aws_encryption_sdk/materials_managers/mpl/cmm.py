@@ -69,22 +69,6 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 )
 
             mpl_output: MPL_GetEncryptionMaterialsOutput = self.mpl_cmm.get_encryption_materials(mpl_input)
-
-            # ????????????????????????????
-            # kpis = set()
-            # for edk in mpl_output.encryption_materials.encrypted_data_keys:
-            #     kpis.add(edk.key_provider_info)
-
-            # print(kpis)
-            # input
-
-            # if len(kpis) == 1:
-            #     for edk in mpl_output.encryption_materials.encrypted_data_keys:
-            #         if edk.key_provider_info == b"rsa-4096-public":
-            #             edk.key_provider_info = b"rsa-4096-private"
-
-            # mpl_output.encryption_materials.encrypted_data_keys[0].key_provider_info = b"rsa-4096-private"
-
             return EncryptionMaterialsFromMPL(mpl_output.encryption_materials)
         except AwsCryptographicMaterialProvidersException as mpl_exception:
             # Wrap MPL error into the ESDK error type

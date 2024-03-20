@@ -1,6 +1,5 @@
-"""Allows overriding the algorithm and signing_key for EncryptionMaterialsFromMPL.
-This must ONLY be used in testing and NOT in production..
-This is used in message tampering testing.
+"""Allows using ESDK-MPL interfaces with the tampering tests.
+These must ONLY be used in testing and NOT in production.
 """
 import attr
 import six
@@ -30,7 +29,7 @@ except ImportError:
 
 class HalfSigningCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFromMPL):
     """
-    Custom CMM that modifies the provider info field on EDKs
+    Custom CMM that uses HalfSigningEncryptionMaterialsFromMPL.
     This extends CryptoMaterialsManagerFromMPL so ESDK-internal checks
     follow MPL logic.
 
@@ -81,7 +80,7 @@ class HalfSigningCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFromMPL):
 
 class HalfSigningEncryptionMaterialsFromMPL(EncryptionMaterialsFromMPL):
     """Allows overriding the algorithm and signing_key for EncryptionMaterialsFromMPL.
-    This must ONLY be used in testing and NOT in production..
+    This must ONLY be used in testing and NOT in production.
     This is used in testing malicious message modification (HalfSigningTampering).
     """
 
