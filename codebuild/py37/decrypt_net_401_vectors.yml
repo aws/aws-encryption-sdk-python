@@ -12,8 +12,6 @@ env:
       arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
       arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
-    # AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_API_DEPLOYMENT_ID: "xi1mwx3ttb"
-    # AWS_ENCRYPTION_SDK_PYTHON_DECRYPT_ORACLE_REGION: "us-west-2"
 
 phases:
   install:
@@ -21,14 +19,6 @@ phases:
       python: 3.7
   pre_build:
     commands:
-      # # Assume Role to access non-prod resources
-      # - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-TestVectorResources")
-      # - export TMP_ROLE
-      # - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
-      # - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
-      # - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
-      # - aws sts get-caller-identity
-
       # Fetch ESDK .NET v4.0.1 Test Vectors
       - VECTOR_ZIP=$CODEBUILD_SRC_DIR/v4-Net-4.0.1.zip
       - VECTORS_URL=https://github.com/aws/aws-encryption-sdk-dafny/raw/mainline/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors/resources/v4-Net-4.0.1.zip
