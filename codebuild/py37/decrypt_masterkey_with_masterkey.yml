@@ -18,7 +18,7 @@ phases:
   install:
     runtime-versions:
       python: 3.7
-  pre-build:
+  pre_build:
     commands:
       # Download generated vectors
       # TODO rewrite URL
