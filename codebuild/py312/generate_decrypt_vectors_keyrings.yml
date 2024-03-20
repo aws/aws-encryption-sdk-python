@@ -23,6 +23,7 @@ phases:
       - |
         tox -- \
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
-          --output 312_keyrings
+          --output 312_keyrings \
+          --keyrings
       - zip -r 312_keyrings.zip 312_keyrings
       - aws s3 cp 312_keyrings.zip s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_keyrings.zip
