@@ -3,19 +3,6 @@ version: 0.2
 batch:
   fast-fail: false
   build-list:
-    - identifier: py37_integ
-      buildspec: codebuild/py37/integ.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_examples
-      buildspec: codebuild/py37/examples.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_awses_local
-      buildspec: codebuild/py37/awses_local.yml
-      env:
-        image: aws/codebuild/standard:5.0
-
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml
       env:
