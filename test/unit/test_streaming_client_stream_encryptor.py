@@ -512,12 +512,12 @@ class TestStreamEncryptor(object):
                 test_encryptor._prep_message()
 
                 # Then: Assert correctness of partitioned EC
-                for k, _ in encryption_context.items():
+                for k, v in encryption_context.items():
                     # If a key is in required_encryption_context_keys, then
                     if k in required_encryption_context_keys:
                         # 1) Its EC is in the StreamEncryptor._required_encryption_context
                         assert k in test_encryptor._required_encryption_context
-                        assert test_encryptor._required_encryption_context[k] == encryption_context[k]
+                        assert test_encryptor._required_encryption_context[k] == v
                         # 2) Its EC is NOT in the StreamEncryptor._stored_encryption_context
                         assert k not in test_encryptor._stored_encryption_context
                     # If a key is NOT in required_encryption_context_keys, then
@@ -526,7 +526,7 @@ class TestStreamEncryptor(object):
                         assert k not in test_encryptor._required_encryption_context
                         # 2) Its EC is in the StreamEncryptor._stored_encryption_context
                         assert k in test_encryptor._stored_encryption_context
-                        assert test_encryptor._stored_encryption_context[k] == encryption_context[k]
+                        assert test_encryptor._stored_encryption_context[k] == v
 
                 # Assert size(stored_EC) + size(required_EC) == size(EC)
                 # (i.e. every EC was sorted into one or the other)

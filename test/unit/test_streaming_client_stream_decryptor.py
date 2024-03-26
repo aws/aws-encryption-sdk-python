@@ -1126,12 +1126,12 @@ class TestStreamDecryptor(object):
                 test_decryptor._read_header()
 
                 # Then: Assert correctness of partitioned EC
-                for k, _ in encryption_context.items():
+                for k, v in encryption_context.items():
                     # If a key is in required_encryption_context_keys, then ...
                     if k in required_encryption_context_keys:
                         # ... its EC is in the StreamEncryptor._required_encryption_context
                         assert k in test_decryptor._required_encryption_context
-                        assert test_decryptor._required_encryption_context[k] == encryption_context[k]
+                        assert test_decryptor._required_encryption_context[k] == v
                     # If a key is NOT in required_encryption_context_keys, then ...
                     else:
                         # ... its EC is NOT in the StreamEncryptor._required_encryption_context
