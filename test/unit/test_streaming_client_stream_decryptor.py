@@ -1071,7 +1071,7 @@ class TestStreamDecryptor(object):
         self,
         mock_verifier,
         *_
-    ): 
+    ):
         required_encryption_context_keys_values = [
             # Case of empty encryption context list is not allowed;
             # if a list is provided, it must be non-empty.
@@ -1126,7 +1126,7 @@ class TestStreamDecryptor(object):
                 test_decryptor._read_header()
 
                 # Then: Assert correctness of partitioned EC
-                for k in encryption_context:
+                for k in encryption_context.keys():
                     # If a key is in required_encryption_context_keys, then ...
                     if k in required_encryption_context_keys:
                         # ... its EC is in the StreamEncryptor._required_encryption_context

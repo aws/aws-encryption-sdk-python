@@ -33,10 +33,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_cryptographic_materialproviders.mpl.references import (
-        ICryptographicMaterialsManager,
-        IKeyring,
-    )
+    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
     HAS_MPL = True
 
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
