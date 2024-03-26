@@ -15,6 +15,13 @@ import argparse
 
 from awses_test_vectors.manifests.full_message.encrypt import MessageEncryptionManifest
 
+try:
+    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import,import-error
+    _HAS_MPL = True
+except ImportError:
+    _HAS_MPL = False
+
+
 try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
     from typing import Iterable, Optional  # noqa pylint: disable=unused-import
 except ImportError:  # pragma: no cover
@@ -29,9 +36,19 @@ def cli(args=None):
     parser.add_argument(
         "--input", required=True, type=argparse.FileType("r"), help="Existing full message encrypt manifest"
     )
+    parser.add_argument(
+        "--keyrings",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Use keyring interfaces to encrypt",
+    )
 
     parsed = parser.parse_args(args)
 
-    encrypt_manifest = MessageEncryptionManifest.from_file(parsed.input)
+    if parsed.keyrings and not _HAS_MPL:
+        raise ImportError("The --keyrings flag requires the aws-cryptographic-material-providers library.")
+
+    encrypt_manifest = MessageEncryptionManifest.from_file(parsed.input, parsed.keyrings)
 
     encrypt_manifest.run()

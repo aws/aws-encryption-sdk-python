@@ -1,0 +1,59 @@
+version: 0.2
+# Runs Only the ESDK-NET v4.0.1 Decryption Vectors, testing Required EC CMM
+
+env:
+  variables:
+    TOXENV: "py312-full_decrypt-mpl"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+  git-credential-helper: yes
+  secrets-manager:
+    GITHUB_TOKEN: Github/lucasmcdonald3-fgpat:actions read
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+  pre_build:
+    commands:
+      # Fetch test vectors from Dafny ESDK's most recent run
+      # (Assuming the first result is most recent; seems to be correct...)
+      - |
+        MOST_RECENT_RUN_ID=$(curl -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token ${GITHUB_TOKEN}" \
+           -H "X-GitHub-Api-Version: 2022-11-28" \
+           "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs?branch=mainline&status=completed&page=1&exclude_pull_requests=true" \
+           | jq 'first(.workflow_runs[] | select(.name=="Daily CI") | .id)')
+      - |
+        echo "DEBUG: Fetching artifact from run $MOST_RECENT_RUN_ID"
+      - |
+        MOST_RECENT_RUN_DOWNLOAD_URL=$(curl -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/aws/aws-encryption-sdk-dafny/actions/runs/$MOST_RECENT_RUN_ID/artifacts?name=ubuntu-latest_vector_artifact" \
+          | jq '.artifacts[0].archive_download_url')
+      - |
+        echo "DEBUG: Fetching artifact at $MOST_RECENT_RUN_DOWNLOAD_URL"
+      - |
+        curl -L -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          $(echo $MOST_RECENT_RUN_DOWNLOAD_URL | tr -d '"') -o ubuntu-latest_test_vector_artifact.zip
+      # This unzips to `net41.zip`.
+      - unzip ubuntu-latest_test_vector_artifact
+      # This unzips to `net41/`.
+      - unzip net41.zip -d net41
+  build:
+    commands:
+      - pip install "tox < 4.0"
+      - cd test_vector_handlers
+      - |
+        tox -- \
+          --input ../net41/manifest.json \
+          --keyrings
