@@ -169,7 +169,10 @@ class TestSerialize(object):
         )
 
     @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
-    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v1_THEN_aad_has_required_ec_bytes(self, mock_header_auth_iv):
+    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v1_THEN_aad_has_required_ec_bytes(
+        self,
+        mock_header_auth_iv,
+    ):
         """Validate that the _create_header_auth function
         behaves as expected for SerializationVersion.V1
         when required_ec_bytes are provided.
@@ -230,7 +233,10 @@ class TestSerialize(object):
         )
 
     @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
-    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v2_THEN_aad_has_required_ec_bytes(self, mock_header_auth_iv):
+    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v2_THEN_aad_has_required_ec_bytes(
+        self,
+        mock_header_auth_iv,
+    ):
         """Validate that the _create_header_auth function
         behaves as expected for SerializationVersion.V2.
         """

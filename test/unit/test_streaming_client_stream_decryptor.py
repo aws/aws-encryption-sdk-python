@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamDecryptor"""
+# noqa pylint: disable=too-many-lines
 import io
 
 import pytest
@@ -1011,7 +1012,7 @@ class TestStreamDecryptor(object):
         assert hasattr(output, "reproduced_encryption_context")
         assert output.reproduced_encryption_context == mock_reproduced_encryption_context
 
-    def test_GIVEN_config_does_not_have_EC_WHEN_create_decrypt_materials_request_THEN_request_does_not_have_reproduced_EC(
+    def test_GIVEN_config_does_not_have_EC_WHEN_create_decrypt_materials_request_THEN_request_does_not_have_reproduced_EC(  # noqa pylint: disable=line-too-long
         self,
     ):
         self.mock_header.content_type = ContentType.FRAMED_DATA
@@ -1066,7 +1067,7 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.Verifier")
-    def test_GIVEN_materials_has_required_encryption_context_keys_attr_WHEN_read_header_THEN_creates_correct_required_EC(
+    def test_GIVEN_materials_has_required_encryption_context_keys_attr_WHEN_read_header_THEN_creates_correct_required_EC(  # noqa pylint: disable=line-too-long
         self,
         mock_verifier,
         *_
@@ -1106,9 +1107,9 @@ class TestStreamDecryptor(object):
             # Given: decryption_materials has required_encryption_context_keys
             self.mock_decrypt_materials.required_encryption_context_keys = \
                 required_encryption_context_keys
-            
+
             for encryption_context in encryption_context_values:
-                
+
                 self.mock_decrypt_materials.encryption_context = encryption_context
 
                 mock_verifier_instance = MagicMock()
@@ -1130,6 +1131,7 @@ class TestStreamDecryptor(object):
                     if k in required_encryption_context_keys:
                         # ... its EC is in the StreamEncryptor._required_encryption_context
                         assert k in test_decryptor._required_encryption_context
+                        assert test_decryptor._required_encryption_context[k] == encryption_context[k]
                     # If a key is NOT in required_encryption_context_keys, then ...
                     else:
                         # ... its EC is NOT in the StreamEncryptor._required_encryption_context

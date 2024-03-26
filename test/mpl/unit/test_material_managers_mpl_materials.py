@@ -160,7 +160,7 @@ def test_GIVEN_valid_signing_key_WHEN_EncryptionMaterials_get_signing_key_THEN_r
     assert output == mock_signing_key
 
 
-def test_GIVEN_valid_required_encryption_context_keys_WHEN_EncryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():
+def test_GIVEN_valid_required_encryption_context_keys_WHEN_EncryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():  # noqa pylint: disable=line-too-long
     # Given: valid required encryption context keys
     mock_required_encryption_context_keys = MagicMock(__class__=bytes)
     mock_mpl_encryption_materials.required_encryption_context_keys = mock_required_encryption_context_keys
@@ -202,7 +202,7 @@ def test_GIVEN_valid_verification_key_WHEN_DecryptionMaterials_get_verification_
     assert output == mock_verification_key
 
 
-def test_GIVEN_valid_encryption_context_WHEN_DecryptionMaterials_get_encryption_context_THEN_returns_encryption_context():
+def test_GIVEN_valid_encryption_context_WHEN_DecryptionMaterials_get_encryption_context_THEN_returns_encryption_context():  # noqa pylint: disable=line-too-long
     # Given: valid encryption context
     mock_encryption_context = MagicMock(__class__=Dict[str, str])
     mock_mpl_decrypt_materials.encryption_context = mock_encryption_context
@@ -215,7 +215,7 @@ def test_GIVEN_valid_encryption_context_WHEN_DecryptionMaterials_get_encryption_
     assert output == mock_encryption_context
 
 
-def test_GIVEN_valid_required_encryption_context_keys_WHEN_DecryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():
+def test_GIVEN_valid_required_encryption_context_keys_WHEN_DecryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():  # noqa pylint: disable=line-too-long
     # Given: valid required encryption context keys
     mock_required_encryption_context_keys = MagicMock(__class__=bytes)
     mock_mpl_decrypt_materials.required_encryption_context_keys = mock_required_encryption_context_keys

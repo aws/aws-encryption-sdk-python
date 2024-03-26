@@ -976,7 +976,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             encryption_context=header.encryption_context,
             commitment_policy=self.config.commitment_policy,
         )
-    
+
     def _validate_parsed_header(
         self,
         header,
@@ -1096,7 +1096,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "Key commitment validation failed. Key identity does not match the identity asserted in the "
                     "message. Halting processing of this message."
                 )
-            
+
         return self._validate_parsed_header(
             header=header,
             header_auth=header_auth,

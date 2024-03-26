@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamEncryptor"""
+# noqa pylint: disable=too-many-lines
 import io
 
 import pytest
@@ -453,7 +454,9 @@ class TestStreamEncryptor(object):
 
     # Given: has MPL
     @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
-    def test_GIVEN_has_mpl_AND_encryption_materials_has_required_EC_keys_WHEN_prep_message_THEN_paritions_stored_and_required_EC(self):
+    def test_GIVEN_has_mpl_AND_encryption_materials_has_required_EC_keys_WHEN_prep_message_THEN_paritions_stored_and_required_EC(  # noqa pylint: disable=line-too-long
+        self
+    ):
         # Create explicit values to explicitly test logic in smaller cases
         required_encryption_context_keys_values = [
             # Case of empty encryption context list is not allowed;
@@ -492,7 +495,7 @@ class TestStreamEncryptor(object):
             # Given: encryption context has required_encryption_context_keys
             self.mock_encryption_materials.required_encryption_context_keys = \
                 required_encryption_context_keys
-            
+
             for encryption_context in encryption_context_values:
                 self.mock_encryption_materials.encryption_context = encryption_context
 
@@ -514,6 +517,7 @@ class TestStreamEncryptor(object):
                     if k in required_encryption_context_keys:
                         # 1) Its EC is in the StreamEncryptor._required_encryption_context
                         assert k in test_encryptor._required_encryption_context
+                        assert test_encryptor._required_encryption_context[k] == encryption_context[k]
                         # 2) Its EC is NOT in the StreamEncryptor._stored_encryption_context
                         assert k not in test_encryptor._stored_encryption_context
                     # If a key is NOT in required_encryption_context_keys, then
@@ -522,16 +526,19 @@ class TestStreamEncryptor(object):
                         assert k not in test_encryptor._required_encryption_context
                         # 2) Its EC is in the StreamEncryptor._stored_encryption_context
                         assert k in test_encryptor._stored_encryption_context
-                
+                        assert test_encryptor._stored_encryption_context[k] == encryption_context[k]
+
                 # Assert size(stored_EC) + size(required_EC) == size(EC)
                 # (i.e. every EC was sorted into one or the other)
                 assert len(test_encryptor._required_encryption_context) \
                     + len(test_encryptor._stored_encryption_context) \
                     == len(encryption_context)
-    
+
     # Given: has MPL
     @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
-    def test_GIVEN_has_mpl_AND_encryption_materials_does_not_have_required_EC_keys_WHEN_prep_message_THEN_stored_EC_is_EC(self):
+    def test_GIVEN_has_mpl_AND_encryption_materials_does_not_have_required_EC_keys_WHEN_prep_message_THEN_stored_EC_is_EC(  # noqa pylint: disable=line-too-long
+        self
+    ):
 
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
 
@@ -557,7 +564,7 @@ class TestStreamEncryptor(object):
         assert test_encryptor._stored_encryption_context == mock_encryption_context
         # Then: _required_encryption_context is None
         assert test_encryptor._required_encryption_context is None
-                
+
     def test_prep_message_no_signer(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
