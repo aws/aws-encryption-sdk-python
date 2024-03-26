@@ -143,5 +143,6 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             ),
             encrypted_data_keys=list_edks,
             encryption_context=request.encryption_context,
+            reproduced_encryption_context=request.reproduced_encryption_context,
         )
         return output

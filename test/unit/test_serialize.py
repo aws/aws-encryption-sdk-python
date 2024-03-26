@@ -79,6 +79,7 @@ class TestSerialize(object):
             "aws_encryption_sdk.internal.formatting.serialize.aws_encryption_sdk.internal.utils.validate_frame_length"
         )
         self.mock_valid_frame_length = self.mock_valid_frame_length_patcher.start()
+        self.mock_required_ec_bytes = MagicMock()
         # Set up mock signer
         self.mock_signer = MagicMock()
         self.mock_signer.update.return_value = None
@@ -168,6 +169,34 @@ class TestSerialize(object):
         )
 
     @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
+    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v1_THEN_aad_has_required_ec_bytes(
+        self,
+        mock_header_auth_iv,
+    ):
+        """Validate that the _create_header_auth function
+        behaves as expected for SerializationVersion.V1
+        when required_ec_bytes are provided.
+        """
+        self.mock_encrypt.return_value = VALUES["header_auth_base"]
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V1,
+            algorithm=self.mock_algorithm,
+            header=VALUES["serialized_header"],
+            data_encryption_key=sentinel.encryption_key,
+            signer=self.mock_signer,
+            required_ec_bytes=self.mock_required_ec_bytes,
+        )
+        self.mock_encrypt.assert_called_once_with(
+            algorithm=self.mock_algorithm,
+            key=sentinel.encryption_key,
+            plaintext=b"",
+            associated_data=VALUES["serialized_header"] + self.mock_required_ec_bytes,
+            iv=mock_header_auth_iv.return_value,
+        )
+        self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_auth"])
+        assert test == VALUES["serialized_header_auth"]
+
+    @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
     def test_serialize_header_auth_v2(self, mock_header_auth_iv):
         """Validate that the _create_header_auth function
         behaves as expected for SerializationVersion.V2.
@@ -202,6 +231,33 @@ class TestSerialize(object):
             header=VALUES["serialized_header_v2_committing"],
             data_encryption_key=VALUES["data_key_obj"],
         )
+
+    @patch("aws_encryption_sdk.internal.formatting.serialize.header_auth_iv")
+    def test_GIVEN_required_ec_bytes_WHEN_serialize_header_auth_v2_THEN_aad_has_required_ec_bytes(
+        self,
+        mock_header_auth_iv,
+    ):
+        """Validate that the _create_header_auth function
+        behaves as expected for SerializationVersion.V2.
+        """
+        self.mock_encrypt.return_value = VALUES["header_auth_base"]
+        test = aws_encryption_sdk.internal.formatting.serialize.serialize_header_auth(
+            version=SerializationVersion.V2,
+            algorithm=self.mock_algorithm,
+            header=VALUES["serialized_header_v2_committing"],
+            data_encryption_key=sentinel.encryption_key,
+            signer=self.mock_signer,
+            required_ec_bytes=self.mock_required_ec_bytes,
+        )
+        self.mock_encrypt.assert_called_once_with(
+            algorithm=self.mock_algorithm,
+            key=sentinel.encryption_key,
+            plaintext=b"",
+            associated_data=VALUES["serialized_header_v2_committing"] + self.mock_required_ec_bytes,
+            iv=mock_header_auth_iv.return_value,
+        )
+        self.mock_signer.update.assert_called_once_with(VALUES["serialized_header_auth_v2"])
+        assert test == VALUES["serialized_header_auth_v2"]
 
     def test_serialize_non_framed_open(self):
         """Validate that the serialize_non_framed_open
