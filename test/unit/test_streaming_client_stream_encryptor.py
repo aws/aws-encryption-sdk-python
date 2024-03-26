@@ -512,7 +512,7 @@ class TestStreamEncryptor(object):
                 test_encryptor._prep_message()
 
                 # Then: Assert correctness of partitioned EC
-                for k in encryption_context.keys():
+                for k, _ in encryption_context.items():
                     # If a key is in required_encryption_context_keys, then
                     if k in required_encryption_context_keys:
                         # 1) Its EC is in the StreamEncryptor._required_encryption_context
