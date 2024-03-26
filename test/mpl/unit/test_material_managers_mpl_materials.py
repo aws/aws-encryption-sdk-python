@@ -160,6 +160,19 @@ def test_GIVEN_valid_signing_key_WHEN_EncryptionMaterials_get_signing_key_THEN_r
     assert output == mock_signing_key
 
 
+def test_GIVEN_valid_required_encryption_context_keys_WHEN_EncryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():
+    # Given: valid required encryption context keys
+    mock_required_encryption_context_keys = MagicMock(__class__=bytes)
+    mock_mpl_encryption_materials.required_encryption_context_keys = mock_required_encryption_context_keys
+
+    # When: get required encryption context keys
+    mpl_encryption_materials = EncryptionMaterialsFromMPL(mpl_materials=mock_mpl_encryption_materials)
+    output = mpl_encryption_materials.required_encryption_context_keys
+
+    # Then: returns required encryption context keys
+    assert output == mock_required_encryption_context_keys
+
+
 def test_GIVEN_valid_data_key_WHEN_DecryptionMaterials_get_data_key_THEN_returns_data_key():
     # Given: valid MPL data key
     mock_data_key = MagicMock(__class__=bytes)
@@ -187,3 +200,29 @@ def test_GIVEN_valid_verification_key_WHEN_DecryptionMaterials_get_verification_
 
     # Then: returns verification key
     assert output == mock_verification_key
+
+
+def test_GIVEN_valid_encryption_context_WHEN_DecryptionMaterials_get_encryption_context_THEN_returns_encryption_context():
+    # Given: valid encryption context
+    mock_encryption_context = MagicMock(__class__=Dict[str, str])
+    mock_mpl_decrypt_materials.encryption_context = mock_encryption_context
+
+    # When: get encryption context
+    mpl_decryption_materials = DecryptionMaterialsFromMPL(mpl_materials=mock_mpl_decrypt_materials)
+    output = mpl_decryption_materials.encryption_context
+
+    # Then: returns valid encryption context
+    assert output == mock_encryption_context
+
+
+def test_GIVEN_valid_required_encryption_context_keys_WHEN_DecryptionMaterials_get_required_encryption_context_keys_THEN_returns_required_encryption_context_keys():
+    # Given: valid required encryption context keys
+    mock_required_encryption_context_keys = MagicMock(__class__=bytes)
+    mock_mpl_decrypt_materials.required_encryption_context_keys = mock_required_encryption_context_keys
+
+    # When: get required encryption context keys
+    mpl_decryption_materials = DecryptionMaterialsFromMPL(mpl_materials=mock_mpl_decrypt_materials)
+    output = mpl_decryption_materials.required_encryption_context_keys
+
+    # Then: returns required encryption context keys
+    assert output == mock_required_encryption_context_keys

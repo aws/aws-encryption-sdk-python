@@ -954,8 +954,72 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
             self._prep_non_framed()
         self._message_prepped = True
 
-    # TODO-MPL: Refactor this function, remove linter disablers
-    def _read_header(self):  # noqa pylint: disable=too-many-branches
+    def _create_decrypt_materials_request(self, header):
+        """
+        Create a DecryptionMaterialsRequest based on whether
+        the StreamDecryptor was provided encryption_context on decrypt
+        (i.e. expects to use required encryption context CMM from the MPL).
+        """
+        # If encryption_context is provided on decrypt,
+        # pass it to the DecryptionMaterialsRequest as reproduced_encryption_context
+        if hasattr(self.config, "encryption_context"):
+            return DecryptionMaterialsRequest(
+                encrypted_data_keys=header.encrypted_data_keys,
+                algorithm=header.algorithm,
+                encryption_context=header.encryption_context,
+                commitment_policy=self.config.commitment_policy,
+                reproduced_encryption_context=self.config.encryption_context
+            )
+        return DecryptionMaterialsRequest(
+            encrypted_data_keys=header.encrypted_data_keys,
+            algorithm=header.algorithm,
+            encryption_context=header.encryption_context,
+            commitment_policy=self.config.commitment_policy,
+        )
+    
+    def _validate_parsed_header(
+        self,
+        header,
+        header_auth,
+        raw_header,
+    ):
+        """
+        Pass arguments from this StreamDecryptor to validate_header based on whether
+        the StreamDecryptor has the _required_encryption_context attribute
+        (i.e. is using the required encryption context CMM from the MPL).
+        """
+        # If _required_encryption_context is present,
+        # serialize it and pass it to validate_header.
+        if hasattr(self, "_required_encryption_context") \
+                and self._required_encryption_context is not None:
+            # The authenticated only encryption context is all encryption context key-value pairs where the
+            # key exists in Required Encryption Context Keys. It is then serialized according to the
+            # message header Key Value Pairs.
+            required_ec_serialized = \
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    self._required_encryption_context
+                )
+
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                # When verifying the header, the AAD input to the authenticated encryption algorithm
+                # specified by the algorithm suite is the message header body and the serialized
+                # authenticated only encryption context.
+                raw_header=raw_header + required_ec_serialized,
+                data_key=self._derived_data_key
+            )
+        else:
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                raw_header=raw_header,
+                data_key=self._derived_data_key
+            )
+
+        return header, header_auth
+
+    def _read_header(self):
         """Reads the message header from the input stream.
 
         :returns: tuple containing deserialized header and header_auth objects
@@ -981,24 +1045,7 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 )
             )
 
-        # If encryption_context is provided on decrypt,
-        # pass it to the DecryptionMaterialsRequest
-        if hasattr(self.config, "encryption_context"):
-            decrypt_materials_request = DecryptionMaterialsRequest(
-                encrypted_data_keys=header.encrypted_data_keys,
-                algorithm=header.algorithm,
-                encryption_context=header.encryption_context,
-                commitment_policy=self.config.commitment_policy,
-                reproduced_encryption_context=self.config.encryption_context
-            )
-        else:
-            decrypt_materials_request = DecryptionMaterialsRequest(
-                encrypted_data_keys=header.encrypted_data_keys,
-                algorithm=header.algorithm,
-                encryption_context=header.encryption_context,
-                commitment_policy=self.config.commitment_policy,
-            )
-
+        decrypt_materials_request = self._create_decrypt_materials_request(header)
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
 
         # If the materials_manager passed required_encryption_context_keys,
@@ -1049,36 +1096,12 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "Key commitment validation failed. Key identity does not match the identity asserted in the "
                     "message. Halting processing of this message."
                 )
-
-        # If _required_encryption_context is present,
-        # serialize it and pass it to validate_header.
-        if self._required_encryption_context is not None:
-            # The authenticated only encryption context is all encryption context key-value pairs where the
-            # key exists in Required Encryption Context Keys. It is then serialized according to the
-            # message header Key Value Pairs.
-            required_ec_serialized = \
-                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
-                    self._required_encryption_context
-                )
-
-            validate_header(
-                header=header,
-                header_auth=header_auth,
-                # When verifying the header, the AAD input to the authenticated encryption algorithm
-                # specified by the algorithm suite is the message header body and the serialized
-                # authenticated only encryption context.
-                raw_header=raw_header + required_ec_serialized,
-                data_key=self._derived_data_key
-            )
-        else:
-            validate_header(
-                header=header,
-                header_auth=header_auth,
-                raw_header=raw_header,
-                data_key=self._derived_data_key
-            )
-
-        return header, header_auth
+            
+        return self._validate_parsed_header(
+            header=header,
+            header_auth=header_auth,
+            raw_header=raw_header,
+        )
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""

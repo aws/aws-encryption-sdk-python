@@ -38,6 +38,7 @@ mock_decryption_materials_request = MagicMock(__class__=DecryptionMaterialsReque
 mock_mpl_cmm = MagicMock(__class__=MPL_ICryptographicMaterialsManager)
 mock_mpl_encryption_materials = MagicMock(__class__=MPL_EncryptionMaterials)
 mock_mpl_decrypt_materials = MagicMock(__class__=MPL_DecryptionMaterials)
+mock_reproduced_encryption_context = MagicMock(__class_=dict)
 
 
 mock_edk = MagicMock(__class__=Native_EncryptedDataKey)
@@ -259,6 +260,7 @@ def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_reques
     for mock_edks in [no_mock_edks, one_mock_edk, two_mock_edks]:
 
         mock_decryption_materials_request.encrypted_data_keys = mock_edks
+        mock_decryption_materials_request.reproduced_encryption_context = mock_reproduced_encryption_context
 
         # When: _create_mpl_decrypt_materials_input_from_request
         output = CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(
@@ -271,6 +273,7 @@ def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_reques
         assert output.algorithm_suite_id == mock_algorithm_id
         assert output.commitment_policy == mock_commitment_policy
         assert output.encryption_context == mock_decryption_materials_request.encryption_context
+        assert output.reproduced_encryption_context == mock_reproduced_encryption_context
 
         assert len(output.encrypted_data_keys) == len(mock_edks)
         for i in range(len(output.encrypted_data_keys)):
