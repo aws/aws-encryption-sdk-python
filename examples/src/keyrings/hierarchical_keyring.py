@@ -55,7 +55,7 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks
+# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
