@@ -26,7 +26,7 @@ encrypt and decrypt data for two separate tenants.
 
 This example requires access to the DDB Table where you are storing the Branch Keys. This
 table must be configured with the following primary key configuration: - Partition key is named
-"partition_key" with type (S) - Sort key is named "sort_key" with type (S)
+"partition_key" with type (S) - Sort key is named "sort_key" with type (S).
 
 This example also requires using a KMS Key. You need the following access on this key: -
 GenerateDataKeyWithoutPlaintext - Decrypt
