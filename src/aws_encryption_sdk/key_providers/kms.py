@@ -35,6 +35,7 @@ from aws_encryption_sdk.exceptions import (
 )
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.arn import arn_from_str, is_valid_mrk_identifier
+from aws_encryption_sdk.internal.deprecation import deprecated
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo
@@ -143,6 +144,7 @@ class DiscoveryFilter(object):
 
 
 @attr.s(hash=True)
+@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class KMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for KMSMasterKey objects.
 
@@ -170,6 +172,7 @@ class KMSMasterKeyConfig(MasterKeyConfig):
         return boto3.session.Session(**kwargs).client("kms", config=botocore_config)
 
 
+@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class KMSMasterKey(MasterKey):
     """Master Key class for KMS CMKs.
 
@@ -383,6 +386,7 @@ class KMSMasterKey(MasterKey):
 
 
 @attr.s(hash=True)
+@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for MRKAwareKMSMasterKey objects. Mostly the same as KMSMasterKey, except the
     client parameter is required rather than optional.
@@ -405,6 +409,7 @@ class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
     )
 
 
+@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareKMSMasterKey(KMSMasterKey):
     """Master Key class for KMS MRKAware CMKs. The logic for this class is almost entirely the same as a normal
     KMSMasterKey ("single-region key"). The primary difference is that this class is more flexible in what ciphertexts
@@ -515,6 +520,7 @@ class MRKAwareKMSMasterKey(KMSMasterKey):
 
 
 @attr.s(hash=True)
+@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
 
@@ -551,6 +557,7 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class BaseKMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
 
@@ -739,6 +746,7 @@ class BaseKMSMasterKeyProvider(MasterKeyProvider):
         )
 
 
+@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     """Strict Master Key Provider for KMS. It is configured with an explicit list of AWS KMS master keys that
     should be used for encryption and decryption. On encryption, the plaintext will be encrypted with all configured
@@ -805,6 +813,7 @@ class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
             )
 
 
+@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
     """A Strict Master Key Provider for KMS that has smarts for handling Multi-Region keys.
 
@@ -874,6 +883,7 @@ class MRKAwareStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
             )
 
 
+@deprecated("Use KMS discovery keyrings from the aws-cryptographic-material-providers library.")
 class DiscoveryAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     """Discovery Master Key Provider for KMS. This can only be used for decryption. It is configured with an optional
      Discovery Filter containing AWS account ids and partitions that should be trusted for decryption. If a ciphertext
@@ -929,6 +939,7 @@ class DiscoveryAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
             )
 
 
+@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareDiscoveryAwsKmsMasterKeyProvider(DiscoveryAwsKmsMasterKeyProvider):
     """Discovery Master Key Provider for KMS that has smarts for handling Multi-Region keys
 

@@ -25,6 +25,7 @@ from aws_encryption_sdk.exceptions import (
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
+from aws_encryption_sdk.internal.deprecation import deprecated
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import MasterKeyInfo
 
@@ -32,6 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(hash=True)
+@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 class MasterKeyProviderConfig(object):
     """Provides a common ancestor for MasterKeyProvider configuration objects
     and a stand-in point if common params are needed later.
@@ -39,6 +41,7 @@ class MasterKeyProviderConfig(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 class MasterKeyProvider(object):
     """Parent interface for Master Key Provider classes.
 
@@ -325,6 +328,7 @@ class MasterKeyProvider(object):
 
 
 @attr.s(hash=True)
+@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 class MasterKeyConfig(object):
     """Configuration object for MasterKey objects.
 
@@ -342,6 +346,7 @@ class MasterKeyConfig(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 class MasterKey(MasterKeyProvider):
     """Parent interface for Master Key classes.
 

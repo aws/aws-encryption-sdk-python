@@ -22,6 +22,7 @@ import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.identifiers import EncryptionType
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from aws_encryption_sdk.internal.deprecation import deprecated
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, RawDataKey
 
@@ -29,6 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(hash=True)
+@deprecated("Use raw keyrings from the aws-cryptographic-material-providers library.")
 class RawMasterKeyConfig(MasterKeyConfig):
     """Configuration object for RawMasterKey objects.
 
@@ -46,6 +48,7 @@ class RawMasterKeyConfig(MasterKeyConfig):
     wrapping_key = attr.ib(hash=True, validator=attr.validators.instance_of(WrappingKey))
 
 
+@deprecated("Use raw keyrings from the aws-cryptographic-material-providers library.")
 class RawMasterKey(MasterKey):
     """Raw Master Key.
 
@@ -189,6 +192,7 @@ class RawMasterKey(MasterKey):
 
 
 @six.add_metaclass(abc.ABCMeta)
+@deprecated("Use raw keyrings from the aws-cryptographic-material-providers library.")
 class RawMasterKeyProvider(MasterKeyProvider):
     """Raw Master Key Provider.
 
