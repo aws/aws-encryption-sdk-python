@@ -890,8 +890,8 @@ class DecryptorConfig(_ClientConfig):
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
     :param dict encryption_context: Dictionary defining encryption context to validate
-            on decrypt. This is ONLY validated on decrypt if using the required encryption
-            context CMM from the aws-cryptographic-materialproviders library.
+            on decrypt. This is ONLY validated on decrypt if using a CMM
+            from the aws-cryptographic-material-providers library.
     """
 
     max_body_length = attr.ib(
