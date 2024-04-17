@@ -39,6 +39,12 @@ Required Prerequisites
 * boto3 >= 1.10.0
 * attrs
 
+Recommended Prerequisites
+=========================
+
+* aws-cryptographic-material-providers: >= 1.0.0 (TODO)
+  * Requires Python 3.11+.
+
 Installation
 ============
 
@@ -54,18 +60,38 @@ Installation
 
 Concepts
 ========
-There are four main concepts that you need to understand to use this library:
+There are three main concepts that you need to understand to use this library:
+
+Data Keys
+---------
+Data keys are the encryption keys that are used to encrypt your data. If your algorithm suite
+uses a key derivation function, the data key is used to generate the key that directly encrypts the data.
+
+Keyrings
+--------
+Keyrings are resources that generate, encrypt, and decrypt data keys.
+You specify a keyring when encrypting and the same or a different keyring when decrypting.
+
+Note: You must also install the `AWS Cryptographic Material Providers Library (MPL)`_ to create and use keyrings.
+
+For more information, see the `AWS Documentation for Keyrings`_.
 
 Cryptographic Materials Managers
 --------------------------------
 Cryptographic materials managers (CMMs) are resources that collect cryptographic materials and prepare them for
 use by the Encryption SDK core logic.
 
-An example of a CMM is the default CMM, which is automatically generated anywhere a caller provides a master
-key provider. The default CMM collects encrypted data keys from all master keys referenced by the master key
-provider.
+An example of a CMM is the default CMM,
+which is automatically generated anywhere a caller provides a keyring.
+The default CMM collects encrypted data keys from all configured keyrings.
 
 An example of a more advanced CMM is the caching CMM, which caches cryptographic materials provided by another CMM.
+
+Legacy Concepts
+===============
+These concepts mention components that have been deprecated since v4 of this library.
+These components have been superseded by new components in the `AWS Cryptographic Material Providers Library (MPL)`_.
+Please avoid using these and instead use components in the MPL.
 
 Master Key Providers
 --------------------
@@ -76,15 +102,20 @@ To encrypt data in this client, a ``MasterKeyProvider`` object must contain at l
 
 ``MasterKeyProvider`` objects can also contain other ``MasterKeyProvider`` objects.
 
+NOTE: Master key providers are deprecated
+and have been superseded by [keyrings](TODO)
+provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
+Please install this library and migrate master key providers to keyring interfaces.
+
 Master Keys
 -----------
 Master keys generate, encrypt, and decrypt data keys.
 An example of a master key is a `KMS customer master key (CMK)`_.
 
-Data Keys
----------
-Data keys are the encryption keys that are used to encrypt your data. If your algorithm suite
-uses a key derivation function, the data key is used to generate the key that directly encrypts the data.
+NOTE: Master keys are deprecated
+and have been superseded by [keyrings](TODO)
+provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
+Please install this library and migrate master key providers to keyring interfaces.
 
 *****
 Usage
@@ -110,147 +141,71 @@ version of the AWS Encryption SDK, we recommend using the default value.
     )
 
 
-You must then create an instance of either a master key provider or a CMM. The examples in this
-readme use the ``StrictAwsKmsMasterKeyProvider`` class.
+You must then create an instance of either a keyring (with the MPL installed) or a CMM.
+You may also provide an instance of a legacy master key provider.
+The examples in this README use the ``AwsKmsKeyring`` class.
+Note: You must install the `AWS Cryptographic Material Providers Library (MPL)`_ to use this class.
 
 
-StrictAwsKmsMasterKeyProvider
+AwsKmsKeyring
 =============================
-A ``StrictAwsKmsMasterKeyProvider`` is configured with an explicit list of AWS KMS
-CMKs with which to encrypt and decrypt data. On encryption, it encrypts the plaintext with all
-configured CMKs. On decryption, it only attempts to decrypt ciphertexts that have been wrapped
-with a CMK that matches one of the configured CMK ARNs.
+A ``AwsKmsKeyring`` is configured with an AWS KMS key ARN whose AWS KMS key
+will be used to generate, encrypt, and decrypt data keys.
+On encryption, it encrypts the plaintext with the data key.
+On decryption, it decrypts an encrypted version of the data key, then uses the decrypted data key to decrypt the ciphertext.
 
-To create a ``StrictAwsKmsMasterKeyProvider`` you must provide one or more CMKs. For providers that will only
-be used for encryption, you can use any valid `KMS key identifier`_. For providers that will be used for decryption, you
-must use the key ARN; key ids, alias names, and alias ARNs are not supported.
+To create a ``AwsKmsKeyring`` you must provide one or more AWS KMS key ARNs.
+For keyrings that will only be used for encryption,
+you can use any valid `KMS key identifier`_.
+For providers that will be used for decryption,
+you must use the key ARN.
+Key ids, alias names, and alias ARNs are not supported.
 
-Because the ``StrictAwsKmsMasterKeyProvider`` uses the `boto3 SDK`_ to interact with `AWS KMS`_,
+Because the ``AwsKmsKeyring`` uses the `boto3 SDK`_ to interact with `AWS KMS`_,
 it requires AWS Credentials.
 To provide these credentials, use the `standard means by which boto3 locates credentials`_ or provide a
-pre-existing instance of a ``botocore session`` to the ``StrictAwsKmsMasterKeyProvider``.
+pre-existing instance of a ``botocore session`` to the ``AwsKmsKeyring``.
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
 
-If you configure the the ``StrictAwsKmsMasterKeyProvider`` with multiple CMKs, the `final message`_
-will include a copy of the data key encrypted by each configured CMK.
+TODO: Code example
 
-.. code:: python
+If you want to configure a keyring with multiple AWS KMS keys, see the multi keyring.
 
-    import aws_encryption_sdk
+MultiKeyring
+============
 
-    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
+A ``MultiKeyring`` is configured with an optional generator keyring and a list of child keyrings.
 
-You can add CMKs from multiple regions to the ``StrictAwsKmsMasterKeyProvider``.
-
-.. code:: python
-
-    import aws_encryption_sdk
-
-    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-west-2:3333333333333:key/33333333-3333-3333-3333-333333333333',
-        'arn:aws:kms:ap-northeast-1:4444444444444:key/44444444-4444-4444-4444-444444444444'
-    ])
-
+TODO: Code example
 
 DiscoveryAwsKmsMasterKeyProvider
 ================================
-We recommend using a ``StrictAwsKmsMasterKeyProvider`` in order to ensure that you can only
-encrypt and decrypt data using the AWS KMS CMKs you expect. However, if you are unable to
-explicitly identify the AWS KMS CMKs that should be used for decryption, you can instead
-use a ``DiscoveryAwsKmsMasterKeyProvider`` for decryption operations. This provider
+We recommend using an ``AwsKmsKeyring`` in order to ensure that you can only
+encrypt and decrypt data using the AWS KMS key ARN you expect,
+or a ``MultiKeyring`` if you are using multiple keys. However, if you are unable to
+explicitly identify the AWS KMS key ARNs that should be used for decryption, you can instead
+use a ``AwsKmsDiscoveryKeyring`` for decryption operations. This provider
 attempts decryption of any ciphertexts as long as they match a ``DiscoveryFilter`` that
 you configure. A ``DiscoveryFilter`` consists of a list of AWS account ids and an AWS
 partition.
 
-.. code:: python
-
-    import aws_encryption_sdk
-    from aws_encryption_sdk.key_providers.kms import DiscoveryFilter
-
-    discovery_filter = DiscoveryFilter(
-        account_ids=['222222222222', '333333333333'],
-        partition='aws'
-    )
-    kms_key_provider = aws_encryption_sdk.DiscoveryAwsKmsMasterKeyProvider(
-        discovery_filter=discovery_filter
-    )
+TODO: Code example
 
 If you do not want to filter the set of allowed accounts, you can also omit the ``discovery_filter`` argument.
 
-Note that a ``DiscoveryAwsKmsMasterKeyProvider`` cannot be used for encryption operations.
+Note that a ``AwsKmsDiscoveryKeyring`` cannot be used for encryption operations.
 
 Encryption and Decryption
 =========================
-After you create an instance of an ``EncryptionSDKClient`` and a ``MasterKeyProvider``, you can use either of
+After you create an instance of an ``EncryptionSDKClient`` and a ``Keyring``, you can use either of
 the client's two ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
 
-.. code:: python
-
-    import aws_encryption_sdk
-    from aws_encryption_sdk.identifiers import CommitmentPolicy
-
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
-    )
-
-    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-    my_plaintext = b'This is some super secret data!  Yup, sure is!'
-
-    my_ciphertext, encryptor_header = client.encrypt(
-        source=my_plaintext,
-        key_provider=kms_key_provider
-    )
-
-    decrypted_plaintext, decryptor_header = client.decrypt(
-        source=my_ciphertext,
-        key_provider=kms_key_provider
-    )
-
-    assert my_plaintext == decrypted_plaintext
-    assert encryptor_header.encryption_context == decryptor_header.encryption_context
+TODO: Code example; basic example with keyring
 
 You can provide an `encryption context`_: a form of additional authenticating information.
 
-.. code:: python
-
-    import aws_encryption_sdk
-    from aws_encryption_sdk.identifiers import CommitmentPolicy
-
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
-    )
-
-    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
-    my_plaintext = b'This is some super secret data!  Yup, sure is!'
-
-    my_ciphertext, encryptor_header = client.encrypt(
-        source=my_plaintext,
-        key_provider=kms_key_provider,
-        encryption_context={
-            'not really': 'a secret',
-            'but adds': 'some authentication'
-        }
-    )
-
-    decrypted_plaintext, decryptor_header = client.decrypt(
-        source=my_ciphertext,
-        key_provider=kms_key_provider
-    )
-
-    assert my_plaintext == decrypted_plaintext
-    assert encryptor_header.encryption_context == decryptor_header.encryption_context
-
+TODO: Code example with encryption context
 
 Streaming
 =========
@@ -258,6 +213,8 @@ If you are handling large files or simply do not want to put the entire plaintex
 memory at once, you can use this library's streaming clients directly. The streaming clients are
 file-like objects, and behave exactly as you would expect a Python file object to behave,
 offering context manager and iteration support.
+
+TODO: Update code example to use a keyring
 
 .. code:: python
 
@@ -309,19 +266,23 @@ to your use-case in order to obtain peak performance.
 
 Thread safety
 ==========================
-The ``EncryptionSDKClient`` and all provided ``CryptoMaterialsManager`` are thread safe.
-But instances of ``BaseKMSMasterKeyProvider`` MUST not be shared between threads,
+The ``EncryptionSDKClient`` and provided ``CryptoMaterialsManager`` are thread safe.
+But instances of key material providers (i.e. keyrings or legacy master key providers) that call AWS KMS
+(ex. ``AwsKmsKeyring`` or other KMS keyrings; ``BaseKmsMasterKeyProvider`` or children of this class)
+MUST not be shared between threads
 for the reasons outlined in `the boto3 docs <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html#multithreading-or-multiprocessing-with-resources>`_.
 
-Because the ``BaseKMSMaterKeyProvider`` creates a `new boto3 sessions <https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674>`_ per region,
+Because these key material providers create a `new boto3 sessions <https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674>`_ per region,
 users do not need to create a client for every region in every thread;
-a new  ``BaseKMSMasterKeyProvider`` per thread is sufficient.
+a single key material provider per thread is sufficient.
 
-(The ``BaseKMSMasterKeyProvider`` is the internal parent class of all the KMS Providers.)
+(The ``BaseKMSMasterKeyProvider`` is the internal parent class of all the legacy KMS master key providers.)
 
 Finally, while the ``CryptoMaterialsCache`` is thread safe,
 sharing entries in that cache across threads needs to be done carefully
 (see the !Note about partition name `in the API Docs <https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_).
+
+TODO: Note on MPL
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
 .. _cryptography: https://cryptography.io/en/latest/
@@ -337,3 +298,5 @@ sharing entries in that cache across threads needs to be done carefully
 .. _encryption context: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 .. _Security issue notifications: ./CONTRIBUTING.md#security-issue-notifications
 .. _Support Policy: ./SUPPORT_POLICY.rst
+.. _AWS Cryptographic Material Providers Library (MPL): https://github.com/aws/aws-cryptographic-material-providers-library
+.. _AWS Documentation for Keyrings: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/choose-keyring.html
