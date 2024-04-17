@@ -899,8 +899,8 @@ class DecryptorConfig(_ClientConfig):
     )
     encryption_context = attr.ib(
         hash=False,  # dictionaries are not hashable
-        default=attr.Factory(dict),
-        validator=attr.validators.instance_of(dict),
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(dict)),
     )
 
 

@@ -195,7 +195,8 @@ class TestStreamDecryptor(object):
         test_decryptor._stream_length = len(VALUES["data_128"])
 
         # Mock: hasattr(self.config, "encryption_context") returns False
-        del test_decryptor.config.encryption_context
+        if hasattr(test_decryptor.config, "encryption_context"):
+            del test_decryptor.config.encryption_context
 
         test_header, test_header_auth = test_decryptor._read_header()
 
@@ -239,7 +240,7 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.Verifier")
     # Given: no MPL
     @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
-    def test_GIVEN_decrypt_config_has_ec_WHEN_read_header_THEN_calls_decrypt_materials_with_reproduced_ec(
+    def test_GIVEN_decrypt_config_has_ec_AND_no_mpl_WHEN_read_header_THEN_raise_TypeError(
         self,
         mock_verifier,
         mock_decrypt_materials_request,
@@ -258,20 +259,14 @@ class TestStreamDecryptor(object):
         test_decryptor.source_stream = ct_stream
         test_decryptor._stream_length = len(VALUES["data_128"])
         # Given: self.config has "encryption_context"
+        # (i.e. encryption context provided on decrypt)
         any_reproduced_ec = {"some": "ec"}
         test_decryptor.config.encryption_context = any_reproduced_ec
 
-        # When: read header
-        test_decryptor._read_header()
-
-        # Then: calls decrypt_materials with reproduced_encryption_context
-        mock_decrypt_materials_request.assert_called_once_with(
-            encrypted_data_keys=self.mock_header.encrypted_data_keys,
-            algorithm=self.mock_header.algorithm,
-            encryption_context=sentinel.encryption_context,
-            commitment_policy=mock_commitment_policy,
-            reproduced_encryption_context=any_reproduced_ec,
-        )
+        # Then: raise TypeError
+        with pytest.raises(TypeError) as excinfo:
+            # When: read header
+            test_decryptor._read_header()
 
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
@@ -986,7 +981,9 @@ class TestStreamDecryptor(object):
             data_key=sentinel.derived_data_key,
         )
 
-    def test_GIVEN_config_has_EC_WHEN_create_decrypt_materials_request_THEN_provide_reproduced_EC(
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_MPL_AND_config_has_EC_WHEN_create_decrypt_materials_request_THEN_provide_reproduced_EC(
         self,
     ):
         self.mock_header.content_type = ContentType.FRAMED_DATA
