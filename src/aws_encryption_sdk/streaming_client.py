@@ -958,11 +958,12 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         Create a DecryptionMaterialsRequest based on whether
         the StreamDecryptor was provided encryption_context on decrypt
-        (i.e. expects to use required encryption context CMM from the MPL).
+        (i.e. expects to use a CMM from the MPL).
         """
         # If encryption_context is provided on decrypt,
         # pass it to the DecryptionMaterialsRequest as reproduced_encryption_context
-        if hasattr(self.config, "encryption_context"):
+        if hasattr(self.config, "encryption_context") \
+            and self.config.encryption_context is not None:
             if (_HAS_MPL
                     and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
                 return DecryptionMaterialsRequest(

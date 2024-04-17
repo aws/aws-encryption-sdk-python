@@ -991,7 +991,7 @@ class TestStreamDecryptor(object):
     ):
         self.mock_header.content_type = ContentType.FRAMED_DATA
         test_decryptor = StreamDecryptor(
-            materials_manager=self.mock_materials_manager,
+            materials_manager=self.mock_mpl_materials_manager,
             source=self.mock_input_stream,
             commitment_policy=self.mock_commitment_policy,
         )
@@ -1039,6 +1039,7 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
     def test_GIVEN_materials_has_no_required_encryption_context_keys_attr_WHEN_read_header_THEN_required_EC_is_None(
         self,
         mock_verifier,
@@ -1067,6 +1068,8 @@ class TestStreamDecryptor(object):
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
     def test_GIVEN_materials_has_required_encryption_context_keys_attr_WHEN_read_header_THEN_creates_correct_required_EC(  # noqa pylint: disable=line-too-long
         self,
         mock_verifier,
