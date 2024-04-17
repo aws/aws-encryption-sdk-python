@@ -264,7 +264,7 @@ class TestStreamDecryptor(object):
         test_decryptor.config.encryption_context = any_reproduced_ec
 
         # Then: raise TypeError
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(TypeError):
             # When: read header
             test_decryptor._read_header()
 
