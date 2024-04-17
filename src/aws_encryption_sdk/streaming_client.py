@@ -963,13 +963,18 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         # If encryption_context is provided on decrypt,
         # pass it to the DecryptionMaterialsRequest as reproduced_encryption_context
         if hasattr(self.config, "encryption_context"):
-            return DecryptionMaterialsRequest(
-                encrypted_data_keys=header.encrypted_data_keys,
-                algorithm=header.algorithm,
-                encryption_context=header.encryption_context,
-                commitment_policy=self.config.commitment_policy,
-                reproduced_encryption_context=self.config.encryption_context
-            )
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                return DecryptionMaterialsRequest(
+                    encrypted_data_keys=header.encrypted_data_keys,
+                    algorithm=header.algorithm,
+                    encryption_context=header.encryption_context,
+                    commitment_policy=self.config.commitment_policy,
+                    reproduced_encryption_context=self.config.encryption_context
+                )
+            else:
+                raise TypeError("encryption_context on decrypt is only supported for CMMs and keyrings "\
+                                "from the aws-cryptographic-material-providers library.")
         return DecryptionMaterialsRequest(
             encrypted_data_keys=header.encrypted_data_keys,
             algorithm=header.algorithm,

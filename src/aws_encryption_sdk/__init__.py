@@ -186,7 +186,8 @@ class EncryptionSDKClient(object):
                 to the end of the stream and tell() to find the length of source data.
 
         :param dict encryption_context: Dictionary defining encryption context to validate
-            on decrypt.
+            on decrypt. This is ONLY validated on decrypt if using a CMM from the
+            aws-cryptographic-material-providers library.
         :param int max_body_length: Maximum frame size (or content length for non-framed messages)
             in bytes to read from ciphertext message.
         :returns: Tuple containing the decrypted plaintext and the message header object
