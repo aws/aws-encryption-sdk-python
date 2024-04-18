@@ -164,7 +164,7 @@ class EncryptionSDKClient(object):
             ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
             ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
             ... ])
-            >>> my_plaintexts, decryptor_header = client.decrypt(
+            >>> my_plaintext, decryptor_header = client.decrypt(
             ...     source=my_ciphertext,
             ...     key_provider=kms_key_provider
             ... )
