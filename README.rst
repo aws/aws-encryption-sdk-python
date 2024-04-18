@@ -59,7 +59,7 @@ Installation
 
 The `[MPL]` suffix also installs the `AWS Cryptographic Material Providers Library (MPL)`_.
 This is a library that contains interfaces for encrypting and decrypting your data.
-It is highly recommended to install this library with the MPL.
+We highly recommend installing the MPL.
 However, if you do not wish to install the MPL, omit the `[MPL]` suffix.
 
 Concepts
