@@ -42,7 +42,7 @@ Required Prerequisites
 Recommended Prerequisites
 =========================
 
-* aws-cryptographic-material-providers: >= 1.0.0 (TODO)
+* aws-cryptographic-material-providers: >= 1.0.0 (TODO-MPL: versionme)
   * Requires Python 3.11+.
 
 Installation
@@ -55,8 +55,12 @@ Installation
 
    .. code::
 
-       $ pip install aws-encryption-sdk
+       $ pip install aws-encryption-sdk[MPL]
 
+The `[MPL]` suffix also installs the `AWS Cryptographic Material Providers Library (MPL)`_.
+This is a library that contains interfaces for encrypting and decrypting your data.
+It is highly recommended to install this library with the MPL.
+However, if you do not wish to install the MPL, omit the `[MPL]` suffix.
 
 Concepts
 ========
@@ -85,8 +89,6 @@ An example of a CMM is the default CMM,
 which is automatically generated anywhere a caller provides a keyring.
 The default CMM collects encrypted data keys from all configured keyrings.
 
-An example of a more advanced CMM is the caching CMM, which caches cryptographic materials provided by another CMM.
-
 Legacy Concepts
 ===============
 These concepts mention components that have been deprecated since v4 of this library.
@@ -103,7 +105,7 @@ To encrypt data in this client, a ``MasterKeyProvider`` object must contain at l
 ``MasterKeyProvider`` objects can also contain other ``MasterKeyProvider`` objects.
 
 NOTE: Master key providers are deprecated
-and have been superseded by [keyrings](TODO)
+and have been superseded by keyrings
 provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
 Please install this library and migrate master key providers to keyring interfaces.
 
@@ -113,7 +115,7 @@ Master keys generate, encrypt, and decrypt data keys.
 An example of a master key is a `KMS customer master key (CMK)`_.
 
 NOTE: Master keys are deprecated
-and have been superseded by [keyrings](TODO)
+and have been superseded by keyrings
 provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
 Please install this library and migrate master key providers to keyring interfaces.
 
@@ -142,9 +144,9 @@ version of the AWS Encryption SDK, we recommend using the default value.
 
 
 You must then create an instance of either a keyring (with the MPL installed) or a CMM.
-You may also provide an instance of a legacy master key provider.
+(You may also provide an instance of a legacy master key provider, but this is not recommended.)
 The examples in this README use the ``AwsKmsKeyring`` class.
-Note: You must install the `AWS Cryptographic Material Providers Library (MPL)`_ to use this class.
+Note: You must also install the `AWS Cryptographic Material Providers Library (MPL)`_ to use this class.
 
 
 AwsKmsKeyring
@@ -170,17 +172,19 @@ you want to reuse an existing instance of a botocore session in order to decreas
 
 TODO: Code example
 
-If you want to configure a keyring with multiple AWS KMS keys, see the multi keyring.
+If you want to configure a keyring with multiple AWS KMS keys, see the multi-keyring.
 
 MultiKeyring
 ============
 
 A ``MultiKeyring`` is configured with an optional generator keyring and a list of child keyrings.
 
+TODO: More words
+
 TODO: Code example
 
-DiscoveryAwsKmsMasterKeyProvider
-================================
+AwsKmsDiscoveryKeyring
+======================
 We recommend using an ``AwsKmsKeyring`` in order to ensure that you can only
 encrypt and decrypt data using the AWS KMS key ARN you expect,
 or a ``MultiKeyring`` if you are using multiple keys. However, if you are unable to
@@ -226,10 +230,7 @@ TODO: Update code example to use a keyring
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
 
-    kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-        'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-        'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-    ])
+    # TODO: create a keyring
     plaintext_filename = 'my-secret-data.dat'
     ciphertext_filename = 'my-encrypted-data.ct'
 
@@ -237,7 +238,7 @@ TODO: Update code example to use a keyring
         with client.stream(
             mode='e',
             source=pt_file,
-            key_provider=kms_key_provider
+            keyring = # TODO: provide keyring
         ) as encryptor:
             for chunk in encryptor:
                 ct_file.write(chunk)
@@ -248,7 +249,7 @@ TODO: Update code example to use a keyring
         with client.stream(
             mode='d',
             source=ct_file,
-            key_provider=kms_key_provider
+            keyring = # TODO: provide keyring
         ) as decryptor:
             for chunk in decryptor:
                 pt_file.write(chunk)
@@ -266,7 +267,7 @@ to your use-case in order to obtain peak performance.
 
 Thread safety
 ==========================
-The ``EncryptionSDKClient`` and provided ``CryptoMaterialsManager`` are thread safe.
+The ``EncryptionSDKClient`` class is thread safe.
 But instances of key material providers (i.e. keyrings or legacy master key providers) that call AWS KMS
 (ex. ``AwsKmsKeyring`` or other KMS keyrings; ``BaseKmsMasterKeyProvider`` or children of this class)
 MUST not be shared between threads
