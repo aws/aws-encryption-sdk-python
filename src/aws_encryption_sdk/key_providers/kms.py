@@ -142,9 +142,8 @@ class DiscoveryFilter(object):
     )
     partition = attr.ib(default=None, hash=True, validator=attr.validators.optional(attr.validators.instance_of(str)))
 
-
-@attr.s(hash=True)
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
+@attr.s(hash=True)
 class KMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for KMSMasterKey objects.
 
@@ -384,9 +383,8 @@ class KMSMasterKey(MasterKey):
                 "provider's key_id={}".format(edk_key_id, self._key_id)
             )
 
-
-@attr.s(hash=True)
 @deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
+@attr.s(hash=True)
 class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for MRKAwareKMSMasterKey objects. Mostly the same as KMSMasterKey, except the
     client parameter is required rather than optional.
@@ -518,9 +516,8 @@ class MRKAwareKMSMasterKey(KMSMasterKey):
             return True
         return False
 
-
-@attr.s(hash=True)
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
+@attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
 
@@ -555,9 +552,8 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.string_types))
     )
 
-
-@six.add_metaclass(abc.ABCMeta)
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
+@six.add_metaclass(abc.ABCMeta)
 class BaseKMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
 
