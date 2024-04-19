@@ -157,12 +157,12 @@ On encryption, it encrypts the plaintext with the data key.
 On decryption, it decrypts an encrypted version of the data key,
 then uses the decrypted data key to decrypt the ciphertext.
 
-To create a ``AwsKmsKeyring`` you must provide one or more AWS KMS key ARNs.
+To create a ``AwsKmsKeyring`` you must provide a AWS KMS key ARN.
 For keyrings that will only be used for encryption,
 you can use any valid `KMS key identifier`_.
 For providers that will be used for decryption,
 you must use the key ARN.
-Key ids, alias names, and alias ARNs are not supported.
+Key ids, alias names, and alias ARNs are not supported for decryption.
 
 Because the ``AwsKmsKeyring`` uses the `boto3 SDK`_ to interact with `AWS KMS`_,
 it requires AWS Credentials.
@@ -171,7 +171,7 @@ pre-existing instance of a ``botocore session`` to the ``AwsKmsKeyring``.
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
 
-TODO: Code example
+TODO-MPL: Code example
 
 If you want to configure a keyring with multiple AWS KMS keys, see the multi-keyring.
 
@@ -180,9 +180,9 @@ MultiKeyring
 
 A ``MultiKeyring`` is configured with an optional generator keyring and a list of child keyrings.
 
-TODO: More words
+TODO-MPL: More words
 
-TODO: Code example
+TODO-MPL: Code example
 
 AwsKmsDiscoveryKeyring
 ======================
@@ -195,7 +195,7 @@ attempts decryption of any ciphertexts as long as they match a ``DiscoveryFilter
 you configure. A ``DiscoveryFilter`` consists of a list of AWS account ids and an AWS
 partition.
 
-TODO: Code example
+TODO-MPL: Code example
 
 If you do not want to filter the set of allowed accounts, you can also omit the ``discovery_filter`` argument.
 
@@ -206,11 +206,11 @@ Encryption and Decryption
 After you create an instance of an ``EncryptionSDKClient`` and a ``Keyring``, you can use either of
 the client's two ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
 
-TODO: Code example; basic example with keyring
+TODO-MPL: Code example; basic example with keyring
 
 You can provide an `encryption context`_: a form of additional authenticating information.
 
-TODO: Code example with encryption context
+TODO-MPL: Code example with encryption context
 
 Streaming
 =========
@@ -219,7 +219,7 @@ memory at once, you can use this library's streaming clients directly. The strea
 file-like objects, and behave exactly as you would expect a Python file object to behave,
 offering context manager and iteration support.
 
-TODO: Update code example to use a keyring
+TODO-MPL: Update code example to use a keyring
 
 .. code:: python
 
@@ -231,7 +231,7 @@ TODO: Update code example to use a keyring
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
 
-    # TODO: create a keyring
+    # TODO-MPL: create a keyring
     plaintext_filename = 'my-secret-data.dat'
     ciphertext_filename = 'my-encrypted-data.ct'
 
@@ -239,7 +239,7 @@ TODO: Update code example to use a keyring
         with client.stream(
             mode='e',
             source=pt_file,
-            keyring = # TODO: provide keyring
+            keyring = # TODO-MPL: provide keyring
         ) as encryptor:
             for chunk in encryptor:
                 ct_file.write(chunk)
@@ -250,7 +250,7 @@ TODO: Update code example to use a keyring
         with client.stream(
             mode='d',
             source=ct_file,
-            keyring = # TODO: provide keyring
+            keyring = # TODO-MPL: provide keyring
         ) as decryptor:
             for chunk in decryptor:
                 pt_file.write(chunk)
@@ -268,6 +268,10 @@ to your use-case in order to obtain peak performance.
 
 Thread safety
 ==========================
+TODO-MPL: need to write about keyring thread safety.
+kms keyrings definitely not thread safe.
+raw keyrings need testing, but may be launched as not thread safe.
+
 The ``EncryptionSDKClient`` class is thread safe.
 But instances of key material providers (i.e. keyrings or legacy master key providers) that call AWS KMS
 (ex. ``AwsKmsKeyring`` or other KMS keyrings; ``BaseKmsMasterKeyProvider`` or children of this class)
@@ -283,8 +287,6 @@ a single key material provider per thread is sufficient.
 Finally, while the ``CryptoMaterialsCache`` is thread safe,
 sharing entries in that cache across threads needs to be done carefully
 (see the !Note about partition name `in the API Docs <https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_).
-
-TODO: Note on MPL
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
 .. _cryptography: https://cryptography.io/en/latest/

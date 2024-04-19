@@ -129,6 +129,7 @@ def _check_mrk_arns_equal(key1, key2):
     )
 
 
+@deprecated("Use DiscoveryFilter from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class DiscoveryFilter(object):
     """DiscoveryFilter to control accounts and partitions that can be used by a KMS Master Key Provider.
