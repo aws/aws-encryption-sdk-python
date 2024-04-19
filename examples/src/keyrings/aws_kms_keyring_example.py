@@ -5,15 +5,16 @@ This example sets up the KMS Keyring
 
 The AWS KMS keyring uses symmetric encryption KMS keys to generate, encrypt and
 decrypt data keys. This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also demonstrates some sanity checks for demonstration.
+with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
+These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 AWS KMS keyrings can be used independently or in a multi-keyring with other keyrings
 of the same or a different type.
 
-For more info on how to use KMS keyring, see
+For more information on how to use KMS keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
 """
 import sys
@@ -46,7 +47,7 @@ def encrypt_and_decrypt_with_keyring(
     decryption of your data keys.
     :type kms_key_id: string
 
-    For more info on KMS Key identifiers, see
+    For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
     # 1. Instantiate the encryption SDK client.
@@ -114,4 +115,5 @@ def encrypt_and_decrypt_with_keyring(
             "Encryption context does not match expected values"
 
     # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA
