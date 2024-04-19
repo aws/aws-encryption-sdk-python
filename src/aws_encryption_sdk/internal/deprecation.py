@@ -1,14 +1,12 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Module containing utilities for deprecated components."""
-import warnings
 import functools
+import warnings
 
 
 def deprecated(reason):
-    """
-    Decorator to apply to classes to emit deprecation warnings.
-    """
+    """Decorator to apply to classes to emit deprecation warnings."""
     def decorator(cls):
         # If class does not define init,
         # its default init it Python's object.__init__,
