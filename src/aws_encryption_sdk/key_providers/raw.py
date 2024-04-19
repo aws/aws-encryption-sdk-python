@@ -28,6 +28,7 @@ from aws_encryption_sdk.structures import DataKey, RawDataKey
 
 _LOGGER = logging.getLogger(__name__)
 
+
 @deprecated("Use raw keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class RawMasterKeyConfig(MasterKeyConfig):
@@ -188,6 +189,7 @@ class RawMasterKey(MasterKey):
             data_key=plaintext_data_key,
             encrypted_data_key=encrypted_data_key.encrypted_data_key,
         )
+
 
 @deprecated("Use raw keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)

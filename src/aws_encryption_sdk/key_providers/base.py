@@ -31,12 +31,14 @@ from aws_encryption_sdk.structures import MasterKeyInfo
 
 _LOGGER = logging.getLogger(__name__)
 
+
 @deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MasterKeyProviderConfig(object):
     """Provides a common ancestor for MasterKeyProvider configuration objects
     and a stand-in point if common params are needed later.
     """
+
 
 @deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)
@@ -324,6 +326,7 @@ class MasterKeyProvider(object):
             raise DecryptKeyError("Unable to decrypt any data key")
         return data_key
 
+
 @deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MasterKeyConfig(object):
@@ -340,6 +343,7 @@ class MasterKeyConfig(object):
         """Verify that children of this class define a "provider_id" attribute."""
         if not hasattr(self, "provider_id"):
             raise TypeError('Instances of MasterKeyConfig must have a "provider_id" attribute defined.')
+
 
 @deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)

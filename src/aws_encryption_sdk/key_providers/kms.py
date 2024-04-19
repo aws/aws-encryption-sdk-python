@@ -142,6 +142,7 @@ class DiscoveryFilter(object):
     )
     partition = attr.ib(default=None, hash=True, validator=attr.validators.optional(attr.validators.instance_of(str)))
 
+
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class KMSMasterKeyConfig(MasterKeyConfig):
@@ -383,6 +384,7 @@ class KMSMasterKey(MasterKey):
                 "provider's key_id={}".format(edk_key_id, self._key_id)
             )
 
+
 @deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
@@ -516,6 +518,7 @@ class MRKAwareKMSMasterKey(KMSMasterKey):
             return True
         return False
 
+
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
@@ -551,6 +554,7 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     discovery_region = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.string_types))
     )
+
 
 @deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)

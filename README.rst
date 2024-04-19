@@ -154,7 +154,8 @@ AwsKmsKeyring
 A ``AwsKmsKeyring`` is configured with an AWS KMS key ARN whose AWS KMS key
 will be used to generate, encrypt, and decrypt data keys.
 On encryption, it encrypts the plaintext with the data key.
-On decryption, it decrypts an encrypted version of the data key, then uses the decrypted data key to decrypt the ciphertext.
+On decryption, it decrypts an encrypted version of the data key,
+then uses the decrypted data key to decrypt the ciphertext.
 
 To create a ``AwsKmsKeyring`` you must provide one or more AWS KMS key ARNs.
 For keyrings that will only be used for encryption,
