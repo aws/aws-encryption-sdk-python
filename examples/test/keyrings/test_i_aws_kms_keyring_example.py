@@ -9,5 +9,7 @@ pytestmark = [pytest.mark.examples]
 
 
 def test_encrypt_and_decrypt_with_keyring():
-    key_arn = "arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f"
-    encrypt_and_decrypt_with_keyring(key_arn)
+    """Test function for encryption and decryption using the AWS KMS Keyring example"""
+
+    kms_key_id = "arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f"
+    encrypt_and_decrypt_with_keyring(kms_key_id)
