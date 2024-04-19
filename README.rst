@@ -89,6 +89,10 @@ An example of a CMM is the default CMM,
 which is automatically generated anywhere a caller provides a keyring.
 The default CMM collects encrypted data keys from all configured keyrings.
 
+Note: You must also install the `AWS Cryptographic Material Providers Library (MPL)`_
+to create and use CMMs that use keyrings.
+CMMs that use master key providers have been deprecated since v4 of this library.
+
 Legacy Concepts
 ===============
 These concepts mention components that have been deprecated since v4 of this library.
