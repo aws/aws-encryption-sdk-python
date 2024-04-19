@@ -55,7 +55,7 @@ Installation
 
    .. code::
 
-       $ pip install aws-encryption-sdk[MPL]
+       $ pip install "aws-encryption-sdk[MPL]"
 
 The `[MPL]` suffix also installs the `AWS Cryptographic Material Providers Library (MPL)`_.
 This is a library that contains interfaces for encrypting and decrypting your data.
