@@ -16,7 +16,7 @@ def deprecated(reason):
         # and cannot take any args or kwargs.
         if cls.__init__ is object.__init__:
             # Make a new init that just emits this deprecation warning.
-            def new_init(self):  # pylint: disable=unused-argument
+            def new_init(self, *args, **kwargs):  # pylint: disable=unused-argument
                 warnings.warn(f"{cls.__name__} is deprecated: {reason}",
                               category=DeprecationWarning, stacklevel=2)
         else:
