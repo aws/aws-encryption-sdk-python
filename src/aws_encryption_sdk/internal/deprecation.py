@@ -10,10 +10,10 @@ def deprecated(reason):
     Decorator to apply to classes to emit deprecation warnings.
     """
     def decorator(cls):
-        # If class does not define __init__,
-        # its default its object.__init,
+        # If class does not define init,
+        # its default init it Python's object.__init__,
         # which only takes self as an arg
-        # and explicitly does not take any args or kwargs.
+        # and cannot take any args or kwargs.
         if cls.__init__ is object.__init__:
             # Make a new init that just emits this deprecation warning.
             def new_init(self):  # pylint: disable=unused-argument
@@ -22,6 +22,7 @@ def deprecated(reason):
         else:
             original_init = cls.__init__
 
+            # Wrap the original init method with a deprecation warning.
             @functools.wraps(cls.__init__)
             def new_init(self, *args, **kwargs):
                 warnings.warn(f"{cls.__name__} is deprecated: {reason}",
