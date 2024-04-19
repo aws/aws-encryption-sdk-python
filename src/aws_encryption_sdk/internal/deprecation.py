@@ -12,8 +12,7 @@ def deprecated(reason):
     def decorator(cls):
         # If class does not define init,
         # its default init it Python's object.__init__,
-        # which only takes self as an arg
-        # and cannot take any args or kwargs.
+        # which does nothing, but cannot be wrapped.
         if cls.__init__ is object.__init__:
             # Make a new init that just emits this deprecation warning.
             def new_init(self, *args, **kwargs):  # pylint: disable=unused-argument
