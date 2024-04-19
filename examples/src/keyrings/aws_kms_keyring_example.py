@@ -10,24 +10,23 @@ with an encryption context. This example also demonstrates some sanity checks fo
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
 
-AWS KMS keyrings can be used independently or in a multi-keyring with other keyrings 
+AWS KMS keyrings can be used independently or in a multi-keyring with other keyrings
 of the same or a different type.
 
 For more info on how to use KMS keyring, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
 """
 import sys
-from typing import Dict
-import boto3
 
+import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
@@ -50,7 +49,6 @@ def encrypt_and_decrypt_with_keyring(
     For more info on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
-
     # 1. Instantiate the encryption SDK client.
     # This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
     # which enforces that this client only encrypts using committing algorithm suites and enforces
