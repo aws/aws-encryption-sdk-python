@@ -298,7 +298,6 @@ class TestStreamDecryptor(object):
             algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
         )
 
-
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.Verifier")
@@ -331,7 +330,6 @@ class TestStreamDecryptor(object):
         with pytest.raises(TypeError):
             # When: read header
             test_decryptor._read_header()
-
 
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
