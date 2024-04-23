@@ -52,60 +52,6 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-def generate_rsa_keyring():
-    """Creates a new RSA keyring along with generating new keys
-
-    Usage: generate_rsa_keyring()
-    """
-    # 1. The key namespace and key name are defined by you.
-    # and are used by the Raw RSA keyring
-    # For more information, see
-    # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-rsa-keyring.html
-    key_name_space = "Some managed raw keys"
-    key_name = "My 4096-bit RSA wrapping key"
-
-    # 2. Generate a 4096-bit RSA key to use with your keyring.
-    ssh_rsa_exponent = 65537
-    bit_strength = 4096
-    key = rsa.generate_private_key(
-        backend=crypto_default_backend(),
-        public_exponent=ssh_rsa_exponent,
-        key_size=bit_strength
-    )
-
-    # This example choses a particular type of encoding, format and encryption_algorithm
-    # Users can choose the PrivateFormat, PublicFormat and encryption_algorithm that align most
-    # with their use-cases
-    private_key = key.private_bytes(
-        encoding=crypto_serialization.Encoding.PEM,
-        format=crypto_serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=crypto_serialization.NoEncryption()
-    )
-    public_key = key.public_key().public_bytes(
-        encoding=crypto_serialization.Encoding.PEM,
-        format=crypto_serialization.PublicFormat.SubjectPublicKeyInfo
-    )
-
-    # 3. Create a Raw RSA keyring
-    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
-        config=MaterialProvidersConfig()
-    )
-
-    keyring_input: CreateRawRsaKeyringInput = CreateRawRsaKeyringInput(
-        key_namespace=key_name_space,
-        key_name=key_name,
-        padding_scheme="OAEP_SHA256_MGF1",
-        public_key=public_key,
-        private_key=private_key
-    )
-
-    raw_rsa_keyring: IKeyring = mat_prov.create_raw_rsa_keyring(
-        input=keyring_input
-    )
-
-    return raw_rsa_keyring
-
-
 def encrypt_and_decrypt_with_keyring():
     """Demonstrate an encrypt/decrypt cycle using a Raw RSA keyring.
 
@@ -134,33 +80,76 @@ def encrypt_and_decrypt_with_keyring():
         "the data you are handling": "is what you think it is",
     }
 
-    # 3. Create a Raw RSA keyring
-    raw_rsa_keyring = generate_rsa_keyring()
+    # 3. The key namespace and key name are defined by you.
+    # and are used by the Raw RSA keyring
+    # For more information, see
+    # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-rsa-keyring.html
+    key_name_space = "Some managed raw keys"
+    key_name = "My 4096-bit RSA wrapping key"
 
-    # 4. Encrypt the data for the encryptionContext
+    # 4. Generate a 4096-bit RSA key to use with your keyring.
+    ssh_rsa_exponent = 65537
+    bit_strength = 4096
+    key = rsa.generate_private_key(
+        backend=crypto_default_backend(),
+        public_exponent=ssh_rsa_exponent,
+        key_size=bit_strength
+    )
+
+    # This example choses a particular type of encoding, format and encryption_algorithm
+    # Users can choose the PrivateFormat, PublicFormat and encryption_algorithm that align most
+    # with their use-cases
+    private_key = key.private_bytes(
+        encoding=crypto_serialization.Encoding.PEM,
+        format=crypto_serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=crypto_serialization.NoEncryption()
+    )
+    public_key = key.public_key().public_bytes(
+        encoding=crypto_serialization.Encoding.PEM,
+        format=crypto_serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    # 5. Create a Raw RSA keyring
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    keyring_input: CreateRawRsaKeyringInput = CreateRawRsaKeyringInput(
+        key_namespace=key_name_space,
+        key_name=key_name,
+        padding_scheme="OAEP_SHA256_MGF1",
+        public_key=public_key,
+        private_key=private_key
+    )
+
+    raw_rsa_keyring: IKeyring = mat_prov.create_raw_rsa_keyring(
+        input=keyring_input
+    )
+
+    # 6. Encrypt the data for the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_rsa_keyring,
         encryption_context=encryption_context
     )
 
-    # 5. Demonstrate that the ciphertext and plaintext are different.
+    # 7. Demonstrate that the ciphertext and plaintext are different.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert ciphertext != EXAMPLE_DATA, \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
-    # 6. Decrypt your encrypted data using the same keyring you used on encrypt.
+    # 8. Decrypt your encrypted data using the same keyring you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
         keyring=raw_rsa_keyring
     )
 
-    # 7. Demonstrate that the encryption context is correct in the decrypted message header
+    # 9. Demonstrate that the encryption context is correct in the decrypted message header
     # (This is an example for demonstration; you do not need to do this in your own code.)
     for k, v in encryption_context.items():
         assert v == dec_header.encryption_context[k], \
             "Encryption context does not match expected values"
 
-    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA
