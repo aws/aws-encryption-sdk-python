@@ -29,6 +29,7 @@ try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
 
     from awses_test_vectors.internal.mypy_types import (  # noqa pylint: disable=unused-import
         AWS_KMS_KEY_SPEC,
+        AWS_KMS_HIERARCHY_KEY_SPEC,
         KEY_SPEC,
         KEYS_MANIFEST,
         MANIFEST_VERSION,
@@ -107,6 +108,50 @@ class AwsKmsKeySpec(KeySpec):
             "decrypt": self.decrypt,
             "type": self.type_name,
             "key-id": key_id,
+        }
+
+
+@attr.s(init=False)
+class AwsKmsHierarchyKeySpec(KeySpec):
+    """AWS KMS hierarchy key specification.
+
+    :param bool encrypt: Key can be used to encrypt
+    :param bool decrypt: Key can be used to decrypt
+    :param str type_name: Master key type name (must be "static-branch-key")
+    :param str key_id: Branch key ID
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    type_name = attr.ib(validator=membership_validator(("static-branch-key",)))
+
+    def __init__(self, encrypt, decrypt, type_name, key_id, branch_key_version, branch_key, beacon_key):  # noqa=D107
+        # type: (bool, bool, str, str) -> None
+        # Workaround pending resolution of attrs/mypy interaction.
+        # https://github.com/python/mypy/issues/2088
+        # https://github.com/python-attrs/attrs/issues/215
+        self.type_name = type_name
+        self.branch_key_version = branch_key_version
+        self.branch_key = branch_key
+        self.beacon_key = beacon_key
+        super(AwsKmsHierarchyKeySpec, self).__init__(encrypt, decrypt, key_id)
+
+    @property
+    def manifest_spec(self):
+        # type: () -> AWS_KMS_HIERARCHY_KEY_SPEC
+        """Build a key specification describing this key specification.
+
+        :return: Key specification JSON
+        :rtype: dict
+        """
+        return {
+            "encrypt": self.encrypt,
+            "decrypt": self.decrypt,
+            "type": self.type_name,
+            "key-id": self.key_id,
+            "branchKeyVersion": self.branch_key_version,
+            "branchKey": self.branch_key,
+            "beaconKey": self.beacon_key,
         }
 
 
@@ -206,8 +251,22 @@ def key_from_manifest_spec(key_spec):
         key_id = key_spec["key-id"]  # type: str
         return AwsKmsKeySpec(encrypt=encrypt, decrypt=decrypt, type_name=type_name, key_id=key_id)
 
-    algorithm = key_spec["algorithm"]  # type: str
+    elif key_spec["type"] == "static-branch-key":
+        branch_key_version = key_spec["branchKeyVersion"]  # type: str
+        branch_key = key_spec["branchKey"]  # type: str
+        beacon_key = key_spec["beaconKey"]  # type: str
+        return AwsKmsHierarchyKeySpec(
+            encrypt=encrypt,
+            decrypt=decrypt,
+            type_name=type_name,
+            key_id=key_id,
+            branch_key_version=branch_key_version,
+            branch_key=branch_key,
+            beacon_key=beacon_key,
+        )
+
     bits = key_spec["bits"]  # type: int
+    algorithm = key_spec["algorithm"]
     encoding = key_spec["encoding"]  # type: str
     material = key_spec["material"]  # type: str
     return ManualKeySpec(

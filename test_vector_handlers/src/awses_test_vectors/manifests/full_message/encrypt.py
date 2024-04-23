@@ -50,7 +50,8 @@ try:
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
 
     _HAS_MPL = True
-except ImportError:
+except ImportError as e:
+    print(e)
     _HAS_MPL = False
 
 
@@ -93,6 +94,7 @@ class MessageEncryptionTestScenario(object):
     master_key_specs = attr.ib(validator=iterable_validator(list, MasterKeySpec))
     master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     keyrings = attr.ib(validator=attr.validators.instance_of(bool))
+    cmm = attr.ib(validator=attr.validators.instance_of(str))
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
@@ -133,6 +135,7 @@ class MessageEncryptionTestScenario(object):
             master_key_specs=master_key_specs,
             master_key_provider_fn=master_key_provider_fn,
             keyrings=keyrings,
+            cmm=scenario["cmm"],
         )
 
     def run(self, materials_manager=None):

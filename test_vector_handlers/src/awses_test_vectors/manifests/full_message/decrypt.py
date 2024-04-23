@@ -222,7 +222,7 @@ class MessageDecryptionTestScenario(object):
     master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.instance_of(MessageDecryptionTestResult))
     keyrings = attr.ib(validator=attr.validators.instance_of(bool))
-    cmm_type = attr.ib(validator=attr.validators.instance_of(str))
+    cmm_type = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
     decryption_method = attr.ib(
         default=None, validator=attr.validators.optional(attr.validators.instance_of(DecryptionMethod))
     )
@@ -288,7 +288,8 @@ class MessageDecryptionTestScenario(object):
             ]
         else:
             master_key_specs = [
-                MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs
+                MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs \
+                    if spec["type"] != "aws-kms-hierarchy"
             ]
 
         def master_key_provider_fn():
@@ -301,13 +302,14 @@ class MessageDecryptionTestScenario(object):
         result_spec = scenario["result"]
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
 
-        if "encryption-context" in scenario:
+
+        if hasattr(scenario, "encryption-context"):
             encryption_context = scenario["encryption-context"]
         else:
             encryption_context = {}
 
         # MPL test vectors add CMM types to the test vectors manifests
-        if "cmm" in scenario:
+        if hasattr(scenario, "cmm"):
             if scenario["cmm"] == "Default":
                 # Master keys and keyrings can handle default CMM
                 cmm_type = scenario["cmm"]
@@ -324,6 +326,12 @@ class MessageDecryptionTestScenario(object):
         else:
             # If unspecified, set "Default" as the default
             cmm_type = "Default"
+
+        # If this scenario does not have any key providers,
+        # do not create a scenario.
+        # Caller logic should expect `None` to mean "no scenario".
+        if master_key_provider_fn() is None:
+            return None
 
         return cls(
             ciphertext_uri=scenario["ciphertext"],
@@ -355,6 +363,9 @@ class MessageDecryptionTestScenario(object):
             spec["decryption-method"] = self.decryption_method.value
         if self.description is not None:
             spec["description"] = self.description
+        spec["cmm"] = self.cmm_type
+        spec["encryption-context"] = self.encryption_context
+        
         return spec
 
     def _one_shot_decrypt(self):

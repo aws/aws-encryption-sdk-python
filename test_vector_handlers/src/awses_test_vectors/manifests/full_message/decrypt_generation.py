@@ -91,7 +91,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (2,)
+SUPPORTED_VERSIONS = (2,4,)
 
 
 class TamperingMethod:
@@ -420,6 +420,8 @@ class MessageDecryptionTestScenarioGenerator(object):
     decryption_master_key_provider_fn = attr.ib(validator=attr.validators.is_callable())
     result = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(MessageDecryptionTestResult)))
     keyrings = attr.ib(validator=attr.validators.instance_of(bool))
+    cmm_type = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
+    encryption_context = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(dict)))
 
     @classmethod
     def from_scenario(cls, scenario, keys, plaintexts, keyrings, keys_uri):
@@ -467,6 +469,16 @@ class MessageDecryptionTestScenarioGenerator(object):
         result_spec = scenario.get("result")
         result = MessageDecryptionTestResult.from_result_spec(result_spec, None) if result_spec else None
 
+        try:
+            encryption_context = encryption_scenario_spec["encryption-context"]
+        except KeyError:
+            encryption_context = None
+
+        try:
+            cmm_type = encryption_scenario_spec["cmm"]
+        except KeyError:
+            cmm_type = None
+
         return cls(
             encryption_scenario=encryption_scenario,
             tampering_method=tampering_method,
@@ -475,6 +487,8 @@ class MessageDecryptionTestScenarioGenerator(object):
             decryption_master_key_provider_fn=decryption_master_key_provider_fn,
             result=result,
             keyrings=keyrings,
+            cmm_type=cmm_type,
+            encryption_context=encryption_context,
         )
 
     def run(self, ciphertext_writer, plaintext_uri):
@@ -504,8 +518,8 @@ class MessageDecryptionTestScenarioGenerator(object):
                 decryption_method=self.decryption_method,
                 result=expected_result,
                 keyrings=self.keyrings,
-                cmm_type="Default",
-                encryption_context={}
+                cmm_type=self.cmm_type,
+                encryption_context=self.encryption_context,
             ),
         )
 
@@ -573,8 +587,9 @@ class MessageDecryptionGenerationManifest(object):
                 tests[name] = MessageDecryptionTestScenarioGenerator.from_scenario(
                     scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=keys_abs_path,
                 )
-            except NotImplementedError:
-                continue
+            except NotImplementedError as e:
+                # continue
+                raise e
         return cls(
             version=raw_manifest["manifest"]["version"],
             keys=keys,

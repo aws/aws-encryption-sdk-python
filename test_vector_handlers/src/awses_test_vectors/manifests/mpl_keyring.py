@@ -30,6 +30,11 @@ from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConf
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
+from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES
+from awses_test_vectors.internal.util import membership_validator
+
+KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy")
+
 import _dafny
 import UTF8
 
@@ -56,6 +61,15 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
 
+    # type_name = attr.ib(validator=membership_validator(set(MASTER_KEY_KNOWN_TYPES).union(KEYRING_ONLY_KNOWN_TYPES)))
+
+    def __attrs_post_init__(self):
+        # type: () -> None
+        """Verify that known types all have loaders and that all required parameters are provided."""
+        # if set(KEYRING_ONLY_KNOWN_TYPES) != set(self._KEYRING_LOADERS.keys()):
+        #     raise NotImplementedError("Gap found between known master key types and available master key loaders.")
+        # super().__attrs_post_init__()
+
     def keyring(self, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
@@ -73,6 +87,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             "key": self.key_name,
             "provider-id": self.provider_id,
             "encryption-algorithm": self.encryption_algorithm,
+            # "keyDescription": 
 
         }
         if self.padding_algorithm is not None and self.padding_algorithm != "":
@@ -153,6 +168,21 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
                         keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
         return keyring
+
+    
+    def _kms_hierarchy_keyring_from_spec(self, keys):
+        # type: (KeysManifest) -> AwsKmsHierarchyKeyring
+        """Build an AWS KMS hierarchy keyring using this specification.
+
+        :param KeySpec key_spec: Key specification to use with this master key
+        :return: AWS KMS hierarchy keyring based on this specification
+        :rtype: AwsKmsHierarchyKeyring
+        :raises TypeError: if this is not an AWS KMS master key specification
+        """
+        if not self.type_name == "aws-kms-hierarchy":
+            raise TypeError("This is not an AWS KMS hierarchy key")
+        
+        return keyring_from_master_key_specs(keys_uri, )
 
 
 def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):
