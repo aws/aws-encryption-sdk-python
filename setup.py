@@ -40,7 +40,8 @@ setup(
     license="Apache License 2.0",
     install_requires=get_requirements(),
     # pylint: disable=fixme
-    # TODO: Point at MPL main branch once Python MPL is merged into main.
+    # TODO-MPL: Point at PyPI once MPL is released.
+    # This blocks releasing ESDK-Python MPL integration.
     extras_require={
         "MPL": ["aws-cryptographic-material-providers @" \
                 "git+https://github.com/aws/aws-cryptographic-material-providers-library.git@" \
