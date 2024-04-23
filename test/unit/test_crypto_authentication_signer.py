@@ -11,8 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Signer``."""
+import cryptography.hazmat.primitives.serialization
 import pytest
-from mock import MagicMock, sentinel
+from mock import MagicMock, patch, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
 import aws_encryption_sdk.internal.crypto.authentication
@@ -77,18 +78,82 @@ def test_f_signer_key_bytes():
     assert test.key_bytes() == VALUES["ecc_private_key_prime_private_bytes"]
 
 
-def test_signer_from_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
+def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
+    patch_default_backend,
+    patch_build_hasher,
+    patch_ec
+):
     mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
     _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
 
-    signer = Signer.from_key_bytes(algorithm=_algorithm, key_bytes=sentinel.key_bytes)
+    # Make a new patched serialization module for this test.
+    # The default patch introduces serialization as `serialization.Encoding.DER`
+    # from within the src, but is `Encoding.DER` in the test.
+    # This namespace change causes the src's `isinstance` checks to fail.
+    # Mock the `serialization.Encoding.DER`
+    with patch.object(cryptography.hazmat.primitives, "serialization"):
+        # Mock the `serialization.load_der_private_key`
+        with patch.object(
+            aws_encryption_sdk.internal.crypto.authentication.serialization,
+            "load_der_private_key"
+        ) as mock_der:
+            # When: from_key_bytes
+            Signer.from_key_bytes(
+                algorithm=_algorithm,
+                key_bytes=sentinel.key_bytes,
+                # Given: No encoding provided => default arg
+            )
 
-    patch_serialization.load_der_private_key.assert_called_once_with(
+            # Then: calls load_der_private_key
+            mock_der.assert_called_once_with(
+                data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
+            )
+
+
+def test_GIVEN_PEM_encoding_WHEN_signer_from_key_bytes_THEN_load_pem_private_key(
+    patch_default_backend,
+    patch_serialization,
+    patch_build_hasher,
+    patch_ec
+):
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+
+    # When: from_key_bytes
+    signer = Signer.from_key_bytes(
+        algorithm=_algorithm,
+        key_bytes=sentinel.key_bytes,
+        # Given: PEM encoding
+        encoding=patch_serialization.Encoding.PEM
+    )
+
+    # Then: calls load_pem_private_key
+    patch_serialization.load_pem_private_key.assert_called_once_with(
         data=sentinel.key_bytes, password=None, backend=patch_default_backend.return_value
     )
     assert isinstance(signer, Signer)
     assert signer.algorithm is _algorithm
-    assert signer.key is patch_serialization.load_der_private_key.return_value
+    assert signer.key is patch_serialization.load_pem_private_key.return_value
+
+
+def test_GIVEN_unrecognized_encoding_WHEN_signer_from_key_bytes_THEN_raise_ValueError(
+    patch_default_backend,
+    patch_serialization,
+    patch_build_hasher,
+    patch_ec
+):
+    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
+    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+
+    # Then: Raises ValueError
+    with pytest.raises(ValueError):
+        # When: from_key_bytes
+        Signer.from_key_bytes(
+            algorithm=_algorithm,
+            key_bytes=sentinel.key_bytes,
+            # Given: Invalid encoding
+            encoding="not an encoding"
+        )
 
 
 def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):

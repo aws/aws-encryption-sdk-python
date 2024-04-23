@@ -1,0 +1,7 @@
+# .coveragerc file when running coverage WITHOUT coverage for the MPL
+# This prevents the ESDK without the MPL from considering the MPL-specific modules as "missed" coverage
+[run]
+omit = */aws_encryption_sdk/materials_managers/mpl/*
+
+[report]
+omit = */aws_encryption_sdk/materials_managers/mpl/*
