@@ -27,7 +27,7 @@ import sys
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateRawAesKeyringInput
+from aws_cryptographic_materialproviders.mpl.models import AesWrappingAlg, CreateRawAesKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
@@ -91,7 +91,7 @@ def encrypt_and_decrypt_with_keyring():
         key_namespace=key_name_space,
         key_name=key_name,
         wrapping_key=static_key,
-        wrapping_alg="ALG_AES256_GCM_IV12_TAG16"
+        wrapping_alg=AesWrappingAlg.ALG_AES256_GCM_IV12_TAG16
     )
 
     raw_aes_keyring: IKeyring = mat_prov.create_raw_aes_keyring(
