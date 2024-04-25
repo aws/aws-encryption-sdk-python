@@ -186,6 +186,6 @@ def encrypt_and_decrypt_with_keyring():
             keyring=raw_rsa_keyring_bob
         )
 
-        assert False, "client.decrypt should throw an error of type CollectionOfErrors!"
+        raise AssertionError("client.decrypt should throw an error of type CollectionOfErrors!")
     except CollectionOfErrors:
         pass
