@@ -19,7 +19,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-latest
+          - macos-12
         python:
           - 3.8
           - 3.x
@@ -34,7 +34,7 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-latest
+          - os: macos-12
             architecture: x86
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
