@@ -365,7 +365,7 @@ class TestStreamDecryptor(object):
             algorithm=self.mock_header.algorithm, encoded_point=mock_b64encoding()
         )
 
-        @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     def test_read_header_frame_too_large(self, mock_derive_datakey):
         self.mock_header.content_type = ContentType.FRAMED_DATA
         self.mock_header.frame_length = 1024
