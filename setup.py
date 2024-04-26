@@ -40,7 +40,7 @@ setup(
     license="Apache License 2.0",
     install_requires=get_requirements(),
     # pylint: disable=fixme
-    # TODO: Point at PyPI once MPL is released.
+    # TODO-MPL: Point at PyPI once MPL is released.
     # This blocks releasing ESDK-Python MPL integration.
     extras_require={
         "MPL": ["aws-cryptographic-material-providers @" \

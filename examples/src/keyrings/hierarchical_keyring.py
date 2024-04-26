@@ -1,6 +1,36 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing basic encryption and decryption of a value already in memory."""
+"""
+This example sets up the Hierarchical Keyring, which establishes a key hierarchy where "branch"
+keys are persisted in DynamoDb. These branch keys are used to protect your data keys, and these
+branch keys are themselves protected by a KMS Key.
+
+Establishing a key hierarchy like this has two benefits:
+First, by caching the branch key material, and only calling KMS to re-establish authentication
+regularly according to your configured TTL, you limit how often you need to call KMS to protect
+your data. This is a performance security tradeoff, where your authentication, audit, and logging
+from KMS is no longer one-to-one with every encrypt or decrypt call. Additionally, KMS Cloudtrail
+cannot be used to distinguish Encrypt and Decrypt calls, and you cannot restrict who has
+Encryption rights from who has Decryption rights since they both ONLY need KMS:Decrypt. However,
+the benefit is that you no longer have to make a network call to KMS for every encrypt or
+decrypt.
+
+Second, this key hierarchy facilitates cryptographic isolation of a tenant's data in a
+multi-tenant data store. Each tenant can have a unique Branch Key, that is only used to protect
+the tenant's data. You can either statically configure a single branch key to ensure you are
+restricting access to a single tenant, or you can implement an interface that selects the Branch
+Key based on the Encryption Context.
+
+This example demonstrates configuring a Hierarchical Keyring with a Branch Key ID Supplier to
+encrypt and decrypt data for two separate tenants.
+
+This example requires access to the DDB Table where you are storing the Branch Keys. This
+table must be configured with the following primary key configuration: - Partition key is named
+"partition_key" with type (S) - Sort key is named "sort_key" with type (S).
+
+This example also requires using a KMS Key. You need the following access on this key: -
+GenerateDataKeyWithoutPlaintext - Decrypt
+"""
 import sys
 
 import boto3
@@ -25,6 +55,7 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
+# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
