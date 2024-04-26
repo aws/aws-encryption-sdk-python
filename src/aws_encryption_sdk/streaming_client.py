@@ -890,8 +890,8 @@ class DecryptorConfig(_ClientConfig):
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
     :param dict encryption_context: Dictionary defining encryption context to validate
-            on decrypt. This is ONLY validated on decrypt if using the required encryption
-            context CMM from the aws-cryptographic-materialproviders library.
+            on decrypt. This is ONLY validated on decrypt if using a CMM
+            from the aws-cryptographic-material-providers library.
     """
 
     max_body_length = attr.ib(
@@ -899,8 +899,8 @@ class DecryptorConfig(_ClientConfig):
     )
     encryption_context = attr.ib(
         hash=False,  # dictionaries are not hashable
-        default=attr.Factory(dict),
-        validator=attr.validators.instance_of(dict),
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(dict)),
     )
 
 
@@ -958,18 +958,24 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         """
         Create a DecryptionMaterialsRequest based on whether
         the StreamDecryptor was provided encryption_context on decrypt
-        (i.e. expects to use required encryption context CMM from the MPL).
+        (i.e. expects to use a CMM from the MPL).
         """
         # If encryption_context is provided on decrypt,
         # pass it to the DecryptionMaterialsRequest as reproduced_encryption_context
-        if hasattr(self.config, "encryption_context"):
-            return DecryptionMaterialsRequest(
-                encrypted_data_keys=header.encrypted_data_keys,
-                algorithm=header.algorithm,
-                encryption_context=header.encryption_context,
-                commitment_policy=self.config.commitment_policy,
-                reproduced_encryption_context=self.config.encryption_context
-            )
+        if hasattr(self.config, "encryption_context") \
+                and self.config.encryption_context is not None:
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                return DecryptionMaterialsRequest(
+                    encrypted_data_keys=header.encrypted_data_keys,
+                    algorithm=header.algorithm,
+                    encryption_context=header.encryption_context,
+                    commitment_policy=self.config.commitment_policy,
+                    reproduced_encryption_context=self.config.encryption_context
+                )
+            else:
+                raise TypeError("encryption_context on decrypt is only supported for CMMs and keyrings "
+                                "from the aws-cryptographic-material-providers library.")
         return DecryptionMaterialsRequest(
             encrypted_data_keys=header.encrypted_data_keys,
             algorithm=header.algorithm,
