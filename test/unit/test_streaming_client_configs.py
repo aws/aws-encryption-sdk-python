@@ -245,6 +245,13 @@ def test_client_configs_with_mpl(
         assert test.key_provider == kwargs["key_provider"]
         assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
 
+    # If MPL keyring was provided, it should be wrapped in MPL materials manager
+    elif "keyring" in kwargs:
+        assert test.keyring is not None
+        assert test.keyring == kwargs["keyring"]
+        assert isinstance(test.keyring, IKeyring)
+        assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
+
     else:
         raise ValueError(f"Test did not find materials_manager or key_provider. {kwargs}")
 

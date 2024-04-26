@@ -36,7 +36,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
     """
     In instances where encryption materials are provided by an implementation of the MPL's
     `aws_cryptographic_materialproviders.mpl.references.MPL_ICryptographicMaterialsManager`,
-    this maps the ESDK CMM interfaces to the MPL CMM.
+    this maps the ESDK-Python CMM interfaces to the MPL CMM.
     """
 
     mpl_cmm: 'MPL_ICryptographicMaterialsManager'
