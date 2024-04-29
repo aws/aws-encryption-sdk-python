@@ -11,19 +11,19 @@ demonstration:
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
-
-AWS KMS RSA keyrings can be used independently or in a multi-keyring with other keyrings
-of the same or a different type.
-
-For more information on how to use KMS keyrings, see
-https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
 """
+#
+# AWS KMS RSA keyrings can be used independently or in a multi-keyring with other keyrings
+# of the same or a different type.
+
+# For more information on how to use KMS keyrings, see
+# https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
 import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsRsaKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
@@ -41,11 +41,11 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_keyring(
     kms_rsa_key_id: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS RSA keyring.
 
     Usage: encrypt_and_decrypt_with_keyring(kms_rsa_key_id)
-    :param kms_rsa_key_id: KMS RSA Key identifier for the KMS key you want to use for encryption and
-    decryption of your data keys.
+    :param kms_rsa_key_id: KMS RSA Key identifier for the KMS RSA key you want to use for
+    encryption and decryption of your data keys.
     :type kms_rsa_key_id: string
 
     For more information on KMS Key identifiers, see
@@ -77,24 +77,37 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    # 4. Create a KMS keyring
+    # 4. Create a KMS RSA keyring
+    kms_rsa_public_key = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA27Uc/fBaMVhxCE/SpCMQ
+oSBRSzQJw+o2hBaA+FiPGtiJ/aPy7sn18aCkelaSj4kwoC79b/arNHlkjc7OJFsN
+/GoFKgNvaiY4lOeJqEiWQGSSgHtsJLdbO2u4OOSxh8qIRAMKbMgQDVX4FR/PLKeK
+fc2aCDvcNSpAM++8NlNmv7+xQBJydr5ce91eISbHkFRkK3/bAM+1iddupoRw4Wo2
+r3avzrg5xBHmzR7u1FTab22Op3Hgb2dBLZH43wNKAceVwKqKA8UNAxashFON7xK9
+yy4kfOL0Z/nhxRKe4jRZ/5v508qIzgzCksYy7Y3QbMejAtiYnr7s5/d5KWw0swou
+twIDAQAB
+-----END PUBLIC KEY-----
+'''
+
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         config=MaterialProvidersConfig()
     )
 
-    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
-        kms_rsa_key_id=kms_rsa_key_id,
+    keyring_input: CreateAwsKmsRsaKeyringInput = CreateAwsKmsRsaKeyringInput(
+        public_key=kms_rsa_public_key,
+        kms_key_id=kms_rsa_key_id,
+        encryption_algorithm="RSAES_OAEP_SHA_256",
         kms_client=kms_client
     )
 
-    kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+    kms_rsa_keyring: IKeyring = mat_prov.create_aws_kms_rsa_keyring(
         input=keyring_input
     )
 
     # 5. Encrypt the data for the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
-        keyring=kms_keyring,
+        keyring=kms_rsa_keyring,
         encryption_context=encryption_context
     )
 
@@ -106,7 +119,7 @@ def encrypt_and_decrypt_with_keyring(
     # 7. Decrypt your encrypted data using the same keyring you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        keyring=kms_keyring
+        keyring=kms_rsa_keyring
     )
 
     # 8. Demonstrate that the encryption context is correct in the decrypted message header
