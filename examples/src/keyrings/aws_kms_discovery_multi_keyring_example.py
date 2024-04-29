@@ -1,9 +1,8 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the AWS KMS Discovery Keyring
-
-AWS KMS discovery keyring is an AWS KMS keyring that doesn't specify any wrapping keys.
+This example sets up the AWS KMS Discovery Multi Keyring and demonstrates decryption
+using a Multi-Keyring containing multiple AWS KMS Discovery Keyrings.
 
 The AWS Encryption SDK provides a standard AWS KMS discovery keyring and a discovery keyring
 for AWS KMS multi-Region keys. For information about using multi-Region keys with the
@@ -22,13 +21,11 @@ has access to that AWS KMS key. The call succeeds only when the caller has kms:D
 permission on the AWS KMS key.
 
 This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This encrypted ciphertext is then decrypted using the Discovery keyring.
-This example also includes some sanity checks for demonstration:
+with an encryption context. This encrypted ciphertext is then decrypted using the Discovery Multi
+keyring. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
-4. Decryption is only possible if the Discovery Keyring contains the correct AWS Account ID's to
-which the KMS key used for encryption belongs
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 For more information on how to use KMS Discovery keyrings, see
@@ -40,7 +37,7 @@ import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import (
-    CreateAwsKmsDiscoveryKeyringInput,
+    CreateAwsKmsDiscoveryMultiKeyringInput,
     CreateAwsKmsKeyringInput,
     DiscoveryFilter,
 )
@@ -49,7 +46,6 @@ from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
@@ -62,7 +58,7 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_keyring(
     kms_key_id: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Keyring.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Multi Keyring.
 
     Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for creating
@@ -126,37 +122,40 @@ def encrypt_and_decrypt_with_keyring(
     assert ciphertext != EXAMPLE_DATA, \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
-    # 7. Now create a Discovery keyring to use for decryption. We'll add a discovery filter
+    # 7. Now create a Discovery Multi keyring to use for decryption. We'll add a discovery filter
     # so that we limit the set of ciphertexts we are willing to decrypt to only ones
     # created by KMS keys in our account and partition.
-    discovery_keyring_input: CreateAwsKmsDiscoveryKeyringInput = CreateAwsKmsDiscoveryKeyringInput(
-        kms_client=kms_client,
-        discovery_filter=DiscoveryFilter(
-            account_ids=["658956600833"],
-            partition="aws"
+    discovery_multi_keyring_input: CreateAwsKmsDiscoveryMultiKeyringInput = \
+        CreateAwsKmsDiscoveryMultiKeyringInput(
+            regions=["us-west-2", "us-east-1"],
+            discovery_filter=DiscoveryFilter(
+                account_ids=["658956600833"],
+                partition="aws"
+            )
         )
+
+    # This is a Multi Keyring composed of Discovery Keyrings.
+    # There is a keyring for every region in `regions`.
+    # All the keyrings have the same Discovery Filter.
+    # Each keyring has its own KMS Client, which is created for the keyring's region.
+    discovery_multi_keyring: IKeyring = mat_prov.create_aws_kms_discovery_multi_keyring(
+        input=discovery_multi_keyring_input
     )
 
-    discovery_keyring: IKeyring = mat_prov.create_aws_kms_discovery_keyring(
-        input=discovery_keyring_input
-    )
-
-    # 8. Decrypt your encrypted data using the discovery keyring.
-    # On Decrypt, the header of the encrypted message (ciphertext) will be parsed.
+    # 8. On Decrypt, the header of the encrypted message (ciphertext) will be parsed.
     # The header contains the Encrypted Data Keys (EDKs), which, if the EDK
     # was encrypted by a KMS Keyring, includes the KMS Key ARN.
-    # The Discovery Keyring filters these EDKs for
-    # EDKs encrypted by Single Region OR Multi Region KMS Keys.
-    # If a Discovery Filter is present, these KMS Keys must belong
-    # to an AWS Account ID in the discovery filter's AccountIds and
-    # must be from the discovery filter's partition.
-    # Finally, KMS is called to decrypt each filtered EDK until an EDK is
-    # successfully decrypted. The resulting data key is used to decrypt the
-    # ciphertext's message.
-    # If all calls to KMS fail, the decryption fails.
+    # For each member of the Multi Keyring, every EDK will try to be decrypted until a decryption
+    # is successful.
+    # Since every member of the Multi Keyring is a Discovery Keyring:
+    #   Each Keyring will filter the EDKs by the Discovery Filter
+    #       For the filtered EDKs, the keyring will try to decrypt it with the keyring's client.
+    # All of this is done serially, until a success occurs or all keyrings have
+    # failed all (filtered) EDKs.
+    # KMS Discovery Keyrings will attempt to decrypt Multi Region Keys (MRKs) and regular KMS Keys.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        keyring=discovery_keyring
+        keyring=discovery_multi_keyring
     )
 
     # 9. Demonstrate that the encryption context is correct in the decrypted message header
@@ -168,34 +167,3 @@ def encrypt_and_decrypt_with_keyring(
     # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA
-
-    # 11. Demonstrate that if a discovery keyring (Bob's) doesn't have the correct AWS Account ID's,
-    # the decrypt will fail with an error message
-    # Note that the Account ID '888888888888' used here is different than the one used
-    # during encryption '658956600833'
-    discovery_keyring_input_bob: CreateAwsKmsDiscoveryKeyringInput = \
-        CreateAwsKmsDiscoveryKeyringInput(
-            kms_client=kms_client,
-            discovery_filter=DiscoveryFilter(
-                account_ids=["888888888888"],
-                partition="aws"
-            )
-        )
-
-    discovery_keyring_bob: IKeyring = mat_prov.create_aws_kms_discovery_keyring(
-        input=discovery_keyring_input_bob
-    )
-
-    # Decrypt the ciphertext using Bob's discovery keyring which doesn't contain the required
-    # Account ID's for the KMS keyring used for encryption.
-    # This should throw an AWSEncryptionSDKClientError exception
-    try:
-        plaintext_bytes, _ = client.decrypt(
-            source=ciphertext,
-            keyring=discovery_keyring_bob
-        )
-
-        raise AssertionError("Decrypt using discovery keyring with wrong AWS Account ID should"
-                             + "raise AWSEncryptionSDKClientError")
-    except AWSEncryptionSDKClientError:
-        pass

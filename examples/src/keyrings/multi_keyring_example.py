@@ -33,7 +33,7 @@ These sanity checks are for demonstration in the example only. You do not need t
 This example creates a multi_keyring using a KMS keyring as generator keyring and a raw AES keyring
 as a child keyring. You can use different combinations of keyrings in the multi_keyring.
 
-For more information on how to use KMS keyrings, see
+For more information on how to use Multi keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-multi-keyring.html
 """
 import secrets
@@ -67,11 +67,11 @@ def encrypt_and_decrypt_with_keyring(
 ):
     """Demonstrate an encrypt/decrypt cycle using a Multi keyring.
     The multi_keyring is created using a KMS keyring as generator keyring and a raw AES keyring
-    as a child keyring. Therefore we take a kms_key_id as input
+    as a child keyring. Therefore, we take a kms_key_id as input
 
     Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for encryption and
-    decryption of your data keys in the kms_keyring that is in-turn used in the multi_keyring
+    decryption of your data keys in the kms_keyring, that is in-turn used in the multi_keyring
     :type kms_key_id: string
 
     For more information on KMS Key identifiers, see
