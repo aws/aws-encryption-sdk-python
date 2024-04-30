@@ -90,7 +90,7 @@ def encrypt_and_decrypt_with_keyring(
         input=keyring_input
     )
 
-    # 5. Encrypt the data for the encryptionContext
+    # 5. Encrypt the data for the encryptionContext.
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=kms_keyring,
