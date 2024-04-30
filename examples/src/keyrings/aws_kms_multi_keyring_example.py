@@ -36,16 +36,12 @@ another KMS keyring as a child keyring.
 For more information on how to use Multi keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-multi-keyring.html
 """
-import secrets
 import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
-    CreateAwsKmsKeyringInput,
-    CreateAwsKmsMultiKeyringInput
-)
+from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput, CreateAwsKmsMultiKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
