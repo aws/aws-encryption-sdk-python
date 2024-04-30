@@ -37,15 +37,15 @@ EXAMPLE_DATA: bytes = b"Hello World"
 
 def encrypt_and_decrypt_with_keyring(
     kms_rsa_key_id: str,
-    kms_rsa_public_key: str
+    public_key: str
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS RSA keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(kms_rsa_key_id, kms_rsa_public_key)
+    Usage: encrypt_and_decrypt_with_keyring(kms_rsa_key_id, public_key)
     :param kms_rsa_key_id: KMS RSA Key identifier for the KMS RSA key you want to use
     :type kms_rsa_key_id: string
-    :param kms_rsa_public_key: KMS RSA public key you want to use
-    :type kms_rsa_public_key: string
+    :param public_key: public key you want to use
+    :type public_key: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -82,7 +82,7 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     keyring_input: CreateAwsKmsRsaKeyringInput = CreateAwsKmsRsaKeyringInput(
-        public_key=kms_rsa_public_key,
+        public_key=public_key,
         kms_key_id=kms_rsa_key_id,
         encryption_algorithm="RSAES_OAEP_SHA_256",
         kms_client=kms_client

@@ -13,7 +13,7 @@ def test_encrypt_and_decrypt_with_keyring():
     kms_rsa_key_id = "arn:aws:kms:us-west-2:370957321024:key/mrk-63d386cb70614ea59b32ad65c9315297"
 
     # THIS IS A PUBLIC RESOURCE AND SHOULD NOT BE USED IN A PRODUCTION ENVIRONMENT
-    kms_rsa_public_key = bytes("-----BEGIN PUBLIC KEY-----\n"
+    public_key = bytes("-----BEGIN PUBLIC KEY-----\n"
                                + "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA27Uc/fBaMVhxCE/SpCMQ"
                                + "oSBRSzQJw+o2hBaA+FiPGtiJ/aPy7sn18aCkelaSj4kwoC79b/arNHlkjc7OJFsN"
                                + "/GoFKgNvaiY4lOeJqEiWQGSSgHtsJLdbO2u4OOSxh8qIRAMKbMgQDVX4FR/PLKeK"
@@ -22,4 +22,4 @@ def test_encrypt_and_decrypt_with_keyring():
                                + "yy4kfOL0Z/nhxRKe4jRZ/5v508qIzgzCksYy7Y3QbMejAtiYnr7s5/d5KWw0swou"
                                + "twIDAQAB"
                                + "\n-----END PUBLIC KEY-----", 'utf-8')
-    encrypt_and_decrypt_with_keyring(kms_rsa_key_id, kms_rsa_public_key)
+    encrypt_and_decrypt_with_keyring(kms_rsa_key_id, public_key)
