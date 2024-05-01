@@ -109,7 +109,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             if input_kwargs["key"] == "rsa-4096-private" \
                     and mode in ("decrypt-generate", "encrypt"):
                 changed_key_name_from_private_to_public = True
-                input("YUP")
                 input_kwargs["key"] = "rsa-4096-public"
             # Specify default padding-hash
             if "padding-hash" not in input_kwargs:
@@ -123,8 +122,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         output: GetKeyDescriptionOutput = keyvectors.get_key_description(
             GetKeyDescriptionInput(json=encoded_json)
         )
-
-        input(f"{output.key_description=}")
 
         keyring: IKeyring = keyvectors.create_test_vector_keyring(
             TestVectorKeyringInput(
@@ -162,13 +159,13 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         # This configuration seems to be correct, because
         # all of the test vectors (master keys and MPL) pass with these two hacks.
         # But this seems weird, and we didn't have to do this in Java.
-        # if hasattr(keyring, "_impl"):  # pylint: disable=protected-access
-        #     if hasattr(keyring._impl, "_keyName"):  # pylint: disable=protected-access
-        #         if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
-        #                 and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
-        #             if changed_key_name_from_private_to_public:
-        #                 # pylint: disable=protected-access
-        #                 keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
+        if hasattr(keyring, "_impl"):  # pylint: disable=protected-access
+            if hasattr(keyring._impl, "_keyName"):  # pylint: disable=protected-access
+                if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
+                        and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
+                    if changed_key_name_from_private_to_public:
+                        # pylint: disable=protected-access
+                        keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
         return keyring
 
@@ -201,9 +198,7 @@ def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):
     """
     keyrings = [spec.keyring(keys_uri, mode) for spec in master_key_specs]
     primary = keyrings[0]
-    input(f"{primary=}")
     others = keyrings[1:]
-    input(f"{others=}")
 
     mpl: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         MaterialProvidersConfig()

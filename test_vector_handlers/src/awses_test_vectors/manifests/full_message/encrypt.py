@@ -168,7 +168,6 @@ class MessageEncryptionTestScenario(object):
         else:
             raise TypeError(f"Unrecognized master_key_provider_fn return type: {self.master_key_provider_fn()}")
         ciphertext, _header = client.encrypt(**encrypt_kwargs)
-        input(f"{_header=}")
         return ciphertext
 
 

@@ -115,7 +115,6 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
     encrypted_data_encryption_key = None
     data_encryption_key = primary_master_key.generate_data_key(algorithm, encryption_context)
     _LOGGER.debug("encryption data generated with master key: %s", data_encryption_key.key_provider)
-    input(f"{master_keys=}")
     for master_key in master_keys:
         # Don't re-encrypt the encryption data key; we already have the ciphertext
         if master_key is primary_master_key:
@@ -129,8 +128,6 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
         )
         encrypted_data_keys.add(encrypted_key)
         _LOGGER.debug("encryption key encrypted with master key: %s", master_key.key_provider)
-    input(f"{data_encryption_key=}")
-    input(f"{encrypted_data_keys=}")
     return data_encryption_key, encrypted_data_keys
 
 
