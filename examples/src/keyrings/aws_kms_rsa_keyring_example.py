@@ -97,7 +97,7 @@ def encrypt_and_decrypt_with_keyring(
         source=EXAMPLE_DATA,
         keyring=kms_rsa_keyring,
         encryption_context=encryption_context,
-        algorithm=AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY
+        algorithm=AlgorithmSuite.AES_256_GCM_IV12_TAG16_HKDF_SHA256
     )
 
     # 6. Demonstrate that the ciphertext and plaintext are different.
