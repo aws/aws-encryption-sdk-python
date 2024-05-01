@@ -68,6 +68,7 @@ class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
     def encrypted_data_keys(self) -> List[Native_EncryptedDataKey]:
         """Materials' encrypted data keys."""
         mpl_edk_list: List[MPL_EncryptedDataKey] = self.mpl_materials.encrypted_data_keys
+        input(f"{mpl_edk_list=}")
         key_blob_list: Set[Native_EncryptedDataKey] = {Native_EncryptedDataKey(
             key_provider=MasterKeyInfo(
                 provider_id=mpl_edk.key_provider_id,

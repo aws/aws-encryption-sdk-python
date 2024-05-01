@@ -303,13 +303,13 @@ class MessageDecryptionTestScenario(object):
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
 
 
-        if hasattr(scenario, "encryption-context"):
+        if "encryption-context" in scenario:
             encryption_context = scenario["encryption-context"]
         else:
             encryption_context = {}
 
         # MPL test vectors add CMM types to the test vectors manifests
-        if hasattr(scenario, "cmm"):
+        if "cmm" in scenario:
             if scenario["cmm"] == "Default":
                 # Master keys and keyrings can handle default CMM
                 cmm_type = scenario["cmm"]
