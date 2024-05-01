@@ -106,10 +106,11 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             # KeyVectors requires a public key to encrypt.
             # If this is not done, then keyring.OnEncrypt fails with
             # "A RawRSAKeyring without a public key cannot provide OnEncrypt"
-            # if input_kwargs["key"] == "rsa-4096-private" \
-            #         and mode in ("decrypt-generate", "encrypt"):
-            #     changed_key_name_from_private_to_public = True
-            #     input_kwargs["key"] = "rsa-4096-public"
+            if input_kwargs["key"] == "rsa-4096-private" \
+                    and mode in ("decrypt-generate", "encrypt"):
+                changed_key_name_from_private_to_public = True
+                input("YUP")
+                input_kwargs["key"] = "rsa-4096-public"
             # Specify default padding-hash
             if "padding-hash" not in input_kwargs:
                 input_kwargs["padding-hash"] = "sha1"
@@ -122,6 +123,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         output: GetKeyDescriptionOutput = keyvectors.get_key_description(
             GetKeyDescriptionInput(json=encoded_json)
         )
+
+        input(f"{output.key_description=}")
 
         keyring: IKeyring = keyvectors.create_test_vector_keyring(
             TestVectorKeyringInput(
@@ -182,7 +185,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         if not self.type_name == "aws-kms-hierarchy":
             raise TypeError("This is not an AWS KMS hierarchy key")
         
-        return keyring_from_master_key_specs(keys_uri, )
+        return keyring_from_master_key_specs(keys, )
 
 
 def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):
@@ -196,18 +199,7 @@ def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):
     :return: Master key provider combining all loaded master keys
     :rtype: IKeyring
     """
-    sorted_specs = []
-    end_specs = []
-    for spec in master_key_specs:
-        if spec.key_name == "rsa-4096-private":
-            end_specs.append(spec)
-        else:
-            sorted_specs.append(spec)
-    for end_spec in end_specs:
-        sorted_specs.append(end_spec)
-    input(sorted_specs)
-
-    keyrings = [spec.keyring(keys_uri, mode) for spec in sorted_specs]
+    keyrings = [spec.keyring(keys_uri, mode) for spec in master_key_specs]
     primary = keyrings[0]
     input(f"{primary=}")
     others = keyrings[1:]
