@@ -58,7 +58,7 @@ def encrypt_and_decrypt_with_keyring(
     # This is the default commitment policy if you were to build the client as
     # `client = aws_encryption_sdk.EncryptionSDKClient()`.
     client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
 
     # 2. Create a boto3 client for KMS.
