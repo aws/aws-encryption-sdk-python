@@ -57,41 +57,21 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-def get_account_id_from_kms_key_id(kms_key_id: str) -> str:
-    """
-    Get the AWS Account ID from the KMS Key ID.
-
-    Usage: get_account_id_from_kms_key_id(kms_key_id)
-    :param kms_key_id: KMS Key identifier for the KMS key you want to use
-    :type kms_key_id: string
-    :return: AWS Account ID
-    :rtype: string
-    """
-    return kms_key_id.split(":")[4]
-
-
-def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
-    """
-    Get the AWS Region from the KMS Key ID.
-
-    Usage: get_aws_region_from_kms_key_id(kms_key_id)
-    :param kms_key_id: KMS Key identifier for the KMS key you want to use
-    :type kms_key_id: string
-    :return: AWS Region
-    :rtype: string
-    """
-    return kms_key_id.split(":")[3]
-
-
 def encrypt_and_decrypt_with_keyring(
-    kms_key_id: str
+    kms_key_id: str,
+    aws_account_id: str,
+    aws_region: str
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
+    Usage: encrypt_and_decrypt_with_keyring(kms_key_id, aws_account_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for creating
     the kms_keyring used for encryption
     :type kms_key_id: string
+    :param aws_account_id: AWS Account ID to use in the discovery filter
+    :type aws_account_id: string
+    :param aws_region: AWS Region to use for the kms client
+    :type aws_region: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -108,11 +88,7 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 2. Create a boto3 client for KMS.
-
-    # Get the AWS Region from the KMS Key ID.
-    region_name = get_aws_region_from_kms_key_id(kms_key_id)
-
-    kms_client = boto3.client('kms', region_name=region_name)
+    kms_client = boto3.client('kms', region_name=aws_region)
 
     # 3. Create encryption context.
     # Remember that your encryption context is NOT SECRET.
@@ -157,9 +133,6 @@ def encrypt_and_decrypt_with_keyring(
     # 7. Now create a Discovery keyring to use for decryption. We'll add a discovery filter
     # so that we limit the set of ciphertexts we are willing to decrypt to only ones
     # created by KMS keys in our account and partition.
-
-    # Get the AWS Account ID from the KMS Key ID to use in the discovery filter
-    aws_account_id: str = get_account_id_from_kms_key_id(kms_key_id=kms_key_id)
 
     discovery_keyring_input: CreateAwsKmsDiscoveryKeyringInput = CreateAwsKmsDiscoveryKeyringInput(
         kms_client=kms_client,

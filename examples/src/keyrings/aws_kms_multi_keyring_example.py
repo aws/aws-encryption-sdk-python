@@ -26,7 +26,7 @@ This example creates a Multi Keyring and then encrypts a custom input EXAMPLE_DA
 with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Decryption of ciphertext is possible using the multi_keyring,
-    and every one of the keyrings from the multi_keyring separately
+   and every one of the keyrings from the multi_keyring separately
 3. All decrypted plaintext value match EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
@@ -56,36 +56,32 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
-    """
-    Get the AWS Region from the KMS Key ID.
-
-    Usage: get_aws_region_from_kms_key_id(kms_key_id)
-    :param kms_key_id: KMS Key identifier for the KMS key you want to use
-    :type kms_key_id: string
-    :return: AWS Region
-    :rtype: string
-    """
-    return kms_key_id.split(":")[3]
-
-
 def encrypt_and_decrypt_with_keyring(
     default_region_kms_key_id: str,
-    second_region_kms_key_id: str
+    second_region_kms_key_id: str,
+    default_region: str,
+    second_region: str
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS Multi keyring.
     The multi_keyring is created using a KMS keyring as generator keyring and another KMS keyring
     as a child keyring. For this example, `default_region_kms_key_id` is the generator key id
     for a KMS key located in your default region, and `second_region_kms_key_id` is the KMS key id
-    for a KMS Key located in some second Region.
+    for a KMS Key located in some second region.
 
-    Usage: encrypt_and_decrypt_with_keyring(default_region_kms_key_id, second_region_kms_key_id)
+    Usage: encrypt_and_decrypt_with_keyring(default_region_kms_key_id,
+                                            second_region_kms_key_id,
+                                            default_region,
+                                            second_region)
     :param default_region_kms_key_id: KMS Key identifier for the default region KMS key you want to
     use as a generator keyring
     :type default_region_kms_key_id: string
     :param second_region_kms_key_id: KMS Key identifier for the second region KMS key you want to
     use as a child keyring
     :type second_region_kms_key_id: string
+    :param default_region: AWS Region for the default region KMS key
+    :type default_region: string
+    :param second_region: AWS Region for the second region KMS key
+    :type second_region: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -155,9 +151,9 @@ def encrypt_and_decrypt_with_keyring(
 
     # 7. Demonstrate that you can successfully decrypt data using a KMS keyring with just the
     # `default_region_kms_key_id` directly.
+    # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 7a. Create a boto3 client for KMS for the default region.
-    default_region = get_aws_region_from_kms_key_id(default_region_kms_key_id)
     default_region_kms_client = boto3.client('kms', region_name=default_region)
 
     # 7b. Create KMS keyring
@@ -182,9 +178,9 @@ def encrypt_and_decrypt_with_keyring(
 
     # 8. Demonstrate that you can also successfully decrypt data using a KMS keyring with just the
     # `second_region_kms_key_id` directly.
+    # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 8a. Create a boto3 client for KMS for the second region.
-    second_region = get_aws_region_from_kms_key_id(second_region_kms_key_id)
     second_region_kms_client = boto3.client('kms', region_name=second_region)
 
     # 8b. Create KMS keyring

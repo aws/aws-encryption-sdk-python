@@ -81,7 +81,7 @@ def encrypt_and_decrypt_with_keyring(
         config=MaterialProvidersConfig()
     )
 
-    # # Create the AWS KMS RSA keyring input
+    # Create the AWS KMS RSA keyring input
     # For more information on the allowed encryption algorithms, please see
     # https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html#key-spec-rsa
     keyring_input: CreateAwsKmsRsaKeyringInput = CreateAwsKmsRsaKeyringInput(

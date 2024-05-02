@@ -182,6 +182,7 @@ def encrypt_and_decrypt_with_keyring(
 
     # 11. Demonstrate that you can successfully decrypt data using just the `kms_keyring`
     # directly.
+    # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 11a. Decrypt your encrypted data using the kms_keyring.
     plaintext_bytes_kms_keyring, _ = client.decrypt(
@@ -195,6 +196,7 @@ def encrypt_and_decrypt_with_keyring(
 
     # 12. Demonstrate that you can also successfully decrypt data using the `raw_aes_keyring`
     # directly.
+    # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 12a. Decrypt your encrypted data using the raw_aes_keyring.
     plaintext_bytes_raw_aes_keyring, _ = client.decrypt(
