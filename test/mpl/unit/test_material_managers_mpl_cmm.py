@@ -97,10 +97,17 @@ def test_GIVEN_valid_request_WHEN_get_encryption_materials_THEN_return_Encryptio
 
 
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+       "._native_algorithm_id_to_mpl_algorithm_id")
+@patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
        "._native_to_mpl_commitment_policy")
 def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_raise_ESDKException(
-    _
+    _,
+    mock_mpl_algorithm_id,
 ):
+    # Given: _native_algorithm_id_to_mpl_algorithm_id returns a valid MPL algorithm ID
+    mock_algorithm_id = "0x1234"  # Some fake algorithm ID that fits the format
+    mock_mpl_algorithm_id.return_value = mock_algorithm_id
+
     # Then: Raises AWSEncryptionSDKClientError
     with pytest.raises(AWSEncryptionSDKClientError):
         # Given: mpl_cmm.get_encryption_materials raises MPL exception
@@ -112,10 +119,17 @@ def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_ra
 
 
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+       "._native_algorithm_id_to_mpl_algorithm_id")
+@patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
        "._native_to_mpl_commitment_policy")
 def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_materials_THEN_returns_MPL_GetEncryptionMaterialsInput(  # noqa: E501
-    mock_mpl_commitment_policy
+    mock_mpl_commitment_policy,
+    mock_mpl_algorithm_id,
 ):
+    # Given: _native_algorithm_id_to_mpl_algorithm_id returns a valid MPL algorithm ID
+    mock_algorithm_id = "0x1234"  # Some fake algorithm ID that fits the format
+    mock_mpl_algorithm_id.return_value = mock_algorithm_id
+
     # Given: commitment policy is some MPL ESDK commitment policy
     mock_commitment_policy = MagicMock(__class__=MPL_CommitmentPolicyESDK)
     mock_mpl_commitment_policy.return_value = mock_commitment_policy

@@ -87,8 +87,9 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         }
 
         if request.algorithm is not None:
-            output_kwargs["algorithm_suite_id"] = CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
-                request.algorithm.algorithm_id
+            output_kwargs["algorithm_suite_id"] = \
+                CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
+                    request.algorithm.algorithm_id
             )
 
         return MPL_GetEncryptionMaterialsInput(**output_kwargs)
