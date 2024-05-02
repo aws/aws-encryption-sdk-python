@@ -58,20 +58,21 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-def should_generate_new_rsa_key_pair(public_key, private_key):
-    """Returns True if user doesn't provide keys, and we need to generate them and
-    returns False if the user has already provided both public and private keys
-    Raises an AssertionError if the user only provides one of private_key and public_key
+def should_generate_new_rsa_key_pair(public_key_file_name, private_key_file_name):
+    """Returns True if user doesn't provide keys, and we need to generate them;
+    Returns False if the user has already provided both public and private keys
+    Raises a ValueError if the user only provides one of private_key and public_key
 
-    Usage: should_generate_new_rsa_key_pair(public_key, private_key)
+    Usage: should_generate_new_rsa_key_pair(public_key_file_name, private_key_file_name)
     """
-    # If only one of public_key and private_key is provided, raise an Assertion Error
-    if (public_key and not private_key) or (not public_key and private_key):
-        raise AssertionError("Either both public and private keys should be provided! Or no keys \
+    # If only one of public_key and private_key files is provided, raise a ValueError
+    if (public_key_file_name and not private_key_file_name)\
+            or (not public_key_file_name and private_key_file_name):
+        raise ValueError("Either both public and private keys should be provided! Or no keys \
                              should be provided and the example can create the keys for you!")
 
     # If no keys are provided, we should generate a new rsa key pair, so return True
-    if not public_key and not private_key:
+    if not public_key_file_name and not private_key_file_name:
         return True
 
     # If both keys are already provided, return False
@@ -139,12 +140,12 @@ def create_rsa_keyring(public_key, private_key):
     return raw_rsa_keyring
 
 
-def encrypt_and_decrypt_with_keyring(public_key=None, private_key=None):
+def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file_name=None):
     """Demonstrate an encrypt/decrypt cycle using a Raw RSA keyring
     with user defined keys. If no keys are present, generate new RSA
     public and private keys and use them to create a Raw RSA keyring
 
-    Usage: encrypt_and_decrypt_with_keyring(public_key, private_key)
+    Usage: encrypt_and_decrypt_with_keyring(public_key_file_name, private_key_file_name)
     """
     # 1. Instantiate the encryption SDK client.
     # This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
@@ -173,17 +174,31 @@ def encrypt_and_decrypt_with_keyring(public_key=None, private_key=None):
 
     # Check if we need to generate an RSA key pair
     should_generate_new_rsa_key_pair_bool = \
-        should_generate_new_rsa_key_pair(public_key=public_key, private_key=private_key)
+        should_generate_new_rsa_key_pair(public_key_file_name=public_key_file_name,
+                                         private_key_file_name=private_key_file_name)
 
     # If user doesn't provide the keys, that is, if should_generate_new_rsa_key_pair_bool is True
     # generate a new RSA public and private key pair
     if should_generate_new_rsa_key_pair_bool:
         public_key, private_key = generate_rsa_keys()
+    else:
+        # If user provides the keys, read the keys from the files
+        with open(public_key_file_name, "r", encoding='utf-8') as f:
+            public_key = f.read()
+
+        # Convert the public key from a string to bytes
+        public_key = bytes(public_key, 'utf-8')
+
+        with open(private_key_file_name, "r", encoding='utf-8') as f:
+            private_key = f.read()
+
+        # Convert the private key from a string to bytes
+        private_key = bytes(private_key, 'utf-8')
 
     # Create the keyring
     raw_rsa_keyring = create_rsa_keyring(public_key=public_key, private_key=private_key)
 
-    # 4. Encrypt the data for the encryptionContext
+    # 4. Encrypt the data with the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_rsa_keyring,
@@ -212,7 +227,7 @@ def encrypt_and_decrypt_with_keyring(public_key=None, private_key=None):
     assert plaintext_bytes == EXAMPLE_DATA
 
     # The next part of the example creates a new RSA keyring (for Bob) to demonstrate that
-    # decryption of the original ciphertext is not possible with a different keyring (Bob's)
+    # decryption of the original ciphertext is not possible with a different keyring (Bob's).
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 9. Create a new Raw RSA keyring for Bob

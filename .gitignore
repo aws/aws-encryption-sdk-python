@@ -31,6 +31,7 @@ __pycache__
 
 # PyTest
 .pytest_cache
+test_keys/
 
 # PyCharm
 .idea/

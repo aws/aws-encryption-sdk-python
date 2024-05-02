@@ -79,6 +79,8 @@ def encrypt_and_decrypt_with_keyring():
     }
 
     # 4. Generate a 256-bit AES key to use with your keyring.
+    # In practice, you should get this key from a secure key management system such as an HSM.
+
     # Here, the input to secrets.token_bytes() = 32 bytes = 256 bits
     static_key = secrets.token_bytes(32)
 
@@ -98,7 +100,7 @@ def encrypt_and_decrypt_with_keyring():
         input=keyring_input
     )
 
-    # 6. Encrypt the data for the encryptionContext
+    # 6. Encrypt the data with the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_aes_keyring,
