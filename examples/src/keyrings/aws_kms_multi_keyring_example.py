@@ -56,6 +56,19 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
+def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
+    """
+    Get the AWS Region from the KMS Key ID.
+
+    Usage: get_aws_region_from_kms_key_id(kms_key_id)
+    :param kms_key_id: KMS Key identifier for the KMS key you want to use
+    :type kms_key_id: string
+    :return: AWS Region
+    :rtype: string
+    """
+    return kms_key_id.split(":")[3]
+
+
 def encrypt_and_decrypt_with_keyring(
     default_region_kms_key_id: str,
     second_region_kms_key_id: str
@@ -144,7 +157,8 @@ def encrypt_and_decrypt_with_keyring(
     # `default_region_kms_key_id` directly.
 
     # 7a. Create a boto3 client for KMS for the default region.
-    default_region_kms_client = boto3.client('kms', region_name="us-west-2")
+    default_region = get_aws_region_from_kms_key_id(default_region_kms_key_id)
+    default_region_kms_client = boto3.client('kms', region_name=default_region)
 
     # 7b. Create KMS keyring
     default_region_kms_keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
@@ -170,7 +184,8 @@ def encrypt_and_decrypt_with_keyring(
     # `second_region_kms_key_id` directly.
 
     # 8a. Create a boto3 client for KMS for the second region.
-    second_region_kms_client = boto3.client('kms', region_name="eu-central-1")
+    second_region = get_aws_region_from_kms_key_id(second_region_kms_key_id)
+    second_region_kms_client = boto3.client('kms', region_name=second_region)
 
     # 8b. Create KMS keyring
     second_region_kms_keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(

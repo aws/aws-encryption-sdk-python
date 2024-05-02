@@ -81,14 +81,16 @@ def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
 
 def encrypt_and_decrypt_with_keyring(
     kms_key_id: str,
-    aws_regions: list(str)
+    aws_regions: list[str]
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Multi Keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
+    Usage: encrypt_and_decrypt_with_keyring(kms_key_id, aws_regions)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for creating
     the kms_keyring used for encryption
     :type kms_key_id: string
+    :param aws_regions: List of AWS Regions to use for creating the discovery multi keyring
+    :type aws_regions: list[string]
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id

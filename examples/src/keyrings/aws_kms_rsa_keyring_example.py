@@ -81,6 +81,9 @@ def encrypt_and_decrypt_with_keyring(
         config=MaterialProvidersConfig()
     )
 
+    # # Create the AWS KMS RSA keyring input
+    # For more information on the allowed encryption algorithms, please see
+    # https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/aws-kms/aws-kms-rsa-keyring.md#supported-padding-schemes
     keyring_input: CreateAwsKmsRsaKeyringInput = CreateAwsKmsRsaKeyringInput(
         public_key=public_key,
         kms_key_id=kms_rsa_key_id,
