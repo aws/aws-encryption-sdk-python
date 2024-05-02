@@ -7,7 +7,10 @@ The aws-cryptographic-materials-library MUST be installed to use this module.
 # pylint should pass even if the MPL isn't installed
 # Also thinks these imports aren't used if it can't import them
 # noqa pylint: disable=import-error,unused-import
-from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
+from aws_cryptographic_materialproviders.mpl.errors import (
+    AwsCryptographicMaterialProvidersException,
+    CollectionOfErrors,
+)
 from aws_cryptographic_materialproviders.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
     CommitmentPolicyESDK as MPL_CommitmentPolicyESDK,
@@ -114,7 +117,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(request)
             mpl_output: 'MPL_DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
             return DecryptionMaterialsFromMPL(mpl_output.decryption_materials)
-        except AwsCryptographicMaterialProvidersException as mpl_exception:
+        except (AwsCryptographicMaterialProvidersException, CollectionOfErrors) as mpl_exception:
             # Wrap MPL error into the ESDK error type
             # so customers only have to catch ESDK error types.
             raise AWSEncryptionSDKClientError(mpl_exception)

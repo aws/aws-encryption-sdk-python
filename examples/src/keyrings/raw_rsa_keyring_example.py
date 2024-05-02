@@ -39,9 +39,6 @@ from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProv
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import CreateRawRsaKeyringInput, PaddingScheme
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
-from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_materialproviders.errors import (
-    CollectionOfErrors,
-)
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -49,6 +46,7 @@ from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
@@ -244,6 +242,6 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
             keyring=raw_rsa_keyring_bob
         )
 
-        raise AssertionError("client.decrypt should throw an error of type CollectionOfErrors!")
-    except CollectionOfErrors:
+        raise AssertionError("client.decrypt should throw an error of type AWSEncryptionSDKClientError!")
+    except AWSEncryptionSDKClientError:
         pass
