@@ -23,7 +23,7 @@ import sys
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsMrkKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
@@ -38,15 +38,31 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
+def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
+    """
+    Get the AWS Region from the KMS Key ID.
+    Usage: get_aws_region_from_kms_key_id(kms_key_id)
+    :param kms_key_id: KMS Key identifier for the KMS key you want to use
+    :type kms_key_id: string
+    :return: AWS Region
+    :rtype: string
+    """
+    return kms_key_id.split(":")[3]
+
+
 def encrypt_and_decrypt_with_keyring(
-    kms_key_id: str
+    encrypt_kms_key_id: str,
+    decrypt_kms_key_id: str,
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
-    :param kms_key_id: KMS Key identifier for the KMS key you want to use for encryption and
-    decryption of your data keys.
-    :type kms_key_id: string
+    Usage: encrypt_and_decrypt_with_keyring(encrypt_kms_key_id, decrypt_kms_key_id)
+    :param encrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
+    for encryption of your data keys.
+    :type encrypt_kms_key_id: string
+    :param decrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
+    for decryption of your data keys.
+    :type decrypt_kms_key_id: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -62,10 +78,7 @@ def encrypt_and_decrypt_with_keyring(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    # 2. Create a boto3 client for KMS.
-    kms_client = boto3.client('kms', region_name="us-west-2")
-
-    # 3. Create encryption context.
+    # 2. Create encryption context.
     # Remember that your encryption context is NOT SECRET.
     # For more information, see
     # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
@@ -77,36 +90,58 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    # 4. Create a keyring that will encrypt your data, using a KMS MRK key in the first region.–
+    # 3. Create a keyring that will encrypt your data, using a KMS MRK key in the first region.
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         config=MaterialProvidersConfig()
     )
 
-    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
-        kms_key_id=kms_key_id,
-        kms_client=kms_client
+    # Create a boto3 client for KMS in the first region.
+    encrypt_region: str = get_aws_region_from_kms_key_id(encrypt_kms_key_id)
+    encrypt_kms_client = boto3.client('kms', region_name=encrypt_region)
+
+    encrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
+        kms_key_id=encrypt_kms_key_id,
+        kms_client=encrypt_kms_client
     )
 
-    kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
-        input=keyring_input
+    encrypt_keyring: IKeyring = mat_prov.create_aws_kms_mrk_keyring(
+        input=encrypt_keyring_input
     )
 
-    # 5. Encrypt the data for the encryptionContext.
+    # 4. Encrypt the data with the encryptionContext using the encrypt_keyring.
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
-        keyring=kms_keyring,
+        keyring=encrypt_keyring,
         encryption_context=encryption_context
     )
 
-    # 6. Demonstrate that the ciphertext and plaintext are different.
+    # 5. Demonstrate that the ciphertext and plaintext are different.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert ciphertext != EXAMPLE_DATA, \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
+    # 6. Create a keyring that will decrypt your data, using the same KMS MRK key replicated
+    # to the second region. This example assumes you have already replicated your key
+    # For more info on this, see the KMS documentation:
+    # https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
+
+    # Create a boto3 client for KMS in the second region.
+    decrypt_region: str = get_aws_region_from_kms_key_id(decrypt_kms_key_id)
+    decrypt_kms_client = boto3.client('kms', region_name=decrypt_region)
+
+    decrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
+        kms_key_id=decrypt_kms_key_id,
+        kms_client=decrypt_kms_client
+    )
+
+    decrypt_keyring: IKeyring = mat_prov.create_aws_kms_mrk_keyring(
+        input=decrypt_keyring_input
+    )
+
     # 7. Decrypt your encrypted data using the same keyring you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        keyring=kms_keyring
+        keyring=decrypt_keyring
     )
 
     # 8. Demonstrate that the encryption context is correct in the decrypted message header
