@@ -11,9 +11,7 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/configure.html
 
 Because it doesn't specify any wrapping keys, a discovery keyring can't encrypt data.
 If you use a discovery keyring to encrypt data, alone or in a multi-keyring, the encrypt
-operation fails. The exception is the AWS Encryption SDK for C, where the encrypt operation
-ignores a standard discovery keyring, but fails if you specify a multi-Region discovery
-keyring, alone or in a multi-keyring.
+operation fails.
 
 When decrypting, a discovery keyring allows the AWS Encryption SDK to ask AWS KMS to decrypt
 any encrypted data key by using the AWS KMS key that encrypted it, regardless of who owns or
@@ -55,8 +53,35 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
+def get_account_id_from_kms_key_id(kms_key_id: str) -> str:
+    """
+    Get the AWS Account ID from the KMS Key ID.
+
+    Usage: get_account_id_from_kms_key_id(kms_key_id)
+    :param kms_key_id: KMS Key identifier for the KMS key you want to use
+    :type kms_key_id: string
+    :return: AWS Account ID
+    :rtype: string
+    """
+    return kms_key_id.split(":")[4]
+
+
+def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
+    """
+    Get the AWS Region from the KMS Key ID.
+
+    Usage: get_aws_region_from_kms_key_id(kms_key_id)
+    :param kms_key_id: KMS Key identifier for the KMS key you want to use
+    :type kms_key_id: string
+    :return: AWS Region
+    :rtype: string
+    """
+    return kms_key_id.split(":")[3]
+
+
 def encrypt_and_decrypt_with_keyring(
-    kms_key_id: str
+    kms_key_id: str,
+    aws_regions: list(str)
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Multi Keyring.
 
@@ -80,7 +105,11 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 2. Create a boto3 client for KMS.
-    kms_client = boto3.client('kms', region_name="us-west-2")
+
+    # Get the AWS Region from the KMS Key ID.
+    region_name = get_aws_region_from_kms_key_id(kms_key_id)
+
+    kms_client = boto3.client('kms', region_name=region_name)
 
     # 3. Create encryption context.
     # Remember that your encryption context is NOT SECRET.
@@ -110,7 +139,7 @@ def encrypt_and_decrypt_with_keyring(
         input=kms_keyring_input
     )
 
-    # 5. Encrypt the data for the encryptionContext
+    # 5. Encrypt the data with the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=encrypt_kms_keyring,
@@ -125,11 +154,15 @@ def encrypt_and_decrypt_with_keyring(
     # 7. Now create a Discovery Multi keyring to use for decryption. We'll add a discovery filter
     # so that we limit the set of ciphertexts we are willing to decrypt to only ones
     # created by KMS keys in our account and partition.
+
+    # Get the AWS Account ID from the KMS Key ID to use in the discovery filter
+    aws_account_id: str = get_account_id_from_kms_key_id(kms_key_id=kms_key_id)
+
     discovery_multi_keyring_input: CreateAwsKmsDiscoveryMultiKeyringInput = \
         CreateAwsKmsDiscoveryMultiKeyringInput(
-            regions=["us-west-2", "us-east-1"],
+            regions=aws_regions,
             discovery_filter=DiscoveryFilter(
-                account_ids=["658956600833"],
+                account_ids=[aws_account_id],
                 partition="aws"
             )
         )

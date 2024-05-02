@@ -155,7 +155,7 @@ def encrypt_and_decrypt_with_keyring(
         input=multi_keyring_input
     )
 
-    # 8. Encrypt the data for the encryptionContext
+    # 8. Encrypt the data with the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=multi_keyring,

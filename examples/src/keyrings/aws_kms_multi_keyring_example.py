@@ -26,7 +26,7 @@ This example creates a Multi Keyring and then encrypts a custom input EXAMPLE_DA
 with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Decryption of ciphertext is possible using the multi_keyring,
-and every one of the keyrings from the multi_keyring separately
+    and every one of the keyrings from the multi_keyring separately
 3. All decrypted plaintext value match EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
@@ -115,7 +115,7 @@ def encrypt_and_decrypt_with_keyring(
         input=kms_multi_keyring_input
     )
 
-    # 4. Encrypt the data for the encryptionContext
+    # 4. Encrypt the data with the encryptionContext
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=kms_multi_keyring,
