@@ -168,7 +168,7 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
         "the data you are handling": "is what you think it is",
     }
 
-    # 3. Create a Raw RSA keyring
+    # 3. Create a Raw RSA keyring.
 
     # Check if we need to generate an RSA key pair
     should_generate_new_rsa_key_pair_bool = \
