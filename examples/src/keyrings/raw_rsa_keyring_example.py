@@ -169,6 +169,8 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
     }
 
     # 3. Create a Raw RSA keyring.
+    #   If you have provided keys in a PEM file, they will be loaded into the keyring.
+    #   Otherwise, a key pair will be randomly generated for you.
 
     # Check if we need to generate an RSA key pair
     should_generate_new_rsa_key_pair_bool = \
