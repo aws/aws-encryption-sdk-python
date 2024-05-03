@@ -23,7 +23,7 @@ phases:
       - unzip 312_hkeyring_manifest.zip
 
       # Download published .NET ESDK so we don't have to build from source
-      - dotnet add package AWS.Cryptography.EncryptionSDK --version 4.0.1
+      - dotnet add NETTestVectors package AWS.Cryptography.EncryptionSDK --version 4.0.1
 
       # Clone SDK-Dafny repo to get test vectors runner
       - git clone git@github.com:aws/aws-encryption-sdk-dafny.git

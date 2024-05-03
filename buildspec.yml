@@ -342,7 +342,7 @@ batch:
       buildspec: codebuild/py312/decrypt_hkeyring_with_keyrings.yml
       env:
         image: aws/codebuild/standard:7.0
-    - identifier: py312_decrypt_kkeyring_with_net
+    - identifier: py312_decrypt_hkeyring_with_net
       depend-on: 
        - py312_generate_hkeyring_decrypt_vectors
       buildspec: codebuild/py312/decrypt_hkeyring_with_net.yml
