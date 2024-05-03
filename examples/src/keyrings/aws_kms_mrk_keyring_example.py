@@ -38,31 +38,28 @@ sys.path.append(MODULE_ROOT_DIR)
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-def get_aws_region_from_kms_key_id(kms_key_id: str) -> str:
-    """
-    Get the AWS Region from the KMS Key ID.
-    Usage: get_aws_region_from_kms_key_id(kms_key_id)
-    :param kms_key_id: KMS Key identifier for the KMS key you want to use
-    :type kms_key_id: string
-    :return: AWS Region
-    :rtype: string
-    """
-    return kms_key_id.split(":")[3]
-
-
 def encrypt_and_decrypt_with_keyring(
     encrypt_kms_key_id: str,
     decrypt_kms_key_id: str,
+    encrypt_region: str,
+    decrypt_region: str
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(encrypt_kms_key_id, decrypt_kms_key_id)
+    Usage: encrypt_and_decrypt_with_keyring(encrypt_kms_key_id,
+                                            decrypt_kms_key_id,
+                                            encrypt_region,
+                                            decrypt_region)
     :param encrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
     for encryption of your data keys.
     :type encrypt_kms_key_id: string
     :param decrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
     for decryption of your data keys.
     :type decrypt_kms_key_id: string
+    :param encrypt_region: AWS Region for encryption of your data keys
+    :type encrypt_region: string
+    :param decrypt_region: AWS Region for decryption of your data keys
+    :type decrypt_region: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -96,7 +93,6 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # Create a boto3 client for KMS in the first region.
-    encrypt_region: str = get_aws_region_from_kms_key_id(encrypt_kms_key_id)
     encrypt_kms_client = boto3.client('kms', region_name=encrypt_region)
 
     encrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
@@ -126,7 +122,6 @@ def encrypt_and_decrypt_with_keyring(
     # https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 
     # Create a boto3 client for KMS in the second region.
-    decrypt_region: str = get_aws_region_from_kms_key_id(decrypt_kms_key_id)
     decrypt_kms_client = boto3.client('kms', region_name=decrypt_region)
 
     decrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
