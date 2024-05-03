@@ -142,7 +142,7 @@ class MessageEncryptionTestScenario(object):
             else:
                 raise ValueError("Unrecognized cmm_type: " + cmm_type)
         else:
-            # If unspecified, set "Default" as the default.
+            # If unspecified, set "Default" as the default
             cmm_type = "Default"
 
         return cls(
