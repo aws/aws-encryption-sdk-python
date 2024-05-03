@@ -3,8 +3,8 @@
 """
 This example sets up the KMS MRK (multi-region key) Keyring
 
-KMS MRK keyring interacts with AWS Key Management Service (AWS KMS) to create, encrypt,
-and decrypt data keys using AWS KMS defined Customer Master Keys (CMKs).
+The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
+create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).
 This example creates a KMS MRK Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
@@ -42,27 +42,28 @@ EXAMPLE_DATA: bytes = b"Hello World"
 
 
 def encrypt_and_decrypt_with_keyring(
-    encrypt_kms_key_id: str,
-    decrypt_kms_key_id: str,
-    encrypt_region: str,
-    decrypt_region: str
+    mrk_key_id_encrypt: str,
+    mrk_replica_key_id_decrypt: str,
+    default_region: str,
+    second_region: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS MRK keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(encrypt_kms_key_id,
-                                            decrypt_kms_key_id,
-                                            encrypt_region,
-                                            decrypt_region)
-    :param encrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
-    for encryption of your data keys.
-    :type encrypt_kms_key_id: string
-    :param decrypt_kms_key_id: KMS Key identifier for the KMS key you want to use
-    for decryption of your data keys.
-    :type decrypt_kms_key_id: string
-    :param encrypt_region: AWS Region for encryption of your data keys
-    :type encrypt_region: string
-    :param decrypt_region: AWS Region for decryption of your data keys
-    :type decrypt_region: string
+    Usage: encrypt_and_decrypt_with_keyring(mrk_key_id_encrypt,
+                                            mrk_replica_key_id_decrypt,
+                                            default_region,
+                                            second_region)
+    :param mrk_key_id_encrypt: KMS Key identifier for the KMS key located in your
+    default region, which you want to use for encryption of your data keys
+    :type mrk_key_id_encrypt: string
+    :param mrk_replica_key_id_decrypt: KMS Key identifier for the KMS key KMS Key
+    that is a replica of the `mrk_key_id_encrypt` in a second region, which you
+    want to use for decryption of your data keys
+    :type mrk_replica_key_id_decrypt: string
+    :param default_region: AWS Region for encryption of your data keys
+    :type default_region: string
+    :param second_region: AWS Region for decryption of your data keys
+    :type second_region: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -96,10 +97,10 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # Create a boto3 client for KMS in the first region.
-    encrypt_kms_client = boto3.client('kms', region_name=encrypt_region)
+    encrypt_kms_client = boto3.client('kms', region_name=default_region)
 
     encrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
-        kms_key_id=encrypt_kms_key_id,
+        kms_key_id=mrk_key_id_encrypt,
         kms_client=encrypt_kms_client
     )
 
@@ -123,10 +124,10 @@ def encrypt_and_decrypt_with_keyring(
     # to the second region. This example assumes you have already replicated your key
 
     # Create a boto3 client for KMS in the second region.
-    decrypt_kms_client = boto3.client('kms', region_name=decrypt_region)
+    decrypt_kms_client = boto3.client('kms', region_name=second_region)
 
     decrypt_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
-        kms_key_id=decrypt_kms_key_id,
+        kms_key_id=mrk_replica_key_id_decrypt,
         kms_client=decrypt_kms_client
     )
 

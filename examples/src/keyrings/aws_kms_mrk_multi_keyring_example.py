@@ -3,10 +3,11 @@
 """
 This example sets up the KMS MRK Multi Keyring
 
-KMS MRK keyring interacts with AWS Key Management Service (AWS KMS) to create, encrypt,
-and decrypt data keys using AWS KMS defined Customer Master Keys (CMKs).
-This example creates a KMS MRK Multi Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also includes some sanity checks for demonstration:
+The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
+create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).
+This example creates a KMS MRK Multi Keyring using an mrk_key_id (generator) and
+a kms_key_id, and then encrypts a custom input EXAMPLE_DATA with an encryption context.
+This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
@@ -138,8 +139,6 @@ def encrypt_and_decrypt_with_keyring(
 
     # Demonstrate that a single AwsKmsMrkKeyring configured with a replica of the MRK from the
     # multi-keyring used to encrypt the data is also capable of decrypting the data.
-    # Not shown in this example: A KMS Keyring created with `kms_key_id` could also
-    # decrypt this message.
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
     # 9. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
@@ -171,3 +170,6 @@ def encrypt_and_decrypt_with_keyring(
     # 12. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes_second_region == EXAMPLE_DATA
+
+    # Not shown in this example: A KMS Keyring created with `kms_key_id` could also
+    # decrypt this message.

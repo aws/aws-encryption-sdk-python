@@ -10,13 +10,13 @@ pytestmark = [pytest.mark.examples]
 
 def test_encrypt_and_decrypt_with_keyring():
     """Test function for encrypt and decrypt using the AWS KMS MRK Keyring example."""
-    encrypt_kms_key_id = \
+    mrk_key_id_encrypt = \
         "arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7"
-    decrypt_kms_key_id = \
+    mrk_replica_key_id_decrypt = \
         "arn:aws:kms:eu-west-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7"
-    encrypt_region = "us-east-1"
-    decrypt_region = "eu-west-1"
-    encrypt_and_decrypt_with_keyring(encrypt_kms_key_id,
-                                     decrypt_kms_key_id,
-                                     encrypt_region,
-                                     decrypt_region)
+    default_region = "us-east-1"
+    second_region = "eu-west-1"
+    encrypt_and_decrypt_with_keyring(mrk_key_id_encrypt,
+                                     mrk_replica_key_id_decrypt,
+                                     default_region,
+                                     second_region)
