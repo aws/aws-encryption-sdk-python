@@ -326,6 +326,29 @@ batch:
       buildspec: codebuild/py312/decrypt_keyrings_with_js.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py312_generate_hkeyring_decrypt_vectors
+      buildspec: codebuild/py312/py312_generate_hkeyring_decrypt_vectors.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_decrypt_hkeyring_with_masterkey
+      depend-on: 
+       - py312_generate_hkeyring_decrypt_vectors
+      buildspec: codebuild/py312/py312_decrypt_hkeyring_with_masterkey.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_decrypt_hkeyring_with_keyrings
+      depend-on: 
+       - py312_generate_hkeyring_decrypt_vectors
+      buildspec: codebuild/py312/decrypt_keyrings_with_keyrings.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    # TODO: turn this into the .NET runner
+    # - identifier: py312_decrypt_keyrings_with_js
+    #   depend-on: 
+    #    - py312_generate_decrypt_vectors_keyrings
+    #   buildspec: codebuild/py312/decrypt_keyrings_with_js.yml
+    #   env:
+    #     image: aws/codebuild/standard:7.0
 
     
     - identifier: code_coverage
