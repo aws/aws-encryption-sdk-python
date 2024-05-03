@@ -15,7 +15,7 @@ import io
 
 import pytest
 import six
-from mock import patch
+from mock import MagicMock, patch
 
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.internal.defaults import ALGORITHM, FRAME_LENGTH, LINE_LENGTH
@@ -33,7 +33,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
     HAS_MPL = True
 
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
@@ -236,24 +236,28 @@ def test_client_configs_with_mpl(
     assert test.materials_manager is not None
 
     # If materials manager was provided, it should be directly used
-    if hasattr(kwargs, "materials_manager"):
+    if "materials_manager" in kwargs:
         assert kwargs["materials_manager"] == test.materials_manager
 
+    # If native key_provider was provided, it should be wrapped in native materials manager
+    elif "key_provider" in kwargs:
+        assert test.key_provider is not None
+        assert test.key_provider == kwargs["key_provider"]
+        assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
+
     # If MPL keyring was provided, it should be wrapped in MPL materials manager
-    if hasattr(kwargs, "keyring"):
+    elif "keyring" in kwargs:
         assert test.keyring is not None
         assert test.keyring == kwargs["keyring"]
         assert isinstance(test.keyring, IKeyring)
         assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
 
-    # If native key_provider was provided, it should be wrapped in native materials manager
-    if hasattr(kwargs, "key_provider"):
-        assert test.key_provider is not None
-        assert test.key_provider == kwargs["key_provider"]
-        assert isinstance(test.materials_manager, DefaultCryptoMaterialsManager)
+    else:
+        raise ValueError(f"Test did not find materials_manager or key_provider. {kwargs}")
 
 
-# This needs its own test; pytest parametrize cannot use a conditionally-loaded type
+# This is an addition to test_client_configs_with_mpl;
+# This needs its own test; pytest's parametrize cannot use a conditionally-loaded type (IKeyring)
 @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
 def test_keyring_client_config_with_mpl(
 ):
@@ -265,16 +269,30 @@ def test_keyring_client_config_with_mpl(
 
     test = _ClientConfig(**kwargs)
 
-    # In all cases, config should have a materials manager
     assert test.materials_manager is not None
 
-    # If materials manager was provided, it should be directly used
-    if hasattr(kwargs, "materials_manager"):
-        assert kwargs["materials_manager"] == test.materials_manager
+    assert test.keyring is not None
+    assert test.keyring == kwargs["keyring"]
+    assert isinstance(test.keyring, IKeyring)
+    assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
 
-    # If MPL keyring was provided, it should be wrapped in MPL materials manager
-    if hasattr(kwargs, "keyring"):
-        assert test.keyring is not None
-        assert test.keyring == kwargs["keyring"]
-        assert isinstance(test.keyring, IKeyring)
-        assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
+
+# This is an addition to test_client_configs_with_mpl;
+# This needs its own test; pytest's parametrize cannot use a conditionally-loaded type (MPL CMM)
+@pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+def test_mpl_cmm_client_config_with_mpl(
+):
+    mock_mpl_cmm = MagicMock(__class__=ICryptographicMaterialsManager)
+    kwargs = {
+        "source": b"",
+        "materials_manager": mock_mpl_cmm,
+        "commitment_policy": CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    }
+
+    test = _ClientConfig(**kwargs)
+
+    assert test.materials_manager is not None
+    # Assert that the MPL CMM is wrapped in the native interface
+    assert isinstance(test.materials_manager, CryptoMaterialsManagerFromMPL)
+    # Assert the MPL CMM is used by the native interface
+    assert test.materials_manager.mpl_cmm == mock_mpl_cmm

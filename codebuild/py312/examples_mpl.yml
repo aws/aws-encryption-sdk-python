@@ -1,3 +1,6 @@
+# Runs the same tests as examples in an environment with the MPL installed
+# to assert existing tests continue to pass with the MPL installed.
+# Then, run MPL-specific tests.
 version: 0.2
 
 env:
@@ -19,6 +22,11 @@ phases:
       python: 3.12
   build:
     commands:
+      - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
+      - pyenv install --skip-existing 3.12.0
+      - pyenv local 3.12.0
+      - pip install --upgrade pip
+      - pip install setuptools
       - pip install "tox < 4.0"
       # Run non-MPL-specific tests with the MPL installed
       - tox -e py312-examples-mpl
@@ -31,4 +39,3 @@ phases:
       - aws sts get-caller-identity
       # Run MPL-specific tests with special role
       - tox -e py312-mplexamples-mpl
-

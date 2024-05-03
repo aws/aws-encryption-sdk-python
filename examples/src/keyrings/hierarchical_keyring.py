@@ -26,7 +26,7 @@ encrypt and decrypt data for two separate tenants.
 
 This example requires access to the DDB Table where you are storing the Branch Keys. This
 table must be configured with the following primary key configuration: - Partition key is named
-"partition_key" with type (S) - Sort key is named "sort_key" with type (S)
+"partition_key" with type (S) - Sort key is named "sort_key" with type (S).
 
 This example also requires using a KMS Key. You need the following access on this key: -
 GenerateDataKeyWithoutPlaintext - Decrypt
@@ -55,7 +55,7 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
 
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks
+# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 module_root_dir = '/'.join(__file__.split("/")[:-1])
 
 sys.path.append(module_root_dir)
@@ -154,7 +154,7 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    # 8. Encrypt the data for encryptionContextA & encryptionContextB
+    # 8. Encrypt the data with encryptionContextA & encryptionContextB
     ciphertext_A, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=hierarchical_keyring,
