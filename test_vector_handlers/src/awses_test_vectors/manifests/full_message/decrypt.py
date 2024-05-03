@@ -309,7 +309,8 @@ class MessageDecryptionTestScenario(object):
             encryption_context = {}
 
         # MPL test vectors add CMM types to the test vectors manifests
-        if "cmm" in scenario:
+        if "cmm" in scenario \
+                and scenario["cmm"] is not None:
             if scenario["cmm"] == "Default":
                 # Master keys and keyrings can handle default CMM
                 cmm_type = scenario["cmm"]
