@@ -154,7 +154,7 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    # 8. Encrypt the data for encryptionContextA & encryptionContextB
+    # 8. Encrypt the data with encryptionContextA & encryptionContextB
     ciphertext_A, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=hierarchical_keyring,

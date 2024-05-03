@@ -81,18 +81,24 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
     def _native_to_mpl_get_encryption_materials(
         request: EncryptionMaterialsRequest
     ) -> 'MPL_GetEncryptionMaterialsInput':
-        commitment_policy = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(
-            request.commitment_policy
-        )
-        output: MPL_GetEncryptionMaterialsInput = MPL_GetEncryptionMaterialsInput(
-            encryption_context=request.encryption_context,
-            commitment_policy=commitment_policy,
-            max_plaintext_length=request.plaintext_length,
-        )
-        return output
+        output_kwargs = {
+            "encryption_context": request.encryption_context,
+            "max_plaintext_length": request.plaintext_length,
+            "commitment_policy": CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(
+                request.commitment_policy
+            )
+        }
+
+        if request.algorithm is not None:
+            output_kwargs["algorithm_suite_id"] = \
+                CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
+                    request.algorithm.algorithm_id
+            )
+
+        return MPL_GetEncryptionMaterialsInput(**output_kwargs)
 
     @staticmethod
-    def _native_to_mpl_commmitment_policy(
+    def _native_to_mpl_commitment_policy(
         native_commitment_policy: CommitmentPolicy
     ) -> 'MPL_CommitmentPolicyESDK':
         if native_commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT:
@@ -141,7 +147,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             algorithm_suite_id=CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
                 request.algorithm.algorithm_id
             ),
-            commitment_policy=CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(
+            commitment_policy=CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(
                 request.commitment_policy
             ),
             encrypted_data_keys=list_edks,
