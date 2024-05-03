@@ -322,7 +322,7 @@ class MessageDecryptionTestScenario(object):
                 else:
                     return None
             else:
-                raise ValueError("Unrecognized cmm_type: " + cmm_type)
+                raise ValueError("Unrecognized cmm_type: " + scenario["cmm"])
         else:
             # If unspecified, set "Default" as the default
             cmm_type = "Default"
