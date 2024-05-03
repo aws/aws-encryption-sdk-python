@@ -126,6 +126,25 @@ class MessageEncryptionTestScenario(object):
                 return keyring_from_master_key_specs(keys_uri, master_key_specs, "encrypt")
             return master_key_provider_from_master_key_specs(keys, master_key_specs)
 
+        # MPL test vectors add CMM types to the test vectors manifests
+        if "cmm" in scenario:
+            if scenario["cmm"] == "Default":
+                # Master keys and keyrings can handle default CMM
+                cmm_type = scenario["cmm"]
+            elif scenario["cmm"] == "RequiredEncryptionContext":
+                # Skip RequiredEncryptionContext CMM for master keys;
+                # RequiredEncryptionContext is unsupported for master keys.
+                # Caller logic should expect `None` to mean "no scenario".
+                if keyrings:
+                    cmm_type = scenario["cmm"]
+                else:
+                    return None
+            else:
+                raise ValueError("Unrecognized cmm_type: " + cmm_type)
+        else:
+            # If unspecified, set "Default" as the default
+            cmm_type = "Default"
+
         return cls(
             plaintext_name=scenario["plaintext"],
             plaintext=plaintexts[scenario["plaintext"]],
@@ -135,7 +154,7 @@ class MessageEncryptionTestScenario(object):
             master_key_specs=master_key_specs,
             master_key_provider_fn=master_key_provider_fn,
             keyrings=keyrings,
-            cmm=scenario["cmm"],
+            cmm=cmm_type,
         )
 
     def run(self, materials_manager=None):
