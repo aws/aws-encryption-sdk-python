@@ -452,8 +452,6 @@ class TestStreamEncryptor(object):
                 encoding=serialization.Encoding.PEM
             )
 
-<<<<<<< HEAD
-=======
     # Given: has MPL
     @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
     def test_GIVEN_has_mpl_AND_encryption_materials_has_required_EC_keys_WHEN_prep_message_THEN_paritions_stored_and_required_EC(  # noqa pylint: disable=line-too-long
@@ -567,7 +565,6 @@ class TestStreamEncryptor(object):
         # Then: _required_encryption_context is None
         assert test_encryptor._required_encryption_context is None
 
->>>>>>> mpl-reviewed
     def test_prep_message_no_signer(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
