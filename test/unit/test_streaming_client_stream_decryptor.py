@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamDecryptor"""
+# noqa pylint: disable=too-many-lines
 import io
 
 import pytest
@@ -194,7 +195,12 @@ class TestStreamDecryptor(object):
         test_decryptor._stream_length = len(VALUES["data_128"])
 
         # Mock: hasattr(self.config, "encryption_context") returns False
+<<<<<<< HEAD
         del test_decryptor.config.encryption_context
+=======
+        if hasattr(test_decryptor.config, "encryption_context"):
+            del test_decryptor.config.encryption_context
+>>>>>>> mpl-reviewed
 
         test_header, test_header_auth = test_decryptor._read_header()
 
@@ -232,6 +238,136 @@ class TestStreamDecryptor(object):
         )
         assert test_header is self.mock_header
         assert test_header_auth is sentinel.header_auth
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # Given: no MPL
+    @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
+    def test_GIVEN_verification_key_AND_no_mpl_WHEN_read_header_THEN_calls_from_key_bytes(
+        self,
+        mock_verifier,
+        *_,
+    ):
+        # Given: verification key
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        # When: read header
+        test_decryptor._read_header()
+
+        # Then: calls from_key_bytes
+        mock_verifier.from_key_bytes.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
+        )
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_verification_key_AND_has_mpl_AND_not_MPLCMM_WHEN_read_header_THEN_calls_from_key_bytes(
+        self,
+        mock_verifier,
+        *_,
+    ):
+        # Given: verification key
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            # Given: native CMM
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        # When: read_header
+        test_decryptor._read_header()
+
+        # Then: calls from_key_bytess
+        mock_verifier.from_key_bytes.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, key_bytes=sentinel.verification_key
+        )
+
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # Given: no MPL
+    @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
+    def test_GIVEN_decrypt_config_has_ec_AND_no_mpl_WHEN_read_header_THEN_raise_TypeError(
+        self,
+        mock_verifier,
+        mock_decrypt_materials_request,
+        *_,
+    ):
+
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+        # Given: self.config has "encryption_context"
+        # (i.e. encryption context provided on decrypt)
+        any_reproduced_ec = {"some": "ec"}
+        test_decryptor.config.encryption_context = any_reproduced_ec
+
+        # Then: raise TypeError
+        with pytest.raises(TypeError):
+            # When: read header
+            test_decryptor._read_header()
+
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @patch("base64.b64encode")
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_verification_key_AND_has_mpl_AND_has_MPLCMM_WHEN_read_header_THEN_calls_from_encoded_point(
+        self,
+        mock_b64encoding,
+        mock_verifier,
+        *_,
+    ):
+        # Given: Verification key
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+        ct_stream = io.BytesIO(VALUES["data_128"])
+        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
+        test_decryptor = StreamDecryptor(
+            # Given: MPL CMM
+            materials_manager=self.mock_mpl_materials_manager,
+            source=ct_stream,
+            commitment_policy=mock_commitment_policy,
+        )
+        test_decryptor.source_stream = ct_stream
+        test_decryptor._stream_length = len(VALUES["data_128"])
+
+        # When: read header
+        test_decryptor._read_header()
+
+        # Then: calls from_encoded_point
+        mock_verifier.from_encoded_point.assert_called_once_with(
+            algorithm=self.mock_header.algorithm, encoded_point=mock_b64encoding()
+        )
 
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
@@ -924,3 +1060,219 @@ class TestStreamDecryptor(object):
         with pytest.raises(SerializationError) as excinfo:
             test_decryptor.close()
         excinfo.match("Footer not read")
+
+    @patch("aws_encryption_sdk.streaming_client.validate_header")
+    def test_GIVEN_does_not_have_required_EC_WHEN_validate_parsed_header_THEN_validate_header(
+        self,
+        mock_validate_header
+    ):
+        self.mock_header.content_type = ContentType.FRAMED_DATA
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
+        test_decryptor._derived_data_key = sentinel.derived_data_key
+        # Given: test_decryptor does not have _required_encryption_context attribute
+        # When: _validate_parsed_header
+        test_decryptor._validate_parsed_header(
+            header=self.mock_header,
+            header_auth=sentinel.header_auth,
+            raw_header=self.mock_raw_header
+        )
+        # Then: validate_header
+        mock_validate_header.assert_called_once_with(
+            header=self.mock_header,
+            header_auth=sentinel.header_auth,
+            raw_header=self.mock_raw_header,
+            data_key=sentinel.derived_data_key,
+        )
+
+    @patch("aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context")
+    @patch("aws_encryption_sdk.streaming_client.validate_header")
+    def test_GIVEN_has_required_EC_WHEN_validate_parsed_header_THEN_validate_header_with_serialized_required_EC(
+        self,
+        mock_validate_header,
+        mock_serialize_encryption_context,
+    ):
+        self.mock_header.content_type = ContentType.FRAMED_DATA
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
+        test_decryptor._derived_data_key = sentinel.derived_data_key
+        # Given: test_decryptor has _required_encryption_context attribute
+        mock_required_ec = MagicMock(__class__=dict)
+        test_decryptor._required_encryption_context = mock_required_ec
+        mock_serialized_required_ec = MagicMock(__class__=bytes)
+        mock_serialize_encryption_context.return_value = mock_serialized_required_ec
+        # When: _validate_parsed_header
+        test_decryptor._validate_parsed_header(
+            header=self.mock_header,
+            header_auth=sentinel.header_auth,
+            raw_header=self.mock_raw_header
+        )
+        # Then: call validate_header with serialized required EC
+        mock_validate_header.assert_called_once_with(
+            header=self.mock_header,
+            header_auth=sentinel.header_auth,
+            raw_header=self.mock_raw_header + mock_serialized_required_ec,
+            data_key=sentinel.derived_data_key,
+        )
+
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_MPL_AND_config_has_EC_WHEN_create_decrypt_materials_request_THEN_provide_reproduced_EC(
+        self,
+    ):
+        self.mock_header.content_type = ContentType.FRAMED_DATA
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_mpl_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
+
+        # Given: StreamDecryptor.config has encryption_context attribute
+        mock_reproduced_encryption_context = MagicMock(__class__=dict)
+        test_decryptor.config.encryption_context = mock_reproduced_encryption_context
+        # Type checking on header encryption context seems to require concrete instance,
+        # neither MagicMock nor sentinel value work
+        self.mock_header.encryption_context = {"some_key_to_pass_type_validation": "some_value"}
+
+        # When: _create_decrypt_materials_request
+        output = test_decryptor._create_decrypt_materials_request(
+            header=self.mock_header,
+        )
+
+        # Then: decrypt_materials_request has reproduced_encryption_context attribute
+        assert hasattr(output, "reproduced_encryption_context")
+        assert output.reproduced_encryption_context == mock_reproduced_encryption_context
+
+    def test_GIVEN_config_does_not_have_EC_WHEN_create_decrypt_materials_request_THEN_request_does_not_have_reproduced_EC(  # noqa pylint: disable=line-too-long
+        self,
+    ):
+        self.mock_header.content_type = ContentType.FRAMED_DATA
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
+
+        # Given: StreamDecryptor.config does not have an encryption_context attribute
+        del test_decryptor.config.encryption_context
+        # Type checking on header encryption context seems to require concrete instance,
+        # neither MagicMock nor sentinel value work
+        self.mock_header.encryption_context = {"some_key_to_pass_type_validation": "some_value"}
+
+        # When: _create_decrypt_materials_request
+        output = test_decryptor._create_decrypt_materials_request(
+            header=self.mock_header,
+        )
+
+        # Then: decrypt_materials_request.reproduced_encryption_context is None
+        assert output.reproduced_encryption_context is None
+
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_materials_has_no_required_encryption_context_keys_attr_WHEN_read_header_THEN_required_EC_is_None(
+        self,
+        mock_verifier,
+        *_
+    ):
+
+        mock_verifier_instance = MagicMock()
+        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+
+        self.mock_header.content_type = ContentType.FRAMED_DATA
+        test_decryptor = StreamDecryptor(
+            materials_manager=self.mock_materials_manager,
+            source=self.mock_input_stream,
+            commitment_policy=self.mock_commitment_policy,
+        )
+
+        # Given: decryption_materials does not have a required_encryption_context_keys attribute
+        del self.mock_decrypt_materials.required_encryption_context_keys
+
+        # When: _read_header
+        test_decryptor._read_header()
+
+        # Then: StreamDecryptor._required_encryption_context is None
+        assert test_decryptor._required_encryption_context is None
+
+    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
+    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
+    @patch("aws_encryption_sdk.streaming_client.Verifier")
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_materials_has_required_encryption_context_keys_attr_WHEN_read_header_THEN_creates_correct_required_EC(  # noqa pylint: disable=line-too-long
+        self,
+        mock_verifier,
+        *_
+    ):
+        required_encryption_context_keys_values = [
+            # Case of empty encryption context list is not allowed;
+            # if a list is provided, it must be non-empty.
+            # The MPL enforces this behavior on construction.
+            ["one_key"],
+            ["one_key", "two_key"],
+            ["one_key", "two_key", "red_key"],
+            ["one_key", "two_key", "red_key", "blue_key"],
+        ]
+
+        encryption_context_values = [
+            {},
+            {"one_key": "some_value"},
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+            },
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+                "red_key": "some_red_value",
+            },
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+                "red_key": "some_red_value",
+                "blue_key": "some_blue_value",
+            }
+        ]
+
+        for required_encryption_context_keys in required_encryption_context_keys_values:
+
+            # Given: decryption_materials has required_encryption_context_keys
+            self.mock_decrypt_materials.required_encryption_context_keys = \
+                required_encryption_context_keys
+
+            for encryption_context in encryption_context_values:
+
+                self.mock_decrypt_materials.encryption_context = encryption_context
+
+                mock_verifier_instance = MagicMock()
+                mock_verifier.from_key_bytes.return_value = mock_verifier_instance
+
+                self.mock_header.content_type = ContentType.FRAMED_DATA
+                test_decryptor = StreamDecryptor(
+                    materials_manager=self.mock_materials_manager,
+                    source=self.mock_input_stream,
+                    commitment_policy=self.mock_commitment_policy,
+                )
+
+                # When: _read_header
+                test_decryptor._read_header()
+
+                # Then: Assert correctness of partitioned EC
+                for k, v in encryption_context.items():
+                    # If a key is in required_encryption_context_keys, then ...
+                    if k in required_encryption_context_keys:
+                        # ... its EC is in the StreamEncryptor._required_encryption_context
+                        assert k in test_decryptor._required_encryption_context
+                        assert test_decryptor._required_encryption_context[k] == v
+                    # If a key is NOT in required_encryption_context_keys, then ...
+                    else:
+                        # ... its EC is NOT in the StreamEncryptor._required_encryption_context
+                        assert k not in test_decryptor._required_encryption_context

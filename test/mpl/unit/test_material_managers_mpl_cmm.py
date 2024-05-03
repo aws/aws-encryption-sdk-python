@@ -38,6 +38,10 @@ mock_decryption_materials_request = MagicMock(__class__=DecryptionMaterialsReque
 mock_mpl_cmm = MagicMock(__class__=MPL_ICryptographicMaterialsManager)
 mock_mpl_encryption_materials = MagicMock(__class__=MPL_EncryptionMaterials)
 mock_mpl_decrypt_materials = MagicMock(__class__=MPL_DecryptionMaterials)
+<<<<<<< HEAD
+=======
+mock_reproduced_encryption_context = MagicMock(__class_=dict)
+>>>>>>> mpl-reviewed
 
 
 mock_edk = MagicMock(__class__=Native_EncryptedDataKey)
@@ -96,10 +100,24 @@ def test_GIVEN_valid_request_WHEN_get_encryption_materials_THEN_return_Encryptio
 
 
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+<<<<<<< HEAD
        "._native_to_mpl_get_encryption_materials")
 def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_raise_ESDKException(
     _
 ):
+=======
+       "._native_algorithm_id_to_mpl_algorithm_id")
+@patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+       "._native_to_mpl_commitment_policy")
+def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_raise_ESDKException(
+    _,
+    mock_mpl_algorithm_id,
+):
+    # Given: _native_algorithm_id_to_mpl_algorithm_id returns a valid MPL algorithm ID
+    mock_algorithm_id = "0x1234"  # Some fake algorithm ID that fits the format
+    mock_mpl_algorithm_id.return_value = mock_algorithm_id
+
+>>>>>>> mpl-reviewed
     # Then: Raises AWSEncryptionSDKClientError
     with pytest.raises(AWSEncryptionSDKClientError):
         # Given: mpl_cmm.get_encryption_materials raises MPL exception
@@ -113,11 +131,23 @@ def test_GIVEN_mpl_cmm_raises_MPLException_WHEN_get_encryption_materials_THEN_ra
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
        "._native_algorithm_id_to_mpl_algorithm_id")
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+<<<<<<< HEAD
        "._native_to_mpl_commmitment_policy")
 def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_materials_THEN_returns_MPL_GetEncryptionMaterialsInput(  # noqa: E501
     mock_mpl_commitment_policy,
     mock_mpl_algorithm,
 ):
+=======
+       "._native_to_mpl_commitment_policy")
+def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_materials_THEN_returns_MPL_GetEncryptionMaterialsInput(  # noqa: E501
+    mock_mpl_commitment_policy,
+    mock_mpl_algorithm_id,
+):
+    # Given: _native_algorithm_id_to_mpl_algorithm_id returns a valid MPL algorithm ID
+    mock_algorithm_id = "0x1234"  # Some fake algorithm ID that fits the format
+    mock_mpl_algorithm_id.return_value = mock_algorithm_id
+
+>>>>>>> mpl-reviewed
     # Given: commitment policy is some MPL ESDK commitment policy
     mock_commitment_policy = MagicMock(__class__=MPL_CommitmentPolicyESDK)
     mock_mpl_commitment_policy.return_value = mock_commitment_policy
@@ -132,6 +162,7 @@ def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_mat
     assert output.encryption_context == mock_encryption_materials_request.encryption_context
     assert output.commitment_policy == mock_commitment_policy
     assert output.max_plaintext_length == mock_encryption_materials_request.plaintext_length
+<<<<<<< HEAD
     assert output.algorithm_suite_id == mock_mpl_algorithm()
 
 
@@ -141,44 +172,81 @@ def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_
 
     # When: _native_to_mpl_commmitment_policy
     output = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(native_commitment_policy)
+=======
+
+
+def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_FORBID_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
+    # Given: native FORBID_ENCRYPT_ALLOW_DECRYPT
+    native_commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+
+    # When: _native_to_mpl_commitment_policy
+    output = CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(native_commitment_policy)
+>>>>>>> mpl-reviewed
 
     # Then: Returns MPL FORBID_ENCRYPT_ALLOW_DECRYPT
     assert isinstance(output, MPL_CommitmentPolicyESDK)
     assert output.value == "FORBID_ENCRYPT_ALLOW_DECRYPT"
 
 
+<<<<<<< HEAD
 def test_GIVEN_CommitmentPolicy_REQUIRE_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commmitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_REQUIRE_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
     # Given: native REQUIRE_ENCRYPT_ALLOW_DECRYPT
     native_commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
 
     # When: _native_to_mpl_commmitment_policy
     output = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(native_commitment_policy)
+=======
+def test_GIVEN_CommitmentPolicy_REQUIRE_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_REQUIRE_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
+    # Given: native REQUIRE_ENCRYPT_ALLOW_DECRYPT
+    native_commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
+
+    # When: _native_to_mpl_commitment_policy
+    output = CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(native_commitment_policy)
+>>>>>>> mpl-reviewed
 
     # Then: Returns MPL REQUIRE_ENCRYPT_ALLOW_DECRYPT
     assert isinstance(output, MPL_CommitmentPolicyESDK)
     assert output.value == "REQUIRE_ENCRYPT_ALLOW_DECRYPT"
 
 
+<<<<<<< HEAD
 def test_GIVEN_CommitmentPolicy_REQUIRE_ENCRYPT_REQUIRE_DECRYPT_WHEN_native_to_mpl_commmitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_REQUIRE_ENCRYPT_REQUIRE_DECRYPT():  # noqa: E501
     # Given: native REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     native_commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
 
     # When: _native_to_mpl_commmitment_policy
     output = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(native_commitment_policy)
+=======
+def test_GIVEN_CommitmentPolicy_REQUIRE_ENCRYPT_REQUIRE_DECRYPT_WHEN_native_to_mpl_commitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_REQUIRE_ENCRYPT_REQUIRE_DECRYPT():  # noqa: E501
+    # Given: native REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    native_commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+
+    # When: _native_to_mpl_commitment_policy
+    output = CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(native_commitment_policy)
+>>>>>>> mpl-reviewed
 
     # Then: Returns MPL REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     assert isinstance(output, MPL_CommitmentPolicyESDK)
     assert output.value == "REQUIRE_ENCRYPT_REQUIRE_DECRYPT"
 
 
+<<<<<<< HEAD
 def test_GIVEN_CommitmentPolicy_unrecognized_WHEN_native_to_mpl_commmitment_policy_THEN_raise_ValueError():
+=======
+def test_GIVEN_CommitmentPolicy_unrecognized_WHEN_native_to_mpl_commitment_policy_THEN_raise_ValueError():
+>>>>>>> mpl-reviewed
     # Given: invalid native commitment policy
     native_commitment_policy = "not a commitment policy"
 
     # Then: Raises ValueError
     with pytest.raises(ValueError):
+<<<<<<< HEAD
         # When: _native_to_mpl_commmitment_policy
         CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(native_commitment_policy)
+=======
+        # When: _native_to_mpl_commitment_policy
+        CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(native_commitment_policy)
+>>>>>>> mpl-reviewed
 
 
 @patch.object(mock_mpl_cmm, "decrypt_materials")
@@ -242,7 +310,11 @@ def test_GIVEN_valid_native_algorithm_id_WHEN_native_algorithm_id_to_mpl_algorit
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
        "._native_algorithm_id_to_mpl_algorithm_id")
 @patch("aws_encryption_sdk.materials_managers.mpl.cmm.CryptoMaterialsManagerFromMPL"
+<<<<<<< HEAD
        "._native_to_mpl_commmitment_policy")
+=======
+       "._native_to_mpl_commitment_policy")
+>>>>>>> mpl-reviewed
 def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_request_THEN_returns_MPL_MPL_DecryptMaterialsInput(  # noqa: E501
     mock_mpl_commitment_policy,
     mock_mpl_algorithm_id,
@@ -251,7 +323,11 @@ def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_reques
     mock_algorithm_id = "0x1234"  # Some fake algorithm ID that fits the format
     mock_mpl_algorithm_id.return_value = mock_algorithm_id
 
+<<<<<<< HEAD
     # Given: _native_to_mpl_commmitment_policy returns some MPL commitment policy
+=======
+    # Given: _native_to_mpl_commitment_policy returns some MPL commitment policy
+>>>>>>> mpl-reviewed
     mock_commitment_policy = MagicMock(__class__=MPL_CommitmentPolicyESDK)
     mock_mpl_commitment_policy.return_value = mock_commitment_policy
 
@@ -263,6 +339,10 @@ def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_reques
     for mock_edks in [no_mock_edks, one_mock_edk, two_mock_edks]:
 
         mock_decryption_materials_request.encrypted_data_keys = mock_edks
+<<<<<<< HEAD
+=======
+        mock_decryption_materials_request.reproduced_encryption_context = mock_reproduced_encryption_context
+>>>>>>> mpl-reviewed
 
         # When: _create_mpl_decrypt_materials_input_from_request
         output = CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(
@@ -275,6 +355,10 @@ def test_GIVEN_valid_request_WHEN_create_mpl_decrypt_materials_input_from_reques
         assert output.algorithm_suite_id == mock_algorithm_id
         assert output.commitment_policy == mock_commitment_policy
         assert output.encryption_context == mock_decryption_materials_request.encryption_context
+<<<<<<< HEAD
+=======
+        assert output.reproduced_encryption_context == mock_reproduced_encryption_context
+>>>>>>> mpl-reviewed
 
         assert len(output.encrypted_data_keys) == len(mock_edks)
         for i in range(len(output.encrypted_data_keys)):

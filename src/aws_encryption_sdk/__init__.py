@@ -164,7 +164,7 @@ class EncryptionSDKClient(object):
             ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
             ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
             ... ])
-            >>> my_ciphertext, encryptor_header = client.decrypt(
+            >>> my_plaintext, decryptor_header = client.decrypt(
             ...     source=my_ciphertext,
             ...     key_provider=kms_key_provider
             ... )
@@ -186,8 +186,8 @@ class EncryptionSDKClient(object):
                 to the end of the stream and tell() to find the length of source data.
 
         :param dict encryption_context: Dictionary defining encryption context to validate
-            on decrypt. This is ONLY validated on decrypt if using the required encryption
-            context CMM from the aws-cryptographic-materialproviders library.
+            on decrypt. This is ONLY validated on decrypt if using a CMM from the
+            aws-cryptographic-material-providers library.
         :param int max_body_length: Maximum frame size (or content length for non-framed messages)
             in bytes to read from ciphertext message.
         :returns: Tuple containing the decrypted plaintext and the message header object

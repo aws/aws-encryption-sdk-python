@@ -7,7 +7,14 @@ The aws-cryptographic-materials-library MUST be installed to use this module.
 # pylint should pass even if the MPL isn't installed
 # Also thinks these imports aren't used if it can't import them
 # noqa pylint: disable=import-error,unused-import
+<<<<<<< HEAD
 from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
+=======
+from aws_cryptographic_materialproviders.mpl.errors import (
+    AwsCryptographicMaterialProvidersException,
+    CollectionOfErrors,
+)
+>>>>>>> mpl-reviewed
 from aws_cryptographic_materialproviders.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
     CommitmentPolicyESDK as MPL_CommitmentPolicyESDK,
@@ -36,7 +43,11 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
     """
     In instances where encryption materials are provided by an implementation of the MPL's
     `aws_cryptographic_materialproviders.mpl.references.MPL_ICryptographicMaterialsManager`,
+<<<<<<< HEAD
     this maps the ESDK CMM interfaces to the MPL CMM.
+=======
+    this maps the ESDK-Python CMM interfaces to the MPL CMM.
+>>>>>>> mpl-reviewed
     """
 
     mpl_cmm: 'MPL_ICryptographicMaterialsManager'
@@ -78,6 +89,7 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
     def _native_to_mpl_get_encryption_materials(
         request: EncryptionMaterialsRequest
     ) -> 'MPL_GetEncryptionMaterialsInput':
+<<<<<<< HEAD
         commitment_policy = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(
             request.commitment_policy
         )
@@ -88,10 +100,23 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
         }
         if request.algorithm is not None:
             mpl_input_kwargs["algorithm_suite_id"] = \
+=======
+        output_kwargs = {
+            "encryption_context": request.encryption_context,
+            "max_plaintext_length": request.plaintext_length,
+            "commitment_policy": CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(
+                request.commitment_policy
+            )
+        }
+
+        if request.algorithm is not None:
+            output_kwargs["algorithm_suite_id"] = \
+>>>>>>> mpl-reviewed
                 CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
                     request.algorithm.algorithm_id
             )
 
+<<<<<<< HEAD
         output: MPL_GetEncryptionMaterialsInput = MPL_GetEncryptionMaterialsInput(
             **mpl_input_kwargs
         )
@@ -99,6 +124,12 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
 
     @staticmethod
     def _native_to_mpl_commmitment_policy(
+=======
+        return MPL_GetEncryptionMaterialsInput(**output_kwargs)
+
+    @staticmethod
+    def _native_to_mpl_commitment_policy(
+>>>>>>> mpl-reviewed
         native_commitment_policy: CommitmentPolicy
     ) -> 'MPL_CommitmentPolicyESDK':
         if native_commitment_policy == CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT:
@@ -123,7 +154,11 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
                 CryptoMaterialsManagerFromMPL._create_mpl_decrypt_materials_input_from_request(request)
             mpl_output: 'MPL_DecryptMaterialsOutput' = self.mpl_cmm.decrypt_materials(mpl_input)
             return DecryptionMaterialsFromMPL(mpl_output.decryption_materials)
+<<<<<<< HEAD
         except AwsCryptographicMaterialProvidersException as mpl_exception:
+=======
+        except (AwsCryptographicMaterialProvidersException, CollectionOfErrors) as mpl_exception:
+>>>>>>> mpl-reviewed
             # Wrap MPL error into the ESDK error type
             # so customers only have to catch ESDK error types.
             raise AWSEncryptionSDKClientError(mpl_exception)
@@ -147,7 +182,11 @@ class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
             algorithm_suite_id=CryptoMaterialsManagerFromMPL._native_algorithm_id_to_mpl_algorithm_id(
                 request.algorithm.algorithm_id
             ),
+<<<<<<< HEAD
             commitment_policy=CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(
+=======
+            commitment_policy=CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(
+>>>>>>> mpl-reviewed
                 request.commitment_policy
             ),
             encrypted_data_keys=list_edks,
