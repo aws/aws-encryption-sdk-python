@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the KMS MRK (multi-region key) Keyring
+This example sets up the AWS KMS MRK (multi-region key) Keyring
 
 The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
 create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).

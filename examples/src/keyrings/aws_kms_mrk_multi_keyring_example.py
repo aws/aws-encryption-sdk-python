@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the KMS MRK Multi Keyring
+This example sets up the AWS KMS MRK Multi Keyring
 
 The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
 create, encrypt, and decrypt data keys with AWS KMS MRK keys.
@@ -51,7 +51,7 @@ def encrypt_and_decrypt_with_keyring(
     mrk_key_id: str,
     kms_key_id: str,
     mrk_replica_key_id: str,
-    second_region: str
+    mrk_replica_decrypt_region: str
 ):
     """Demonstrate an encrypt/decrypt cycle using a Multi-Keyring made
        up of multiple AWS KMS MRK Keyrings
@@ -59,7 +59,7 @@ def encrypt_and_decrypt_with_keyring(
     Usage: encrypt_and_decrypt_with_keyring(mrk_key_id,
                                             kms_key_id,
                                             mrk_replica_key_id,
-                                            second_region)
+                                            mrk_replica_decrypt_region)
     :param mrk_key_id: KMS Key identifier for an AWS KMS multi-region key (MRK) located in your
     default region
     :type mrk_key_id: string
@@ -69,8 +69,8 @@ def encrypt_and_decrypt_with_keyring(
     :param mrk_replica_key_id: KMS Key identifier for an MRK that is a replica of the
     `mrk_key_id` in a second region.
     :type mrk_replica_key_id: string
-    :param second_region: The second region where the MRK replica is located
-    :type second_region: string
+    :param mrk_replica_decrypt_region: The second region where the MRK replica is located
+    :type mrk_replica_decrypt_region: string
 
     For more information on KMS Key identifiers for multi-region keys, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -151,8 +151,8 @@ def encrypt_and_decrypt_with_keyring(
 
     # 9. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
 
-    # Create a boto3 client for KMS in the second region.
-    second_region_kms_client = boto3.client('kms', region_name=second_region)
+    # Create a boto3 client for KMS in the second region which is the region for mrk_replica_key_id.
+    second_region_kms_client = boto3.client('kms', region_name=mrk_replica_decrypt_region)
 
     second_region_mrk_keyring_input: CreateAwsKmsMrkKeyringInput = CreateAwsKmsMrkKeyringInput(
         kms_key_id=mrk_replica_key_id,
