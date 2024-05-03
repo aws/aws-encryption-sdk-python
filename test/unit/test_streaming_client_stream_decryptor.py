@@ -195,12 +195,8 @@ class TestStreamDecryptor(object):
         test_decryptor._stream_length = len(VALUES["data_128"])
 
         # Mock: hasattr(self.config, "encryption_context") returns False
-<<<<<<< HEAD
-        del test_decryptor.config.encryption_context
-=======
         if hasattr(test_decryptor.config, "encryption_context"):
             del test_decryptor.config.encryption_context
->>>>>>> mpl-reviewed
 
         test_header, test_header_auth = test_decryptor._read_header()
 
