@@ -4,20 +4,28 @@
 This example sets up the KMS MRK Multi Keyring
 
 The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
-create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).
-This example creates a KMS MRK Multi Keyring using an mrk_key_id (generator) and
-a kms_key_id, and then encrypts a custom input EXAMPLE_DATA with an encryption context.
+create, encrypt, and decrypt data keys with AWS KMS MRK keys.
+The KMS MRK multi-keyring consists of one or more individual keyrings of the
+same or different type. The keys can either be regular KMS keys or MRKs.
+The effect is like using several keyrings in a series.
+
+This example creates a AwsKmsMrkMultiKeyring using an mrk_key_id (generator) and a kms_key_id
+as a child key, and then encrypts a custom input EXAMPLE_DATA with an encryption context.
+Either KMS Key individually is capable of decrypting data encrypted under this keyring.
 This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
 4. Ciphertext can be decrypted using an AwsKmsMrkKeyring containing a replica of the
-   MRK key (from the multi-keyring used for encryption) copied from the first region into
+   MRK (from the multi-keyring used for encryption) copied from the first region into
    the second region
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 For more information on how to use KMS keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
+
+For more info on KMS MRK (multi-region keys), see the KMS documentation:
+https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 """
 import sys
 
@@ -56,7 +64,7 @@ def encrypt_and_decrypt_with_keyring(
     default region
     :type mrk_key_id: string
     :param kms_key_id: KMS Key identifier for a KMS key, possibly located in a different region
-    than the MRK key
+    than the MRK
     :type kms_key_id: string
     :param mrk_replica_key_id: KMS Key identifier for an MRK that is a replica of the
     `mrk_key_id` in a second region.
@@ -64,7 +72,7 @@ def encrypt_and_decrypt_with_keyring(
     :param second_region: The second region where the MRK replica is located
     :type second_region: string
 
-    For more information on KMS Key identifiers, see
+    For more information on KMS Key identifiers for multi-region keys, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
     # 1. Instantiate the encryption SDK client.
@@ -120,8 +128,8 @@ def encrypt_and_decrypt_with_keyring(
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 6. Decrypt your encrypted data using the same AwsKmsMrkMultiKeyring you used on encrypt.
-    # It will decrypt the data using the generator KMS MRK key since that is the first available
-    # KMS key on the keyring that is capable of decrypting the data.
+    # It will decrypt the data using the generator key (in this case, the MRK), since that is
+    # the first available KMS key on the keyring that is capable of decrypting the data.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
         keyring=kms_mrk_multi_keyring
