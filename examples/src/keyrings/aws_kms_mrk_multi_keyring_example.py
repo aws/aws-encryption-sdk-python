@@ -5,7 +5,7 @@ This example sets up the KMS MRK Multi Keyring
 
 KMS MRK keyring interacts with AWS Key Management Service (AWS KMS) to create, encrypt,
 and decrypt data keys using AWS KMS defined Customer Master Keys (CMKs).
-This example creates a KMS MRK Keyring and then encrypts a custom input EXAMPLE_DATA
+This example creates a KMS MRK Multi Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
@@ -51,7 +51,7 @@ def encrypt_and_decrypt_with_keyring(
                                             kms_key_id,
                                             mrk_replica_key_id,
                                             second_region)
-    :param mrk_key_id: KMS Key identifier for an AWS KMS multi-Region key (MRK) located in your
+    :param mrk_key_id: KMS Key identifier for an AWS KMS multi-region key (MRK) located in your
     default region
     :type mrk_key_id: string
     :param kms_key_id: KMS Key identifier for a KMS key, possibly located in a different region
@@ -119,7 +119,7 @@ def encrypt_and_decrypt_with_keyring(
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 6. Decrypt your encrypted data using the same AwsKmsMrkMultiKeyring you used on encrypt.
-    # It will decrypt the data using the generator KMS key since that is the first available
+    # It will decrypt the data using the generator KMS MRK key since that is the first available
     # KMS key on the keyring that is capable of decrypting the data.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
@@ -138,7 +138,7 @@ def encrypt_and_decrypt_with_keyring(
 
     # Demonstrate that a single AwsKmsMrkKeyring configured with a replica of the MRK from the
     # multi-keyring used to encrypt the data is also capable of decrypting the data.
-    # Not shown in this example: A KMS Keyring created with `kmsKeyArn` could also
+    # Not shown in this example: A KMS Keyring created with `kms_key_id` could also
     # decrypt this message.
     # (This is an example for demonstration; you do not need to do this in your own code.)
 

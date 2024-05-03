@@ -1,7 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the KMS MRK Keyring
+This example sets up the KMS MRK (multi-region key) Keyring
 
 KMS MRK keyring interacts with AWS Key Management Service (AWS KMS) to create, encrypt,
 and decrypt data keys using AWS KMS defined Customer Master Keys (CMKs).
@@ -17,6 +17,9 @@ of the same or a different type.
 
 For more information on how to use KMS keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
+
+For more info on KMS MRK (multi-region keys), see the KMS documentation:
+https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 """
 import sys
 
@@ -118,8 +121,6 @@ def encrypt_and_decrypt_with_keyring(
 
     # 6. Create a keyring that will decrypt your data, using the same KMS MRK key replicated
     # to the second region. This example assumes you have already replicated your key
-    # For more info on this, see the KMS documentation:
-    # https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 
     # Create a boto3 client for KMS in the second region.
     decrypt_kms_client = boto3.client('kms', region_name=decrypt_region)
