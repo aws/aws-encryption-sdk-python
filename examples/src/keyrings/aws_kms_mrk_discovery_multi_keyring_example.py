@@ -40,7 +40,11 @@ import sys
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsMrkKeyringInput, CreateAwsKmsMrkDiscoveryMultiKeyringInput, DiscoveryFilter
+from aws_cryptographic_materialproviders.mpl.models import (
+    CreateAwsKmsMrkDiscoveryMultiKeyringInput,
+    CreateAwsKmsMrkKeyringInput,
+    DiscoveryFilter,
+)
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
