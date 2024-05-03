@@ -1,7 +1,9 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the AWS KMS MRK (multi-region key) Discovery Keyring
+This example sets up the AWS KMS MRK (multi-region key) Discovery Multi Keyring
+
+AWS KMS MRK Discovery Multi Keyring is composed of multiple MRK discovery keyrings.
 
 AWS KMS discovery keyring is an AWS KMS keyring that doesn't specify any wrapping keys.
 The AWS Encryption SDK provides a standard AWS KMS discovery keyring and a discovery keyring
@@ -18,7 +20,7 @@ The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
 create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).
 This example creates a KMS MRK Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context. This encrypted ciphertext is then decrypted using an
-MRK Discovery keyring. This example also includes some sanity checks for demonstration:
+MRK Discovery Multi keyring. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
@@ -38,7 +40,7 @@ import sys
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsMrkKeyringInput, CreateAwsKmsMrkDiscoveryKeyringInput, DiscoveryFilter
+from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsMrkKeyringInput, CreateAwsKmsMrkDiscoveryMultiKeyringInput, DiscoveryFilter
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict
 
@@ -55,30 +57,26 @@ EXAMPLE_DATA: bytes = b"Hello World"
 
 def encrypt_and_decrypt_with_keyring(
     mrk_key_id_encrypt: str,
-    aws_account_id: str,
     mrk_encrypt_region: str,
-    mrk_replica_decrypt_region: str
+    aws_account_id: str,
+    aws_regions: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS MRK Discovery keyring.
+    """Demonstrate an encrypt/decrypt cycle using an AWS KMS MRK Discovery Multi keyring.
 
     Usage: encrypt_and_decrypt_with_keyring(mrk_key_id_encrypt,
-                                            aws_account_id,
                                             mrk_encrypt_region,
-                                            mrk_replica_decrypt_region)
+                                            aws_account_id,
+                                            aws_regions)
     :param mrk_key_id_encrypt: KMS Key identifier for the KMS key located in your
     default region, which you want to use for encryption of your data keys
     :type mrk_key_id_encrypt: string
+    :param mrk_encrypt_region: AWS Region for encryption of your data keys. This should
+    be the region of the mrk_key_id_encrypt
+    :type mrk_encrypt_region: string
     :param aws_account_id: AWS Account ID to use in the discovery filter
     :type aws_account_id: string
-    :param mrk_encrypt_region: AWS Region for encryption of your data keys. This should
-    be the region of the mrk_key_id_encrypt.
-    :type mrk_encrypt_region: string
-    :param mrk_replica_decrypt_region: AWS Region for decryption of your data keys.
-    This example assumes you have already replicated your mrk_key_id_encrypt to the
-    region mrk_replica_decrypt_region. Therfore, this mrk_replica_decrypt_region should
-    be the region of the mrk replica key id. However, since we are using a discovery keyring,
-    we don't need to provide the mrk replica key id
-    :type mrk_replica_decrypt_region: string
+    :param aws_regions: AWS Region to use in the the discovery filter
+    :type aws_regions: string
 
     For more information on KMS Key identifiers for multi-region keys, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -139,30 +137,41 @@ def encrypt_and_decrypt_with_keyring(
     assert ciphertext != EXAMPLE_DATA, \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
-    # 6. Now create a Discovery keyring to use for decryption.
-    # In order to illustrate the MRK behavior of this keyring, we configure
-    # the keyring to use the second KMS region where the MRK (mrk_key_id_encrypt) is replicated to.
-    # This example assumes you have already replicated your key, but since we
-    # are using a discovery keyring, we don't need to provide the mrk replica key id
-
-    # Create a boto3 client for KMS in the second region.
-    decrypt_kms_client = boto3.client('kms', region_name=mrk_replica_decrypt_region)
-
-    decrypt_discovery_keyring_input: CreateAwsKmsMrkDiscoveryKeyringInput = \
-        CreateAwsKmsMrkDiscoveryKeyringInput(
-            kms_client=decrypt_kms_client,
-            region=mrk_replica_decrypt_region,
+    # 6. Now create a MRK Discovery Multi Keyring to use for decryption.
+    # We'll add a discovery filter to limit the set of encrypted data keys
+    # we are willing to decrypt to only ones created by KMS keys in select
+    # accounts and the partition `aws`.
+    # MRK Discovery keyrings also filter encrypted data keys by the region
+    # the keyring is created with.
+    decrypt_discovery_multi_keyring_input: CreateAwsKmsMrkDiscoveryMultiKeyringInput = \
+        CreateAwsKmsMrkDiscoveryMultiKeyringInput(
+            regions=aws_regions,
             discovery_filter=DiscoveryFilter(
                 account_ids=[aws_account_id],
                 partition="aws"
             )
         )
 
-    decrypt_discovery_keyring: IKeyring = mat_prov.create_aws_kms_mrk_discovery_keyring(
-        input=decrypt_discovery_keyring_input
+    # This is a Multi Keyring composed of Discovery Keyrings.
+    # There is a keyring for every region in `regions`.
+    # All the keyrings have the same Discovery Filter.
+    # Each keyring has its own KMS Client, which is created for the keyring's region.
+    decrypt_discovery_keyring: IKeyring = mat_prov.create_aws_kms_mrk_discovery_multi_keyring(
+        input=decrypt_discovery_multi_keyring_input
     )
 
-    # 7. Decrypt your encrypted data using the discovery keyring.
+    # 7. Decrypt your encrypted data using the discovery multi keyring.
+    # On Decrypt, the header of the encrypted message (ciphertext) will be parsed.
+    # The header contains the Encrypted Data Keys (EDKs), which, if the EDK
+    # was encrypted by a KMS Keyring, includes the KMS Key ARN.
+    # For each member of the Multi Keyring, every EDK will try to be decrypted until a decryption
+    # is successful.
+    # Since every member of the Multi Keyring is a Discovery Keyring:
+    #   Each Keyring will filter the EDKs by the Discovery Filter and the Keyring's region.
+    #      For each filtered EDK, the keyring will attempt decryption with the keyring's client.
+    # All of this is done serially, until a success occurs or all keyrings have failed
+    # all (filtered) EDKs. KMS MRK Discovery Keyrings will attempt to decrypt
+    # Multi Region Keys (MRKs) and regular KMS Keys.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
         keyring=decrypt_discovery_keyring
