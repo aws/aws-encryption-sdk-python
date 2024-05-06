@@ -125,7 +125,8 @@ class AwsKmsHierarchyKeySpec(KeySpec):
 
     type_name = attr.ib(validator=membership_validator(("static-branch-key",)))
 
-    def __init__(self, encrypt, decrypt, type_name, key_id, branch_key_version, branch_key, beacon_key):  # noqa=D107,R0913
+    # noqa pylint: disable=line-too-long,too-many-arguments
+    def __init__(self, encrypt, decrypt, type_name, key_id, branch_key_version, branch_key, beacon_key):  # noqa=D107
         # type: (bool, bool, str, str) -> None
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
