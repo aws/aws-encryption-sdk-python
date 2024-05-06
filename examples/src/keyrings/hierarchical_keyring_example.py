@@ -53,7 +53,7 @@ import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
-from .example_branch_key_id_supplier import ExampleBranchKeyIdSupplier
+from .branch_key_id_supplier_example import ExampleBranchKeyIdSupplier
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 module_root_dir = '/'.join(__file__.split("/")[:-1])
