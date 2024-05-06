@@ -3,16 +3,17 @@
 """
 This example sets up the AWS KMS MRK (multi-region key) Discovery Keyring
 
-AWS KMS discovery keyring is an AWS KMS keyring that doesn't specify any wrapping keys.
-The AWS Encryption SDK provides a standard AWS KMS discovery keyring and a discovery keyring
-for AWS KMS multi-Region keys. Because it doesn't specify any wrapping keys, a discovery keyring
-can't encrypt data. If you use a discovery keyring to encrypt data, alone or in a multi-keyring,
-the encrypt operation fails.
+The AWS KMS discovery keyring is an AWS KMS keyring that doesn't specify any wrapping keys.
 
 When decrypting, an MRK discovery keyring allows the AWS Encryption SDK to ask AWS KMS to decrypt
 any encrypted data key by using the AWS KMS MRK that encrypted it, regardless of who owns or
 has access to that AWS KMS key. The call succeeds only when the caller has kms:Decrypt
 permission on the AWS KMS MRK.
+
+The AWS Encryption SDK provides a standard AWS KMS discovery keyring and a discovery keyring
+for AWS KMS multi-Region keys. Because it doesn't specify any wrapping keys, a discovery keyring
+can't encrypt data. If you use a discovery keyring to encrypt data, alone or in a multi-keyring,
+the encrypt operation fails.
 
 The AWS Key Management Service (AWS KMS) MRK keyring interacts with AWS KMS to
 create, encrypt, and decrypt data keys with multi-region AWS KMS keys (MRKs).
@@ -27,7 +28,7 @@ These sanity checks are for demonstration in the example only. You do not need t
 For information about using multi-Region keys with the AWS Encryption SDK, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/configure.html#config-mrks
 
-For more info on KMS MRK (multi-region keys), see the KMS documentation:
+For more info on KMS MRKs (multi-region keys), see the KMS documentation:
 https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 
 For more information on how to use KMS Discovery keyrings, see
@@ -63,8 +64,9 @@ def encrypt_and_decrypt_with_keyring(
     mrk_encrypt_region: str,
     mrk_replica_decrypt_region: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS MRK Discovery keyring.
+    """Demonstrate decryption using an AWS KMS MRK Discovery keyring.
 
+    Since discovery keyrings cannot be used to encrypt, we use KMS MRK keyring for encryption
     Usage: encrypt_and_decrypt_with_keyring(mrk_key_id_encrypt,
                                             aws_account_id,
                                             mrk_encrypt_region,
@@ -79,9 +81,9 @@ def encrypt_and_decrypt_with_keyring(
     :type mrk_encrypt_region: string
     :param mrk_replica_decrypt_region: AWS Region for decryption of your data keys.
     This example assumes you have already replicated your mrk_key_id_encrypt to the
-    region mrk_replica_decrypt_region. Therfore, this mrk_replica_decrypt_region should
-    be the region of the mrk replica key id. However, since we are using a discovery keyring,
-    we don't need to provide the mrk replica key id
+    region mrk_replica_decrypt_region. Therefore, this mrk_replica_decrypt_region should
+    be the region of the MRK replica. However, since we are using a discovery keyring,
+    we don't need to provide the replica MRK ID.
     :type mrk_replica_decrypt_region: string
 
     For more information on KMS Key identifiers for multi-region keys, see
