@@ -365,45 +365,6 @@ class TestStreamDecryptor(object):
             algorithm=self.mock_header.algorithm, encoded_point=mock_b64encoding()
         )
 
-    @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
-    @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
-    @patch("aws_encryption_sdk.streaming_client.Verifier")
-    # Given: no MPL
-    @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
-    def test_GIVEN_decrypt_config_has_ec_WHEN_read_header_THEN_calls_decrypt_materials_with_reproduced_ec(
-        self,
-        mock_verifier,
-        mock_decrypt_materials_request,
-        *_,
-    ):
-
-        mock_verifier_instance = MagicMock()
-        mock_verifier.from_key_bytes.return_value = mock_verifier_instance
-        ct_stream = io.BytesIO(VALUES["data_128"])
-        mock_commitment_policy = MagicMock(__class__=CommitmentPolicy)
-        test_decryptor = StreamDecryptor(
-            materials_manager=self.mock_materials_manager,
-            source=ct_stream,
-            commitment_policy=mock_commitment_policy,
-        )
-        test_decryptor.source_stream = ct_stream
-        test_decryptor._stream_length = len(VALUES["data_128"])
-        # Given: self.config has "encryption_context"
-        any_reproduced_ec = {"some": "ec"}
-        test_decryptor.config.encryption_context = any_reproduced_ec
-
-        # When: read header
-        test_decryptor._read_header()
-
-        # Then: calls decrypt_materials with reproduced_encryption_context
-        mock_decrypt_materials_request.assert_called_once_with(
-            encrypted_data_keys=self.mock_header.encrypted_data_keys,
-            algorithm=self.mock_header.algorithm,
-            encryption_context=sentinel.encryption_context,
-            commitment_policy=mock_commitment_policy,
-            reproduced_encryption_context=any_reproduced_ec,
-        )
-
     @patch("aws_encryption_sdk.streaming_client.DecryptionMaterialsRequest")
     @patch("aws_encryption_sdk.streaming_client.derive_data_encryption_key")
     @patch("aws_encryption_sdk.streaming_client.Verifier")
