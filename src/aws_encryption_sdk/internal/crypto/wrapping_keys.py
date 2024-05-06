@@ -102,7 +102,7 @@ class WrappingKey(object):
                 return self._wrapping_key.decrypt(
                     ciphertext=encrypted_wrapped_data_key.ciphertext, padding=self.wrapping_algorithm.padding
                 )
-            except ValueError as e:
+            except ValueError:
                 raise IncorrectMasterKeyError("_wrapping_key cannot decrypt provided ciphertext")
         serialized_encryption_context = serialize_encryption_context(encryption_context=encryption_context)
         return decrypt(
