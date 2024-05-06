@@ -55,8 +55,8 @@ malesuada sed velit.'''
     ciphertext_filename = test_keyrings_directory + '/my-encrypted-data.ct'
 
     # Define the filename of the decrypted data.
-    new_plaintext_filename = test_keyrings_directory + '/my-decrypted-data.dat'
+    decrypted_filename = test_keyrings_directory + '/my-decrypted-data.dat'
 
     encrypt_and_decrypt_with_keyring(plaintext_filename,
                                      ciphertext_filename,
-                                     new_plaintext_filename)
+                                     decrypted_filename)

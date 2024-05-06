@@ -10,7 +10,7 @@ when you need to provide the wrapping key and encrypt the data keys locally or o
 
 This example creates a Raw AES Keyring and then encrypts an input stream from the file
 `plaintext_filename` with an encryption context to an output (encrypted) file `ciphertext_filename`.
-It then decrypts the ciphertext from `ciphertext_filename` to a new file `new_plaintext_filename`.
+It then decrypts the ciphertext from `ciphertext_filename` to a new file `decrypted_filename`.
 This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
@@ -46,11 +46,19 @@ sys.path.append(MODULE_ROOT_DIR)
 def encrypt_and_decrypt_with_keyring(
     plaintext_filename: str,
     ciphertext_filename: str,
-    new_plaintext_filename: str
+    decrypted_filename: str
 ):
     """Demonstrate a streaming encrypt/decrypt cycle using a Raw AES keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring()
+    Usage: encrypt_and_decrypt_with_keyring(plaintext_filename
+                                            ciphertext_filename
+                                            decrypted_filename)
+    :param plaintext_filename: filename of the plaintext data
+    :type plaintext_filename: string
+    :param ciphertext_filename: filename of the ciphertext data
+    :type ciphertext_filename: string
+    :param decrypted_filename: filename of the decrypted data
+    :type decrypted_filename: string
     """
     # 1. Instantiate the encryption SDK client.
     # This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
@@ -122,7 +130,7 @@ def encrypt_and_decrypt_with_keyring(
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 8. Decrypt your encrypted data using the same keyring you used on encrypt.
-    with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
+    with open(ciphertext_filename, 'rb') as ct_file, open(decrypted_filename, 'wb') as pt_file:
         with client.stream(
             mode='d',
             source=ct_file,
@@ -140,5 +148,5 @@ def encrypt_and_decrypt_with_keyring(
 
     # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert filecmp.cmp(plaintext_filename, new_plaintext_filename), \
+    assert filecmp.cmp(plaintext_filename, decrypted_filename), \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
