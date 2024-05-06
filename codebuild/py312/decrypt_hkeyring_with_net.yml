@@ -22,6 +22,12 @@ phases:
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_manifest.zip 312_hkeyring_manifest.zip
       - unzip 312_hkeyring_manifest.zip
 
+      # Approach 1: "The Right Way":
+
+      # TODO: Get published NET TestVectors runner
+
+      # Approach 2: "The Quick Way:"
+
       # Clone SDK-Dafny repo to get test vectors runner
       - git clone git@github.com:aws/aws-encryption-sdk-dafny.git
 
