@@ -40,6 +40,14 @@ from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 
 from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES, MasterKeySpec
 
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+
+    from awses_test_vectors.internal.mypy_types import MASTER_KEY_SPEC  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
 KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy", )
 
 
@@ -63,7 +71,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
 
     @classmethod
     def from_scenario(cls, spec):
-        # type: (MASTER_KEY_SPEC) -> MasterKeySpec
+        # type: (MASTER_KEY_SPEC) -> KeyringSpec
         """Load from a keyring specification.
 
         :param dict spec: Master key specification JSON
