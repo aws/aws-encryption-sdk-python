@@ -15,34 +15,30 @@
 This REQUIRES the aws-cryptographic-material-providers library.
 """
 import json
-import attr
+
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
 import _dafny
+import attr
 import UTF8
+from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
+from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
+        aws_cryptography_materialproviderstestvectorkeys.models import (
+    GetKeyDescriptionInput,
+    GetKeyDescriptionOutput,
+    TestVectorKeyringInput,
+)
 
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module
 from awses_test_vectors.internal.mpl.keyvectors_provider import KeyVectorsProvider
-from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
-from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES
-
-
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-    aws_cryptography_materialproviderstestvectorkeys.models import (
-        GetKeyDescriptionInput,
-        GetKeyDescriptionOutput,
-        TestVectorKeyringInput,
-    )
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
-from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
-
 from awses_test_vectors.internal.util import membership_validator
+from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 
-from .master_key import MasterKeySpec
-
+from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES, MasterKeySpec
 
 KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy", )
 
@@ -183,21 +179,6 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
                         keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
 
         return keyring
-
-
-    def _kms_hierarchy_keyring_from_spec(self, keys):
-        # type: (KeysManifest) -> AwsKmsHierarchyKeyring
-        """Build an AWS KMS hierarchy keyring using this specification.
-
-        :param KeySpec key_spec: Key specification to use with this master key
-        :return: AWS KMS hierarchy keyring based on this specification
-        :rtype: AwsKmsHierarchyKeyring
-        :raises TypeError: if this is not an AWS KMS master key specification
-        """
-        if not self.type_name == "aws-kms-hierarchy":
-            raise TypeError("This is not an AWS KMS hierarchy key")
-
-        return keyring_from_master_key_specs(keys, )
 
 
 def keyring_from_master_key_specs(keys_uri, master_key_specs, mode):

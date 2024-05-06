@@ -125,7 +125,7 @@ class AwsKmsHierarchyKeySpec(KeySpec):
 
     type_name = attr.ib(validator=membership_validator(("static-branch-key",)))
 
-    def __init__(self, encrypt, decrypt, type_name, key_id, branch_key_version, branch_key, beacon_key):  # noqa=D107
+    def __init__(self, encrypt, decrypt, type_name, key_id, branch_key_version, branch_key, beacon_key):  # noqa=D107,R0913
         # type: (bool, bool, str, str) -> None
         # Workaround pending resolution of attrs/mypy interaction.
         # https://github.com/python/mypy/issues/2088
@@ -251,7 +251,7 @@ def key_from_manifest_spec(key_spec):
         key_id = key_spec["key-id"]  # type: str
         return AwsKmsKeySpec(encrypt=encrypt, decrypt=decrypt, type_name=type_name, key_id=key_id)
 
-    elif key_spec["type"] == "static-branch-key":
+    if key_spec["type"] == "static-branch-key":
         branch_key_version = key_spec["branchKeyVersion"]  # type: str
         branch_key = key_spec["branchKey"]  # type: str
         beacon_key = key_spec["beaconKey"]  # type: str

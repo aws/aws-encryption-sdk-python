@@ -561,6 +561,7 @@ class MessageDecryptionGenerationManifest(object):
 
     @classmethod
     def from_file(cls, input_file, keyrings):
+        # noqa: R0914
         # type: (IO) -> MessageDecryptionGenerationManifest
         """Load from a file containing a full message encrypt manifest.
 
@@ -592,7 +593,7 @@ class MessageDecryptionGenerationManifest(object):
                     scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=keys_abs_path,
                 )
             except NotImplementedError as e:
-                raise e
+                continue
         return cls(
             version=raw_manifest["manifest"]["version"],
             keys=keys,

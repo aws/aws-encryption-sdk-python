@@ -366,7 +366,7 @@ class MessageDecryptionTestScenario(object):
             spec["description"] = self.description
         spec["cmm"] = self.cmm_type
         spec["encryption-context"] = self.encryption_context
-        
+
         return spec
 
     def _one_shot_decrypt(self):
