@@ -108,26 +108,28 @@ def encrypt_and_decrypt_with_keyring(
     }
 
     # 8. Decrypt the data
-    plaintext_bytes_A, _ = client.decrypt(
+    plaintext_bytes_a, _ = client.decrypt(
         source=ciphertext,
         materials_manager=required_ec_cmm,
         encryption_context=reproduced_encryption_context
     )
-    assert plaintext_bytes_A == EXAMPLE_DATA
+    assert plaintext_bytes_a == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # We can also decrypt using the underlying CMM,
     # but must also provide the reproduced encryption context
-    plaintext_bytes_A, _ = client.decrypt(
+    plaintext_bytes_a, _ = client.decrypt(
         source=ciphertext,
         materials_manager=underlying_cmm,
         encryption_context=reproduced_encryption_context
     )
-    assert plaintext_bytes_A == EXAMPLE_DATA
+    assert plaintext_bytes_a == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # 9. Extra: Demonstrate that if we don't provide the reproduced encryption context,
     #    decryption will fail.
     try:
-        plaintext_bytes_A, _ = client.decrypt(
+        plaintext_bytes_a, _ = client.decrypt(
             source=ciphertext,
             materials_manager=required_ec_cmm,
             # No reproduced encryption context for required EC CMM-produced message makes decryption fail.
@@ -143,7 +145,7 @@ def encrypt_and_decrypt_with_keyring(
     # Same for the default CMM;
     # If we don't provide the reproduced encryption context, decryption will fail.
     try:
-        plaintext_bytes_A, _ = client.decrypt(
+        plaintext_bytes_a, _ = client.decrypt(
             source=ciphertext,
             materials_manager=required_ec_cmm,
             # No reproduced encryption context for required EC CMM-produced message makes decryption fail.

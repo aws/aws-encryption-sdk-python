@@ -101,13 +101,13 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 4. Call CreateKey to create two new active branch keys
-    branch_key_id_A: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
-    branch_key_id_B: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
+    branch_key_id_a: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
+    branch_key_id_b: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
 
     # 5. Create a branch key supplier that maps the branch key id to a more readable format
     branch_key_id_supplier: IBranchKeyIdSupplier = ExampleBranchKeyIdSupplier(
-        tenant_1_id=branch_key_id_A,
-        tenant_2_id=branch_key_id_B,
+        tenant_1_id=branch_key_id_a,
+        tenant_2_id=branch_key_id_b,
     )
 
     # 6. Create the Hierarchical Keyring.
@@ -135,7 +135,7 @@ def encrypt_and_decrypt_with_keyring(
     #    be used to encrypt data.
 
     # Create encryption context for TenantA
-    encryption_context_A: Dict[str, str] = {
+    encryption_context_a: Dict[str, str] = {
         "tenant": "TenantA",
         "encryption": "context",
         "is not": "secret",
@@ -145,7 +145,7 @@ def encrypt_and_decrypt_with_keyring(
     }
 
     # Create encryption context for TenantB
-    encryption_context_B: Dict[str, str] = {
+    encryption_context_b: Dict[str, str] = {
         "tenant": "TenantB",
         "encryption": "context",
         "is not": "secret",
@@ -155,22 +155,22 @@ def encrypt_and_decrypt_with_keyring(
     }
 
     # 8. Encrypt the data with encryptionContextA & encryptionContextB
-    ciphertext_A, _ = client.encrypt(
+    ciphertext_a, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=hierarchical_keyring,
-        encryption_context=encryption_context_A
+        encryption_context=encryption_context_a
     )
-    ciphertext_B, _ = client.encrypt(
+    ciphertext_b, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=hierarchical_keyring,
-        encryption_context=encryption_context_B
+        encryption_context=encryption_context_b
     )
 
     # 9. To attest that TenantKeyB cannot decrypt a message written by TenantKeyA,
     #    let's construct more restrictive hierarchical keyrings.
-    keyring_input_A: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
+    keyring_input_a: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
         key_store=keystore,
-        branch_key_id=branch_key_id_A,
+        branch_key_id=branch_key_id_a,
         ttl_seconds=600,
         cache=CacheTypeDefault(
             value=DefaultCache(
@@ -179,13 +179,13 @@ def encrypt_and_decrypt_with_keyring(
         ),
     )
 
-    hierarchical_keyring_A: IKeyring = mat_prov.create_aws_kms_hierarchical_keyring(
-        input=keyring_input_A
+    hierarchical_keyring_a: IKeyring = mat_prov.create_aws_kms_hierarchical_keyring(
+        input=keyring_input_a
     )
 
-    keyring_input_B: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
+    keyring_input_b: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
         key_store=keystore,
-        branch_key_id=branch_key_id_B,
+        branch_key_id=branch_key_id_b,
         ttl_seconds=600,
         cache=CacheTypeDefault(
             value=DefaultCache(
@@ -194,8 +194,8 @@ def encrypt_and_decrypt_with_keyring(
         ),
     )
 
-    hierarchical_keyring_B: IKeyring = mat_prov.create_aws_kms_hierarchical_keyring(
-        input=keyring_input_B
+    hierarchical_keyring_b: IKeyring = mat_prov.create_aws_kms_hierarchical_keyring(
+        input=keyring_input_b
     )
 
     # 10. Demonstrate that data encrypted by one tenant's key
@@ -205,8 +205,8 @@ def encrypt_and_decrypt_with_keyring(
     # This will fail and raise a AWSEncryptionSDKClientError, which we swallow ONLY for demonstration purposes.
     try:
         client.decrypt(
-            source=ciphertext_A,
-            keyring=hierarchical_keyring_B
+            source=ciphertext_a,
+            keyring=hierarchical_keyring_b
         )
     except AWSEncryptionSDKClientError:
         pass
@@ -215,21 +215,23 @@ def encrypt_and_decrypt_with_keyring(
     # This will fail and raise a AWSEncryptionSDKClientError, which we swallow ONLY for demonstration purposes.
     try:
         client.decrypt(
-            source=ciphertext_B,
-            keyring=hierarchical_keyring_A
+            source=ciphertext_b,
+            keyring=hierarchical_keyring_a
         )
     except AWSEncryptionSDKClientError:
         pass
 
     # 10. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
     #     and that the decrypted data matches the input data.
-    plaintext_bytes_A, _ = client.decrypt(
-        source=ciphertext_A,
-        keyring=hierarchical_keyring_A
+    plaintext_bytes_a, _ = client.decrypt(
+        source=ciphertext_a,
+        keyring=hierarchical_keyring_a
     )
-    assert plaintext_bytes_A == EXAMPLE_DATA
-    plaintext_bytes_B, _ = client.decrypt(
-        source=ciphertext_B,
-        keyring=hierarchical_keyring_B
+    assert plaintext_bytes_a == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
+    plaintext_bytes_b, _ = client.decrypt(
+        source=ciphertext_b,
+        keyring=hierarchical_keyring_b
     )
-    assert plaintext_bytes_B == EXAMPLE_DATA
+    assert plaintext_bytes_b == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
