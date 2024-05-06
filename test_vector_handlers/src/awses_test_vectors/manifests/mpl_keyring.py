@@ -33,7 +33,7 @@ from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInp
 from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES
 from awses_test_vectors.internal.util import membership_validator
 
-KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy")
+KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy", )
 
 import _dafny
 import UTF8
@@ -61,14 +61,27 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
 
-    # type_name = attr.ib(validator=membership_validator(set(MASTER_KEY_KNOWN_TYPES).union(KEYRING_ONLY_KNOWN_TYPES)))
+    type_name = attr.ib(validator=membership_validator(set(MASTER_KEY_KNOWN_TYPES).union(set(KEYRING_ONLY_KNOWN_TYPES))))
 
-    def __attrs_post_init__(self):
-        # type: () -> None
-        """Verify that known types all have loaders and that all required parameters are provided."""
-        # if set(KEYRING_ONLY_KNOWN_TYPES) != set(self._KEYRING_LOADERS.keys()):
-        #     raise NotImplementedError("Gap found between known master key types and available master key loaders.")
-        # super().__attrs_post_init__()
+    @classmethod
+    def from_scenario(cls, spec):
+        # type: (MASTER_KEY_SPEC) -> MasterKeySpec
+        """Load from a keyring specification.
+
+        :param dict spec: Master key specification JSON
+        :return: Loaded master key specification
+        :rtype: MasterKeySpec
+        """
+        return cls(
+            type_name=spec["type"],
+            key_name=spec.get("key"),
+            default_mrk_region=spec.get("default-mrk-region"),
+            discovery_filter=cls._discovery_filter_from_spec(spec.get("aws-kms-discovery-filter")),
+            provider_id=spec.get("provider-id"),
+            encryption_algorithm=spec.get("encryption-algorithm"),
+            padding_algorithm=spec.get("padding-algorithm"),
+            padding_hash=spec.get("padding-hash"),
+        )
 
     def keyring(self, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring

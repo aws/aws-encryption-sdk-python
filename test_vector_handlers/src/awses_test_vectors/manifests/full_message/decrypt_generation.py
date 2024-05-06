@@ -444,6 +444,10 @@ class MessageDecryptionTestScenarioGenerator(object):
             keyrings,
             keys_uri,
         )
+
+        if encryption_scenario is None:
+            return None
+
         tampering = scenario.get("tampering")
         tampering_method = TamperingMethod.from_tampering_spec(tampering)
         decryption_method_spec = scenario.get("decryption-method")
@@ -588,7 +592,6 @@ class MessageDecryptionGenerationManifest(object):
                     scenario=scenario, keys=keys, plaintexts=plaintexts, keyrings=keyrings, keys_uri=keys_abs_path,
                 )
             except NotImplementedError as e:
-                # continue
                 raise e
         return cls(
             version=raw_manifest["manifest"]["version"],
