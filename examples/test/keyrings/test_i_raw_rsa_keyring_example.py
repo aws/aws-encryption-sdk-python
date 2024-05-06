@@ -33,6 +33,8 @@ def test_encrypt_and_decrypt_with_keyring_with_user_defined_keys():
     user_private_key = user_private_key.decode('utf-8')
 
     test_keyrings_directory = 'test_keyrings'
+    if not os.path.exists(test_keyrings_directory):
+        os.makedirs(test_keyrings_directory)
 
     # Define the file names for the keys
     user_public_key_file_name = test_keyrings_directory + '/user_public_key_file_name.pem'
