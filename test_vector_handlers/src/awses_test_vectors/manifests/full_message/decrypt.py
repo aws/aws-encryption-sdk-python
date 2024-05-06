@@ -288,8 +288,8 @@ class MessageDecryptionTestScenario(object):
             ]
         else:
             master_key_specs = [
-                MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs \
-                    if spec["type"] != "aws-kms-hierarchy"
+                MasterKeySpec.from_scenario(spec) for spec in raw_master_key_specs
+                if spec["type"] != "aws-kms-hierarchy"
             ]
 
         def master_key_provider_fn():
@@ -301,7 +301,6 @@ class MessageDecryptionTestScenario(object):
         decryption_method = DecryptionMethod(decryption_method_spec) if decryption_method_spec else None
         result_spec = scenario["result"]
         result = MessageDecryptionTestResult.from_result_spec(result_spec, plaintext_reader)
-
 
         if "encryption-context" in scenario:
             encryption_context = scenario["encryption-context"]

@@ -26,11 +26,11 @@ from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConf
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-        aws_cryptography_materialproviderstestvectorkeys.models import (
-    GetKeyDescriptionInput,
-    GetKeyDescriptionOutput,
-    TestVectorKeyringInput,
-)
+    aws_cryptography_materialproviderstestvectorkeys.models import (
+        GetKeyDescriptionInput,
+        GetKeyDescriptionOutput,
+        TestVectorKeyringInput,
+    )
 
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module
@@ -41,7 +41,6 @@ from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES, MasterKeySpec
 
 KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy", )
-
 
 
 @attr.s

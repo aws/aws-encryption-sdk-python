@@ -91,7 +91,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-SUPPORTED_VERSIONS = (2,4,)
+SUPPORTED_VERSIONS = (2, 4, )
 
 
 class TamperingMethod:
