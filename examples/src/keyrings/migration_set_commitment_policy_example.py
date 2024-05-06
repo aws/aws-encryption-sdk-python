@@ -29,7 +29,6 @@ from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.identifiers import AlgorithmSuite
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
