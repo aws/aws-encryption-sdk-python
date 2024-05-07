@@ -4,12 +4,14 @@
 This example configures a client with a specific commitment policy for the
 AWS Encryption SDK client, then encrypts and decrypts data using an AWS KMS Keyring.
 
-This configuration should only be used as part of a migration from version 1.x to 2.x, or for
-advanced users with specialized requirements. We recommend that AWS Encryption SDK users use the
-default commitment policy whenever possible.
+The commitment policy in this example (FORBID_ENCRYPT_ALLOW_DECRYPT) should only be used as part
+of a migration from version 1.x to 2.x, or for advanced users with specialized requirements.
+We recommend that AWS Encryption SDK users use the default commitment policy
+(REQUIRE_ENCRYPT_REQUIRE_DECRYPT) whenever possible.
 
 This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also includes some sanity checks for demonstration:
+with an encryption context for the commitment policy FORBID_ENCRYPT_ALLOW_DECRYPT.
+This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
@@ -52,11 +54,13 @@ def encrypt_and_decrypt_with_keyring(
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
     # 1. Instantiate the encryption SDK client.
-    # This builds the client with the FORBID_ENCRYPT_ALLOW_DECRYPT commitment policy,
-    # which enforces that this client cannot encrypt with key commitment.
-    # It can decrypt ciphertexts encrypted with or without key commitment.
+    # This example builds the client with the FORBID_ENCRYPT_ALLOW_DECRYPT commitment policy,
+    # which enforces that this client cannot encrypt with key commitment
+    # and it can decrypt ciphertexts encrypted with or without key commitment.
     # The default commitment policy if you were to build the client as
     # `client = aws_encryption_sdk.EncryptionSDKClient()` is REQUIRE_ENCRYPT_REQUIRE_DECRYPT.
+    # We recommend that AWS Encryption SDK users use the default commitment policy
+    # (REQUIRE_ENCRYPT_REQUIRE_DECRYPT) whenever possible.
     client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
@@ -93,8 +97,8 @@ def encrypt_and_decrypt_with_keyring(
     # 5. Encrypt the data with the encryptionContext. Make sure you use a non-committing algorithm
     # with the commitment policy FORBID_ENCRYPT_ALLOW_DECRYPT. Otherwise client.encrypt() will throw
     # aws_encryption_sdk.exceptions.ActionNotAllowedError. By default for
-    # FORBID_ENCRYPT_ALLOW_DECRYPT,
-    # the algorithm used is AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384
+    # FORBID_ENCRYPT_ALLOW_DECRYPT, the algorithm used is
+    # AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 which is a non-committing algorithm.
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=kms_keyring,

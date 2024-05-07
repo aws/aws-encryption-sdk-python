@@ -14,12 +14,13 @@ you specify as a byte array. You can specify only one wrapping key in each Raw A
 but you can include multiple Raw AES keyrings, alone or with other keyrings, in a multi-keyring.
 
 The AES wrapping algorithm (AesWrappingAlg.ALG_AES256_GCM_IV12_TAG16) protects your data key using
-the user-provided wrapping key. The encryption algorithm used in the encrypt() method for a Raw
-AES keyring is the algorithm used to protect your data using the data key. This example
-demonstrates setting the latter, which is the encryption algorithm for protecting your data.
-The default algorithm used in encrypt method is AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384
-which is a committing and signing algorithm. This example sets the encryption algorithm as
-AES_256_GCM_HKDF_SHA512_COMMIT_KEY which is a committing but non-signing algorithm.
+the user-provided wrapping key. The encryption algorithm used in the encrypt() method is the
+algorithm used to protect your data using the data key. This example demonstrates setting the
+latter, which is the encryption algorithm for protecting your data. The default algorithm used
+in encrypt method is AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384 when the commitment policy is
+REQUIRE_ENCRYPT_REQUIRE_DECRYPT which is a committing and signing algorithm. This example sets
+the encryption algorithm as AES_256_GCM_HKDF_SHA512_COMMIT_KEY which is a committing but
+non-signing algorithm.
 
 This example creates a Raw AES Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context and the encryption algorithm AES_256_GCM_HKDF_SHA512_COMMIT_KEY.

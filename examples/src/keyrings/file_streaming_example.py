@@ -129,7 +129,7 @@ def encrypt_and_decrypt_with_keyring(
     assert not filecmp.cmp(plaintext_filename, ciphertext_filename), \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
-    # 8. Decrypt your encrypted data using the same keyring you used on encrypt.
+    # 8. Decrypt your encrypted data stream using the same keyring you used on encrypt.
     with open(ciphertext_filename, 'rb') as ct_file, open(decrypted_filename, 'wb') as pt_file:
         with client.stream(
             mode='d',

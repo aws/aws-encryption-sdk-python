@@ -16,7 +16,7 @@ def test_encrypt_and_decrypt_with_keyring():
     if not os.path.exists(test_keyrings_directory):
         os.makedirs(test_keyrings_directory)
 
-    # Define the filename of the plaintext data.
+    # Define the filename of the input plaintext data.
     plaintext_filename = test_keyrings_directory + '/my-secret-data.dat'
 
     # Define the plaintext data to be encrypted and decrypted.
@@ -47,7 +47,7 @@ eget iaculis. Cras lacinia ligula quis risus ultrices, sed consectetur metus imp
 Nullam id enim vestibulum nibh ultricies auctor. Morbi neque lacus, faucibus vitae commodo quis,
 malesuada sed velit.'''
 
-    # Write plaintext data to file
+    # Write plaintext data to plaintext_filename file
     with open(plaintext_filename, "w", encoding="utf-8") as f:
         f.write(plaintext_data)
 
