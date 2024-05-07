@@ -8,7 +8,7 @@ The algorithm suite used in the encrypt() method is the algorithm used to protec
 data using the data key. By setting this algorithm, you can configure the algorithm used
 to encrypt and decrypt your data.
 
-Encryption algorithms can be set in a similar manner in other keyrings as well. However,
+Algorithm suites can be set in a similar manner in other keyrings as well. However,
 please make sure that you're using a logical algorithm suite that is compatible with your
 keyring. For more information on algorithm suites supported by the AWS Encryption SDK, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algorithms.html
@@ -19,8 +19,8 @@ is the algorithm used to protect your data using the data key. This example demo
 latter, which is the algorithm suite for protecting your data. When the commitment policy is
 REQUIRE_ENCRYPT_REQUIRE_DECRYPT, the default algorithm used in the encrypt method is
 AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384, which is a committing and signing algorithm.
-Signature verification is extremely useful to ensure the integrity of a digital message as it goes
-between systems. However, signature verification adds a significant performance cost to encryption
+Signature verification ensures the integrity of a digital message as it goes across trust
+boundaries. However, signature verification adds a significant performance cost to encryption
 and decryption. If encryptors and decryptors are equally trusted, we can consider using an algorithm
 suite that does not include signing. This example sets the algorithm suite as
 AES_256_GCM_HKDF_SHA512_COMMIT_KEY, which is a committing but non-signing algorithm.
