@@ -20,7 +20,6 @@ import pytest
 from ...src.deprecated.one_kms_cmk_streaming_data import encrypt_decrypt_stream
 from .examples_test_utils import get_cmk_arn, static_plaintext
 
-
 pytestmark = [pytest.mark.examples]
 
 
