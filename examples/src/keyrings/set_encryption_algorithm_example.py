@@ -4,23 +4,28 @@
 This example demonstrates how to set an encryption algorithm while using the Raw AES Keyring
 in the AWS Encryption SDK.
 
+The encryption algorithm used in the encrypt() method is the algorithm used to protect your
+data using the data key. By setting this algorithm, you can configure the algorithm used
+to encrypt and decrypt your data.
+
 Encryption algorithms can be set in a similar manner in other keyrings as well. However,
 please make sure that you're using a logical encryption algorithm that is compatible with your
-keyring. For example, AWS KMS RSA Keyring does not support use with an algorithm suite
-containing an asymmetric signature.
-
-The Raw AES keyring encrypts data by using the AES-GCM algorithm and a wrapping key that
-you specify as a byte array. You can specify only one wrapping key in each Raw AES keyring,
-but you can include multiple Raw AES keyrings, alone or with other keyrings, in a multi-keyring.
+keyring. For more information on encryption algorithms supported by the AWS Encryption SDK, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algorithms.html
 
 The AES wrapping algorithm (AesWrappingAlg.ALG_AES256_GCM_IV12_TAG16) protects your data key using
 the user-provided wrapping key. The encryption algorithm used in the encrypt() method is the
 algorithm used to protect your data using the data key. This example demonstrates setting the
-latter, which is the encryption algorithm for protecting your data. The default algorithm used
-in encrypt method is AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384 when the commitment policy is
-REQUIRE_ENCRYPT_REQUIRE_DECRYPT which is a committing and signing algorithm. This example sets
-the encryption algorithm as AES_256_GCM_HKDF_SHA512_COMMIT_KEY which is a committing but
-non-signing algorithm.
+latter, which is the encryption algorithm for protecting your data. When the commitment policy is
+REQUIRE_ENCRYPT_REQUIRE_DECRYPT, the default algorithm used in the encrypt method is
+AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384, which is a committing and signing algorithm.
+Signature verification is extremely useful to ensure the integrity of a digital message as it
+goes between systems. However, signature verification adds a significant performance cost on
+decryption. If the users encrypting data and the users decrypting data are equally trusted, we can
+consider using an algorithm suite that does not include signing. This example sets the encryption
+algorithm as AES_256_GCM_HKDF_SHA512_COMMIT_KEY which is a committing but non-signing algorithm.
+For more information on digital signatures, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#digital-sigs
 
 This example creates a Raw AES Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context and the encryption algorithm AES_256_GCM_HKDF_SHA512_COMMIT_KEY.
@@ -101,6 +106,7 @@ def encrypt_and_decrypt_with_keyring():
         config=MaterialProvidersConfig()
     )
 
+    # The wrapping algorithm here is NOT the encryption algorithm we set in this example.
     keyring_input: CreateRawAesKeyringInput = CreateRawAesKeyringInput(
         key_namespace=key_name_space,
         key_name=key_name,
@@ -113,7 +119,8 @@ def encrypt_and_decrypt_with_keyring():
     )
 
     # 6. Encrypt the data with the encryptionContext.
-    # Specify the encryption algorithm you want to use for encrypting your data here
+    # This is the important step in this example where we specify the encryption algorithm
+    # you want to use for encrypting your data here
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_aes_keyring,

@@ -4,10 +4,10 @@
 This example configures a client with a specific commitment policy for the
 AWS Encryption SDK client, then encrypts and decrypts data using an AWS KMS Keyring.
 
-The commitment policy in this example (FORBID_ENCRYPT_ALLOW_DECRYPT) should only be used as part
-of a migration from version 1.x to 2.x, or for advanced users with specialized requirements.
-We recommend that AWS Encryption SDK users use the default commitment policy
-(REQUIRE_ENCRYPT_REQUIRE_DECRYPT) whenever possible.
+The commitment policy in this example (FORBID_ENCRYPT_ALLOW_DECRYPT) should only be
+used as part of a migration from version 1.x to 2.x, or for advanced users with
+specialized requirements. Most AWS Encryption SDK users should use the default
+commitment policy (REQUIRE_ENCRYPT_REQUIRE_DECRYPT).
 
 This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context for the commitment policy FORBID_ENCRYPT_ALLOW_DECRYPT.

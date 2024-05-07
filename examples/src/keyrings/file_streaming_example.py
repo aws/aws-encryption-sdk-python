@@ -1,12 +1,16 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example demonstrates file streaming for encryption and decryption using a Raw AES keyring
+This example demonstrates file streaming for encryption and decryption.
 
-The Raw AES keyring lets you use an AES symmetric key that you provide as a wrapping key that
-protects your data key. You need to generate, store, and protect the key material,
-preferably in a hardware security module (HSM) or key management system. Use a Raw AES keyring
-when you need to provide the wrapping key and encrypt the data keys locally or offline.
+File streaming is useful when the plaintext or ciphertext file/data is too large to load into
+memory. Therefore, the AWS Encryption SDK allows users to stream the data, instead of loading it
+all at once in memory. In this example, we demonstrate file streaming for encryption and decryption
+using a Raw AES keyring. However, you can use any keyring for encryption/decryption with streaming.
+
+For more information on how to use Raw AES keyrings, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
+To look at a Raw AES keyring example, checkout out raw_aes_keyring_example.py
 
 This example creates a Raw AES Keyring and then encrypts an input stream from the file
 `plaintext_filename` with an encryption context to an output (encrypted) file `ciphertext_filename`.
@@ -21,8 +25,6 @@ The Raw AES keyring encrypts data by using the AES-GCM algorithm and a wrapping 
 you specify as a byte array. You can specify only one wrapping key in each Raw AES keyring,
 but you can include multiple Raw AES keyrings, alone or with other keyrings, in a multi-keyring.
 
-For more information on how to use Raw AES keyrings, see
-https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
 """
 import filecmp
 import secrets
@@ -48,7 +50,7 @@ def encrypt_and_decrypt_with_keyring(
     ciphertext_filename: str,
     decrypted_filename: str
 ):
-    """Demonstrate a streaming encrypt/decrypt cycle using a Raw AES keyring.
+    """Demonstrate a streaming encrypt/decrypt cycle.
 
     Usage: encrypt_and_decrypt_with_keyring(plaintext_filename
                                             ciphertext_filename
@@ -98,6 +100,7 @@ def encrypt_and_decrypt_with_keyring(
     static_key = secrets.token_bytes(32)
 
     # 5. Create a Raw AES keyring
+    # We choose to use a raw AES keyring, but any keyring can be used with streaming.
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         config=MaterialProvidersConfig()
     )
