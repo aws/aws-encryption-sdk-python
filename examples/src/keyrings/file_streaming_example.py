@@ -6,7 +6,7 @@ This example demonstrates file streaming for encryption and decryption.
 File streaming is useful when the plaintext or ciphertext file/data is too large to load into
 memory. Therefore, the AWS Encryption SDK allows users to stream the data, instead of loading it
 all at once in memory. In this example, we demonstrate file streaming for encryption and decryption
-using a Raw AES keyring. However, you can use any keyring for encryption/decryption with streaming.
+using a Raw AES keyring. However, you can use any keyring with streaming.
 
 This example creates a Raw AES Keyring and then encrypts an input stream from the file
 `plaintext_filename` with an encryption context to an output (encrypted) file `ciphertext_filename`.
