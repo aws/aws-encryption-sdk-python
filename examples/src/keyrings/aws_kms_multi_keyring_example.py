@@ -144,7 +144,8 @@ def encrypt_and_decrypt_with_keyring(
 
     # 6b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_multi_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_multi_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # Because you used a multi_keyring on Encrypt, you can use either of the two
     # kms keyrings individually to decrypt the data.
@@ -174,7 +175,8 @@ def encrypt_and_decrypt_with_keyring(
 
     # 7d. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_default_region_kms_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_default_region_kms_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # 8. Demonstrate that you can also successfully decrypt data using a KMS keyring with just the
     # `second_region_kms_key_id` directly.
@@ -201,4 +203,5 @@ def encrypt_and_decrypt_with_keyring(
 
     # 8d. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_second_region_kms_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_second_region_kms_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"

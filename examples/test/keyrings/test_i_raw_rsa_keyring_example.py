@@ -32,13 +32,13 @@ def test_encrypt_and_decrypt_with_keyring_with_user_defined_keys():
     user_public_key = user_public_key.decode('utf-8')
     user_private_key = user_private_key.decode('utf-8')
 
-    test_keys_directory = 'test_keys'
-    if not os.path.exists(test_keys_directory):
-        os.makedirs(test_keys_directory)
+    test_keyrings_directory = 'test_keyrings'
+    if not os.path.exists(test_keyrings_directory):
+        os.makedirs(test_keyrings_directory)
 
     # Define the file names for the keys
-    user_public_key_file_name = test_keys_directory + '/user_public_key_file_name.pem'
-    user_private_key_file_name = test_keys_directory + '/user_private_key_file_name.pem'
+    user_public_key_file_name = test_keyrings_directory + '/user_public_key_file_name.pem'
+    user_private_key_file_name = test_keyrings_directory + '/user_private_key_file_name.pem'
 
     # Write the public key to the file
     with open(user_public_key_file_name, "w", encoding="utf-8") as f:
@@ -65,12 +65,12 @@ def test_encrypt_and_decrypt_fails_if_user_provides_only_public_key():
     # Convert the public key to string
     user_public_key = user_public_key.decode('utf-8')
 
-    test_keys_directory = 'test_keys'
-    if not os.path.exists(test_keys_directory):
-        os.makedirs(test_keys_directory)
+    test_keyrings_directory = 'test_keyrings'
+    if not os.path.exists(test_keyrings_directory):
+        os.makedirs(test_keyrings_directory)
 
     # Define the file name for the public key
-    user_public_key_file_name = test_keys_directory + '/user_public_key_file_name.pem'
+    user_public_key_file_name = test_keyrings_directory + '/user_public_key_file_name.pem'
 
     # Write the public key to the file
     with open(user_public_key_file_name, "w", encoding="utf-8") as f:
@@ -97,12 +97,12 @@ def test_encrypt_and_decrypt_fails_if_user_provides_only_private_key():
     # Convert the private key to string
     user_private_key = user_private_key.decode('utf-8')
 
-    test_keys_directory = 'test_keys'
-    if not os.path.exists(test_keys_directory):
-        os.makedirs(test_keys_directory)
+    test_keyrings_directory = 'test_keyrings'
+    if not os.path.exists(test_keyrings_directory):
+        os.makedirs(test_keyrings_directory)
 
     # Define the file name for the private key
-    user_private_key_file_name = test_keys_directory + '/user_private_key_file_name.pem'
+    user_private_key_file_name = test_keyrings_directory + '/user_private_key_file_name.pem'
 
     # Write the private key to the file
     with open(user_private_key_file_name, "w", encoding="utf-8") as f:

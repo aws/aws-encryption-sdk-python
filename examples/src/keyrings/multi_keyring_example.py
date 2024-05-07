@@ -175,7 +175,8 @@ def encrypt_and_decrypt_with_keyring(
 
     # 10b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_multi_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_multi_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # Because you used a multi_keyring on Encrypt, you can use either the
     # `kms_keyring` or `raw_aes_keyring` individually to decrypt the data.
@@ -192,7 +193,8 @@ def encrypt_and_decrypt_with_keyring(
 
     # 11b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_kms_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_kms_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # 12. Demonstrate that you can also successfully decrypt data using the `raw_aes_keyring`
     # directly.
@@ -206,4 +208,5 @@ def encrypt_and_decrypt_with_keyring(
 
     # 12b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes_raw_aes_keyring == EXAMPLE_DATA
+    assert plaintext_bytes_raw_aes_keyring == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"

@@ -224,7 +224,8 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
 
     # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes == EXAMPLE_DATA
+    assert plaintext_bytes == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
     # The next part of the example creates a new RSA keyring (for Bob) to demonstrate that
     # decryption of the original ciphertext is not possible with a different keyring (Bob's).

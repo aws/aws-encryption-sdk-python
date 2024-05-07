@@ -170,4 +170,5 @@ def encrypt_and_decrypt_with_keyring(
 
     # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
-    assert plaintext_bytes == EXAMPLE_DATA
+    assert plaintext_bytes == EXAMPLE_DATA, \
+        "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"

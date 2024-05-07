@@ -1,23 +1,39 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the Raw AES Keyring
+This example demonstrates how to set an algorithm suite while using the Raw AES Keyring
+in the AWS Encryption SDK.
 
-The Raw AES keyring lets you use an AES symmetric key that you provide as a wrapping key that
-protects your data key. You need to generate, store, and protect the key material,
-preferably in a hardware security module (HSM) or key management system. Use a Raw AES keyring
-when you need to provide the wrapping key and encrypt the data keys locally or offline.
+The algorithm suite used in the encrypt() method is the algorithm used to protect your
+data using the data key. By setting this algorithm, you can configure the algorithm used
+to encrypt and decrypt your data.
+
+Algorithm suites can be set in a similar manner in other keyrings as well. However,
+please make sure that you're using a logical algorithm suite that is compatible with your
+keyring. For more information on algorithm suites supported by the AWS Encryption SDK, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/supported-algorithms.html
+
+The AES wrapping algorithm (AesWrappingAlg.ALG_AES256_GCM_IV12_TAG16) protects your data key using
+the user-provided wrapping key. In contrast, the algorithm suite used in the encrypt() method
+is the algorithm used to protect your data using the data key. This example demonstrates setting the
+latter, which is the algorithm suite for protecting your data. When the commitment policy is
+REQUIRE_ENCRYPT_REQUIRE_DECRYPT, the default algorithm used in the encrypt method is
+AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384, which is a committing and signing algorithm.
+Signature verification ensures the integrity of a digital message as it goes across trust
+boundaries. However, signature verification adds a significant performance cost to encryption
+and decryption. If encryptors and decryptors are equally trusted, we can consider using an algorithm
+suite that does not include signing. This example sets the algorithm suite as
+AES_256_GCM_HKDF_SHA512_COMMIT_KEY, which is a committing but non-signing algorithm.
+For more information on digital signatures, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#digital-sigs
 
 This example creates a Raw AES Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also includes some sanity checks for demonstration:
+with an encryption context and the algorithm suite AES_256_GCM_HKDF_SHA512_COMMIT_KEY.
+This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
-
-The Raw AES keyring encrypts data by using the AES-GCM algorithm and a wrapping key that
-you specify as a byte array. You can specify only one wrapping key in each Raw AES keyring,
-but you can include multiple Raw AES keyrings, alone or with other keyrings, in a multi-keyring.
 
 For more information on how to use Raw AES keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
@@ -33,6 +49,7 @@ from typing import Dict
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.identifiers import AlgorithmSuite
 
 # TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
 MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
@@ -78,7 +95,7 @@ def encrypt_and_decrypt_with_keyring():
         "the data you are handling": "is what you think it is",
     }
 
-    # 4. Generate a 256-bit AES key to use with your keyring.
+    # 4. Generate a 256-bit AES wrapping key to use with your keyring.
     # In practice, you should get this key from a secure key management system such as an HSM.
 
     # Here, the input to secrets.token_bytes() = 32 bytes = 256 bits
@@ -89,6 +106,7 @@ def encrypt_and_decrypt_with_keyring():
         config=MaterialProvidersConfig()
     )
 
+    # The wrapping algorithm here is NOT the algorithm suite we set in this example.
     keyring_input: CreateRawAesKeyringInput = CreateRawAesKeyringInput(
         key_namespace=key_name_space,
         key_name=key_name,
@@ -100,11 +118,14 @@ def encrypt_and_decrypt_with_keyring():
         input=keyring_input
     )
 
-    # 6. Encrypt the data with the encryptionContext
+    # 6. Encrypt the data with the encryptionContext.
+    # This is the important step in this example where we specify the algorithm suite
+    # you want to use for encrypting your data
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_aes_keyring,
-        encryption_context=encryption_context
+        encryption_context=encryption_context,
+        algorithm=AlgorithmSuite.AES_256_GCM_HKDF_SHA512_COMMIT_KEY
     )
 
     # 7. Demonstrate that the ciphertext and plaintext are different.

@@ -1,21 +1,24 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-This example sets up the KMS Keyring
+This example configures a client with a specific commitment policy for the
+AWS Encryption SDK client, then encrypts and decrypts data using an AWS KMS Keyring.
 
-The AWS KMS keyring uses symmetric encryption KMS keys to generate, encrypt and
-decrypt data keys. This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also includes some sanity checks for demonstration:
+The commitment policy in this example (FORBID_ENCRYPT_ALLOW_DECRYPT) should only be
+used as part of a migration from version 1.x to 2.x, or for advanced users with
+specialized requirements. Most AWS Encryption SDK users should use the default
+commitment policy (REQUIRE_ENCRYPT_REQUIRE_DECRYPT).
+
+This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
+with an encryption context for the commitment policy FORBID_ENCRYPT_ALLOW_DECRYPT.
+This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
-AWS KMS keyrings can be used independently or in a multi-keyring with other keyrings
-of the same or a different type.
-
-For more information on how to use KMS keyrings, see
-https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
+For more information on setting your commitment policy, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#commitment-policy
 """
 import sys
 
@@ -40,7 +43,7 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_keyring(
     kms_key_id: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
+    """Demonstrate how to set your commitment policy for migration.
 
     Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for encryption and
@@ -51,14 +54,15 @@ def encrypt_and_decrypt_with_keyring(
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
     # 1. Instantiate the encryption SDK client.
-    # This builds the client with the REQUIRE_ENCRYPT_REQUIRE_DECRYPT commitment policy,
-    # which enforces that this client only encrypts using committing algorithm suites and enforces
-    # that this client will only decrypt encrypted messages that were created with a committing
-    # algorithm suite.
-    # This is the default commitment policy if you were to build the client as
-    # `client = aws_encryption_sdk.EncryptionSDKClient()`.
+    # This example builds the client with the FORBID_ENCRYPT_ALLOW_DECRYPT commitment policy,
+    # which enforces that this client cannot encrypt with key commitment
+    # and it can decrypt ciphertexts encrypted with or without key commitment.
+    # The default commitment policy if you were to build the client as
+    # `client = aws_encryption_sdk.EncryptionSDKClient()` is REQUIRE_ENCRYPT_REQUIRE_DECRYPT.
+    # We recommend that AWS Encryption SDK users use the default commitment policy
+    # (REQUIRE_ENCRYPT_REQUIRE_DECRYPT) whenever possible.
     client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
 
     # 2. Create a boto3 client for KMS.
@@ -90,7 +94,11 @@ def encrypt_and_decrypt_with_keyring(
         input=keyring_input
     )
 
-    # 5. Encrypt the data with the encryptionContext.
+    # 5. Encrypt the data with the encryptionContext. Make sure you use a non-committing algorithm
+    # with the commitment policy FORBID_ENCRYPT_ALLOW_DECRYPT. Otherwise client.encrypt() will throw
+    # aws_encryption_sdk.exceptions.ActionNotAllowedError. By default for
+    # FORBID_ENCRYPT_ALLOW_DECRYPT, the algorithm used is
+    # AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384 which is a non-committing algorithm.
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=kms_keyring,
