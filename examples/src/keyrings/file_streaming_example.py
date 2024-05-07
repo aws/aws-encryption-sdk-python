@@ -8,10 +8,6 @@ memory. Therefore, the AWS Encryption SDK allows users to stream the data, inste
 all at once in memory. In this example, we demonstrate file streaming for encryption and decryption
 using a Raw AES keyring. However, you can use any keyring for encryption/decryption with streaming.
 
-For more information on how to use Raw AES keyrings, see
-https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
-To look at a Raw AES keyring example, checkout out raw_aes_keyring_example.py
-
 This example creates a Raw AES Keyring and then encrypts an input stream from the file
 `plaintext_filename` with an encryption context to an output (encrypted) file `ciphertext_filename`.
 It then decrypts the ciphertext from `ciphertext_filename` to a new file `decrypted_filename`.
@@ -21,10 +17,11 @@ This example also includes some sanity checks for demonstration:
 3. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
-The Raw AES keyring encrypts data by using the AES-GCM algorithm and a wrapping key that
-you specify as a byte array. You can specify only one wrapping key in each Raw AES keyring,
-but you can include multiple Raw AES keyrings, alone or with other keyrings, in a multi-keyring.
+For more information on how to use Raw AES keyrings, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
 
+See raw_aes_keyring_example.py in the same directory for another raw AES keyring example
+in the AWS Encryption SDK for Python.
 """
 import filecmp
 import secrets
