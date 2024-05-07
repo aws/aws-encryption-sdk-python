@@ -18,7 +18,7 @@ This example also includes some sanity checks for demonstration:
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 For more information on setting your commitment policy, see
-https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/migrate-commitment-policy.html
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#commitment-policy
 """
 import sys
 
