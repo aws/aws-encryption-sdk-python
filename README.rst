@@ -247,9 +247,9 @@ TODO-MPL: Update code example to use a keyring
             for chunk in encryptor:
                 ct_file.write(chunk)
 
-    new_plaintext_filename = 'my-decrypted-data.dat'
+    decrypted_filename = 'my-decrypted-data.dat'
 
-    with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
+    with open(ciphertext_filename, 'rb') as ct_file, open(decrypted_filename, 'wb') as pt_file:
         with client.stream(
             mode='d',
             source=ct_file,
@@ -258,7 +258,7 @@ TODO-MPL: Update code example to use a keyring
             for chunk in decryptor:
                 pt_file.write(chunk)
 
-    assert filecmp.cmp(plaintext_filename, new_plaintext_filename)
+    assert filecmp.cmp(plaintext_filename, decrypted_filename)
     assert encryptor.header.encryption_context == decryptor.header.encryption_context
 
 Performance Considerations

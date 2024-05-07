@@ -45,7 +45,8 @@ class EncryptionSDKClientConfig(object):
 
     :param commitment_policy: The commitment policy to apply to encryption and decryption requests
     :type commitment_policy: aws_encryption_sdk.materials_manager.identifiers.CommitmentPolicy
-    :param max_encrypted_data_keys: The maximum number of encrypted data keys to allow during encryption and decryption
+    :param max_encrypted_data_keys: The maximum number of encrypted data keys to allow during
+    encryption and decryption
     :type max_encrypted_data_keys: None or positive int
     """
 
@@ -104,15 +105,26 @@ class EncryptionSDKClient(object):
 
         .. code:: python
 
+            >>> import boto3
+            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
-            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-            ... ])
+            >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+            ...     config=MaterialProvidersConfig()
+            ... )
+            >>> keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+            ...     kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     kms_client=boto3.client('kms', region_name="us-west-2")
+            ... )
+            >>> kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+            ...     input=keyring_input
+            ... )
             >>> my_ciphertext, encryptor_header = client.encrypt(
             ...     source=my_plaintext,
-            ...     key_provider=kms_key_provider
+            ...     keyring=kms_keyring
             ... )
 
         :param config: Client configuration object (config or individual parameters required)
@@ -120,11 +132,11 @@ class EncryptionSDKClient(object):
         :param source: Source data to encrypt or decrypt
         :type source: str, bytes, io.IOBase, or file
         :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
-            (requires either `materials_manager` or `key_provider`)
+            (requires either `materials_manager` or `keyring`)
         :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-        :param key_provider: `MasterKeyProvider` that returns data keys for encryption
-            (requires either `materials_manager` or `key_provider`)
-        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+        :param keyring: `IKeyring` that returns keyring for encryption
+            (requires either `materials_manager` or `keyring`)
+        :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
         :param int source_length: Length of source data (optional)
 
             .. note::
@@ -134,7 +146,7 @@ class EncryptionSDKClient(object):
             .. note::
                 If `source_length` and `materials_manager` are both provided, the total plaintext bytes
                 encrypted will not be allowed to exceed `source_length`. To maintain backwards compatibility,
-                this is not enforced if a `key_provider` is provided.
+                this is not enforced if a `keyring` is provided.
 
         :param dict encryption_context: Dictionary defining encryption context
         :param algorithm: Algorithm to use for encryption
@@ -158,15 +170,26 @@ class EncryptionSDKClient(object):
 
         .. code:: python
 
+            >>> import boto3
+            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
-            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-            ... ])
-            >>> my_ciphertext, encryptor_header = client.decrypt(
+            >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+            ...     config=MaterialProvidersConfig()
+            ... )
+            >>> keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+            ...     kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     kms_client=boto3.client('kms', region_name="us-west-2")
+            ... )
+            >>> kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+            ...     input=keyring_input
+            ... )
+            >>> my_plaintext, decryptor_header = client.decrypt(
             ...     source=my_ciphertext,
-            ...     key_provider=kms_key_provider
+            ...     keyring=kms_keyring
             ... )
 
         :param config: Client configuration object (config or individual parameters required)
@@ -174,11 +197,11 @@ class EncryptionSDKClient(object):
         :param source: Source data to encrypt or decrypt
         :type source: str, bytes, io.IOBase, or file
         :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
-            (requires either `materials_manager` or `key_provider`)
+            (requires either `materials_manager` or `keyring`)
         :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
-        :param key_provider: `MasterKeyProvider` that returns data keys for decryption
-            (requires either `materials_manager` or `key_provider`)
-        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+        :param keyring: `IKeyring` that returns keyring for encryption
+            (requires either `materials_manager` or `keyring`)
+        :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
         :param int source_length: Length of source data (optional)
 
             .. note::
@@ -218,28 +241,39 @@ class EncryptionSDKClient(object):
 
         .. code:: python
 
+            >>> import boto3
+            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
-            >>> kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
-            ...     'arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
-            ...     'arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333'
-            ...  ])
+            >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+            ...     config=MaterialProvidersConfig()
+            ... )
+            >>> keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+            ...     kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+            ...     kms_client=boto3.client('kms', region_name="us-west-2")
+            ... )
+            >>> kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+            ...     input=keyring_input
+            ... )
             >>> plaintext_filename = 'my-secret-data.dat'
             >>> ciphertext_filename = 'my-encrypted-data.ct'
             >>> with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
-            ...      with client.stream(
+            ...     with client.stream(
             ...         mode='e',
             ...         source=pt_file,
-            ...         key_provider=kms_key_provider
+            ...         keyring=kms_keyring
             ...     ) as encryptor:
             ...         for chunk in encryptor:
-            ...              ct_file.write(chunk)
-            >>> new_plaintext_filename = 'my-decrypted-data.dat'
-            >>> with open(ciphertext_filename, 'rb') as ct_file, open(new_plaintext_filename, 'wb') as pt_file:
+            ...             ct_file.write(chunk)
+            >>> decrypted_filename = 'my-decrypted-data.dat'
+            >>> with open(ciphertext_filename, 'rb') as ct_file, open(decrypted_filename, 'wb') as pt_file:
             ...     with client.stream(
             ...         mode='d',
             ...         source=ct_file,
-            ...         key_provider=kms_key_provider
+            ...         keyring=kms_keyring
             ...     ) as decryptor:
             ...         for chunk in decryptor:
             ...             pt_file.write(chunk)
