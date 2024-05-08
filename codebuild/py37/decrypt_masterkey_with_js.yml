@@ -2,7 +2,6 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py312-integ"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
@@ -15,8 +14,21 @@ env:
 phases:
   install:
     runtime-versions:
-      python: 3.12
+      python: 3.7
+    commands:
+      - n 16
+      # Install the Javascript ESDK run test vectors
+      - npm install -g @aws-crypto/integration-node
+
+  pre_build:
+    commands:
+      # Download previously generated vectors
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/37_masterkey.zip 37_masterkey.zip
+      # Repackage zip in expected format
+      - unzip 37_masterkey.zip
+      - cd 37_masterkey
+      - zip -r vectors.zip .
   build:
     commands:
-      - pip install "tox < 4.0"
-      - tox
+      # Decrypt generated vectors with Javascript ESDK
+      - integration-node decrypt -v vectors.zip

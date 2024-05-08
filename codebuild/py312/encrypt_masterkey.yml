@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py312-integ"
+    TOXENV: "py312-full_encrypt"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
@@ -19,4 +19,7 @@ phases:
   build:
     commands:
       - pip install "tox < 4.0"
-      - tox
+      - cd test_vector_handlers
+      - |
+        tox -- \
+          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0003-awses-message-encryption.v2.json

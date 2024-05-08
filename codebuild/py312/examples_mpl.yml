@@ -19,7 +19,7 @@ env:
 phases:
   install:
     runtime-versions:
-      python: latest
+      python: 3.12
   build:
     commands:
       - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
@@ -31,7 +31,7 @@ phases:
       # Run non-MPL-specific tests with the MPL installed
       - tox -e py312-examples-mpl
       # Assume special role to access keystore
-      - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-Py311ExamplesMpl")
+      - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-Py312ExamplesMpl")
       - export TMP_ROLE
       - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')

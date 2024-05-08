@@ -2,9 +2,9 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py312-integ"
+    TOXENV: "py312-full_decrypt"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
-      arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
+      arn:aws:kms:us-west-2:658956600833:key/b35311ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
       arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
@@ -16,7 +16,15 @@ phases:
   install:
     runtime-versions:
       python: 3.12
+  pre_build:
+    commands:
+      # Download previously generated vectors
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_keyrings.zip 312_keyrings.zip
+      - unzip 312_keyrings.zip
   build:
     commands:
       - pip install "tox < 4.0"
-      - tox
+      - cd test_vector_handlers
+      - |
+        tox -- \
+          --input ../312_keyrings/manifest.json

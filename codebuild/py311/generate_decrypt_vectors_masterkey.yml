@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TOXENV: "py312-integ"
+    TOXENV: "py311-full_decrypt_generate"
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
       arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
@@ -15,8 +15,14 @@ env:
 phases:
   install:
     runtime-versions:
-      python: 3.12
+      python: 3.11
   build:
     commands:
       - pip install "tox < 4.0"
-      - tox
+      - cd test_vector_handlers
+      - |
+        tox -- \
+          --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
+          --output 311_masterkey
+      - zip -r 311_masterkey.zip 311_masterkey
+      - aws s3 cp 311_masterkey.zip s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/311_masterkey.zip
