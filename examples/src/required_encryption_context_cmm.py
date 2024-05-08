@@ -53,7 +53,8 @@ def encrypt_and_decrypt_with_keyring(
     #    Most encrypted data should have an associated encryption context
     #    to protect integrity. This sample uses placeholder values.
     #    For more information see:
-    #    blogs.aws.amazon.com/security/post/Tx2LZ6WBJJANTNW/How-to-Protect-the-Integrity-of-Your-Encrypted-Data-by-Using-AWS-Key-Management  # noqa: E501
+    #    pylint: disable=line-too-long
+    #    blogs.aws.amazon.com/security/post/Tx2LZ6WBJJANTNW/How-to-Protect-the-Integrity-of-Your-Encrypted-Data-by-Using-AWS-Key-Management
     encryption_context: Dict[str, str] = {
         "key1": "value1",
         "key2": "value2",

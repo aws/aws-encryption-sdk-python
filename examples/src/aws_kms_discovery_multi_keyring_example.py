@@ -56,7 +56,7 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_keyring(
     kms_key_id: str,
     aws_account_id: str,
-    aws_regions: list[str]
+    aws_regions: list
 ):
     """Demonstrate an encrypt/decrypt cycle using an AWS KMS Discovery Multi Keyring.
 

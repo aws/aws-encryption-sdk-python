@@ -64,7 +64,7 @@ def encrypt_and_decrypt_with_keyring(
     mrk_key_id_encrypt: str,
     mrk_encrypt_region: str,
     aws_account_id: str,
-    aws_regions: list[str]
+    aws_regions: list
 ):
     """Demonstrate decryption using an AWS KMS MRK Discovery Multi keyring.
 

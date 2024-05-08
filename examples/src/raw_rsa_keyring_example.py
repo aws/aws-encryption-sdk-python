@@ -240,7 +240,7 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
 
     # 10. Test decrypt for the original ciphertext using raw_rsa_keyring_bob
     try:
-        plaintext_bytes_bob, _ = client.decrypt(
+        plaintext_bytes_bob, _ = client.decrypt(  # pylint: disable=unused-variable
             source=ciphertext,
             keyring=raw_rsa_keyring_bob
         )
