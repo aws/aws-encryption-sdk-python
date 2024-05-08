@@ -4,7 +4,7 @@
 
 from aws_cryptographic_materialproviders.mpl.models import GetBranchKeyIdInput, GetBranchKeyIdOutput
 from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier
-from typing import Dict
+from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 
 class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):

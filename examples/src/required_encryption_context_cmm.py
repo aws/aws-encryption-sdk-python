@@ -19,7 +19,7 @@ from aws_cryptographic_materialproviders.mpl.models import (
     CreateRequiredEncryptionContextCMMInput,
 )
 from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
-from typing import Dict, List
+from typing import Dict, List  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy

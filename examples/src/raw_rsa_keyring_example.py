@@ -42,7 +42,7 @@ from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from typing import Dict
+from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
