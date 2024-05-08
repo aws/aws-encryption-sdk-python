@@ -1,7 +1,6 @@
 [MESSAGES CONTROL]
 # Disabling messages that we either don't care about for tests or are necessary to break for tests.
 disable =
-    import-error, # ignore mpl import errors
     invalid-name,  # we prefer long, descriptive, names for tests
     missing-docstring,  # we don't write docstrings for tests
     wrong-import-position,  # similar to E0401, pylint does not appear to identify

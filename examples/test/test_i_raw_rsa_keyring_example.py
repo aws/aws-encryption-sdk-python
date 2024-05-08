@@ -60,7 +60,7 @@ def test_encrypt_and_decrypt_fails_if_user_provides_only_public_key():
     test both encryption and decryption, or not provide any keys and the example generates both
     """
     # Generate the user keys for testing
-    user_public_key, user_private_key = generate_rsa_keys()
+    user_public_key, user_private_key = generate_rsa_keys()  # pylint: disable=unused-variable
 
     # Convert the public key to string
     user_public_key = user_public_key.decode('utf-8')
@@ -92,7 +92,7 @@ def test_encrypt_and_decrypt_fails_if_user_provides_only_private_key():
     test both encryption and decryption, or not provide any keys and the example generates both
     """
     # Generate the user keys for testing
-    user_public_key, user_private_key = generate_rsa_keys()
+    user_public_key, user_private_key = generate_rsa_keys()  # pylint: disable=unused-variable
 
     # Convert the private key to string
     user_private_key = user_private_key.decode('utf-8')
