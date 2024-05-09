@@ -445,7 +445,7 @@ Performance Considerations
 Adjusting the frame size can significantly improve the performance of encrypt/decrypt operations with this library.
 
 Processing each frame in a framed message involves a certain amount of overhead. If you are encrypting a large file,
-increasing the frame size can offer potentially significant performance gains.  We recommend that you tune these values
+increasing the frame size can offer potentially significant performance gains. We recommend that you tune these values
 to your use-case in order to obtain peak performance.
 
 Thread safety
