@@ -134,6 +134,9 @@ class EncryptionSDKClient(object):
         :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
             (requires either `materials_manager` or `keyring`)
         :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+        :param key_provider: `MasterKeyProvider` that returns data keys for encryption
+            (requires either `materials_manager` or `key_provider`)
+        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
         :param keyring: `IKeyring` that returns keyring for encryption
             (requires either `materials_manager` or `keyring`)
         :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
@@ -199,6 +202,9 @@ class EncryptionSDKClient(object):
         :param materials_manager: `CryptoMaterialsManager` that returns cryptographic materials
             (requires either `materials_manager` or `keyring`)
         :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
+        :param key_provider: `MasterKeyProvider` that returns data keys for decryption
+            (requires either `materials_manager` or `key_provider`)
+        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
         :param keyring: `IKeyring` that returns keyring for encryption
             (requires either `materials_manager` or `keyring`)
         :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
