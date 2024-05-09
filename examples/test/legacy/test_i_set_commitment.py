@@ -15,7 +15,7 @@
 import botocore.session
 import pytest
 
-from ...src.deprecated.set_commitment import encrypt_decrypt
+from ...src.legacy.set_commitment import encrypt_decrypt
 from .examples_test_utils import get_cmk_arn, static_plaintext
 
 pytestmark = [pytest.mark.examples]

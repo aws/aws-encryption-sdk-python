@@ -15,7 +15,7 @@
 import botocore.session
 import pytest
 
-from ...src.deprecated.discovery_kms_provider import encrypt_decrypt
+from ...src.legacy.discovery_kms_provider import encrypt_decrypt
 from .examples_test_utils import get_cmk_arn, static_plaintext
 
 pytestmark = [pytest.mark.examples]

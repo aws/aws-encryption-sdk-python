@@ -13,7 +13,7 @@
 """Unit test suite for the basic data key caching example in the AWS-hosted documentation."""
 import pytest
 
-from ...src.deprecated.data_key_caching_basic import encrypt_with_caching
+from ...src.legacy.data_key_caching_basic import encrypt_with_caching
 from .examples_test_utils import get_cmk_arn
 
 pytestmark = [pytest.mark.examples]

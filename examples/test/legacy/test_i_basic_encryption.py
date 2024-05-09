@@ -14,7 +14,7 @@
 import botocore.session
 import pytest
 
-from ...src.deprecated.basic_encryption import cycle_string
+from ...src.legacy.basic_encryption import cycle_string
 from .examples_test_utils import get_cmk_arn, static_plaintext
 
 pytestmark = [pytest.mark.examples]

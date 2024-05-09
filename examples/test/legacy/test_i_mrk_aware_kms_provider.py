@@ -14,7 +14,7 @@
 
 import pytest
 
-from ...src.deprecated.mrk_aware_kms_provider import encrypt_decrypt
+from ...src.legacy.mrk_aware_kms_provider import encrypt_decrypt
 from .examples_test_utils import get_mrk_arn, get_second_mrk_arn, static_plaintext
 
 pytestmark = [pytest.mark.examples]
