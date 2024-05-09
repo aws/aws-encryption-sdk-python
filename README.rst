@@ -101,7 +101,6 @@ Please avoid using these and instead use components in the MPL.
 Master Key Providers
 --------------------
 Master key providers are resources that provide master keys.
-An example of a master key provider is `AWS KMS`_.
 
 To encrypt data in this client, a ``MasterKeyProvider`` object must contain at least one ``MasterKey`` object.
 
@@ -115,7 +114,7 @@ Please install this library and migrate master key providers to keyring interfac
 Master Keys
 -----------
 Master keys generate, encrypt, and decrypt data keys.
-An example of a master key is a `KMS customer master key (CMK)`_.
+An example of a master key is an `AWS KMS key`_.
 
 NOTE: Master keys are deprecated
 and have been superseded by keyrings
@@ -154,13 +153,13 @@ Note: You must also install the `AWS Cryptographic Material Providers Library (M
 
 AwsKmsKeyring
 =============================
-A ``AwsKmsKeyring`` is configured with an AWS KMS key ARN whose AWS KMS key
+An ``AwsKmsKeyring`` is configured with an AWS KMS key ARN whose AWS KMS key
 will be used to generate, encrypt, and decrypt data keys.
 On encryption, it encrypts the plaintext with the data key.
 On decryption, it decrypts an encrypted version of the data key,
 then uses the decrypted data key to decrypt the ciphertext.
 
-To create a ``AwsKmsKeyring`` you must provide a AWS KMS key ARN.
+To create an ``AwsKmsKeyring`` you must provide a AWS KMS key ARN.
 For keyrings that will only be used for encryption,
 you can use any valid `KMS key identifier`_.
 For providers that will be used for decryption,
@@ -174,18 +173,79 @@ pre-existing instance of a ``botocore session`` to the ``AwsKmsKeyring``.
 This latter option can be useful if you have an alternate way to store your AWS credentials or
 you want to reuse an existing instance of a botocore session in order to decrease startup costs.
 
-TODO-MPL: Code example
+.. code:: python
+
+    import boto3
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+
+    import aws_encryption_sdk
+    from aws_encryption_sdk import CommitmentPolicy
+
+    # Instantiate the encryption SDK client.
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+
+    # Create a KMS keyring.
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+        kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        kms_client=boto3.client('kms', region_name="us-east-1")
+    )
+
+    kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+        input=keyring_input
+    )
+
 
 If you want to configure a keyring with multiple AWS KMS keys, see the multi-keyring.
 
 MultiKeyring
 ============
 
-A ``MultiKeyring`` is configured with an optional generator keyring and a list of child keyrings.
+A ``MultiKeyring`` is configured with an optional generator keyring and a list of
+child keyrings of the same or a different type.
 
-TODO-MPL: More words
+The effect is like using several keyrings in a series. When you use a multi-keyring to
+encrypt data, any of the wrapping keys in any of its keyrings can decrypt that data.
 
-TODO-MPL: Code example
+.. code:: python
+
+    import boto3
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsMultiKeyringInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+
+    import aws_encryption_sdk
+    from aws_encryption_sdk import CommitmentPolicy
+
+    # Instantiate the encryption SDK client.
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+
+    # Create an AwsKmsMultiKeyring that protects your data under two different KMS Keys.
+    # Either KMS Key individually is capable of decrypting data encrypted under this Multi Keyring.
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    kms_multi_keyring_input: CreateAwsKmsMultiKeyringInput = CreateAwsKmsMultiKeyringInput(
+        generator='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        kms_key_ids=['arn:aws:kms:us-east-1:3333333333333:key/33333333-3333-3333-3333-333333333333']
+    )
+
+    kms_multi_keyring: IKeyring = mat_prov.create_aws_kms_multi_keyring(
+        input=kms_multi_keyring_input
+    )
+
 
 AwsKmsDiscoveryKeyring
 ======================
@@ -193,27 +253,129 @@ We recommend using an ``AwsKmsKeyring`` in order to ensure that you can only
 encrypt and decrypt data using the AWS KMS key ARN you expect,
 or a ``MultiKeyring`` if you are using multiple keys. However, if you are unable to
 explicitly identify the AWS KMS key ARNs that should be used for decryption, you can instead
-use a ``AwsKmsDiscoveryKeyring`` for decryption operations. This provider
+use an ``AwsKmsDiscoveryKeyring`` for decryption operations. This provider
 attempts decryption of any ciphertexts as long as they match a ``DiscoveryFilter`` that
 you configure. A ``DiscoveryFilter`` consists of a list of AWS account ids and an AWS
 partition.
 
-TODO-MPL: Code example
+.. code:: python
+
+    import boto3
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    ffrom aws_cryptographic_materialproviders.mpl.models import (
+        CreateAwsKmsDiscoveryKeyringInput,
+        DiscoveryFilter,
+    )
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+
+    import aws_encryption_sdk
+    from aws_encryption_sdk import CommitmentPolicy
+
+    # Instantiate the encryption SDK client.
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+
+    # Create a Discovery keyring to use for decryption
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    discovery_keyring_input: CreateAwsKmsDiscoveryKeyringInput = CreateAwsKmsDiscoveryKeyringInput(
+        kms_client=boto3.client('kms', region_name="us-east-1"),
+        discovery_filter=DiscoveryFilter(
+            account_ids=["2222222222222"],
+            partition="aws"
+        )
+    )
+
+    discovery_keyring: IKeyring = mat_prov.create_aws_kms_discovery_keyring(
+        input=discovery_keyring_input
+    )
+
 
 If you do not want to filter the set of allowed accounts, you can also omit the ``discovery_filter`` argument.
 
-Note that a ``AwsKmsDiscoveryKeyring`` cannot be used for encryption operations.
+Note that an ``AwsKmsDiscoveryKeyring`` cannot be used for encryption operations.
 
 Encryption and Decryption
 =========================
 After you create an instance of an ``EncryptionSDKClient`` and a ``Keyring``, you can use either of
 the client's two ``encrypt``/``decrypt`` functions to encrypt and decrypt your data.
 
-TODO-MPL: Code example; basic example with keyring
+Here's an example for using a KMS keyring for encryption and decryption:
+
+.. code:: python
+
+    # Encrypt the data.
+    my_ciphertext, enc_header = client.encrypt(
+        source=my_plaintext,
+        keyring=kms_keyring
+    )
+
+    # Decrypt your encrypted data.
+    my_decrypted_plaintext, dec_header = client.decrypt(
+        source=my_ciphertext,
+        keyring=kms_keyring
+    )
 
 You can provide an `encryption context`_: a form of additional authenticating information.
 
-TODO-MPL: Code example with encryption context
+Here's an example for using KMS keyring with an encryption context:
+
+.. code:: python
+
+    import boto3
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
+
+    import aws_encryption_sdk
+    from aws_encryption_sdk import CommitmentPolicy
+
+    # Instantiate the encryption SDK client.
+    client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    )
+
+    # Create an encryption context
+    encryption_context: Dict[str, str] = {
+        "encryption": "context",
+        "is not": "secret",
+        "but adds": "useful metadata",
+        "that can help you": "be confident that",
+        "the data you are handling": "is what you think it is",
+    }
+
+    # Create a KMS keyring.
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+        kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        kms_client=boto3.client('kms', region_name="us-east-1")
+    )
+
+    kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+        input=keyring_input
+    )
+
+    # Encrypt the data with the encryptionContext.
+    my_ciphertext, enc_header = client.encrypt(
+        source=my_plaintext,
+        keyring=kms_keyring,
+        encryption_context=encryption_context
+    )
+
+    # Decrypt your encrypted data.
+    my_decrypted_plaintext, dec_header = client.decrypt(
+        source=my_ciphertext,
+        keyring=kms_keyring
+    )
+
 
 Streaming
 =========
@@ -222,50 +384,67 @@ memory at once, you can use this library's streaming clients directly. The strea
 file-like objects, and behave exactly as you would expect a Python file object to behave,
 offering context manager and iteration support.
 
-TODO-MPL: Update code example to use a keyring
-
 .. code:: python
 
-    import aws_encryption_sdk
-    from aws_encryption_sdk.identifiers import CommitmentPolicy
-    import filecmp
+    import boto3
+    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
+    from aws_cryptographic_materialproviders.mpl.references import IKeyring
 
+    import aws_encryption_sdk
+    from aws_encryption_sdk import CommitmentPolicy
+
+    # Instantiate the encryption SDK client.
     client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_ALLOW_DECRYPT
     )
 
-    # TODO-MPL: create a keyring
+    # Create a keyring.
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+        kms_key_id='arn:aws:kms:us-east-1:2222222222222:key/22222222-2222-2222-2222-222222222222',
+        kms_client=boto3.client('kms', region_name="us-east-1")
+    )
+
+    kms_keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+        input=keyring_input
+    )
+
     plaintext_filename = 'my-secret-data.dat'
     ciphertext_filename = 'my-encrypted-data.ct'
 
+    # Encrypt the data stream.
     with open(plaintext_filename, 'rb') as pt_file, open(ciphertext_filename, 'wb') as ct_file:
         with client.stream(
             mode='e',
             source=pt_file,
-            keyring = # TODO-MPL: provide keyring
+            keyring=kms_keyring
         ) as encryptor:
             for chunk in encryptor:
                 ct_file.write(chunk)
 
     decrypted_filename = 'my-decrypted-data.dat'
 
+    # Decrypt your encrypted data stream.
     with open(ciphertext_filename, 'rb') as ct_file, open(decrypted_filename, 'wb') as pt_file:
         with client.stream(
             mode='d',
             source=ct_file,
-            keyring = # TODO-MPL: provide keyring
+            keyring=kms_keyring
         ) as decryptor:
             for chunk in decryptor:
                 pt_file.write(chunk)
 
-    assert filecmp.cmp(plaintext_filename, decrypted_filename)
-    assert encryptor.header.encryption_context == decryptor.header.encryption_context
 
 Performance Considerations
 ==========================
 Adjusting the frame size can significantly improve the performance of encrypt/decrypt operations with this library.
 
-Processing each frame in a framed message involves a certain amount of overhead.  If you are encrypting a large file,
+Processing each frame in a framed message involves a certain amount of overhead. If you are encrypting a large file,
 increasing the frame size can offer potentially significant performance gains.  We recommend that you tune these values
 to your use-case in order to obtain peak performance.
 
@@ -297,7 +476,7 @@ sharing entries in that cache across threads needs to be done carefully
 .. _Read the Docs: http://aws-encryption-sdk-python.readthedocs.io/en/latest/
 .. _GitHub: https://github.com/aws/aws-encryption-sdk-python/
 .. _AWS KMS: https://docs.aws.amazon.com/kms/latest/developerguide/overview.html
-.. _KMS customer master key (CMK): https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+.. _AWS KMS key: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
 .. _KMS key identifier: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
 .. _boto3 SDK: https://boto3.readthedocs.io/en/latest/
 .. _standard means by which boto3 locates credentials: https://boto3.readthedocs.io/en/latest/guide/configuration.html
