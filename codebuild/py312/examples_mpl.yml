@@ -1,3 +1,6 @@
+# Runs the same tests as examples in an environment with the MPL installed
+# to assert existing tests continue to pass with the MPL installed.
+# Then, run MPL-specific tests.
 version: 0.2
 
 env:

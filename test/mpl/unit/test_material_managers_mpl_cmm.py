@@ -147,12 +147,12 @@ def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_mat
     assert output.algorithm_suite_id == mock_mpl_algorithm()
 
 
-def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commmitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_FORBID_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
+def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_FORBID_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
     # Given: native FORBID_ENCRYPT_ALLOW_DECRYPT
     native_commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
 
-    # When: _native_to_mpl_commmitment_policy
-    output = CryptoMaterialsManagerFromMPL._native_to_mpl_commmitment_policy(native_commitment_policy)
+    # When: _native_to_mpl_commitment_policy
+    output = CryptoMaterialsManagerFromMPL._native_to_mpl_commitment_policy(native_commitment_policy)
 
     # Then: Returns MPL FORBID_ENCRYPT_ALLOW_DECRYPT
     assert isinstance(output, MPL_CommitmentPolicyESDK)
