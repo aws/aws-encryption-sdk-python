@@ -302,7 +302,7 @@ the client's two ``encrypt``/``decrypt`` functions to encrypt and decrypt your d
     kms_multi_keyring: IKeyring = mat_prov.create_aws_kms_multi_keyring(
         input=kms_multi_keyring_input
     )
-    
+
     my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
     my_ciphertext, encryptor_header = client.encrypt(
@@ -345,7 +345,7 @@ You can provide an `encryption context`_: a form of additional authenticating in
     kms_multi_keyring: IKeyring = mat_prov.create_aws_kms_multi_keyring(
         input=kms_multi_keyring_input
     )
-    
+
     my_plaintext = b'This is some super secret data!  Yup, sure is!'
 
     my_ciphertext, encryptor_header = client.encrypt(

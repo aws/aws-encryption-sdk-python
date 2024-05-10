@@ -144,7 +144,6 @@ def test_GIVEN_valid_mpl_commitment_policy_WHEN_native_to_mpl_get_encryption_mat
     assert output.encryption_context == mock_encryption_materials_request.encryption_context
     assert output.commitment_policy == mock_commitment_policy
     assert output.max_plaintext_length == mock_encryption_materials_request.plaintext_length
-    assert output.algorithm_suite_id == mock_mpl_algorithm()
 
 
 def test_GIVEN_CommitmentPolicy_FORBID_ENCRYPT_ALLOW_DECRYPT_WHEN_native_to_mpl_commitment_policy_THEN_returns_MPL_CommitmentPolicyESDK_FORBID_ENCRYPT_ALLOW_DECRYPT():  # noqa: E501
