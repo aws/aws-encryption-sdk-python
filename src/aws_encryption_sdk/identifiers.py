@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-__version__ = "3.1.1"
+__version__ = "3.2.0"
 USER_AGENT_SUFFIX = "AwsEncryptionSdkPython/{}".format(__version__)
 
 

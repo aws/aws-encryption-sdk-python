@@ -1,3 +1,5 @@
+# Runs the same tests as integ in an environment with the MPL installed.
+# This asserts existing tests continue to pass with the MPL installed.
 version: 0.2
 
 env:
@@ -19,5 +21,10 @@ phases:
       python: 3.12
   build:
     commands:
+      - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
+      - pyenv install --skip-existing 3.12.0
+      - pyenv local 3.12.0
+      - pip install --upgrade pip
+      - pip install setuptools
       - pip install "tox < 4.0"
       - tox

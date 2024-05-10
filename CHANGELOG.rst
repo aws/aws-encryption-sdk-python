@@ -2,6 +2,58 @@
 Changelog
 *********
 
+3.2.0 -- 2024-03-18
+===================
+
+Features
+-----------
+* test Python 3.12 in CI (#623 (https://github.com/josecorella/aws-encryption-sdk-python/issues/623)) (93a67d8 (https://github.com/josecorella/aws-encryption-sdk-python/commit/93a67d8a3806f560ead950e6d8898e53c4c4f9df))
+* update requirements and README (#638 (https://github.com/josecorella/aws-encryption-sdk-python/issues/638)) (bcead77 (https://github.com/josecorella/aws-encryption-sdk-python/commit/bcead776b022566ad8211a08e1a458375b23a356))
+
+Fixes
+-----------
+* CI for Decrypt Oracle (#558 (https://github.com/josecorella/aws-encryption-sdk-python/issues/558)) (6c6b732 (https://github.com/josecorella/aws-encryption-sdk-python/commit/6c6b732379197e91d2137af9f018f670a1ce500a))
+* deprecate python36 from chalice (#539 (https://github.com/josecorella/aws-encryption-sdk-python/issues/539)) (f8aa29f (https://github.com/josecorella/aws-encryption-sdk-python/commit/f8aa29fe98d419dac916846d7ff207685ea95307))
+* test: correctly invoke ec.generate_private_key (#585 (https://github.com/josecorella/aws-encryption-sdk-python/issues/585)) (560e714 (https://github.com/josecorella/aws-encryption-sdk-python/commit/560e7143ac7caf98e190b17ce2af97b7eea6be16))
+* update pyca range (#507 (https://github.com/josecorella/aws-encryption-sdk-python/issues/507)) (aced92c (https://github.com/josecorella/aws-encryption-sdk-python/commit/aced92c3d87dddf3e0920b9dfad4cedd2473604a))
+* Use FORBID_ENCRYPT_ALLOW_DECRYPT policy for decrypt oracle (#538 (https://github.com/josecorella/aws-encryption-sdk-python/issues/538)) (e91838f (https://github.com/josecorella/aws-encryption-sdk-python/commit/e91838f65705867fc95506a4323054bca24e9521))
+* wrong formatting python warning (#546 (https://github.com/josecorella/aws-encryption-sdk-python/issues/546)) (9b618d3 (https://github.com/josecorella/aws-encryption-sdk-python/commit/9b618d3a5e517435304a891393fefcbbd89faf65))
+
+Maintenance
+-----------
+* Add example for custom KMS client config (#440 (https://github.com/josecorella/aws-encryption-sdk-python/issues/440)) (08f305a (https://github.com/josecorella/aws-encryption-sdk-python/commit/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13))
+* Add Thread safety section to README (#562 (https://github.com/josecorella/aws-encryption-sdk-python/issues/562)) (7a07b16 (https://github.com/josecorella/aws-encryption-sdk-python/commit/7a07b161d51900066c131627f9f7330acb926d3b))
+* bump deps & document upstream test (#646 (https://github.com/josecorella/aws-encryption-sdk-python/issues/646)) (a93ffe7 (https://github.com/josecorella/aws-encryption-sdk-python/commit/a93ffe7a98f8913040f6a693701ba287dd1570fb))
+* CFN: Commit existing CFN (#636 (https://github.com/josecorella/aws-encryption-sdk-python/issues/636)) (c122076 (https://github.com/josecorella/aws-encryption-sdk-python/commit/c12207621d295b335fdfb500c2b02694cc6786d8))
+* ci: skip pyenv installation if already exists (#627 (https://github.com/josecorella/aws-encryption-sdk-python/issues/627)) (1006758 (https://github.com/josecorella/aws-encryption-sdk-python/commit/10067581cd3316fbb379929806db6867e4cb0feb))
+* deps: bump actions/checkout from 3 to 4 (#607 (https://github.com/josecorella/aws-encryption-sdk-python/issues/607)) (e5c331b (https://github.com/josecorella/aws-encryption-sdk-python/commit/e5c331b68590825b55b5300ffab6dc80fbd20818))
+* deps: bump actions/setup-python from 2 to 4.2.0 (#491 (https://github.com/josecorella/aws-encryption-sdk-python/issues/491)) (d064bf8 (https://github.com/josecorella/aws-encryption-sdk-python/commit/d064bf8813d25e1ba4a8cce7269b8ee48acfd79a))
+* deps: bump cryptography from 39.0.0 to 39.0.1 in /test (#559 (https://github.com/josecorella/aws-encryption-sdk-python/issues/559)) (6468137 (https://github.com/josecorella/aws-encryption-sdk-python/commit/646813786c6250a525afb67bebc486eda206edd8))
+* deps: bump cryptography from 39.0.1 to 41.0.2 in /test (#592 (https://github.com/josecorella/aws-encryption-sdk-python/issues/592)) (3ba8019 (https://github.com/josecorella/aws-encryption-sdk-python/commit/3ba8019681ed95c41bb9448f0c3897d1aecc7559))
+* deps: bump cryptography from 41.0.2 to 41.0.6 in /test (#626 (https://github.com/josecorella/aws-encryption-sdk-python/issues/626)) (c67e6bd (https://github.com/josecorella/aws-encryption-sdk-python/commit/c67e6bd471b30e13cc7f1b724ce7d19df2380c22))
+* deps: bump dependabot/fetch-metadata from 1.3.0 to 1.3.6 (#549 (https://github.com/josecorella/aws-encryption-sdk-python/issues/549)) (2a6bd9d (https://github.com/josecorella/aws-encryption-sdk-python/commit/2a6bd9d70c779655077985c544df3db6a3518443))
+* deps: bump flake8-bugbear in /dev_requirements (#512 (https://github.com/josecorella/aws-encryption-sdk-python/issues/512)) (93f01d6 (https://github.com/josecorella/aws-encryption-sdk-python/commit/93f01d655d6bce704bd8779cc9c4acb5f96b980c))
+* deps: bump flake8-docstrings in /dev_requirements (#555 (https://github.com/josecorella/aws-encryption-sdk-python/issues/555)) (bd8f270 (https://github.com/josecorella/aws-encryption-sdk-python/commit/bd8f270c8717e5d4a787d33bcfda8b53bbe7751e))
+* deps: bump flake8-print from 4.0.0 to 5.0.0 in /dev_requirements (#554 (https://github.com/josecorella/aws-encryption-sdk-python/issues/554)) (2326531 (https://github.com/josecorella/aws-encryption-sdk-python/commit/232653188558379bceeb884b3f74b56b07560f62))
+* deps: bump isort from 5.10.1 to 5.11.4 in /dev_requirements (#551 (https://github.com/josecorella/aws-encryption-sdk-python/issues/551)) (36a0ea2 (https://github.com/josecorella/aws-encryption-sdk-python/commit/36a0ea2199872d6590691b53fbea7aee2236a99e))
+* deps: bump pytest from 7.0.1 to 7.2.0 in /dev_requirements (#524 (https://github.com/josecorella/aws-encryption-sdk-python/issues/524)) (af98302 (https://github.com/josecorella/aws-encryption-sdk-python/commit/af983024fdd800e6b2c4ae41cdf1617c982e4916))
+* deps: bump pytest from 7.2.0 to 7.2.1 in /dev_requirements (#553 (https://github.com/josecorella/aws-encryption-sdk-python/issues/553)) (48f96d5 (https://github.com/josecorella/aws-encryption-sdk-python/commit/48f96d58eeb712a5faa631ce4f4930d5d23bb649))
+* deps: bump pytest-cov from 3.0.0 to 4.0.0 in /dev_requirements (#550 (https://github.com/josecorella/aws-encryption-sdk-python/issues/550)) (6e436e1 (https://github.com/josecorella/aws-encryption-sdk-python/commit/6e436e13ce250759a499c3d9c820384cfc26283c))
+* deps: bump readme-renderer from 34.0 to 37.3 in /dev_requirements (#526 (https://github.com/josecorella/aws-encryption-sdk-python/issues/526)) (38aa063 (https://github.com/josecorella/aws-encryption-sdk-python/commit/38aa06309ad8ad709044c86ac6b4951739fbf996))
+* deps: bump setuptools from 62.0.0 to 66.1.1 in /dev_requirements (#547 (https://github.com/josecorella/aws-encryption-sdk-python/issues/547)) (04e8c16 (https://github.com/josecorella/aws-encryption-sdk-python/commit/04e8c167273357a9548ff474c527805d8764a661))
+* deps: bump sphinx from 4.4.0 to 5.3.0 in /dev_requirements (#523 (https://github.com/josecorella/aws-encryption-sdk-python/issues/523)) (51cb2ce (https://github.com/josecorella/aws-encryption-sdk-python/commit/51cb2ce148bc7e048587b013337f2440b53c1387))
+* deps: bump tox from 3.24.5 to 3.27.1 in /dev_requirements (#528 (https://github.com/josecorella/aws-encryption-sdk-python/issues/528)) (e2c834a (https://github.com/josecorella/aws-encryption-sdk-python/commit/e2c834ac5c4a9ca65db2b225e794f7ddf4d89cc4))
+* deps: bump urllib3 from 1.26.14 to 1.26.18 in /test (#618 (https://github.com/josecorella/aws-encryption-sdk-python/issues/618)) (bbb2281 (https://github.com/josecorella/aws-encryption-sdk-python/commit/bbb2281ed61f8fc8700e31d9828753531c8e586f))
+* deps: bump vulture from 2.3 to 2.6 in /dev_requirements (#533 (https://github.com/josecorella/aws-encryption-sdk-python/issues/533)) (2822364 (https://github.com/josecorella/aws-encryption-sdk-python/commit/28223646b4c48b2508ca46e3084689988abd2d27))
+* deps: bump wheel from 0.37.1 to 0.38.4 in /dev_requirements (#536 (https://github.com/josecorella/aws-encryption-sdk-python/issues/536)) (1922650 (https://github.com/josecorella/aws-encryption-sdk-python/commit/19226506ad33f5b964fe6632604425923f6ba8c1))
+* drop py3.6 from Oracle & Test Vectors (#529 (https://github.com/josecorella/aws-encryption-sdk-python/issues/529)) (8b6a493 (https://github.com/josecorella/aws-encryption-sdk-python/commit/8b6a49388c85785a22d59430007b7873ac8acf96))
+* drop py36 support (#530 (https://github.com/josecorella/aws-encryption-sdk-python/issues/530)) (a753ff8 (https://github.com/josecorella/aws-encryption-sdk-python/commit/a753ff884fe3000881c7d3a2392a0b5d65cfa138))
+* release: add api token to prod release process (#503 (https://github.com/josecorella/aws-encryption-sdk-python/issues/503)) (333c85b (https://github.com/josecorella/aws-encryption-sdk-python/commit/333c85b40b8ee20ed6303b9775e7fb9a6c6d2c63))
+* release: add api token to staging release process (#502 (https://github.com/josecorella/aws-encryption-sdk-python/issues/502)) (78e43b3 (https://github.com/josecorella/aws-encryption-sdk-python/commit/78e43b38a5b9df9a925084242a230fccf91476f2))
+* rm upstream-py27 (#564 (https://github.com/josecorella/aws-encryption-sdk-python/issues/564)) (b378508 (https://github.com/josecorella/aws-encryption-sdk-python/commit/b3785085b7c00fef27a250abf78549d6e7928802))
+* SupportPolicy: Mark 1.x & 2.x End-of-Support (#501 (https://github.com/josecorella/aws-encryption-sdk-python/issues/501)) (ca58e5e (https://github.com/josecorella/aws-encryption-sdk-python/commit/ca58e5e0ce373e9ae5132bb5ce95b6886a0a37d3))
+
+
 3.1.1 -- 2022-06-20
 ===================
 
