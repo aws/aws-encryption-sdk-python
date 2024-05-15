@@ -13,9 +13,10 @@ def _warn_deprecated_python():
         (2, 7): {"date": DEPRECATION_DATE_MAP["2.x"]},
         (3, 4): {"date": DEPRECATION_DATE_MAP["2.x"]},
         (3, 5): {"date": "2021-11-10"},
+        (3, 7): {"date": "2024-03-04"},
     }
     py_version = (sys.version_info.major, sys.version_info.minor)
-    minimum_version = (3, 6)
+    minimum_version = (3, 8)
 
     if py_version in deprecated_versions:
         params = deprecated_versions[py_version]
