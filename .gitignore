@@ -35,6 +35,8 @@ __pycache__
 test_keyrings/
 # Ignore results of performance test
 performance_tests/results/*
+# Ignore the memory profile logs
+mprofile_*
 
 # PyCharm
 .idea/
