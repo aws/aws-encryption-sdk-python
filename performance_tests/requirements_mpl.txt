@@ -1,0 +1,1 @@
+amazon-cryptographic-material-providers-test-vectors @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@lucmcdon/python-mpl#subdirectory=TestVectorsAwsCryptographicMaterialProviders/runtimes/python
