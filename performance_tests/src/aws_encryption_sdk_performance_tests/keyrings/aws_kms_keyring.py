@@ -59,10 +59,12 @@ def encrypt_using_keyring(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    _, _ = client.encrypt(
+    ciphertext_data, _ = client.encrypt(
         source=plaintext_data,
         keyring=keyring
     )
+
+    return ciphertext_data
 
 
 def decrypt_using_keyring(
@@ -81,7 +83,9 @@ def decrypt_using_keyring(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    _, _ = client.decrypt(
+    decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,
         keyring=keyring
     )
+
+    return decrypted_plaintext_data

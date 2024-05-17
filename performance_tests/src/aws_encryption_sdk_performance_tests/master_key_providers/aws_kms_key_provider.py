@@ -42,10 +42,12 @@ def encrypt_using_key_provider(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    _, _ = client.encrypt(
+    ciphertext_data, _ = client.encrypt(
         source=plaintext_data,
         key_provider=key_provider
     )
+
+    return ciphertext_data
 
 
 def decrypt_using_key_provider(
@@ -64,7 +66,9 @@ def decrypt_using_key_provider(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    _, _ = client.decrypt(
+    decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,
         key_provider=key_provider
     )
+
+    return decrypted_plaintext_data
