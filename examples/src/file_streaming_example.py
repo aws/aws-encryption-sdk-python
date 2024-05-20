@@ -25,7 +25,6 @@ in the AWS Encryption SDK for Python.
 """
 import filecmp
 import secrets
-import sys
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig

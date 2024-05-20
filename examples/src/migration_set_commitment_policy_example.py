@@ -20,7 +20,6 @@ These sanity checks are for demonstration in the example only. You do not need t
 For more information on setting your commitment policy, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#commitment-policy
 """
-import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
