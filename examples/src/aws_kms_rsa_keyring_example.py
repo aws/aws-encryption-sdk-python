@@ -26,7 +26,6 @@ import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.identifiers import AlgorithmSuite
 
-
 EXAMPLE_DATA: bytes = b"Hello World"
 
 

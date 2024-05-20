@@ -54,7 +54,6 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .branch_key_id_supplier_example import ExampleBranchKeyIdSupplier
 
-
 EXAMPLE_DATA: bytes = b"Hello World"
 
 

@@ -47,7 +47,6 @@ import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
-
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
