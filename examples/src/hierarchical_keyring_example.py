@@ -55,10 +55,6 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .branch_key_id_supplier_example import ExampleBranchKeyIdSupplier
 
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
-module_root_dir = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(module_root_dir)
 
 EXAMPLE_DATA: bytes = b"Hello World"
 
