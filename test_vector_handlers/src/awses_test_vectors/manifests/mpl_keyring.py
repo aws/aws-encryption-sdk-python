@@ -15,22 +15,23 @@
 This REQUIRES the aws-cryptographic-material-providers library.
 """
 import json
+import attr
 
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-import _dafny
-import attr
-import UTF8
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
     aws_cryptography_materialproviderstestvectorkeys.models import (
         GetKeyDescriptionInput,
         GetKeyDescriptionOutput,
         TestVectorKeyringInput,
     )
+from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
+
+import _dafny
+import UTF8
 
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module

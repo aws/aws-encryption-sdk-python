@@ -4,44 +4,6 @@ batch:
   fast-fail: false
   build-graph:
 
-    # 3.7
-    - identifier: py37_integ
-      buildspec: codebuild/py37/integ.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_examples
-      buildspec: codebuild/py37/examples.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_decrypt_dafny_esdk_vectors
-      buildspec: codebuild/py37/decrypt_dafny_esdk_vectors.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_decrypt_net_401_vectors
-      buildspec: codebuild/py37/decrypt_net_401_vectors.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_encrypt_masterkey
-      buildspec: codebuild/py37/encrypt_masterkey.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_generate_decrypt_vectors_masterkey
-      buildspec: codebuild/py37/generate_decrypt_vectors_masterkey.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_decrypt_masterkey_with_masterkey
-      depend-on: 
-       - py37_generate_decrypt_vectors_masterkey
-      buildspec: codebuild/py37/decrypt_masterkey_with_masterkey.yml
-      env:
-        image: aws/codebuild/standard:5.0
-    - identifier: py37_decrypt_masterkey_with_js
-      depend-on: 
-       - py37_generate_decrypt_vectors_masterkey
-      buildspec: codebuild/py37/decrypt_masterkey_with_js.yml
-      env:
-        image: aws/codebuild/standard:5.0
-
     # 3.8
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml

@@ -1,6 +1,7 @@
 [MESSAGE CONTROL]
 # Disabling messages that either we don't care about we intentionally break.
 disable =
+    import-error, # ignore mpl import errors
     invalid-name,  # we prefer long, descriptive, names for examples
     bad-continuation,  # we let black handle this
     ungrouped-imports,  # we let isort handle this
