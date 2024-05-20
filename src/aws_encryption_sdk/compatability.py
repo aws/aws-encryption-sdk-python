@@ -1,15 +1,5 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-# http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Contains logic for checking ESDK and Python Version"""
 import sys
 import warnings
@@ -23,9 +13,10 @@ def _warn_deprecated_python():
         (2, 7): {"date": DEPRECATION_DATE_MAP["2.x"]},
         (3, 4): {"date": DEPRECATION_DATE_MAP["2.x"]},
         (3, 5): {"date": "2021-11-10"},
+        (3, 7): {"date": "2024-03-04"},
     }
     py_version = (sys.version_info.major, sys.version_info.minor)
-    minimum_version = (3, 6)
+    minimum_version = (3, 8)
 
     if py_version in deprecated_versions:
         params = deprecated_versions[py_version]
