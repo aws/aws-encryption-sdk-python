@@ -36,7 +36,6 @@ import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 
 
-
 def encrypt_and_decrypt_with_keyring(
     plaintext_filename: str,
     ciphertext_filename: str,

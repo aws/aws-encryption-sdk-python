@@ -28,7 +28,6 @@ from typing import Dict  # noqa pylint: disable=wrong-import-order
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 
-
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
