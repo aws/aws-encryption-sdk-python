@@ -2,7 +2,7 @@ version: 0.2
 
 batch:
   fast-fail: false
-  build-list:
+  build-batch:
     - identifier: py38_integ
       buildspec: codebuild/py38/integ.yml
       env:
