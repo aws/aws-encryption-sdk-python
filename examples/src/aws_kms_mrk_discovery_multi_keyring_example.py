@@ -36,7 +36,6 @@ https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview
 For more information on how to use KMS Discovery keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html#kms-keyring-discovery
 """
-import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders

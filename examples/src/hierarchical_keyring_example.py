@@ -31,7 +31,6 @@ table must be configured with the following primary key configuration: - Partiti
 This example also requires using a KMS Key. You need the following access on this key: -
 GenerateDataKeyWithoutPlaintext - Decrypt
 """
-import sys
 
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example

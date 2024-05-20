@@ -6,7 +6,6 @@ A required encryption context CMM asks for required keys in the encryption conte
 on encrypt such that they will not be stored on the message, but WILL be included in the header signature.
 On decrypt, the client MUST supply the key/value pair(s) that were not stored to successfully decrypt the message.
 """
-import sys
 
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example

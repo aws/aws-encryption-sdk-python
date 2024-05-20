@@ -21,7 +21,6 @@ https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyrin
 For more info on KMS MRK (multi-region keys), see the KMS documentation:
 https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html
 """
-import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders

@@ -36,7 +36,6 @@ another KMS keyring as a child keyring.
 For more information on how to use Multi keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-multi-keyring.html
 """
-import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
