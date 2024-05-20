@@ -25,14 +25,9 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # Windows fails due to "No module named 'Wrappers'"
-          # This SHOULD be fixed once Dafny generates fully-qualified import statements
-          # (i.e. doo files, per-package module names)
-          # Disable for now
-          # - windows-latest
+          - windows-latest
           - macos-12
         python:
-          - 3.7
           - 3.8
           - 3.9
           - "3.10"
