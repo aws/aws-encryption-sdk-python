@@ -8,7 +8,6 @@ from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProv
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
 from aws_cryptographic_materialproviders.mpl.references import IKeyring
-from aws_encryption_sdk import CommitmentPolicy
 
 
 def create_keyring(
@@ -55,9 +54,7 @@ def encrypt_using_keyring(
     :param keyring: Keyring to use for encryption.
     :type keyring: IKeyring
     """
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
-    )
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
     ciphertext_data, _ = client.encrypt(
         source=plaintext_data,
@@ -79,9 +76,7 @@ def decrypt_using_keyring(
     :param keyring: Keyring to use for decryption.
     :type keyring: IKeyring
     """
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
-    )
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
     decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,

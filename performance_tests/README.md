@@ -6,7 +6,7 @@ This project is licensed under the Apache-2.0 License.
 
 ## Overview
 
-Here are the keyrings / master key-providers that we plan to test:
+Here are the keyrings / master key-providers that we are testing:
 
 1. KMS Keyring / KMS Master Key Provider
 2. Raw AES Keyring / AES Master Key Provider
@@ -20,7 +20,7 @@ For each keyring / master key-provider, we test the execution time and memory co
 2. Encrypt
 3. Decrypt
 
-We demonstrate the usage of the performance tests through an [AWS KMS Keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html). However, the procedure is the same for any keyring / master key-provider.
+We demonstrate the usage of the performance tests through an [AWS KMS Keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html). However, the procedure is the same for any keyring / master key-provider, with slight change in the input arguments.
 
 The results for the performance test will be available in the results folder in the performance_tests directory.
 

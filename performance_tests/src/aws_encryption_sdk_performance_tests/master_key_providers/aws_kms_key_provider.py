@@ -3,7 +3,6 @@
 """Performance tests for the AWS KMS master key provider."""
 
 import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
 
 
 def create_key_provider(
@@ -38,9 +37,7 @@ def encrypt_using_key_provider(
     :param key_provider: Master key provider to use for encryption.
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     """
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
-    )
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
     ciphertext_data, _ = client.encrypt(
         source=plaintext_data,
@@ -62,9 +59,7 @@ def decrypt_using_key_provider(
     :param key_provider: Master key provider to use for decryption.
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
     """
-    client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
-    )
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
     decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,

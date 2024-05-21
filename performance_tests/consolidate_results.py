@@ -3,11 +3,12 @@
 """Script for consolidating results for execution times"""
 
 import csv
-import sys
+import argparse
+import numpy as np
 
 
 def calculate_statistics(_csv_file):
-    """Calculate min, max and average statistics for execution times in a CSV file."""
+    """Calculate min, max, average and p99 statistics for execution times in a CSV file."""
     with open(_csv_file, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         data = [float(row[0]) for row in reader]
@@ -18,24 +19,26 @@ def calculate_statistics(_csv_file):
         _average = sum(data) / _total_entries
         _minimum = min(data)
         _maximum = max(data)
-        return _total_entries, _average, _minimum, _maximum
+        _perc_99 = np.percentile(data, 99) 
+        return _total_entries, _average, _minimum, _maximum, _perc_99
 
     return None
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python consolidate_results.py <csv_file>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('csv_file',
+                        help='csv file containing the outputs of execution times for n_iter iterations')
+    args = parser.parse_args()
 
-    csv_file = sys.argv[1]
-    statistics = calculate_statistics(csv_file)
+    statistics = calculate_statistics(args.csv_file)
     if statistics:
-        total_entries, average, minimum, maximum = statistics
-        print("CSV File:", csv_file)
+        total_entries, average, minimum, maximum, perc_99 = statistics
+        print("CSV File:", args.csv_file)
         print("Total Entries:", total_entries)
         print("Average:", average)
         print("Minimum:", minimum)
         print("Maximum:", maximum)
+        print("99th percentile:", perc_99)
     else:
         print("No data found in the CSV file.")
