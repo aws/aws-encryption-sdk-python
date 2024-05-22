@@ -53,6 +53,7 @@ def encrypt_kms_keyring():
 
 @encrypt_kms_keyring.command()
 @click.option('--plaintext_data_filename',
+              default='test/resources/plaintext/plaintext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
               prompt='Filename containing plaintext data you want to encrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
@@ -72,7 +73,7 @@ def encrypt(
     keyring = create_keyring(kms_key_id)
     time_list = []
 
-    for _ in range(n_iters):
+    for _ in tqdm(range(n_iters)):
         curr_time = time.time()
 
         encrypt_using_keyring(plaintext_data, keyring)
@@ -91,6 +92,7 @@ def decrypt_kms_keyring():
 
 @decrypt_kms_keyring.command()
 @click.option('--ciphertext_data_filename',
+              default='test/resources/ciphertext/kms/ciphertext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
               prompt='Filename containing ciphertext data you want to decrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
@@ -110,7 +112,7 @@ def decrypt(
     keyring = create_keyring(kms_key_id)
     time_list = []
 
-    for _ in range(n_iters):
+    for _ in tqdm(range(n_iters)):
         curr_time = time.time()
 
         decrypt_using_keyring(ciphertext_data, keyring)
