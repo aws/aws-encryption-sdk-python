@@ -76,7 +76,8 @@ try:
     # Import internal ESDK modules that depend on the MPL
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
-except ImportError:
+except ImportError as e:
+    print("streamingerror" + e)
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
