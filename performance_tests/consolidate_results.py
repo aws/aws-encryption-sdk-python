@@ -15,12 +15,14 @@ def calculate_statistics(_csv_file):
 
     # Calculate statistics
     if data:
+        data = np.sort(data)
         _total_entries = len(data)
         _average = sum(data) / _total_entries
+        _trimmed_average_99 = np.mean(data[0:int(0.99 * len(data))])
         _minimum = min(data)
         _maximum = max(data)
-        _perc_99 = np.percentile(data, 99) 
-        return _total_entries, _average, _minimum, _maximum, _perc_99
+        _perc_99 = np.percentile(data, 99)
+        return _total_entries, _average, _trimmed_average_99, _minimum, _maximum, _perc_99
 
     return None
 
@@ -33,10 +35,11 @@ if __name__ == "__main__":
 
     statistics = calculate_statistics(args.csv_file)
     if statistics:
-        total_entries, average, minimum, maximum, perc_99 = statistics
+        total_entries, average, trimmend_average_99, minimum, maximum, perc_99 = statistics
         print("CSV File:", args.csv_file)
         print("Total Entries:", total_entries)
         print("Average:", average)
+        print("99th percentile trimmed average:", trimmend_average_99)
         print("Minimum:", minimum)
         print("Maximum:", maximum)
         print("99th percentile:", perc_99)

@@ -9,6 +9,8 @@ from tqdm import tqdm
 
 from aws_encryption_sdk_performance_tests.keyrings.aws_kms_keyring import (
     create_keyring,
+    create_kms_client,
+    create_keyring_given_kms_client,
     decrypt_using_keyring,
     encrypt_using_keyring,
 )
@@ -38,6 +40,38 @@ def create(
         curr_time = time.time()
 
         create_keyring(kms_key_id)
+
+        # calculate elapsed time in milliseconds
+        elapsed_time = (time.time() - curr_time) * 1000
+        time_list.append(elapsed_time)
+
+    PerfTestUtils.print_time_list_to_csv(time_list, output_file)
+
+
+@click.group()
+def create_kms_keyring_given_kms_client():
+    """Click group helper function"""
+
+
+@create_kms_keyring_given_kms_client.command()
+@click.option('--kms_key_id',
+              default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
+@click.option('--n_iters',
+              default=PerfTestUtils.DEFAULT_N_ITERS)
+@click.option('--output_file',
+              default='kms_keyring_create_given_kms_client')
+def create_given_kms_client(
+    kms_key_id: str,
+    n_iters: int,
+    output_file: str
+):
+    """Performance test for the create_keyring function."""
+    kms_client = create_kms_client()
+    time_list = []
+    for _ in tqdm(range(n_iters)):
+        curr_time = time.time()
+
+        create_keyring_given_kms_client(kms_key_id, kms_client)
 
         # calculate elapsed time in milliseconds
         elapsed_time = (time.time() - curr_time) * 1000
@@ -125,6 +159,7 @@ def decrypt(
 
 
 kms_keyring_test = click.CommandCollection(sources=[create_kms_keyring,
+                                                    create_kms_keyring_given_kms_client,
                                                     encrypt_kms_keyring,
                                                     decrypt_kms_keyring])
 

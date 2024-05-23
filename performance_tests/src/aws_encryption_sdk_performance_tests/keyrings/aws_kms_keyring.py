@@ -42,6 +42,49 @@ def create_keyring(
     return keyring
 
 
+def create_kms_client():
+    """Create an AWS KMS client.
+
+    Usage: create_kms_client()
+    """
+    # Create a boto3 client for KMS.
+    kms_client = boto3.client('kms', region_name="us-west-2")
+
+    return kms_client
+
+
+def create_keyring_given_kms_client(
+    kms_key_id: str,
+    kms_client: boto3.client,
+):
+    """Demonstrate how to create an AWS KMS keyring with given KMS client.
+
+    Usage: create_keyring(kms_key_id, kms_client)
+    :param kms_key_id: KMS Key identifier for the KMS key you want to use.
+    :type kms_key_id: string
+    :param kms_client: boto3 client for KMS.
+    :type kms_client: boto3.client
+
+    For more information on KMS Key identifiers, see
+    https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
+    """
+    # Create a KMS keyring
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
+
+    keyring_input: CreateAwsKmsKeyringInput = CreateAwsKmsKeyringInput(
+        kms_key_id=kms_key_id,
+        kms_client=kms_client
+    )
+
+    keyring: IKeyring = mat_prov.create_aws_kms_keyring(
+        input=keyring_input
+    )
+
+    return keyring
+
+
 def encrypt_using_keyring(
     plaintext_data: bytes,
     keyring: IKeyring
