@@ -5,6 +5,8 @@
 import time
 
 import click
+import click.testing
+import pytest
 from tqdm import tqdm
 
 from aws_encryption_sdk_performance_tests.master_key_providers.raw_rsa_master_key_provider import (
@@ -118,6 +120,30 @@ def decrypt(
 raw_rsa_key_provider_test = click.CommandCollection(sources=[create_raw_rsa_key_provider,
                                                              encrypt_raw_rsa_key_provider,
                                                              decrypt_raw_rsa_key_provider])
+
+
+@pytest.fixture
+def runner():
+    """Click runner"""
+    return click.testing.CliRunner()
+
+
+def test_create(runner):
+    """Test the create_key_provider function"""
+    result = runner.invoke(create_raw_rsa_key_provider.commands['create'], ['--n_iters', 1])
+    assert result.exit_code == 0
+
+
+def test_encrypt(runner):
+    """Test the encrypt_using_key_provider function"""
+    result = runner.invoke(encrypt_raw_rsa_key_provider.commands['encrypt'], ['--n_iters', 1])
+    assert result.exit_code == 0
+
+
+def test_decrypt(runner):
+    """Test the decrypt_using_key_provider function"""
+    result = runner.invoke(decrypt_raw_rsa_key_provider.commands['decrypt'], ['--n_iters', 1])
+    assert result.exit_code == 0
 
 
 if __name__ == "__main__":
