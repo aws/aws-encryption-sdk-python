@@ -1,4 +1,4 @@
-# Performance Tests for ESDK Python
+# aws-encryption-sdk performance tests
 
 ## License
 
@@ -6,21 +6,22 @@ This project is licensed under the Apache-2.0 License.
 
 ## Overview
 
-Here are the keyrings / master key-providers that we are testing:
+This library tests the following keyrings / master key-providers:
 
 1. KMS Keyring / KMS Master Key Provider
 2. Raw AES Keyring / AES Master Key Provider
-3. HKeyring / caching CMM example ("old" caching solution vs the (current) "new" caching solution)
-4. Raw RSA Keyring / RSA Master Key Provider
+3. Raw RSA Keyring / RSA Master Key Provider
+4. Hierarchy Keyring
+5. Caching CMM
 
-For each test on the above keyrings / master key-providers, we measure the execution time and memory consumption in each test.
+For each test on the above keyrings / master key-providers, this package measures the execution time and memory consumption.
 
-For each keyring / master key-provider, we test the execution time and memory consumption time for three operations:
+For each keyring / master key-provider, the execution time and memory consumption time is measured for three operations:
 1. Create keyring / master key-provider
 2. Encrypt
 3. Decrypt
 
-We demonstrate the usage of the performance tests through an [AWS KMS Keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html). However, the procedure is the same for any keyring / master key-provider, with slight change in the input arguments.
+The usage of the performance tests is demonstrated through an [AWS KMS Keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html). However, the procedure is the same for any keyring / master key-provider, with slight change in the input arguments.
 
 The results for the performance test will be available in the results folder in the performance_tests directory.
 
@@ -122,13 +123,13 @@ mprof plot
 This 'mprof plot' command will plot the most recent mprofile log file.
 
 ## Usage: Performance Graph
-To generate a performance graph, please use the following command to generate the pstats log file by specifying the output pstats file path. Here, we use 'results/kms_keyring_create.pstats' as the output file.
+To generate a performance graph, please use the following command to generate the pstats log file by specifying the output pstats file path. Here, 'results/kms_keyring_create.pstats' is set as the default output file.
 
 ```
 python -m cProfile -o results/kms_keyring_create.pstats test/keyrings/test_aws_kms_keyring.py create
 ```
 
-After generating the pstats file, please run the following command to generate the performance graph. The output performance graph will be a .png file that you specify. Here, we use 'results/kms_keyring_create.png' as the output file.
+After generating the pstats file, please run the following command to generate the performance graph. The output performance graph will be a .png file that you specify. Here, 'results/kms_keyring_create.png' is set as the default output file.
 ```
 gprof2dot -f pstats results/kms_keyring_create.pstats | dot -Tpng -o results/kms_keyring_create.png && eog results/kms_keyring_create.png 
 ```

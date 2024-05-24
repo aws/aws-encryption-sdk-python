@@ -9,8 +9,8 @@ from tqdm import tqdm
 
 from aws_encryption_sdk_performance_tests.keyrings.aws_kms_keyring import (
     create_keyring,
-    create_kms_client,
     create_keyring_given_kms_client,
+    create_kms_client,
     decrypt_using_keyring,
     encrypt_using_keyring,
 )

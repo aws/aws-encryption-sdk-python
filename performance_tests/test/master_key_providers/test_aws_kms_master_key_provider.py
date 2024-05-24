@@ -7,7 +7,7 @@ import time
 import click
 from tqdm import tqdm
 
-from aws_encryption_sdk_performance_tests.master_key_providers.aws_kms_key_provider import (
+from aws_encryption_sdk_performance_tests.master_key_providers.aws_kms_master_key_provider import (
     create_key_provider,
     decrypt_using_key_provider,
     encrypt_using_key_provider,
