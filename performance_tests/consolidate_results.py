@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Script for consolidating results for execution times"""
 
-import csv
 import argparse
+import csv
+
 import numpy as np
 
 
