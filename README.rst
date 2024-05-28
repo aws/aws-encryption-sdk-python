@@ -90,13 +90,13 @@ which is automatically generated anywhere a caller provides a keyring.
 
 Note: You must also install the `AWS Cryptographic Material Providers Library (MPL)`_
 to create and use CMMs that use keyrings.
-CMMs that use master key providers have been deprecated since v4 of this library.
+CMMs that use master key providers have been marked as legacy since v4 of this library.
 
 Legacy Concepts
 ===============
-These concepts mention components that have been deprecated since v4 of this library.
+This section describes legacy concepts used in earlier versions of this library.
 These components have been superseded by new components in the `AWS Cryptographic Material Providers Library (MPL)`_.
-Please avoid using these and instead use components in the MPL.
+Please avoid using these components, and instead use components in the MPL.
 
 Master Key Providers
 --------------------
@@ -106,7 +106,7 @@ To encrypt data in this client, a ``MasterKeyProvider`` object must contain at l
 
 ``MasterKeyProvider`` objects can also contain other ``MasterKeyProvider`` objects.
 
-NOTE: Master key providers are deprecated
+NOTE: Master key providers are legacy components
 and have been superseded by keyrings
 provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
 Please install this library and migrate master key providers to keyring interfaces.
@@ -116,7 +116,7 @@ Master Keys
 Master keys generate, encrypt, and decrypt data keys.
 An example of a master key is an `AWS KMS key`_.
 
-NOTE: Master keys are deprecated
+NOTE: Master keys are legacy constructs
 and have been superseded by keyrings
 provided by the `AWS Cryptographic Material Providers Library (MPL)`_.
 Please install this library and migrate master key providers to keyring interfaces.

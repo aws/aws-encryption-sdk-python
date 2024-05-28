@@ -129,7 +129,6 @@ def _check_mrk_arns_equal(key1, key2):
     )
 
 
-@deprecated("Use DiscoveryFilter from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class DiscoveryFilter(object):
     """DiscoveryFilter to control accounts and partitions that can be used by a KMS Master Key Provider.
@@ -144,7 +143,6 @@ class DiscoveryFilter(object):
     partition = attr.ib(default=None, hash=True, validator=attr.validators.optional(attr.validators.instance_of(str)))
 
 
-@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class KMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for KMSMasterKey objects.
@@ -173,7 +171,6 @@ class KMSMasterKeyConfig(MasterKeyConfig):
         return boto3.session.Session(**kwargs).client("kms", config=botocore_config)
 
 
-@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class KMSMasterKey(MasterKey):
     """Master Key class for KMS CMKs.
 
@@ -386,7 +383,6 @@ class KMSMasterKey(MasterKey):
             )
 
 
-@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
     """Configuration object for MRKAwareKMSMasterKey objects. Mostly the same as KMSMasterKey, except the
@@ -410,7 +406,6 @@ class MRKAwareKMSMasterKeyConfig(MasterKeyConfig):
     )
 
 
-@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareKMSMasterKey(KMSMasterKey):
     """Master Key class for KMS MRKAware CMKs. The logic for this class is almost entirely the same as a normal
     KMSMasterKey ("single-region key"). The primary difference is that this class is more flexible in what ciphertexts
@@ -520,7 +515,6 @@ class MRKAwareKMSMasterKey(KMSMasterKey):
         return False
 
 
-@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     """Configuration object for KMSMasterKeyProvider objects.
@@ -557,7 +551,6 @@ class KMSMasterKeyProviderConfig(MasterKeyProviderConfig):
     )
 
 
-@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)
 class BaseKMSMasterKeyProvider(MasterKeyProvider):
     """Master Key Provider for KMS.
@@ -747,7 +740,6 @@ class BaseKMSMasterKeyProvider(MasterKeyProvider):
         )
 
 
-@deprecated("Use KMS keyrings from the aws-cryptographic-material-providers library.")
 class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     """Strict Master Key Provider for KMS. It is configured with an explicit list of AWS KMS master keys that
     should be used for encryption and decryption. On encryption, the plaintext will be encrypted with all configured
@@ -814,7 +806,6 @@ class StrictAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
             )
 
 
-@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
     """A Strict Master Key Provider for KMS that has smarts for handling Multi-Region keys.
 
@@ -884,7 +875,6 @@ class MRKAwareStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
             )
 
 
-@deprecated("Use KMS discovery keyrings from the aws-cryptographic-material-providers library.")
 class DiscoveryAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
     """Discovery Master Key Provider for KMS. This can only be used for decryption. It is configured with an optional
      Discovery Filter containing AWS account ids and partitions that should be trusted for decryption. If a ciphertext
@@ -940,7 +930,6 @@ class DiscoveryAwsKmsMasterKeyProvider(BaseKMSMasterKeyProvider):
             )
 
 
-@deprecated("Use KMS MRK keyrings from the aws-cryptographic-material-providers library.")
 class MRKAwareDiscoveryAwsKmsMasterKeyProvider(DiscoveryAwsKmsMasterKeyProvider):
     """Discovery Master Key Provider for KMS that has smarts for handling Multi-Region keys
 

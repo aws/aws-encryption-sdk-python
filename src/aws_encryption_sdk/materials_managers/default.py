@@ -32,7 +32,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(hash=False)
-@deprecated("Use CMMs from the aws-cryptographic-material-providers library.")
 class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
     """Default crypto material manager.
 

@@ -36,7 +36,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(hash=False)
-@deprecated("Use the hierarchical keyring from the aws-cryptographic-material-providers library.")
 class CachingCryptoMaterialsManager(CryptoMaterialsManager):
     """Crypto material manager which caches results from an underlying material manager.
 

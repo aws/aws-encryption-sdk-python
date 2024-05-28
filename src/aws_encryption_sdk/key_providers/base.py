@@ -32,7 +32,6 @@ from aws_encryption_sdk.structures import MasterKeyInfo
 _LOGGER = logging.getLogger(__name__)
 
 
-@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MasterKeyProviderConfig(object):
     """Provides a common ancestor for MasterKeyProvider configuration objects
@@ -40,7 +39,6 @@ class MasterKeyProviderConfig(object):
     """
 
 
-@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)
 class MasterKeyProvider(object):
     """Parent interface for Master Key Provider classes.
@@ -327,7 +325,6 @@ class MasterKeyProvider(object):
         return data_key
 
 
-@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @attr.s(hash=True)
 class MasterKeyConfig(object):
     """Configuration object for MasterKey objects.
@@ -345,7 +342,6 @@ class MasterKeyConfig(object):
             raise TypeError('Instances of MasterKeyConfig must have a "provider_id" attribute defined.')
 
 
-@deprecated("Use keyrings from the aws-cryptographic-material-providers library.")
 @six.add_metaclass(abc.ABCMeta)
 class MasterKey(MasterKeyProvider):
     """Parent interface for Master Key classes.

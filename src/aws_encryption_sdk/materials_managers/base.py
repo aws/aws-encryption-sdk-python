@@ -19,7 +19,6 @@ from ..internal.deprecation import deprecated
 
 
 @six.add_metaclass(abc.ABCMeta)
-@deprecated("Use CMMs from the aws-cryptographic-material-providers library.")
 class CryptoMaterialsManager(object):
     """Parent interface for crypto material manager classes.
 
