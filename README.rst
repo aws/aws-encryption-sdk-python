@@ -58,7 +58,7 @@ Installation
        $ pip install "aws-encryption-sdk[MPL]"
 
 The `[MPL]` suffix also installs the `AWS Cryptographic Material Providers Library (MPL)`_.
-This is a library that contains interfaces for encrypting and decrypting your data.
+This is a library that contains constructs for encrypting and decrypting your data.
 We highly recommend installing the MPL.
 However, if you do not wish to install the MPL, omit the `[MPL]` suffix.
 
@@ -94,7 +94,7 @@ CMMs that use master key providers have been marked as legacy since v4 of this l
 
 Legacy Concepts
 ===============
-This section describes legacy concepts used in earlier versions of this library.
+This section describes legacy concepts introduced in earlier versions of this library.
 These components have been superseded by new components in the `AWS Cryptographic Material Providers Library (MPL)`_.
 Please avoid using these components, and instead use components in the MPL.
 
@@ -435,25 +435,23 @@ to your use-case in order to obtain peak performance.
 
 Thread safety
 ==========================
-TODO-MPL: need to write about keyring thread safety.
-kms keyrings definitely not thread safe.
-raw keyrings need testing, but may be launched as not thread safe.
-
-The ``EncryptionSDKClient`` class is thread safe.
-But instances of key material providers (i.e. keyrings or legacy master key providers) that call AWS KMS
-(ex. ``AwsKmsMultiKeyring`` or other KMS keyrings; ``BaseKmsMasterKeyProvider`` or children of this class)
-MUST not be shared between threads
+The ``EncryptionSDKClient`` and all provided ``CryptoMaterialsManager`` in this library are thread safe.
+But instances of ``BaseKMSMasterKeyProvider`` MUST not be shared between threads,
 for the reasons outlined in `the boto3 docs <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html#multithreading-or-multiprocessing-with-resources>`_.
 
-Because these key material providers create a `new boto3 sessions <https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674>`_ per region,
+Because the ``BaseKMSMaterKeyProvider`` creates a `new boto3 sessions <https://github.com/aws/aws-encryption-sdk-python/blob/08f305a9b7b5fc897d9cafac55fb98f3f2a6fe13/src/aws_encryption_sdk/key_providers/kms.py#L665-L674>`_ per region,
 users do not need to create a client for every region in every thread;
-a single key material provider per thread is sufficient.
+a new  ``BaseKMSMasterKeyProvider`` per thread is sufficient.
 
-(The ``BaseKMSMasterKeyProvider`` is the internal parent class of all the legacy KMS master key providers.)
+(The ``BaseKMSMasterKeyProvider`` is the internal parent class of all the KMS Providers.)
 
 Finally, while the ``CryptoMaterialsCache`` is thread safe,
 sharing entries in that cache across threads needs to be done carefully
 (see the !Note about partition name `in the API Docs <https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_).
+
+**Important:** Components from the `AWS Cryptographic Material Providers Library (MPL)`_ have separate thread safety considerations.
+For more information, see the note on thread safety in that project's README.
+
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
 .. _cryptography: https://cryptography.io/en/latest/
