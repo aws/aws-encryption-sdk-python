@@ -35,4 +35,4 @@ phases:
       - aws sts get-caller-identity
       # Run MPL-specific tests with special role
       - cd performance_tests/
-      - tox
+      - tox -e py311-performance_tests-mpl
