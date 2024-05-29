@@ -34,5 +34,4 @@ phases:
       - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
       - aws sts get-caller-identity
       # Run MPL-specific tests with special role
-      - cd performance_tests/
-      - tox -e py312-performance_tests-mpl
+      - cd performance_tests/ && tox -e py312-performance_tests-mpl
