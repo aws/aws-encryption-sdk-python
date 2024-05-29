@@ -28,7 +28,7 @@ def create_kms_key_provider():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_key_provider_create')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_create')
 def create(
     kms_key_id: str,
     n_iters: int,
@@ -55,14 +55,15 @@ def encrypt_kms_key_provider():
 
 @encrypt_kms_key_provider.command()
 @click.option('--plaintext_data_filename',
-              default='test/resources/plaintext/plaintext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
               prompt='Filename containing plaintext data you want to encrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_key_provider_encrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_encrypt')
 def encrypt(
     plaintext_data_filename: str,
     kms_key_id: str,
@@ -94,14 +95,15 @@ def decrypt_kms_key_provider():
 
 @decrypt_kms_key_provider.command()
 @click.option('--ciphertext_data_filename',
-              default='test/resources/ciphertext/kms/ciphertext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/ciphertext/kms/ciphertext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
               prompt='Filename containing ciphertext data you want to decrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_key_provider_decrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_decrypt')
 def decrypt(
     ciphertext_data_filename: str,
     kms_key_id: str,

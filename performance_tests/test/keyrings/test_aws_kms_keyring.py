@@ -104,8 +104,6 @@ def encrypt(
     output_file: str
 ):
     """Performance test for the encrypt_using_keyring function."""
-    print('plaintext_data_filename', plaintext_data_filename)
-    print('output_file', output_file)
     plaintext_data = PerfTestUtils.read_file(plaintext_data_filename)
 
     keyring = create_keyring(kms_key_id)
@@ -190,7 +188,6 @@ def test_create_given_kms_client(runner):
 def test_encrypt(runner):
     """Test the encrypt_using_keyring function"""
     result = runner.invoke(encrypt_kms_keyring.commands['encrypt'], ['--n_iters', 1])
-    print('result.output', result.output)
     assert result.exit_code == 0
 
 

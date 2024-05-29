@@ -26,7 +26,7 @@ def create_raw_rsa_keyring():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='raw_rsa_keyring_create')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_rsa_keyring_create')
 def create(
     n_iters: int,
     output_file: str
@@ -55,12 +55,13 @@ def encrypt_raw_rsa_keyring():
 
 @encrypt_raw_rsa_keyring.command()
 @click.option('--plaintext_data_filename',
-              default='test/resources/plaintext/plaintext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
               prompt='Filename containing plaintext data you want to encrypt')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='raw_rsa_keyring_encrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_rsa_keyring_encrypt')
 def encrypt(
     plaintext_data_filename: str,
     n_iters: int,
@@ -93,12 +94,13 @@ def decrypt_raw_rsa_keyring():
 
 @decrypt_raw_rsa_keyring.command()
 @click.option('--ciphertext_data_filename',
-              default='test/resources/ciphertext/raw_rsa/ciphertext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/ciphertext/raw_rsa/ciphertext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
               prompt='Filename containing ciphertext data you want to decrypt')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='raw_rsa_keyring_decrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_rsa_keyring_decrypt')
 def decrypt(
     ciphertext_data_filename: str,
     n_iters: int,
