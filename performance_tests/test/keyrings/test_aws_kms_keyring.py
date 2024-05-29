@@ -47,6 +47,8 @@ def create(
         elapsed_time = (time.time() - curr_time) * 1000
         time_list.append(elapsed_time)
 
+    print('time_list', time_list)
+    print('output_file', output_file)
     PerfTestUtils.write_time_list_to_csv(time_list, output_file)
 
 
@@ -175,6 +177,7 @@ def runner():
 def test_create(runner):
     """Test the create_keyring function"""
     result = runner.invoke(create_kms_keyring.commands['create'], ['--n_iters', 1])
+    print('time_list', result.output)
     assert result.exit_code == 0
 
 
