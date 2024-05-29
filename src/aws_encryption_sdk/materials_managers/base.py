@@ -16,7 +16,6 @@ import abc
 import six
 
 
-
 @six.add_metaclass(abc.ABCMeta)
 class CryptoMaterialsManager(object):
     """Parent interface for crypto material manager classes.
