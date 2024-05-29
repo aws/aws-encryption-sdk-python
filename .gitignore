@@ -35,6 +35,8 @@ __pycache__
 test_keyrings/
 # Ignore results of performance test
 performance_tests/results/*
+# To track the results folder, keep the __init__.py file
+!performance_tests/results/__init__.py
 # Ignore the memory profile logs
 mprofile_*
 
