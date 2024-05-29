@@ -35,7 +35,6 @@ from aws_encryption_sdk.exceptions import (
 )
 from aws_encryption_sdk.identifiers import USER_AGENT_SUFFIX
 from aws_encryption_sdk.internal.arn import arn_from_str, is_valid_mrk_identifier
-from aws_encryption_sdk.internal.deprecation import deprecated
 from aws_encryption_sdk.internal.str_ops import to_str
 from aws_encryption_sdk.key_providers.base import MasterKey, MasterKeyConfig, MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.structures import DataKey, EncryptedDataKey, MasterKeyInfo

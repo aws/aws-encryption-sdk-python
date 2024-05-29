@@ -15,7 +15,6 @@ import abc
 
 import six
 
-from ..internal.deprecation import deprecated
 
 
 @six.add_metaclass(abc.ABCMeta)

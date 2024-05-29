@@ -25,7 +25,6 @@ from aws_encryption_sdk.exceptions import (
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
-from aws_encryption_sdk.internal.deprecation import deprecated
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import MasterKeyInfo
 

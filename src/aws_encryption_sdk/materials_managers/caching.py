@@ -25,7 +25,6 @@ from ..caches import (
 from ..caches.base import CryptoMaterialsCache
 from ..exceptions import CacheKeyError
 from ..internal.defaults import MAX_BYTES_PER_KEY, MAX_MESSAGES_PER_KEY
-from ..internal.deprecation import deprecated
 from ..internal.str_ops import to_bytes
 from ..key_providers.base import MasterKeyProvider
 from . import EncryptionMaterialsRequest

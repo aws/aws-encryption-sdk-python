@@ -20,7 +20,6 @@ from ..identifiers import CommitmentPolicy
 from ..internal.crypto.authentication import Signer, Verifier
 from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
 from ..internal.defaults import ALGORITHM, ALGORITHM_COMMIT_KEY, ENCODED_SIGNER_KEY
-from ..internal.deprecation import deprecated
 from ..internal.str_ops import to_str
 from ..internal.utils import prepare_data_keys
 from ..internal.utils.commitment import validate_commitment_policy_on_decrypt, validate_commitment_policy_on_encrypt

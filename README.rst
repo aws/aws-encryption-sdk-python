@@ -449,7 +449,8 @@ Finally, while the ``CryptoMaterialsCache`` is thread safe,
 sharing entries in that cache across threads needs to be done carefully
 (see the !Note about partition name `in the API Docs <https://aws-encryption-sdk-python.readthedocs.io/en/latest/generated/aws_encryption_sdk.materials_managers.caching.html#aws_encryption_sdk.materials_managers.caching.CachingCryptoMaterialsManager>`_).
 
-**Important:** Components from the `AWS Cryptographic Material Providers Library (MPL)`_ have separate thread safety considerations.
+**Important:** Components from the `AWS Cryptographic Material Providers Library (MPL)`_
+have separate thread safety considerations.
 For more information, see the note on thread safety in that project's README.
 
 
