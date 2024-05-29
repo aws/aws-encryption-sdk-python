@@ -97,6 +97,6 @@ class PerfTestUtils:
     @staticmethod
     def write_time_list_to_csv(time_list, filename):
         """Writes the time list to a CSV file."""
-        with open('results/' + filename + '.csv', 'w', encoding='utf-8') as myfile:
+        with open(filename + '.csv', 'w', encoding='utf-8') as myfile:
             for time in time_list:
                 myfile.write(str(time) + '\n')

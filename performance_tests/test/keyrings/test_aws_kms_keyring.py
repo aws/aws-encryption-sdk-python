@@ -30,7 +30,7 @@ def create_kms_keyring():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_keyring_create')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_keyring_create')
 def create(
     kms_key_id: str,
     n_iters: int,
@@ -46,9 +46,6 @@ def create(
         # calculate elapsed time in milliseconds
         elapsed_time = (time.time() - curr_time) * 1000
         time_list.append(elapsed_time)
-
-    print('time_list', time_list)
-    print('output_file', output_file)
     PerfTestUtils.write_time_list_to_csv(time_list, output_file)
 
 
@@ -63,7 +60,7 @@ def create_kms_keyring_given_kms_client():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_keyring_create_given_kms_client')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_keyring_create_given_kms_client')
 def create_given_kms_client(
     kms_key_id: str,
     n_iters: int,
@@ -91,14 +88,15 @@ def encrypt_kms_keyring():
 
 @encrypt_kms_keyring.command()
 @click.option('--plaintext_data_filename',
-              default='test/resources/plaintext/plaintext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
               prompt='Filename containing plaintext data you want to encrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_keyring_encrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_keyring_encrypt')
 def encrypt(
     plaintext_data_filename: str,
     kms_key_id: str,
@@ -130,14 +128,15 @@ def decrypt_kms_keyring():
 
 @decrypt_kms_keyring.command()
 @click.option('--ciphertext_data_filename',
-              default='test/resources/ciphertext/kms/ciphertext-data-' + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
+              default='/'.join(__file__.split("/")[:-2]) + '/resources/ciphertext/kms/ciphertext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
               prompt='Filename containing ciphertext data you want to decrypt')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='kms_keyring_decrypt')
+              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_keyring_decrypt')
 def decrypt(
     ciphertext_data_filename: str,
     kms_key_id: str,
@@ -177,7 +176,6 @@ def runner():
 def test_create(runner):
     """Test the create_keyring function"""
     result = runner.invoke(create_kms_keyring.commands['create'], ['--n_iters', 1])
-    print('time_list', result.output)
     assert result.exit_code == 0
 
 
