@@ -6,7 +6,7 @@
 class PerfTestUtils:
     """Utility functions for AWS Encryption SDK performance tests."""
     DEFAULT_N_ITERS = 100
-    DEFAULT_FILE_SIZE = 'small'
+    DEFAULT_FILE_SIZE = 'medium'
     DEFAULT_AES_256_STATIC_KEY = \
         b'_\xcf"\x82\x03\x12\x9d\x00\x8a\xed\xaf\xe4\x80\x1d\x00t\xa6P\xac\xb6\xfe\xc5\xf6/{\xe7\xaaO\x01\x13W\x85'
     DEFAULT_RSA_PUBLIC_KEY = bytes("-----BEGIN PUBLIC KEY-----\n"
@@ -76,6 +76,19 @@ class PerfTestUtils:
                                     + "PXUuRjOxKO6MzldzqJSUrTir8uqCwBIR9x9GOrGDp//ZbRw2TK4EbkyjNYO7KtOF\n"
                                     + "A/DHJmMI5bKETJyj1GhBE9LqypAI1Bo=\n"
                                     + "-----END PRIVATE KEY-----\n", "utf-8")
+
+    DEFAULT_ENCRYPTION_CONTEXT = {
+        "tenant": "TenantA",
+        "encryption": "context",
+        "is not": "secret",
+        "but adds": "useful metadata",
+        "that can help you": "be confident that",
+        "the data you are handling": "is what you think it is",
+    }
+
+    DEFAULT_BRANCH_KEY_ID_A = 'a52dfaad-7dbd-4430-a1fd-abaa5299da07'
+
+    DEFAULT_BRANCH_KEY_ID_B = '8ba79cef-581c-4125-9292-b057a29d42d7'
 
     @staticmethod
     def read_file(filename):

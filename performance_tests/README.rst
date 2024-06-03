@@ -1,12 +1,14 @@
-# aws-encryption-sdk performance tests
+#####################################
+aws-encryption-sdk performance tests
+#####################################
 
-## License
+This module runs performance tests for the `AWS Encryption SDK Python`_.
 
-This project is licensed under the Apache-2.0 License.
+********
+Overview
+********
 
-## Overview
-
-This library tests the following keyrings / master key-providers:
+This module tests the following keyrings / master key-providers:
 
 1. KMS Keyring / KMS Master Key Provider
 2. Raw AES Keyring / AES Master Key Provider
@@ -14,122 +16,217 @@ This library tests the following keyrings / master key-providers:
 4. Hierarchy Keyring
 5. Caching CMM
 
-For each test on the above keyrings / master key-providers, this package measures the execution time and memory consumption.
+For each test on the above keyrings / master key-providers, this package measures:
 
-For each keyring / master key-provider, the execution time and memory consumption time is measured for three operations:
+1. Execution time
+2. Total memory consumption
+
+For each keyring / master key-provider, the execution time and memory consumption
+is measured for three operations:
+
 1. Create keyring / master key-provider
 2. Encrypt
 3. Decrypt
 
-The usage of the performance tests is demonstrated through an [AWS KMS Keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html). However, the procedure is the same for any keyring / master key-provider, with slight change in the input arguments.
+The usage of the performance tests is demonstrated through an `AWS KMS Keyring`_.
+However, the procedure is the same for any keyring / master key-provider, with slight
+changes in the input arguments.
 
-The results for the performance test will be available in the results folder in the performance_tests directory.
+The results for the performance test will be available in the results folder in the
+performance_tests directory.
 
-## Usage: Execution Time
+**********************
+Required Prerequisites
+**********************
 
-### Create Keyring
-To run the performance test for execution time, please use the following commands in the performance_tests directory
-```
-python test/keyrings/test_aws_kms_keyring.py create
-```
+* Python 3.11+
+* aws-encryption-sdk
 
-#### Optional Arguments
-* kms_key_id: The KMS key ID you want to use
-* n_iters: Number of iterations you want to run the test for. For instance, if n_iters = 100, this performance test script will run the create_keyring method 100 times and report the execution time of each of the calls.
-* output_file: The output file for execution times for each function call, default='kms_keyring_create' in the results folder
+*****
+Usage
+*****
 
-#### Consolidate Results
+Execution Time
+==============
 
-In order to find the minimum, maximum and average times from the n_iters runs, please use the following script from the performance_tests directory:
-```
-python consolidate_results.py results/kms_keyring_create.csv
-```
+Create Keyring
+--------------
+To run the performance test for execution time, please use the
+following commands in the performance_tests directory.
 
-### Encrypt
-To run the performance test for execution time, please use the following commands in the performance_tests directory
-```
-python test/keyrings/test_aws_kms_keyring.py encrypt
-```
+.. code::
 
-Here, you will receive a prompt on the terminal to specify the plaintext file you want to encrypt. Some example plaintext data files are present in the 'test/resources' directory.
+    usage: python test/keyrings/test_aws_kms_keyring.py create
 
-Alternatively, if you want to provide the arguments as flags without using the interactive CLI, you can run the command in the following manner:
+    Create a keyring to use for encryption and decryption.
 
-```
-python test/keyrings/test_aws_kms_keyring.py encrypt --plaintext_data_filename test/resources/plaintext-data-medium.dat
-```
+    optional arguments:
+      -h, --help                    show this help message and exit.
+      --kms_key_id KMS_KEY_ID       The KMS key ID you want to use.
+      --n_iters N_ITERS             Number of iterations you want to
+                                    run the test for. For instance,
+                                    if n_iters = 100, this performance
+                                    test script will run the create_keyring
+                                    method 100 times and report the
+                                    execution time of each of the calls.
+      --output_file OUTPUT_FILE     The output file for execution times
+                                    for each function call,
+                                    default='kms_keyring_create' in the
+                                    results folder.
 
-You can choose to use any other plaintext file as well.
 
-#### Arguments
-* plaintext_data_filename: Filename containing plaintext data you want to encrypt
+Consolidate Results
+~~~~~~~~~~~~~~~~~~~
 
-#### Optional Arguments
-* kms_key_id: The KMS key ID you want to use to encrypt the data
-* n_iters: Number of iterations you want to run the test for. For instance, if n_iters = 100, this performance test script will run the encrypt method 100 times and report the execution time of each of the calls.
-* output_file: The output file for execution times for each function call, default='kms_keyring_encrypt'
+In order to find the minimum, maximum, average, 99th percentile and bottom
+99th percentile trimmed average times from the n_iters runs, please use the
+following script from the performance_tests directory:
 
-#### Consolidate Results
+.. code::
 
-In order to find the minimum, maximum and average times from the n_iters runs, please use the following script from the performance_tests directory:
-```
-python consolidate_results.py results/kms_keyring_encrypt.csv
-```
+    usage: python consolidate_results.py results/kms_keyring_create.csv
 
-### Decrypt
-To run the performance test for execution time, please use the following commands in the performance_tests directory
-```
-python test/keyrings/test_aws_kms_keyring.py decrypt
-```
 
-Here, you will receive a prompt on the terminal to specify the ciphertext file you want to decrypt. Some example ciphertext data files are present in the 'test/resources' directory.
+Encrypt
+-------
 
-Alternatively, if you want to provide the arguments as flags without using the interactive CLI, you can run the command in the following manner:
+To run the performance test for execution time, please use the following
+commands in the performance_tests directory:
 
-```
-python test/keyrings/test_aws_kms_keyring.py decrypt --ciphertext_data_filename test/resources/ciphertext-data-medium.ct
-```
+.. code::
 
-You can choose to use any other ciphertext file as well.
+    usage: python test/keyrings/test_aws_kms_keyring.py encrypt
 
-#### Arguments
-* ciphertext_data_filename: Filename containing ciphertext data you want to decrypt
+    optional arguments:
+      -h, --help                                            show this help message and exit.
+      --plaintext_data_filename PLAINTEXT_DATA_FILENAME     Filename containing plaintext data
+                                                            you want to encrypt.
+                                                            default='test/resources/plaintext/plaintext-data-medium.dat'.
+                                                            You can choose to use any other plaintext
+                                                            file as well. Some example plaintext
+                                                            data files are present in the
+                                                            'test/resources' directory.
+      --kms_key_id KMS_KEY_ID                               The KMS key ID you want to use.
+      --n_iters N_ITERS                                     Number of iterations you want to
+                                                            run the test for. For instance,
+                                                            if n_iters = 100, this performance
+                                                            test script will run the create_keyring
+                                                            method 100 times and report the
+                                                            execution time of each of the calls.
+      --output_file OUTPUT_FILE                             The output file for execution times
+                                                            for each function call,
+                                                            default='kms_keyring_create' in the
+                                                            results folder.
 
-#### Optional Arguments
-* kms_key_id: The KMS key ID you want to use to decrypt the data
-* n_iters: Number of iterations you want to run the test for. For instance, if n_iters = 100, this performance test script will run the decrypt method 100 times and report the execution time of each of the calls.
-* output_file: The output file for execution times for each function call, default='kms_keyring_decrypt'
+Consolidate Results
+~~~~~~~~~~~~~~~~~~~
 
-#### Consolidate Results
+In order to find the minimum, maximum, average, 99th percentile and bottom
+99th percentile trimmed average times from the n_iters runs, please use the
+following script from the performance_tests directory:
 
-In order to find the minimum, maximum and average times from the n_iters runs, please use the following script from the performance_tests directory:
-```
-python consolidate_results.py results/kms_keyring_decrypt.csv
-```
+.. code::
 
-## Usage: Memory Consumption
-To get the memory consumption, simply use 'mprof run' instead of 'python' in the previously mentioned commands.
+    usage: python consolidate_results.py results/kms_keyring_encrypt.csv
 
-For example, if you want to calculate the memory consumption of the encrypt function of a AWS KMS Keyring, simply write:
-```
-mprof run test/keyrings/test_aws_kms_keyring.py encrypt --plaintext_data_filename test/resources/plaintext-data-medium.dat
-```
 
-This should generate an mprofile log file in your current directory. To plot the memory consumption with time, please use the following command from the same directory
-```
-mprof plot
-```
+Decrypt
+-------
+
+To run the performance test for execution time, please use the
+following commands in the performance_tests directory
+
+.. code::
+
+    usage: python test/keyrings/test_aws_kms_keyring.py decrypt
+
+    optional arguments:
+      -h, --help                                            show this help message and exit.
+      --ciphertext_data_filename CIPHERTEXT_DATA_FILENAME   Filename containing ciphertext data
+                                                            you want to decrypt.
+                                                            default='test/resources/ciphertext/kms/ciphertext-data-medium.ct'.
+                                                            You can choose to use any other
+                                                            ciphertext file as well. Some example
+                                                            ciphertext data files are present in
+                                                            the 'test/resources' directory.
+      --kms_key_id KMS_KEY_ID                               The KMS key ID you want to use.
+      --n_iters N_ITERS                                     Number of iterations you want to
+                                                            run the test for. For instance,
+                                                            if n_iters = 100, this performance
+                                                            test script will run the create_keyring
+                                                            method 100 times and report the
+                                                            execution time of each of the calls.
+      --output_file OUTPUT_FILE                             The output file for execution times
+                                                            for each function call,
+                                                            default='kms_keyring_create' in the
+                                                            results folder.
+
+Consolidate Results
+~~~~~~~~~~~~~~~~~~~
+
+In order to find the minimum, maximum, average, 99th percentile and bottom
+99th percentile trimmed average times from the n_iters runs, please use the
+following script from the performance_tests directory:
+
+.. code::
+
+    usage: python consolidate_results.py results/kms_keyring_decrypt.csv
+
+Memory Consumption
+==================
+
+To get the memory consumption, simply replace 'python'
+with 'mprof run' in the previously mentioned commands.
+
+For example, if you want to calculate the memory consumption
+of the encrypt function of a AWS KMS Keyring, simply write:
+
+.. code::
+
+    usage: mprof run test/keyrings/test_aws_kms_keyring.py encrypt
+
+
+This should generate an mprofile log file in your current directory.
+This mprofile log file contains the total memory consumed by the program
+with respect to time elapsed.
+To plot the memory consumption with respect to time, please use the following
+command from the same directory
+
+.. code::
+
+    usage: mprof plot
+
 
 This 'mprof plot' command will plot the most recent mprofile log file.
 
-## Usage: Performance Graph
-To generate a performance graph, please use the following command to generate the pstats log file by specifying the output pstats file path. Here, 'results/kms_keyring_create.pstats' is set as the default output file.
 
-```
-python -m cProfile -o results/kms_keyring_create.pstats test/keyrings/test_aws_kms_keyring.py create
-```
+Performance Graph
+=================
 
-After generating the pstats file, please run the following command to generate the performance graph. The output performance graph will be a .png file that you specify. Here, 'results/kms_keyring_create.png' is set as the default output file.
-```
-gprof2dot -f pstats results/kms_keyring_create.pstats | dot -Tpng -o results/kms_keyring_create.png && eog results/kms_keyring_create.png 
-```
+To generate a performance graph, please use the following command
+to generate the pstats log file by specifying the output pstats file
+path. Here, 'results/kms_keyring_create.pstats' is set as the default
+output file.
+
+.. code::
+
+    usage: python -m cProfile -o results/kms_keyring_create.pstats test/keyrings/test_aws_kms_keyring.py create
+
+
+After generating the pstats file, please run the following command
+to generate the performance graph. The output performance graph will
+be a .png file that you specify. Here, 'results/kms_keyring_create.png'
+is set as the default output file.
+
+.. code::
+
+    usage: gprof2dot -f pstats results/kms_keyring_create.pstats | dot -Tpng -o results/kms_keyring_create.png && eog results/kms_keyring_create.png
+
+
+Note: This project does not adhere to semantic versioning; as such it
+makes no guarantees that functionality will persist across major,
+minor, or patch versions.
+**DO NOT** take a standalone dependency on this library.
+
+.. _AWS Encryption SDK Python: https://github.com/aws/aws-encryption-sdk-python/
+.. _AWS KMS Keyring: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html

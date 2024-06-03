@@ -23,7 +23,7 @@ def create_keyring(
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
     # Create a boto3 client for KMS.
-    kms_client = boto3.client('kms', region_name="us-west-2")
+    kms_client = create_kms_client()
 
     # Create a KMS keyring
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
@@ -42,13 +42,15 @@ def create_keyring(
     return keyring
 
 
-def create_kms_client():
+def create_kms_client(aws_region="us-west-2"):
     """Create an AWS KMS client.
 
-    Usage: create_kms_client()
+    Usage: create_kms_client(aws_region)
+    :param aws_region: AWS region to use for KMS client.
+    :type aws_region: string
     """
     # Create a boto3 client for KMS.
-    kms_client = boto3.client('kms', region_name="us-west-2")
+    kms_client = boto3.client('kms', region_name=aws_region)
 
     return kms_client
 
