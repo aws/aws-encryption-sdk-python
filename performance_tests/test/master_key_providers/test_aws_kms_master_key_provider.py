@@ -141,19 +141,22 @@ def runner():
 
 def test_create(runner):
     """Test the create_key_provider function"""
-    result = runner.invoke(create_kms_key_provider.commands['create'], ['--n_iters', 1])
+    result = runner.invoke(create_kms_key_provider.commands['create'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 
 def test_encrypt(runner):
     """Test the encrypt_using_key_provider function"""
-    result = runner.invoke(encrypt_kms_key_provider.commands['encrypt'], ['--n_iters', 1])
+    result = runner.invoke(encrypt_kms_key_provider.commands['encrypt'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 
 def test_decrypt(runner):
     """Test the decrypt_using_key_provider function"""
-    result = runner.invoke(decrypt_kms_key_provider.commands['decrypt'], ['--n_iters', 1])
+    result = runner.invoke(decrypt_kms_key_provider.commands['decrypt'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 

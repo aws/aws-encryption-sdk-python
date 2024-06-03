@@ -6,6 +6,7 @@
 class PerfTestUtils:
     """Utility functions for AWS Encryption SDK performance tests."""
     DEFAULT_N_ITERS = 100
+    DEFAULT_TESTING_N_ITERS = 1
     DEFAULT_FILE_SIZE = 'medium'
     DEFAULT_AES_256_STATIC_KEY = \
         b'_\xcf"\x82\x03\x12\x9d\x00\x8a\xed\xaf\xe4\x80\x1d\x00t\xa6P\xac\xb6\xfe\xc5\xf6/{\xe7\xaaO\x01\x13W\x85'

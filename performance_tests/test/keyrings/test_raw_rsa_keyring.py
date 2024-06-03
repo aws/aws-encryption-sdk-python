@@ -139,19 +139,22 @@ def runner():
 
 def test_create(runner):
     """Test the create_keyring function"""
-    result = runner.invoke(create_raw_rsa_keyring.commands['create'], ['--n_iters', 1])
+    result = runner.invoke(create_raw_rsa_keyring.commands['create'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 
 def test_encrypt(runner):
     """Test the encrypt_using_keyring function"""
-    result = runner.invoke(encrypt_raw_rsa_keyring.commands['encrypt'], ['--n_iters', 1])
+    result = runner.invoke(encrypt_raw_rsa_keyring.commands['encrypt'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 
 def test_decrypt(runner):
     """Test the decrypt_using_keyring function"""
-    result = runner.invoke(decrypt_raw_rsa_keyring.commands['decrypt'], ['--n_iters', 1])
+    result = runner.invoke(decrypt_raw_rsa_keyring.commands['decrypt'],
+                           ['--n_iters', PerfTestUtils.DEFAULT_TESTING_N_ITERS])
     assert result.exit_code == 0
 
 
