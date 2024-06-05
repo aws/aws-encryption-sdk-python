@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """This is a performance test for creating the Raw AES Master key-provider."""
 
+import os
 import time
 
 import click
@@ -16,6 +17,8 @@ from aws_encryption_sdk_performance_tests.master_key_providers.raw_aes_master_ke
 )
 from aws_encryption_sdk_performance_tests.utils.util import PerfTestUtils
 
+MODULE_ABS_PATH = os.path.abspath(__file__)
+
 
 @click.group()
 def create_raw_aes_key_provider():
@@ -26,7 +29,7 @@ def create_raw_aes_key_provider():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_aes_key_provider_create')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/raw_aes_key_provider_create')
 def create(
     n_iters: int,
     output_file: str
@@ -52,13 +55,12 @@ def encrypt_raw_aes_key_provider():
 
 @encrypt_raw_aes_key_provider.command()
 @click.option('--plaintext_data_filename',
-              default='/'.join(__file__.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
-              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
-              prompt='Filename containing plaintext data you want to encrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_aes_key_provider_encrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/raw_aes_key_provider_encrypt')
 def encrypt(
     plaintext_data_filename: str,
     n_iters: int,
@@ -89,13 +91,12 @@ def decrypt_raw_aes_key_provider():
 
 @decrypt_raw_aes_key_provider.command()
 @click.option('--ciphertext_data_filename',
-              default='/'.join(__file__.split("/")[:-2]) + '/resources/ciphertext/raw_aes/ciphertext-data-'
-              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
-              prompt='Filename containing ciphertext data you want to decrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-2]) + '/resources/ciphertext/raw_aes/ciphertext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/raw_aes_key_provider_decrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/raw_aes_key_provider_decrypt')
 def decrypt(
     ciphertext_data_filename: str,
     n_iters: int,

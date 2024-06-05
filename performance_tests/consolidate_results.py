@@ -14,16 +14,18 @@ def calculate_statistics(_csv_file):
         reader = csv.reader(file)
         data = [float(row[0]) for row in reader]
 
+    output_stats = {}
+
     # Calculate statistics
     if data:
         data = np.sort(data)
-        _total_entries = len(data)
-        _average = np.mean(data)
-        _trimmed_average_99_bottom = np.mean(data[0:int(0.99 * len(data))])
-        _minimum = min(data)
-        _maximum = max(data)
-        _perc_99 = np.percentile(data, 99)
-        return _total_entries, _average, _trimmed_average_99_bottom, _minimum, _maximum, _perc_99
+        output_stats['total_entries'] = len(data)
+        output_stats['average'] = np.mean(data)
+        output_stats['trimmed_average_99_bottom'] = np.mean(data[0:int(0.99 * len(data))])
+        output_stats['minimum'] = min(data)
+        output_stats['maximum'] = max(data)
+        output_stats['perc_99'] = np.percentile(data, 99)
+        return output_stats
 
     return None
 
@@ -36,13 +38,12 @@ if __name__ == "__main__":
 
     statistics = calculate_statistics(args.csv_file)
     if statistics:
-        total_entries, average, trimmend_average_99_bottom, minimum, maximum, perc_99 = statistics
         print("CSV File:", args.csv_file)
-        print("Total Entries:", total_entries)
-        print("Average:", average)
-        print("Bottom 99th percentile trimmed average:", trimmend_average_99_bottom)
-        print("Minimum:", minimum)
-        print("Maximum:", maximum)
-        print("99th percentile:", perc_99)
+        print("Total Entries:", statistics['total_entries'])
+        print("Average:", statistics['average'])
+        print("Bottom 99th percentile trimmed average:", statistics['trimmed_average_99_bottom'])
+        print("Minimum:", statistics['minimum'])
+        print("Maximum:", statistics['maximum'])
+        print("99th percentile:", statistics['perc_99'])
     else:
         print("No data found in the CSV file.")

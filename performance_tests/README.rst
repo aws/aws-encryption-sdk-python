@@ -8,7 +8,7 @@ This module runs performance tests for the `AWS Encryption SDK Python`_.
 Overview
 ********
 
-This module tests the following keyrings / master key-providers:
+This module tests the following keyrings / master key providers:
 
 1. KMS Keyring / KMS Master Key Provider
 2. Raw AES Keyring / AES Master Key Provider
@@ -16,20 +16,20 @@ This module tests the following keyrings / master key-providers:
 4. Hierarchy Keyring
 5. Caching CMM
 
-For each test on the above keyrings / master key-providers, this package measures:
+For each test on the above keyrings / master key providers, this package measures:
 
 1. Execution time
 2. Total memory consumption
 
-For each keyring / master key-provider, the execution time and memory consumption
+For each keyring / master key provider, the execution time and memory consumption
 is measured for three operations:
 
-1. Create keyring / master key-provider
+1. Create keyring / master key provider
 2. Encrypt
 3. Decrypt
 
 The usage of the performance tests is demonstrated through an `AWS KMS Keyring`_.
-However, the procedure is the same for any keyring / master key-provider, with slight
+However, the procedure is the same for any keyring / master key provider, with slight
 changes in the input arguments.
 
 The results for the performance test will be available in the results folder in the
@@ -39,8 +39,18 @@ performance_tests directory.
 Required Prerequisites
 **********************
 
-* Python 3.11+
+* Python 3.8+
 * aws-encryption-sdk
+* boto3 >= 1.10.0
+* click
+* tqdm
+* pytest
+
+Recommended Prerequisites
+=========================
+
+* aws-cryptographic-material-providers: >= 1.0.0
+  * Requires Python 3.11+.
 
 *****
 Usage
@@ -74,19 +84,6 @@ following commands in the performance_tests directory.
                                     default='kms_keyring_create' in the
                                     results folder.
 
-
-Consolidate Results
-~~~~~~~~~~~~~~~~~~~
-
-In order to find the minimum, maximum, average, 99th percentile and bottom
-99th percentile trimmed average times from the n_iters runs, please use the
-following script from the performance_tests directory:
-
-.. code::
-
-    usage: python consolidate_results.py results/kms_keyring_create.csv
-
-
 Encrypt
 -------
 
@@ -117,18 +114,6 @@ commands in the performance_tests directory:
                                                             for each function call,
                                                             default='kms_keyring_create' in the
                                                             results folder.
-
-Consolidate Results
-~~~~~~~~~~~~~~~~~~~
-
-In order to find the minimum, maximum, average, 99th percentile and bottom
-99th percentile trimmed average times from the n_iters runs, please use the
-following script from the performance_tests directory:
-
-.. code::
-
-    usage: python consolidate_results.py results/kms_keyring_encrypt.csv
-
 
 Decrypt
 -------
@@ -161,12 +146,14 @@ following commands in the performance_tests directory
                                                             default='kms_keyring_create' in the
                                                             results folder.
 
-Consolidate Results
-~~~~~~~~~~~~~~~~~~~
+Consolidate Time Results
+========================
 
 In order to find the minimum, maximum, average, 99th percentile and bottom
 99th percentile trimmed average times from the n_iters runs, please use the
-following script from the performance_tests directory:
+following script from the performance_tests directory with the csv file
+containing times for each of the n_iters runs generated in the previous
+"Execution Time" section:
 
 .. code::
 

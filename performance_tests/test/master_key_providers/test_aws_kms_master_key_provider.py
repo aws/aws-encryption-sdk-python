@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """This is a performance test for creating the AWS KMS Master key-provider."""
 
+import os
 import time
 
 import click
@@ -16,6 +17,8 @@ from aws_encryption_sdk_performance_tests.master_key_providers.aws_kms_master_ke
 )
 from aws_encryption_sdk_performance_tests.utils.util import PerfTestUtils
 
+MODULE_ABS_PATH = os.path.abspath(__file__)
+
 
 @click.group()
 def create_kms_key_provider():
@@ -28,7 +31,7 @@ def create_kms_key_provider():
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_create')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/kms_key_provider_create')
 def create(
     kms_key_id: str,
     n_iters: int,
@@ -55,15 +58,14 @@ def encrypt_kms_key_provider():
 
 @encrypt_kms_key_provider.command()
 @click.option('--plaintext_data_filename',
-              default='/'.join(__file__.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
-              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat',
-              prompt='Filename containing plaintext data you want to encrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-2]) + '/resources/plaintext/plaintext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.dat')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_encrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/kms_key_provider_encrypt')
 def encrypt(
     plaintext_data_filename: str,
     kms_key_id: str,
@@ -95,15 +97,14 @@ def decrypt_kms_key_provider():
 
 @decrypt_kms_key_provider.command()
 @click.option('--ciphertext_data_filename',
-              default='/'.join(__file__.split("/")[:-2]) + '/resources/ciphertext/kms/ciphertext-data-'
-              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct',
-              prompt='Filename containing ciphertext data you want to decrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-2]) + '/resources/ciphertext/kms/ciphertext-data-'
+              + PerfTestUtils.DEFAULT_FILE_SIZE + '.ct')
 @click.option('--kms_key_id',
               default='arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f')
 @click.option('--n_iters',
               default=PerfTestUtils.DEFAULT_N_ITERS)
 @click.option('--output_file',
-              default='/'.join(__file__.split("/")[:-3]) + '/results/kms_key_provider_decrypt')
+              default='/'.join(MODULE_ABS_PATH.split("/")[:-3]) + '/results/kms_key_provider_decrypt')
 def decrypt(
     ciphertext_data_filename: str,
     kms_key_id: str,
