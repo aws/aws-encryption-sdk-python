@@ -126,6 +126,10 @@ batch:
       buildspec: codebuild/py311/integ_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
+    - identifier: py311_performance_tests_mpl
+      buildspec: codebuild/py311/performance_tests_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
     - identifier: py311_examples
       buildspec: codebuild/py311/examples.yml
       env:
@@ -210,6 +214,10 @@ batch:
         image: aws/codebuild/standard:7.0
     - identifier: py312_integ_mpl
       buildspec: codebuild/py312/integ_mpl.yml
+      env:
+        image: aws/codebuild/standard:7.0
+    - identifier: py312_performance_tests_mpl
+      buildspec: codebuild/py312/performance_tests_mpl.yml
       env:
         image: aws/codebuild/standard:7.0
     - identifier: py312_examples
