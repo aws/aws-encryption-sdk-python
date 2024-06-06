@@ -38,8 +38,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
@@ -282,7 +280,6 @@ def migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(
 
     Usage: migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(public_key, private_key)
     """
-
     # 1a. Create a Raw RSA Keyring
     raw_rsa_keyring = RawRsaKeyring.create_keyring(public_key=public_key, private_key=private_key)
 

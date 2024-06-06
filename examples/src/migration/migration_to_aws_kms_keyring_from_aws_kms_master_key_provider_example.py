@@ -216,7 +216,6 @@ def migration_to_aws_kms_keyring_from_aws_kms_master_key_provider(
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
-
     # 1a. Create a AWS KMS Keyring
     aws_kms_keyring = AwsKmsKeyring.create_keyring(kms_key_id=kms_key_id)
 

@@ -231,7 +231,6 @@ def migration_to_raw_aes_keyring_from_raw_aes_master_key_provider():
 
     Usage: migration_to_raw_aes_keyring_from_raw_aes_master_key_provider()
     """
-
     # 1a. Create a Raw AES Keyring
     raw_aes_keyring = RawAesKeyring.create_keyring()
 
