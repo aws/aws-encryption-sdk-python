@@ -43,13 +43,13 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
 
 
 def create_key_provider():
-    """Demonstrate how to create a Raw AES master key-provider.
+    """Demonstrate how to create a Raw AES master key provider.
 
     Usage: create_key_provider()
     """
-    # Create a Raw AES master key-provider.
+    # Create a Raw AES master key provider.
 
-    # The Key ID  field in the JceMasterKey and RawMasterKey is equivalent to key name in the Raw keyrings
+    # The Key ID field in the JceMasterKey and RawMasterKey is equivalent to key name in the Raw keyrings
     key_id = "My 256-bit AES wrapping key"
     key_provider = StaticRandomMasterKeyProvider()
     key_provider.add_master_key(key_id)
@@ -61,7 +61,7 @@ def encrypt_using_key_provider(
     plaintext_data: bytes,
     key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
 ):
-    """Demonstrate how to encrypt plaintext data using a Raw AES master key-provider.
+    """Demonstrate how to encrypt plaintext data using a Raw AES master key provider.
 
     Usage: encrypt_using_key_provider(plaintext_data, key_provider)
     :param plaintext_data: plaintext data you want to encrypt
@@ -83,7 +83,7 @@ def decrypt_using_key_provider(
     ciphertext_data: bytes,
     key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
 ):
-    """Demonstrate how to decrypt ciphertext data using a Raw AES master key-provider.
+    """Demonstrate how to decrypt ciphertext data using a Raw AES master key provider.
 
     Usage: decrypt_using_key_provider(ciphertext_data, key_provider)
     :param ciphertext_data: ciphertext data you want to decrypt

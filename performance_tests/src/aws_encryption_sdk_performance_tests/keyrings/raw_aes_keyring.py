@@ -19,7 +19,6 @@ def create_keyring():
     key_name_space = "Some managed raw keys"
     key_name = "My 256-bit AES wrapping key"
 
-    # Here, the input to secrets.token_bytes() = 32 bytes = 256 bits
     # We fix the static key in order to make the test deterministic
     static_key = PerfTestUtils.DEFAULT_AES_256_STATIC_KEY
 
