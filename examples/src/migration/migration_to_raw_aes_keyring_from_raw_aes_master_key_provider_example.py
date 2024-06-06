@@ -24,6 +24,7 @@ But both ciphertexts when decrypted using keyring and MKP should give the same p
 For more information on how to use Raw AES keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
 """
+import secrets
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
@@ -46,8 +47,7 @@ DEFAULT_ENCRYPTION_CONTEXT : Dict[str, str] = {
     "the data you are handling": "is what you think it is",
 }
 
-DEFAULT_AES_256_STATIC_KEY = \
-    b'_\xcf"\x82\x03\x12\x9d\x00\x8a\xed\xaf\xe4\x80\x1d\x00t\xa6P\xac\xb6\xfe\xc5\xf6/{\xe7\xaaO\x01\x13W\x85'
+DEFAULT_AES_256_STATIC_KEY = secrets.token_bytes(32)
 
 DEFAULT_KEY_NAME_SPACE = "Some managed raw keys"
 

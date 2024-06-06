@@ -20,7 +20,6 @@ But both ciphertexts when decrypted using keyring and MKP should give the same p
 For more information on how to use KMS keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html
 """
-
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig

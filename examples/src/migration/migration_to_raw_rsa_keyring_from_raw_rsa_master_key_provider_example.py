@@ -28,20 +28,6 @@ But both ciphertexts when decrypted using keyring and MKP should give the same p
 For more information on how to use Raw RSA keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-rsa-keyring.html
 """
-
-
-import aws_encryption_sdk
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateRawRsaKeyringInput, PaddingScheme
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
-import aws_encryption_sdk
-from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
-from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
-from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
-from typing import Dict  # noqa pylint: disable=wrong-import-order
-import sys
-
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import CreateRawRsaKeyringInput, PaddingScheme
@@ -54,7 +40,9 @@ from typing import Dict  # noqa pylint: disable=wrong-import-order
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-
+from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
+from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
+from aws_encryption_sdk.key_providers.raw import RawMasterKeyProvider
 
 EXAMPLE_DATA: bytes = b"Hello World"
 
