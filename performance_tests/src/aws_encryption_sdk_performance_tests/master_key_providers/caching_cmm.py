@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Performance tests for the Caching Cryptographic Materials Manager (CMM)."""
+"""Performance tests for the Caching Cryptographic Materials Manager (CMM) with KMS Master Key Provider."""
 
 import aws_encryption_sdk
 
@@ -22,7 +22,7 @@ def create_cmm(
     """
     # Security thresholds
     #   Max messages (or max bytes per) data key are optional
-    max_entry_messages = 100
+    max_messages_encrypted = 100
 
     # Create a master key provider for the KMS customer master key (CMK)
     key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[kms_key_id])
@@ -35,7 +35,7 @@ def create_cmm(
         master_key_provider=key_provider,
         cache=cache,
         max_age=max_age_in_cache,
-        max_messages_encrypted=max_entry_messages,
+        max_messages_encrypted=max_messages_encrypted,
     )
 
     return caching_cmm

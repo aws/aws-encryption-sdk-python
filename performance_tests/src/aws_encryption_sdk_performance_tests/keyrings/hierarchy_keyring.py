@@ -2,9 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Performance tests for the hierarchy keyring."""
 
-# noqa pylint: disable=wrong-import-order
-from typing import Dict
-
 import aws_encryption_sdk
 import boto3
 from aws_cryptographic_materialproviders.keystore import KeyStore
@@ -16,46 +13,10 @@ from aws_cryptographic_materialproviders.mpl.models import (
     CacheTypeDefault,
     CreateAwsKmsHierarchicalKeyringInput,
     DefaultCache,
-    GetBranchKeyIdInput,
-    GetBranchKeyIdOutput,
 )
-from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
+from aws_cryptographic_materialproviders.mpl.references import IKeyring
 
 from ..utils.util import PerfTestUtils
-
-
-class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
-    """Example implementation of a branch key ID supplier."""
-
-    branch_key_id_for_tenant_a: str
-    branch_key_id_for_tenant_b: str
-
-    def __init__(self, tenant_1_id, tenant_2_id):
-        """Example constructor for a branch key ID supplier."""
-        self.branch_key_id_for_tenant_a = tenant_1_id
-        self.branch_key_id_for_tenant_b = tenant_2_id
-
-    def get_branch_key_id(
-        self,
-        param: GetBranchKeyIdInput
-    ) -> GetBranchKeyIdOutput:
-        """Returns branch key ID from the tenant ID in input's encryption context."""
-        encryption_context: Dict[str, str] = param.encryption_context
-
-        if b"tenant" not in encryption_context:
-            raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
-
-        tenant_key_id: str = encryption_context.get(b"tenant")
-        branch_key_id: str
-
-        if tenant_key_id == b"TenantA":
-            branch_key_id = self.branch_key_id_for_tenant_a
-        elif tenant_key_id == b"TenantB":
-            branch_key_id = self.branch_key_id_for_tenant_b
-        else:
-            raise ValueError(f"Item does not contain valid tenant ID: {tenant_key_id=}")
-
-        return GetBranchKeyIdOutput(branch_key_id=branch_key_id)
 
 
 def create_keyring(
@@ -95,15 +56,8 @@ def create_keyring(
         )
     )
 
-    # Call CreateKey to create two new active branch keys
-    branch_key_id_a: str = PerfTestUtils.DEFAULT_BRANCH_KEY_ID_A
-    branch_key_id_b: str = PerfTestUtils.DEFAULT_BRANCH_KEY_ID_B
-
-    # Create a branch key supplier that maps the branch key id to a more readable format
-    branch_key_id_supplier: IBranchKeyIdSupplier = ExampleBranchKeyIdSupplier(
-        tenant_1_id=branch_key_id_a,
-        tenant_2_id=branch_key_id_b,
-    )
+    # Call CreateKey to create a new branch key.
+    branch_key_id: str = PerfTestUtils.DEFAULT_BRANCH_KEY_ID
 
     # Create the Hierarchical Keyring.
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
@@ -112,7 +66,7 @@ def create_keyring(
 
     keyring_input: CreateAwsKmsHierarchicalKeyringInput = CreateAwsKmsHierarchicalKeyringInput(
         key_store=keystore,
-        branch_key_id_supplier=branch_key_id_supplier,
+        branch_key_id=branch_key_id,
         ttl_seconds=600,
         cache=CacheTypeDefault(
             value=DefaultCache(
