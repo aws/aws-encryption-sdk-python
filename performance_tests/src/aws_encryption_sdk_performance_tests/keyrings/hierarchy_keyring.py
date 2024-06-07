@@ -22,17 +22,20 @@ from ..utils.util import PerfTestUtils
 def create_keyring(
     key_store_table_name: str,
     logical_key_store_name: str,
-    kms_key_id: str
+    kms_key_id: str,
+    branch_key_id: str = PerfTestUtils.DEFAULT_BRANCH_KEY_ID
 ):
     """Demonstrate how to create a hierarchy keyring.
 
-    Usage: create_keyring(key_store_table_name, logical_key_store_name, kms_key_id)
+    Usage: create_keyring(key_store_table_name, logical_key_store_name, kms_key_id, branch_key_id)
     :param key_store_table_name: Name of the KeyStore DynamoDB table.
     :type key_store_table_name: string
     :param logical_key_store_name: Logical name of the KeyStore.
     :type logical_key_store_name: string
     :param kms_key_id: KMS Key identifier for the KMS key you want to use.
     :type kms_key_id: string
+    :param branch_key_id: Branch key you want to use for the hierarchy keyring.
+    :type branch_key_id: string
 
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
@@ -55,9 +58,6 @@ def create_keyring(
             ),
         )
     )
-
-    # Call CreateKey to create a new branch key.
-    branch_key_id: str = PerfTestUtils.DEFAULT_BRANCH_KEY_ID
 
     # Create the Hierarchical Keyring.
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(

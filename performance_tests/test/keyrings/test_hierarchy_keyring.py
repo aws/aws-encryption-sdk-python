@@ -3,7 +3,6 @@
 """This is a performance test for creating the hierarchy keyring."""
 
 import os
-# noqa pylint: disable=wrong-import-order
 import time
 
 import click
