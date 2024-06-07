@@ -4,12 +4,12 @@
 import pytest
 
 from ...src.migration.migration_raw_rsa_key_example import (
-    migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider,
+    migration_raw_rsa_key,
 )
 
 pytestmark = [pytest.mark.examples]
 
 
-def test_migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider():
+def test_migration_raw_rsa_key():
     """Test function for migrating to Raw RSA Keyring from Raw RSA Master Key Provider."""
-    migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider()
+    migration_raw_rsa_key()

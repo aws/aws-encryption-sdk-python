@@ -12,7 +12,7 @@ hardware security module (HSM) or key management system.
 The encryption function encrypts the data key under the RSA public key. The decryption function
 decrypts the data key using the private key.
 
-This example defines classes for Raw RSA Keyring and Raw RSA MKP and
+This example creates a Raw RSA Keyring and Raw RSA MKP and
 then encrypts a custom input EXAMPLE_DATA with an encryption context using both
 the keyring and MKP. The example then decrypts the ciphertext using both keyring and MKPs.
 This example also includes some sanity checks for demonstration:
@@ -89,77 +89,73 @@ def generate_rsa_keys_helper():
 DEFAULT_RSA_PUBLIC_KEY, DEFAULT_RSA_PRIVATE_KEY = generate_rsa_keys_helper()
 
 
-class RawRsaKeyring():
-    """Class for creating a Raw RSA Keyring and using it for encryption and decryption"""
+def create_keyring(public_key, private_key):
+    """Demonstrate how to create a Raw RSA keyring using the key pair.
 
-    @staticmethod
-    def create_keyring(public_key, private_key):
-        """Demonstrate how to create a Raw RSA keyring using the key pair.
+    Usage: create_keyring(public_key, private_key)
+    """
+    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+        config=MaterialProvidersConfig()
+    )
 
-        Usage: create_keyring(public_key, private_key)
-        """
-        mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
-            config=MaterialProvidersConfig()
-        )
+    keyring_input: CreateRawRsaKeyringInput = CreateRawRsaKeyringInput(
+        key_namespace=DEFAULT_KEY_NAME_SPACE,
+        key_name=DEFAULT_KEY_NAME,
+        padding_scheme=PaddingScheme.OAEP_SHA256_MGF1,
+        public_key=public_key,
+        private_key=private_key
+    )
 
-        keyring_input: CreateRawRsaKeyringInput = CreateRawRsaKeyringInput(
-            key_namespace=DEFAULT_KEY_NAME_SPACE,
-            key_name=DEFAULT_KEY_NAME,
-            padding_scheme=PaddingScheme.OAEP_SHA256_MGF1,
-            public_key=public_key,
-            private_key=private_key
-        )
+    keyring: IKeyring = mat_prov.create_raw_rsa_keyring(
+        input=keyring_input
+    )
 
-        keyring: IKeyring = mat_prov.create_raw_rsa_keyring(
-            input=keyring_input
-        )
+    return keyring
 
-        return keyring
 
-    @staticmethod
-    def encrypt_using_keyring(
-        plaintext_data: bytes,
-        keyring: IKeyring
-    ):
-        """Demonstrate how to encrypt plaintext data using a Raw RSA keyring.
+def encrypt_using_keyring(
+    plaintext_data: bytes,
+    keyring: IKeyring
+):
+    """Demonstrate how to encrypt plaintext data using a Raw RSA keyring.
 
-        Usage: encrypt_using_keyring(plaintext_data, keyring)
-        :param plaintext_data: plaintext data you want to encrypt
-        :type: bytes
-        :param keyring: Keyring to use for encryption.
-        :type keyring: IKeyring
-        """
-        client = aws_encryption_sdk.EncryptionSDKClient()
+    Usage: encrypt_using_keyring(plaintext_data, keyring)
+    :param plaintext_data: plaintext data you want to encrypt
+    :type: bytes
+    :param keyring: Keyring to use for encryption.
+    :type keyring: IKeyring
+    """
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
-        ciphertext_data, _ = client.encrypt(
-            source=plaintext_data,
-            keyring=keyring,
-            encryption_context=DEFAULT_ENCRYPTION_CONTEXT
-        )
+    ciphertext_data, _ = client.encrypt(
+        source=plaintext_data,
+        keyring=keyring,
+        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
+    )
 
-        return ciphertext_data
+    return ciphertext_data
 
-    @staticmethod
-    def decrypt_using_keyring(
-        ciphertext_data: bytes,
-        keyring: IKeyring
-    ):
-        """Demonstrate how to decrypt ciphertext data using a Raw RSA keyring.
 
-        Usage: decrypt_using_keyring(ciphertext_data, keyring)
-        :param ciphertext_data: ciphertext data you want to decrypt
-        :type: bytes
-        :param keyring: Keyring to use for decryption.
-        :type keyring: IKeyring
-        """
-        client = aws_encryption_sdk.EncryptionSDKClient()
+def decrypt_using_keyring(
+    ciphertext_data: bytes,
+    keyring: IKeyring
+):
+    """Demonstrate how to decrypt ciphertext data using a Raw RSA keyring.
 
-        decrypted_plaintext_data, _ = client.decrypt(
-            source=ciphertext_data,
-            keyring=keyring
-        )
+    Usage: decrypt_using_keyring(ciphertext_data, keyring)
+    :param ciphertext_data: ciphertext data you want to decrypt
+    :type: bytes
+    :param keyring: Keyring to use for decryption.
+    :type keyring: IKeyring
+    """
+    client = aws_encryption_sdk.EncryptionSDKClient()
 
-        return decrypted_plaintext_data
+    decrypted_plaintext_data, _ = client.decrypt(
+        source=ciphertext_data,
+        keyring=keyring
+    )
+
+    return decrypted_plaintext_data
 
 
 # This is a helper class necessary for the Raw RSA master key provider.
@@ -200,88 +196,84 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         )
 
 
-class RawRsaMasterKeyProvider():
-    """Class for creating a Raw RSA MKP and using it for encryption and decryption"""
+def create_key_provider():
+    """Demonstrate how to create a Raw RSA master key provider.
 
-    @staticmethod
-    def create_key_provider():
-        """Demonstrate how to create a Raw RSA master key provider.
+    Usage: create_key_provider()
+    """
+    # Create a Raw RSA master key provider.
 
-        Usage: create_key_provider()
-        """
-        # Create a Raw RSA master key provider.
+    # The Key ID field in the JceMasterKey and RawMasterKey is equivalent to key name
+    # in the Raw keyrings
+    key_id = DEFAULT_KEY_NAME
 
-        # The Key ID field in the JceMasterKey and RawMasterKey is equivalent to key name
-        # in the Raw keyrings
-        key_id = DEFAULT_KEY_NAME
+    # In this example, we fix the static key to DEFAULT_RSA_PRIVATE_KEY in both the keyring
+    # and MKP (for MKP, we fix the static key in StaticRandomMasterKeyProvider) in order to make
+    # the test deterministic. Thus, both the Raw RSA keyring and Raw RSA MKP have the same
+    # private_key and we are able to encrypt data using keyrings and decrypt using MKP
+    # and vice versa. In practice, users should generate a new key pair for each key id in
+    # the StaticRandomMasterKeyProvider.
+    key_provider = StaticRandomMasterKeyProvider()
+    key_provider.add_master_key(key_id)
 
-        # In this example, we fix the static key to DEFAULT_RSA_PRIVATE_KEY in both the keyring
-        # and MKP (for MKP, we fix the static key in StaticRandomMasterKeyProvider) in order to make
-        # the test deterministic. Thus, both the Raw RSA keyring and Raw RSA MKP have the same
-        # private_key and we are able to encrypt data using keyrings and decrypt using MKP
-        # and vice versa. In practice, users should generate a new key pair for each key id in
-        # the StaticRandomMasterKeyProvider.
-        key_provider = StaticRandomMasterKeyProvider()
-        key_provider.add_master_key(key_id)
-
-        return key_provider
-
-    @staticmethod
-    def encrypt_using_key_provider(
-        plaintext_data: bytes,
-        key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    ):
-        """Demonstrate how to encrypt plaintext data using a Raw RSA master key provider.
-
-        Usage: encrypt_using_key_provider(plaintext_data, key_provider)
-        :param plaintext_data: plaintext data you want to encrypt
-        :type: bytes
-        :param key_provider: Master key provider to use for encryption.
-        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-        """
-        client = aws_encryption_sdk.EncryptionSDKClient()
-
-        ciphertext_data, _ = client.encrypt(
-            source=plaintext_data,
-            key_provider=key_provider,
-            encryption_context=DEFAULT_ENCRYPTION_CONTEXT
-        )
-
-        return ciphertext_data
-
-    @staticmethod
-    def decrypt_using_key_provider(
-        ciphertext_data: bytes,
-        key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    ):
-        """Demonstrate how to decrypt ciphertext data using a Raw RSA master key provider.
-
-        Usage: decrypt_using_key_provider(ciphertext_data, key_provider)
-        :param ciphertext_data: ciphertext data you want to decrypt
-        :type: bytes
-        :param key_provider: Master key provider to use for decryption.
-        :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-        """
-        client = aws_encryption_sdk.EncryptionSDKClient()
-
-        decrypted_plaintext_data, _ = client.decrypt(
-            source=ciphertext_data,
-            key_provider=key_provider
-        )
-
-        return decrypted_plaintext_data
+    return key_provider
 
 
-def migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(
+def encrypt_using_key_provider(
+    plaintext_data: bytes,
+    key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+):
+    """Demonstrate how to encrypt plaintext data using a Raw RSA master key provider.
+
+    Usage: encrypt_using_key_provider(plaintext_data, key_provider)
+    :param plaintext_data: plaintext data you want to encrypt
+    :type: bytes
+    :param key_provider: Master key provider to use for encryption.
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    """
+    client = aws_encryption_sdk.EncryptionSDKClient()
+
+    ciphertext_data, _ = client.encrypt(
+        source=plaintext_data,
+        key_provider=key_provider,
+        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
+    )
+
+    return ciphertext_data
+
+
+def decrypt_using_key_provider(
+    ciphertext_data: bytes,
+    key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+):
+    """Demonstrate how to decrypt ciphertext data using a Raw RSA master key provider.
+
+    Usage: decrypt_using_key_provider(ciphertext_data, key_provider)
+    :param ciphertext_data: ciphertext data you want to decrypt
+    :type: bytes
+    :param key_provider: Master key provider to use for decryption.
+    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    """
+    client = aws_encryption_sdk.EncryptionSDKClient()
+
+    decrypted_plaintext_data, _ = client.decrypt(
+        source=ciphertext_data,
+        key_provider=key_provider
+    )
+
+    return decrypted_plaintext_data
+
+
+def migration_raw_rsa_key(
     public_key=DEFAULT_RSA_PUBLIC_KEY,
     private_key=DEFAULT_RSA_PRIVATE_KEY
 ):
-    """Demonstrate a migration example for moving from a Raw RSA keyring to Raw RSA MKP.
+    """Demonstrate a migration example for moving to a Raw RSA keyring from Raw RSA MKP.
 
-    Usage: migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(public_key, private_key)
+    Usage: migration_raw_rsa_key(public_key, private_key)
     """
     # 1a. Create a Raw RSA Keyring
-    raw_rsa_keyring = RawRsaKeyring.create_keyring(public_key=public_key, private_key=private_key)
+    raw_rsa_keyring = create_keyring(public_key=public_key, private_key=private_key)
 
     # 1b. Create a Raw RSA Master Key Provider
 
@@ -291,16 +283,16 @@ def migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(
     # private_key and we are able to encrypt data using keyrings and decrypt using MKP
     # and vice versa. In practice, users should generate a new key pair for each key id in
     # the StaticRandomMasterKeyProvider.
-    raw_rsa_master_key_provider = RawRsaMasterKeyProvider.create_key_provider()
+    raw_rsa_master_key_provider = create_key_provider()
 
     # 2a. Encrypt EXAMPLE_DATA using Raw RSA Keyring
-    ciphertext_keyring = RawRsaKeyring.encrypt_using_keyring(
+    ciphertext_keyring = encrypt_using_keyring(
         plaintext_data=EXAMPLE_DATA,
         keyring=raw_rsa_keyring
     )
 
     # 2b. Encrypt EXAMPLE_DATA using Raw RSA Master Key Provider
-    ciphertext_mkp = RawRsaMasterKeyProvider.encrypt_using_key_provider(
+    ciphertext_mkp = encrypt_using_key_provider(
         plaintext_data=EXAMPLE_DATA,
         key_provider=raw_rsa_master_key_provider
     )
@@ -312,12 +304,12 @@ def migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(
 
     # 3. Decrypt the ciphertext_keyring using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_keyring_using_keyring = RawRsaKeyring.decrypt_using_keyring(
+    decrypted_ciphertext_keyring_using_keyring = decrypt_using_keyring(
         ciphertext_data=ciphertext_keyring,
         keyring=raw_rsa_keyring
     )
 
-    decrypted_ciphertext_keyring_using_mkp = RawRsaMasterKeyProvider.decrypt_using_key_provider(
+    decrypted_ciphertext_keyring_using_mkp = decrypt_using_key_provider(
         ciphertext_data=ciphertext_keyring,
         key_provider=raw_rsa_master_key_provider
     )
@@ -328,12 +320,12 @@ def migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider(
 
     # 4. Decrypt the ciphertext_mkp using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_mkp_using_keyring = RawRsaKeyring.decrypt_using_keyring(
+    decrypted_ciphertext_mkp_using_keyring = decrypt_using_keyring(
         ciphertext_data=ciphertext_mkp,
         keyring=raw_rsa_keyring
     )
 
-    decrypted_ciphertext_mkp_using_mkp = RawRsaMasterKeyProvider.decrypt_using_key_provider(
+    decrypted_ciphertext_mkp_using_mkp = decrypt_using_key_provider(
         ciphertext_data=ciphertext_mkp,
         key_provider=raw_rsa_master_key_provider
     )

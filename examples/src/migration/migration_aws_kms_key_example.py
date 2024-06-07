@@ -4,7 +4,7 @@
 This is a migration example for moving to the AWS KMS Keyring from AWS KMS master key provider (MKP)
 
 The AWS KMS keyring uses symmetric encryption KMS keys to generate, encrypt and
-decrypt data keys. This example creates the KMS Keyring and KMS MKP and
+decrypt data keys. This example creates a KMS Keyring and KMS MKP and
 then encrypts a custom input EXAMPLE_DATA with an encryption context using both
 the keyring and MKP. The example then decrypts the ciphertext using both keyring and MKPs.
 This example also includes some sanity checks for demonstration:
@@ -202,9 +202,9 @@ def decrypt_using_key_provider(
 def migration_aws_kms_key(
     kms_key_id: str
 ):
-    """Demonstrate a migration example for moving from an AWS KMS keyring to AWS KMS MKP.
+    """Demonstrate a migration example for moving to an AWS KMS keyring from AWS KMS MKP.
 
-    Usage: migration_to_aws_kms_keyring_from_aws_kms_master_key_provider(kms_key_id)
+    Usage: migration_aws_kms_key(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for encryption and
     decryption of your data keys.
     :type kms_key_id: string
