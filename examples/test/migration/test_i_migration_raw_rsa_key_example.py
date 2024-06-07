@@ -3,7 +3,7 @@
 """Test suite for the migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider_example."""
 import pytest
 
-from ...src.migration.migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider_example import (
+from ...src.migration.migration_raw_rsa_key_example import (
     migration_to_raw_rsa_keyring_from_raw_rsa_master_key_provider,
 )
 
