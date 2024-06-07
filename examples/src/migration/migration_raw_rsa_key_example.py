@@ -183,7 +183,7 @@ def migration_raw_rsa_key(
     Usage: migration_raw_rsa_key(public_key, private_key)
     """
     client = aws_encryption_sdk.EncryptionSDKClient()
-    
+
     # 1a. Create a Raw RSA Keyring
     raw_rsa_keyring = create_keyring(public_key=public_key, private_key=private_key)
 
@@ -198,14 +198,14 @@ def migration_raw_rsa_key(
     raw_rsa_master_key_provider = create_key_provider()
 
     # 2a. Encrypt EXAMPLE_DATA using Raw RSA Keyring
-    ciphertext_keyring = client.encrypt(
+    ciphertext_keyring, _ = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_rsa_keyring,
         encryption_context=DEFAULT_ENCRYPTION_CONTEXT
     )
 
     # 2b. Encrypt EXAMPLE_DATA using Raw RSA Master Key Provider
-    ciphertext_mkp = client.encrypt(
+    ciphertext_mkp, _ = client.encrypt(
         source=EXAMPLE_DATA,
         key_provider=raw_rsa_master_key_provider,
         encryption_context=DEFAULT_ENCRYPTION_CONTEXT
@@ -218,12 +218,12 @@ def migration_raw_rsa_key(
 
     # 3. Decrypt the ciphertext_keyring using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_keyring_using_keyring = client.decrypt(
+    decrypted_ciphertext_keyring_using_keyring, _ = client.decrypt(
         source=ciphertext_keyring,
         keyring=raw_rsa_keyring
     )
 
-    decrypted_ciphertext_keyring_using_mkp = client.decrypt(
+    decrypted_ciphertext_keyring_using_mkp, _ = client.decrypt(
         source=ciphertext_keyring,
         key_provider=raw_rsa_master_key_provider
     )
@@ -234,12 +234,12 @@ def migration_raw_rsa_key(
 
     # 4. Decrypt the ciphertext_mkp using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_mkp_using_keyring = client.decrypt(
+    decrypted_ciphertext_mkp_using_keyring, _ = client.decrypt(
         source=ciphertext_mkp,
         keyring=raw_rsa_keyring
     )
 
-    decrypted_ciphertext_mkp_using_mkp = client.decrypt(
+    decrypted_ciphertext_mkp_using_mkp, _ = client.decrypt(
         source=ciphertext_mkp,
         key_provider=raw_rsa_master_key_provider
     )

@@ -178,13 +178,13 @@ def migration_raw_aes_key():
 
     # 4. Decrypt the ciphertext_mkp using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_mkp_using_keyring = decrypt_using_keyring(
-        ciphertext_data=ciphertext_mkp,
+    decrypted_ciphertext_mkp_using_keyring, _ = client.decrypt(
+        source=ciphertext_mkp,
         keyring=raw_aes_keyring
     )
 
-    decrypted_ciphertext_mkp_using_mkp = decrypt_using_key_provider(
-        ciphertext_data=ciphertext_mkp,
+    decrypted_ciphertext_mkp_using_mkp, _ = client.decrypt(
+        source=ciphertext_mkp,
         key_provider=raw_aes_master_key_provider
     )
 
