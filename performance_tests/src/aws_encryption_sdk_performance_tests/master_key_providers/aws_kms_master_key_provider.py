@@ -8,7 +8,7 @@ import aws_encryption_sdk
 def create_key_provider(
     kms_key_id: str
 ):
-    """Demonstrate how to create an AWS KMS master key-provider.
+    """Demonstrate how to create an AWS KMS master key provider.
 
     Usage: create_key_provider(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use.
@@ -17,7 +17,7 @@ def create_key_provider(
     For more information on KMS Key identifiers, see
     https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#key-id
     """
-    # Create a KMS master key-provider.
+    # Create a KMS master key provider.
     key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(key_ids=[
         kms_key_id,
     ])
@@ -29,7 +29,7 @@ def encrypt_using_key_provider(
     plaintext_data: bytes,
     key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
 ):
-    """Demonstrate how to encrypt plaintext data using an AWS KMS master key-provider.
+    """Demonstrate how to encrypt plaintext data using an AWS KMS master key provider.
 
     Usage: encrypt_using_key_provider(plaintext_data, key_provider)
     :param plaintext_data: plaintext data you want to encrypt
@@ -51,7 +51,7 @@ def decrypt_using_key_provider(
     ciphertext_data: bytes,
     key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
 ):
-    """Demonstrate how to decrypt ciphertext data using an AWS KMS master key-provider.
+    """Demonstrate how to decrypt ciphertext data using an AWS KMS master key provider.
 
     Usage: decrypt_using_key_provider(ciphertext_data, key_provider)
     :param ciphertext_data: ciphertext data you want to decrypt
