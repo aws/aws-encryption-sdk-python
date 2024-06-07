@@ -87,9 +87,7 @@ class PerfTestUtils:
         "the data you are handling": "is what you think it is",
     }
 
-    DEFAULT_BRANCH_KEY_ID_A = 'a52dfaad-7dbd-4430-a1fd-abaa5299da07'
-
-    DEFAULT_BRANCH_KEY_ID_B = '8ba79cef-581c-4125-9292-b057a29d42d7'
+    DEFAULT_BRANCH_KEY_ID = 'a52dfaad-7dbd-4430-a1fd-abaa5299da07'
 
     @staticmethod
     def read_file(filename):
