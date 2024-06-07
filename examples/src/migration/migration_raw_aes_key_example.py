@@ -80,51 +80,6 @@ def create_keyring():
     return keyring
 
 
-def encrypt_using_keyring(
-    plaintext_data: bytes,
-    keyring: IKeyring
-):
-    """Demonstrate how to encrypt plaintext data using a Raw AES keyring.
-
-    Usage: encrypt_using_keyring(plaintext_data, keyring)
-    :param plaintext_data: plaintext data you want to encrypt
-    :type: bytes
-    :param keyring: Keyring to use for encryption.
-    :type keyring: IKeyring
-    """
-    client = aws_encryption_sdk.EncryptionSDKClient()
-
-    ciphertext_data, _ = client.encrypt(
-        source=plaintext_data,
-        keyring=keyring,
-        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
-    )
-
-    return ciphertext_data
-
-
-def decrypt_using_keyring(
-    ciphertext_data: bytes,
-    keyring: IKeyring
-):
-    """Demonstrate how to decrypt ciphertext data using a Raw AES keyring.
-
-    Usage: decrypt_using_keyring(ciphertext_data, keyring)
-    :param ciphertext_data: ciphertext data you want to decrypt
-    :type: bytes
-    :param keyring: Keyring to use for decryption.
-    :type keyring: IKeyring
-    """
-    client = aws_encryption_sdk.EncryptionSDKClient()
-
-    decrypted_plaintext_data, _ = client.decrypt(
-        source=ciphertext_data,
-        keyring=keyring
-    )
-
-    return decrypted_plaintext_data
-
-
 # This is a helper class necessary for the Raw AES master key provider
 class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
     """Generates 256-bit keys for each unique key ID."""
@@ -173,56 +128,13 @@ def create_key_provider():
     return key_provider
 
 
-def encrypt_using_key_provider(
-    plaintext_data: bytes,
-    key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-):
-    """Demonstrate how to encrypt plaintext data using a Raw AES master key provider.
-
-    Usage: encrypt_using_key_provider(plaintext_data, key_provider)
-    :param plaintext_data: plaintext data you want to encrypt
-    :type: bytes
-    :param key_provider: Master key provider to use for encryption.
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    """
-    client = aws_encryption_sdk.EncryptionSDKClient()
-
-    ciphertext_data, _ = client.encrypt(
-        source=plaintext_data,
-        key_provider=key_provider,
-        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
-    )
-
-    return ciphertext_data
-
-
-def decrypt_using_key_provider(
-    ciphertext_data: bytes,
-    key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-):
-    """Demonstrate how to decrypt ciphertext data using a Raw AES master key provider.
-
-    Usage: decrypt_using_key_provider(ciphertext_data, key_provider)
-    :param ciphertext_data: ciphertext data you want to decrypt
-    :type: bytes
-    :param key_provider: Master key provider to use for decryption.
-    :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    """
-    client = aws_encryption_sdk.EncryptionSDKClient()
-
-    decrypted_plaintext_data, _ = client.decrypt(
-        source=ciphertext_data,
-        key_provider=key_provider
-    )
-
-    return decrypted_plaintext_data
-
-
 def migration_raw_aes_key():
     """Demonstrate a migration example for moving to a Raw AES keyring from Raw AES MKP.
 
     Usage: migration_raw_aes_key()
     """
+    client = aws_encryption_sdk.EncryptionSDKClient()
+
     # 1a. Create a Raw AES Keyring
     raw_aes_keyring = create_keyring()
 
@@ -230,15 +142,17 @@ def migration_raw_aes_key():
     raw_aes_master_key_provider = create_key_provider()
 
     # 2a. Encrypt EXAMPLE_DATA using Raw AES Keyring
-    ciphertext_keyring = encrypt_using_keyring(
-        plaintext_data=EXAMPLE_DATA,
-        keyring=raw_aes_keyring
+    ciphertext_keyring, _ = client.encrypt(
+        source=EXAMPLE_DATA,
+        keyring=raw_aes_keyring,
+        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
     )
 
     # 2b. Encrypt EXAMPLE_DATA using Raw AES Master Key Provider
-    ciphertext_mkp = encrypt_using_key_provider(
-        plaintext_data=EXAMPLE_DATA,
-        key_provider=raw_aes_master_key_provider
+    ciphertext_mkp, _ = client.encrypt(
+        source=EXAMPLE_DATA,
+        key_provider=raw_aes_master_key_provider,
+        encryption_context=DEFAULT_ENCRYPTION_CONTEXT
     )
 
     # Note: The ciphertexts obtained by encrypting EXAMPLE_DATA using keyring and MKP
@@ -248,13 +162,13 @@ def migration_raw_aes_key():
 
     # 3. Decrypt the ciphertext_keyring using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
-    decrypted_ciphertext_keyring_using_keyring = decrypt_using_keyring(
-        ciphertext_data=ciphertext_keyring,
+    decrypted_ciphertext_keyring_using_keyring, _ = client.decrypt(
+        source=ciphertext_keyring,
         keyring=raw_aes_keyring
     )
 
-    decrypted_ciphertext_keyring_using_mkp = decrypt_using_key_provider(
-        ciphertext_data=ciphertext_keyring,
+    decrypted_ciphertext_keyring_using_mkp, _ = client.decrypt(
+        source=ciphertext_keyring,
         key_provider=raw_aes_master_key_provider
     )
 
