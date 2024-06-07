@@ -9,11 +9,11 @@ preferably in a hardware security module (HSM) or key management system. Use a R
 when you need to provide the wrapping key and encrypt the data keys locally or offline.
 
 This example creates a Raw AES Keyring and Raw AES MKP and
-then encrypts a custom input EXAMPLE_DATA with an encryption context using both
-the keyring and MKP. The example then decrypts the ciphertext using both keyring and MKPs.
+then encrypts a custom input EXAMPLE_DATA with the same encryption context using both
+the keyring and MKP. The example then decrypts the ciphertexts using both keyring and MKPs.
 This example also includes some sanity checks for demonstration:
 1. Decryption of these ciphertexts encrypted using keyring and MKP
-   is possible using both KMS keyring and KMS MKP
+   is possible using both Raw AES keyring and Raw AES MKP
 2. Both decrypted plaintexts are same and match EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 

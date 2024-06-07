@@ -5,8 +5,8 @@ This is a migration example for moving to the AWS KMS Keyring from AWS KMS maste
 
 The AWS KMS keyring uses symmetric encryption KMS keys to generate, encrypt and
 decrypt data keys. This example creates a KMS Keyring and KMS MKP and
-then encrypts a custom input EXAMPLE_DATA with an encryption context using both
-the keyring and MKP. The example then decrypts the ciphertext using both keyring and MKPs.
+then encrypts a custom input EXAMPLE_DATA with the same encryption context using both
+the keyring and MKP. The example then decrypts the ciphertexts using both keyring and MKPs.
 This example also includes some sanity checks for demonstration:
 1. Decryption of these ciphertexts encrypted using keyring and MKP
    is possible using both KMS keyring and KMS MKP

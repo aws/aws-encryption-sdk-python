@@ -13,11 +13,11 @@ The encryption function encrypts the data key under the RSA public key. The decr
 decrypts the data key using the private key.
 
 This example creates a Raw RSA Keyring and Raw RSA MKP and
-then encrypts a custom input EXAMPLE_DATA with an encryption context using both
-the keyring and MKP. The example then decrypts the ciphertext using both keyring and MKPs.
+then encrypts a custom input EXAMPLE_DATA with the same encryption context using both
+the keyring and MKP. The example then decrypts the ciphertexts using both keyring and MKPs.
 This example also includes some sanity checks for demonstration:
 1. Decryption of these ciphertexts encrypted using keyring and MKP
-   is possible using both KMS keyring and KMS MKP
+   is possible using both Raw RSA keyring and Raw RSA MKP
 2. Both decrypted plaintexts are same and match EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
@@ -142,6 +142,8 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         except KeyError:
             # We fix the static key in order to make the test deterministic
             # In practice, you should get this key from a secure key management system such as an HSM.
+            # Also, in practice, users should generate a new key pair for each key id in
+            # the StaticRandomMasterKeyProvider.
             static_key = DEFAULT_RSA_PRIVATE_KEY
             self._static_keys[key_id] = static_key
         return WrappingKey(
