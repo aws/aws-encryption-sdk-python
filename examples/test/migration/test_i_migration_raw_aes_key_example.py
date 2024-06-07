@@ -3,7 +3,7 @@
 """Test suite for the migration_to_raw_aes_keyring_from_raw_aes_master_key_provider_example."""
 import pytest
 
-from ...src.migration.migration_to_raw_aes_keyring_from_raw_aes_master_key_provider_example import (
+from ...src.migration.migration_raw_aes_key_example import (
     migration_to_raw_aes_keyring_from_raw_aes_master_key_provider,
 )
 

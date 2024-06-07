@@ -3,14 +3,16 @@ Migration Examples
 ##################
 
 The native Python ESDK now uses the `AWS Cryptographic Material Providers Library`_,
-which introduces keyrings in place of the Master Key Provider. The MPL abstracts lower
+which introduces keyrings in place of Master Key Providers. The MPL abstracts lower
 level cryptographic materials management of encryption and decryption materials.
 
-This directory contains some examples to migrate from the legacy Master Key Providers
-to keyrings. Here is the list of examples:
-1. Migration to AWS KMS Keyring from AWS KMS Master Key Provider
-2. Migration to Raw AES Keyring from Raw AES Master Key Provider
-3. Migration to Raw RSA Keyring from Raw RSA Master Key Provider
+This directory contains some examples to migrate from the old version of the ESDK.
+If you have messages encrypted in the older versions using Master Key Providers,
+these examples can guide you on how to decrypt those messages using the new version
+of the ESDK. Here is the list of examples:
+1. Migration example for AWS KMS keys
+2. Migration example for Raw AES keys
+3. Migration example for Raw RSA keys
 4. Setting a 'CommitmentPolicy' during migration
 
 .. _AWS Cryptographic Material Providers Library: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
