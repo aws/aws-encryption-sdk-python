@@ -5,6 +5,12 @@
 # Required
 version: 2
 
+# Set the OS, Python version and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.8"
+
 # Build documentation in the doc/ directory with Sphinx
 sphinx:
    configuration: doc/conf.py
@@ -15,8 +21,7 @@ submodules:
   exclude: all
 
 python:
-  version: 3.8
   install:
     - requirements: dev_requirements/doc-requirements.txt
-    - method: setuptools
+    - method: pip
       path: .
