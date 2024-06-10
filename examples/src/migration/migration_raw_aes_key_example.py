@@ -49,8 +49,12 @@ DEFAULT_ENCRYPTION_CONTEXT : Dict[str, str] = {
 
 DEFAULT_AES_256_STATIC_KEY = secrets.token_bytes(32)
 
+# The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+# in the Raw Master Key Providers
 DEFAULT_KEY_NAME_SPACE = "Some managed raw keys"
 
+# The key name in the Raw keyrings is equivalent to the Key ID field
+# in the Raw Master Key Providers
 DEFAULT_KEY_NAME = "My 256-bit AES wrapping key"
 
 
@@ -66,6 +70,10 @@ def create_keyring():
         config=MaterialProvidersConfig()
     )
 
+    # The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+    # in the Raw Master Key Providers
+    # The key name in the Raw keyrings is equivalent to the Key ID field
+    # in the Raw Master Key Providers
     keyring_input: CreateRawAesKeyringInput = CreateRawAesKeyringInput(
         key_namespace=DEFAULT_KEY_NAME_SPACE,
         key_name=DEFAULT_KEY_NAME,
@@ -81,11 +89,16 @@ def create_keyring():
 
 
 # This is a helper class necessary for the Raw AES master key provider
-class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
+# In the StaticMasterKeyProvider, we fix the static key to
+# DEFAULT_AES_256_STATIC_KEY in order to make the test deterministic.
+# Thus, both the Raw AES keyring and Raw AES MKP have the same key
+# and we are able to encrypt data using keyrings and decrypt using MKP and vice versa
+# In practice, users should generate a new random key for each key id.
+class StaticMasterKeyProvider(RawMasterKeyProvider):
     """Generates 256-bit keys for each unique key ID."""
 
-    # The Provider ID (or Provider) field in the JceMasterKey and RawMasterKey is
-    # equivalent to key namespace in the Raw keyrings
+    # The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+    # in the Raw Master Key Providers
     provider_id = DEFAULT_KEY_NAME_SPACE
 
     def __init__(self, **kwargs):  # pylint: disable=unused-argument
@@ -93,7 +106,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         self._static_keys = {}
 
     def _get_raw_key(self, key_id):
-        """Returns a static, randomly-generated symmetric key for the specified key ID.
+        """Returns a static, symmetric key for the specified key ID.
 
         :param str key_id: Key ID
         :returns: Wrapping key that contains the specified static key
@@ -120,9 +133,10 @@ def create_key_provider():
     """
     # Create a Raw AES master key provider.
 
-    # The Key ID field in the JceMasterKey and RawMasterKey is equivalent to key name in the Raw keyrings
+    # The key name in the Raw keyrings is equivalent to the Key ID field
+    # in the Raw Master Key Providers
     key_id = DEFAULT_KEY_NAME
-    key_provider = StaticRandomMasterKeyProvider()
+    key_provider = StaticMasterKeyProvider()
     key_provider.add_master_key(key_id)
 
     return key_provider

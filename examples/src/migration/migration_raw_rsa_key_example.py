@@ -52,8 +52,12 @@ DEFAULT_ENCRYPTION_CONTEXT : Dict[str, str] = {
     "the data you are handling": "is what you think it is",
 }
 
+# The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+# in the Raw Master Key Providers
 DEFAULT_KEY_NAME_SPACE = "Some managed raw keys"
 
+# The key name in the Raw keyrings is equivalent to the Key ID field
+# in the Raw Master Key Providers
 DEFAULT_KEY_NAME = "My 4096-bit RSA wrapping key"
 
 
@@ -98,6 +102,10 @@ def create_keyring(public_key, private_key):
         config=MaterialProvidersConfig()
     )
 
+    # The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+    # in the Raw Master Key Providers
+    # The key name in the Raw keyrings is equivalent to the Key ID field
+    # in the Raw Master Key Providers
     keyring_input: CreateRawRsaKeyringInput = CreateRawRsaKeyringInput(
         key_namespace=DEFAULT_KEY_NAME_SPACE,
         key_name=DEFAULT_KEY_NAME,
@@ -114,16 +122,16 @@ def create_keyring(public_key, private_key):
 
 
 # This is a helper class necessary for the Raw RSA master key provider.
-# In the StaticRandomMasterKeyProvider, we fix the static key to
+# In the StaticMasterKeyProvider, we fix the static key to
 # DEFAULT_RSA_PRIVATE_KEY in order to make the test deterministic.
 # Thus, both the Raw RSA keyring and Raw RSA MKP have the same private_key
 # and we are able to encrypt data using keyrings and decrypt using MKP and vice versa
-# In practice, users should generate a new key pair for each key id.
-class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
-    """Randomly generates and provides 4096-bit RSA keys consistently per unique key id."""
+# In practice, users should generate a new random key pair for each key id.
+class StaticMasterKeyProvider(RawMasterKeyProvider):
+    """Provides 4096-bit RSA keys consistently per unique key id."""
 
-    # The Provider ID (or Provider) field in the JceMasterKey and RawMasterKey is
-    # equivalent to key namespace in the Raw keyrings
+    # The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
+    # in the Raw Master Key Providers
     provider_id = DEFAULT_KEY_NAME_SPACE
 
     def __init__(self, **kwargs):  # pylint: disable=unused-argument
@@ -131,7 +139,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
         self._static_keys = {}
 
     def _get_raw_key(self, key_id):
-        """Retrieves a static, randomly generated, RSA key for the specified key id.
+        """Retrieves a static, RSA key for the specified key id.
 
         :param str key_id: User-defined ID for the static key
         :returns: Wrapping key that contains the specified static key
@@ -143,7 +151,7 @@ class StaticRandomMasterKeyProvider(RawMasterKeyProvider):
             # We fix the static key in order to make the test deterministic
             # In practice, you should get this key from a secure key management system such as an HSM.
             # Also, in practice, users should generate a new key pair for each key id in
-            # the StaticRandomMasterKeyProvider.
+            # the StaticMasterKeyProvider.
             static_key = DEFAULT_RSA_PRIVATE_KEY
             self._static_keys[key_id] = static_key
         return WrappingKey(
@@ -160,17 +168,17 @@ def create_key_provider():
     """
     # Create a Raw RSA master key provider.
 
-    # The Key ID field in the JceMasterKey and RawMasterKey is equivalent to key name
-    # in the Raw keyrings
+    # The key name in the Raw keyrings is equivalent to the Key ID field
+    # in the Raw Master Key Providers
     key_id = DEFAULT_KEY_NAME
 
     # In this example, we fix the static key to DEFAULT_RSA_PRIVATE_KEY in both the keyring
-    # and MKP (for MKP, we fix the static key in StaticRandomMasterKeyProvider) in order to make
+    # and MKP (for MKP, we fix the static key in StaticMasterKeyProvider) in order to make
     # the test deterministic. Thus, both the Raw RSA keyring and Raw RSA MKP have the same
     # private_key and we are able to encrypt data using keyrings and decrypt using MKP
     # and vice versa. In practice, users should generate a new key pair for each key id in
-    # the StaticRandomMasterKeyProvider.
-    key_provider = StaticRandomMasterKeyProvider()
+    # the StaticMasterKeyProvider.
+    key_provider = StaticMasterKeyProvider()
     key_provider.add_master_key(key_id)
 
     return key_provider
@@ -192,11 +200,11 @@ def migration_raw_rsa_key(
     # 1b. Create a Raw RSA Master Key Provider
 
     # In this example, we fix the static key to DEFAULT_RSA_PRIVATE_KEY in both the keyring
-    # and MKP (for MKP, we fix the static key in StaticRandomMasterKeyProvider) in order to make
+    # and MKP (for MKP, we fix the static key in StaticMasterKeyProvider) in order to make
     # the test deterministic. Thus, both the Raw RSA keyring and Raw RSA MKP have the same
     # private_key and we are able to encrypt data using keyrings and decrypt using MKP
     # and vice versa. In practice, users should generate a new key pair for each key id in
-    # the StaticRandomMasterKeyProvider.
+    # the StaticMasterKeyProvider.
     raw_rsa_master_key_provider = create_key_provider()
 
     # 2a. Encrypt EXAMPLE_DATA using Raw RSA Keyring
