@@ -21,7 +21,6 @@ submodules:
   exclude: all
 
 python:
-  version: 3.12
   install:
     - requirements: dev_requirements/doc-requirements.txt
     - method: setuptools
