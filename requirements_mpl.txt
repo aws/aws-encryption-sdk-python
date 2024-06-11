@@ -1,1 +1,1 @@
-aws-cryptographic-material-providers @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@lucmcdon/python-mpl#subdirectory=AwsCryptographicMaterialProviders/runtimes/python
+aws-cryptographic-material-providers @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@lucmcdon/python-mpl-v2#subdirectory=AwsCryptographicMaterialProviders/runtimes/python

@@ -29,7 +29,6 @@ These sanity checks are for demonstration in the example only. You do not need t
 For more information on how to use KMS Discovery keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-kms-keyring.html#kms-keyring-discovery
 """
-import sys
 
 import boto3
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
@@ -44,11 +43,6 @@ from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
-MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(MODULE_ROOT_DIR)
 
 EXAMPLE_DATA: bytes = b"Hello World"
 

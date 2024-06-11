@@ -25,7 +25,6 @@ in the AWS Encryption SDK for Python.
 """
 import filecmp
 import secrets
-import sys
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
@@ -35,11 +34,6 @@ from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
-MODULE_ROOT_DIR = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(MODULE_ROOT_DIR)
 
 
 def encrypt_and_decrypt_with_keyring(
