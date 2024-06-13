@@ -19,7 +19,7 @@ These sanity checks are for demonstration in the example only. You do not need t
 
 Note: The ciphertexts obtained by encrypting EXAMPLE_DATA using keyring and MKP are not
 the same because the ESDK generates different data keys each time for encryption of the data.
-But both ciphertexts when decrypted using keyring and MKP should give the same plaintext result.
+But both ciphertexts when decrypted using keyring and MKP will give the same plaintext result.
 
 For more information on how to use Raw AES keyrings, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-raw-aes-keyring.html
@@ -172,7 +172,7 @@ def migration_raw_aes_key():
     # Note: The ciphertexts obtained by encrypting EXAMPLE_DATA using keyring and MKP
     # (that is ciphertext_keyring and ciphertext_mkp) are not the same because the ESDK
     # generates different data keys each time for encryption of the data. But both
-    # ciphertexts when decrypted using keyring and MKP should give the same plaintext result.
+    # ciphertexts when decrypted using keyring and MKP will give the same plaintext result.
 
     # 3. Decrypt the ciphertext_keyring using both the keyring and MKP and ensure the
     # resulting plaintext is the same and also equal to EXAMPLE_DATA
