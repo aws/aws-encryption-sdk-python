@@ -3,7 +3,7 @@
 """Test suite for the migration_set_commitment_policy_example."""
 import pytest
 
-from ..src.migration_set_commitment_policy_example import encrypt_and_decrypt_with_keyring
+from ...src.migration.migration_set_commitment_policy_example import encrypt_and_decrypt_with_keyring
 
 pytestmark = [pytest.mark.examples]
 
