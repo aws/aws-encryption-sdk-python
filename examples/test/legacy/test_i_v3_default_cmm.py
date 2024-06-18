@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.examples]
 
 
 def test_v3_default_cmm():
-    """Test method for encryption and decryption using V3 defualt CMM"""
+    """Test method for encryption and decryption using V3 defualt CMM."""
     plaintext = static_plaintext
     cmk_arn = get_cmk_arn()
     encrypt_decrypt_with_v3_default_cmm(key_arn=cmk_arn,
