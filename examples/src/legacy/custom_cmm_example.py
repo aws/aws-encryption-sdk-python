@@ -3,8 +3,9 @@
 """Example to create a custom crypto material manager class."""
 
 import aws_encryption_sdk
-from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk import CommitmentPolicy, StrictAwsKmsMasterKeyProvider
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
 
 # Custom CMM implementation.
@@ -14,9 +15,9 @@ from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 class CustomSigningSuiteOnlyCMM(CryptoMaterialsManager):
     """Example custom crypto materials manager class."""
 
-    def __init__(self, cmm: CryptoMaterialsManager) -> None:
-        super().__init__()
-        self.underlying_cmm = cmm
+    def __init__(self, master_key_provider: StrictAwsKmsMasterKeyProvider) -> None:
+        """Constructor for CustomSigningSuiteOnlyCMM class."""
+        self.underlying_cmm = DefaultCryptoMaterialsManager(master_key_provider)
 
     def get_encryption_materials(self, request):
         """Provides encryption materials appropriate for the request for the custom CMM.
