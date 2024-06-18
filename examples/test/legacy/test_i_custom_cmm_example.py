@@ -6,9 +6,10 @@ import botocore.session
 import pytest
 
 import aws_encryption_sdk
-from ...src.legacy.custom_cmm_example import encrypt_decrypt_with_cmm, CustomSigningSuiteOnlyCMM
-from .v3_default_cmm import V3DefaultCryptoMaterialsManager
+
+from ...src.legacy.custom_cmm_example import CustomSigningSuiteOnlyCMM, encrypt_decrypt_with_cmm
 from .examples_test_utils import get_cmk_arn, static_plaintext
+from .v3_default_cmm import V3DefaultCryptoMaterialsManager
 
 pytestmark = [pytest.mark.examples]
 
