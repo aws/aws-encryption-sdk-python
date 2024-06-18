@@ -40,7 +40,7 @@ class V3DefaultCryptoMaterialsManager(CryptoMaterialsManager):
 
     master_key_provider = attr.ib(validator=attr.validators.instance_of(MasterKeyProvider))
 
-    def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):
+    def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):  # pylint: disable=no-self-use
         """Generates a signing key based on the provided algorithm.
 
         :param algorithm: Algorithm for which to generate signing key
@@ -111,7 +111,7 @@ class V3DefaultCryptoMaterialsManager(CryptoMaterialsManager):
             signing_key=signing_key,
         )
 
-    def _load_verification_key_from_encryption_context(self, algorithm, encryption_context):
+    def _load_verification_key_from_encryption_context(self, algorithm, encryption_context):  # pylint: disable=no-self-use
         """Loads the verification key from the encryption context if used by algorithm suite.
 
         :param algorithm: Algorithm for which to generate signing key
