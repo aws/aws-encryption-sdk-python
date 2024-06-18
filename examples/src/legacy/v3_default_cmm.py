@@ -172,22 +172,26 @@ def encrypt_decrypt_with_v3_default_cmm(key_arn,
     # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
-    # Create a KMS master key provider. Note that because we are planning on decrypting using this same provider,
-    # we MUST provide the ARN of the KMS Key. If we provide a raw key id or a key alias, decryption will fail.
+    # Create a KMS master key provider.
     kms_kwargs = dict(key_ids=[key_arn])
     if botocore_session is not None:
         kms_kwargs["botocore_session"] = botocore_session
     master_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
 
+    # Create the V3 default CMM (V3DefaultCryptoMaterialsManager) using the master_key_provider
     default_cmm = V3DefaultCryptoMaterialsManager(master_key_provider=master_key_provider)
 
     # Encrypt the plaintext source data
     ciphertext, encryptor_header = client.encrypt(
-        source=source_plaintext, materials_manager=default_cmm
+        source=source_plaintext,
+        materials_manager=default_cmm
     )
 
     # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = client.decrypt(source=ciphertext, key_provider=master_key_provider)
+    cycled_plaintext, decrypted_header = client.decrypt(
+        source=ciphertext,
+        key_provider=master_key_provider
+    )
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == source_plaintext
