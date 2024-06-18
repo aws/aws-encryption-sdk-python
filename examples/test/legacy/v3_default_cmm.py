@@ -1,11 +1,10 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Default crypto material manager class example for ESDK V3."""
+"""Copy-paste of the V3 default CMM."""
 import logging
 
 import attr
 
-import aws_encryption_sdk
 from aws_encryption_sdk.exceptions import MasterKeyProviderError, SerializationError
 from aws_encryption_sdk.identifiers import CommitmentPolicy
 from aws_encryption_sdk.internal.crypto.authentication import Signer, Verifier
@@ -156,51 +155,3 @@ class V3DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         )
 
         return DecryptionMaterials(data_key=data_key, verification_key=verification_key)
-
-
-def encrypt_decrypt_with_v3_default_cmm(key_arn,
-                                        source_plaintext,
-                                        botocore_session):
-    """Encrypts and decrypts a string using a V3 default CMM.
-
-    :param str key_arn: Amazon Resource Name (ARN) of the KMS CMK
-    :param bytes source_plaintext: Data to encrypt
-    :param botocore_session: existing botocore session instance
-    :type botocore_session: botocore.session.Session
-    """
-    # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
-    # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
-    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
-
-    # Create a KMS master key provider.
-    kms_kwargs = dict(key_ids=[key_arn])
-    if botocore_session is not None:
-        kms_kwargs["botocore_session"] = botocore_session
-    master_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
-
-    # Create the V3 default CMM (V3DefaultCryptoMaterialsManager) using the master_key_provider
-    default_cmm = V3DefaultCryptoMaterialsManager(master_key_provider=master_key_provider)
-
-    # Encrypt the plaintext source data
-    ciphertext, encryptor_header = client.encrypt(
-        source=source_plaintext,
-        materials_manager=default_cmm
-    )
-
-    # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = client.decrypt(
-        source=ciphertext,
-        key_provider=master_key_provider
-    )
-
-    # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
-    assert cycled_plaintext == source_plaintext
-
-    # Verify that the encryption context used in the decrypt operation includes all key pairs from
-    # the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
-    #
-    # In production, always use a meaningful encryption context. In this sample, we omit the
-    # encryption context (no key pairs).
-    assert all(
-        pair in decrypted_header.encryption_context.items() for pair in encryptor_header.encryption_context.items()
-    )
