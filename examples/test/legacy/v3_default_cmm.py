@@ -42,7 +42,6 @@ class V3DefaultCryptoMaterialsManager(CryptoMaterialsManager):
 
 # pylint: disable=no-self-use
     def _generate_signing_key_and_update_encryption_context(self, algorithm, encryption_context):
-        # noqa: F401
         """Generates a signing key based on the provided algorithm.
 
         :param algorithm: Algorithm for which to generate signing key
