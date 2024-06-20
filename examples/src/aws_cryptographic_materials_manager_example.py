@@ -7,7 +7,9 @@ The AWS cryptographic materials manager (CMM) assembles the cryptographic materi
 that are used to encrypt and decrypt data. The cryptographic materials include
 plaintext and encrypted data keys, and an optional message signing key.
 This example creates a CMM and then encrypts a custom input EXAMPLE_DATA
-with an encryption context. This example also includes some sanity checks for demonstration:
+with an encryption context. Creating a CMM involves taking a keyring as input,
+and we use an AWS KMS Keyring for this example.
+This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
 2. Encryption context is correct in the decrypted message header
 3. Decrypted plaintext value matches EXAMPLE_DATA
@@ -42,9 +44,9 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_cmm(
     kms_key_id: str
 ):
-    """Demonstrate an encrypt/decrypt cycle using an AWS KMS keyring.
+    """Demonstrate an encrypt/decrypt cycle using an AWS Cryptographic Material Managers.
 
-    Usage: encrypt_and_decrypt_with_keyring(kms_key_id)
+    Usage: encrypt_and_decrypt_with_cmm(kms_key_id)
     :param kms_key_id: KMS Key identifier for the KMS key you want to use for encryption and
     decryption of your data keys.
     :type kms_key_id: string
@@ -63,10 +65,7 @@ def encrypt_and_decrypt_with_cmm(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
-    # 2. Create a boto3 client for KMS.
-    kms_client = boto3.client('kms', region_name="us-west-2")
-
-    # 3. Create encryption context.
+    # 2. Create encryption context.
     # Remember that your encryption context is NOT SECRET.
     # For more information, see
     # https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#encryption-context
@@ -79,6 +78,8 @@ def encrypt_and_decrypt_with_cmm(
     }
 
     # 4. Create a KMS keyring to use with the CryptographicMaterialsManager
+    kms_client = boto3.client('kms', region_name="us-west-2")
+
     mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
         config=MaterialProvidersConfig()
     )
@@ -102,31 +103,31 @@ def encrypt_and_decrypt_with_cmm(
         input=cmm_input
     )
 
-    # 5. Encrypt the data with the encryptionContext.
+    # 6. Encrypt the data with the encryptionContext.
     ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         materials_manager=cmm,
         encryption_context=encryption_context
     )
 
-    # 6. Demonstrate that the ciphertext and plaintext are different.
+    # 7. Demonstrate that the ciphertext and plaintext are different.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert ciphertext != EXAMPLE_DATA, \
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
-    # 7. Decrypt your encrypted data using the same keyring you used on encrypt.
+    # 8. Decrypt your encrypted data using the same cmm you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
         materials_manager=cmm
     )
 
-    # 8. Demonstrate that the encryption context is correct in the decrypted message header
+    # 9. Demonstrate that the encryption context is correct in the decrypted message header
     # (This is an example for demonstration; you do not need to do this in your own code.)
     for k, v in encryption_context.items():
         assert v == dec_header.encryption_context[k], \
             "Encryption context does not match expected values"
 
-    # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
