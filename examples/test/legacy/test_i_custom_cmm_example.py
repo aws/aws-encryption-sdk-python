@@ -26,7 +26,7 @@ def test_custom_cmm_example():
         kms_kwargs["botocore_session"] = botocore_session
     master_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(**kms_kwargs)
 
-    # Create the V3 default CMM (V3DefaultCryptoMaterialsManager) using the master_key_provider
+    # Create the custom signing CMM using the master_key_provider
     cmm = CustomSigningSuiteOnlyCMM(master_key_provider=master_key_provider)
 
     encrypt_decrypt_with_cmm(cmm=cmm,

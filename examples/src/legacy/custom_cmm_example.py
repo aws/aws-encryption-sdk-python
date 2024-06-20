@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example to create a custom crypto material manager class."""
+"""Example to create a custom implementation of the native ESDK CryptoMaterialsManager class."""
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy, StrictAwsKmsMasterKeyProvider
