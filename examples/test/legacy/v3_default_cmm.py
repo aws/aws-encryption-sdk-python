@@ -1,6 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Copy-paste of the V3 default CMM."""
+# flake8: ignore=D205,D400,D401
 import logging
 
 import attr
