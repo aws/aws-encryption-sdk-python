@@ -79,7 +79,6 @@ def encrypt_decrypt_with_cmm(
     """Encrypts and decrypts a string using a custom CMM.
 
     :param ICryptographicMaterialsManager cmm: CMM to use for encryption and decryption
-    :param bytes source_plaintext: Data to encrypt
     """
     # Set up an encryption client with an explicit commitment policy. Note that if you do not explicitly choose a
     # commitment policy, REQUIRE_ENCRYPT_REQUIRE_DECRYPT is used by default.
