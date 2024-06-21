@@ -29,20 +29,20 @@ class CustomSigningSuiteOnlyCMM(CryptoMaterialsManager):
         """
         materials = self.underlying_cmm.get_encryption_materials(request)
         if not materials.algorithm.is_signing():
-            raise AssertionError(
+            raise ValueError(
                 "Algorithm provided to CustomSigningSuiteOnlyCMM"
                   + " is not a supported signing algorithm: " + materials.algorithm
                   )
         return materials
 
     def decrypt_materials(self, request):
-        """Provider decryption materials appropriate for the request.
+        """Provides decryption materials appropriate for the request for the custom CMM.
 
         :param DecryptionMaterialsRequest request: Request object to provide to a
         crypto material manager's `decrypt_materials` method.
         """
         if not request.algorithm.is_signing():
-            raise AssertionError(
+            raise ValueError(
                 "Algorithm provided to CustomSigningSuiteOnlyCMM"
                   + " is not a supported signing algorithm: " + request.algorithm
                   )
@@ -53,7 +53,7 @@ def encrypt_decrypt_with_cmm(
     cmm: CryptoMaterialsManager,
     source_plaintext: str
 ):
-    """Encrypts and decrypts a string using a CMM.
+    """Encrypts and decrypts a string using a custom CMM.
 
     :param CryptoMaterialsManager cmm: CMM to use for encryption and decryption
     :param bytes source_plaintext: Data to encrypt

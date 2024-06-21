@@ -1,7 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Test suite for encryption and decryption using custom CMM."""
-
 import botocore.session
 import pytest
 
