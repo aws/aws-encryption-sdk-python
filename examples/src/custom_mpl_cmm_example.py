@@ -4,7 +4,10 @@
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput, SignatureAlgorithmNone
+from aws_cryptographic_materialproviders.mpl.models import (
+    CreateDefaultCryptographicMaterialsManagerInput,
+    SignatureAlgorithmNone,
+)
 from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
 
 import aws_encryption_sdk
