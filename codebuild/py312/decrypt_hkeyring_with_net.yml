@@ -35,7 +35,7 @@ phases:
       - cd aws-encryption-sdk-dafny/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorLib
       - ls
       - pwd
-      - sed -i '' -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
+      - sed -i -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
       - cd ../TestVectors
   
   build:
