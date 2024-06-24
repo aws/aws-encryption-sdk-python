@@ -29,7 +29,7 @@ phases:
       # Approach 2: "The Quick Way:"
 
       # Clone SDK-Dafny repo to get test vectors runner
-      - git clone git@github.com:aws/aws-encryption-sdk-dafny.git
+      - git clone https://github.com/aws/aws-encryption-sdk-dafny.git
 
       # Change TestVectors to reference the published .NET ESDK
       - cd aws-encryption-sdk-dafny/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorsLib
