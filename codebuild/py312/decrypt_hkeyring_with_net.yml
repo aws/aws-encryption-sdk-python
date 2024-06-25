@@ -11,8 +11,6 @@ env:
       arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
     AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
       arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
-    DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH: >-
-      312_hkeyring_manifest/manifest.json
 
 phases:
   install:
@@ -23,6 +21,7 @@ phases:
       # Download previously generated vectors
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_manifest.zip 312_hkeyring_manifest.zip
       - unzip 312_hkeyring_manifest.zip
+      - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_manifest/manifest.json"
       - ls 312_hkeyring_manifest/
       - pwd
 
