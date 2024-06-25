@@ -1,18 +1,26 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """
-Example to create a custom implementation of the ESDK-MPL ICryptographicMaterialsManager class.
+Example to create a custom implementation of the MPL's ICryptographicMaterialsManager class and use it with the ESDK.
+
+The cryptographic materials manager (CMM) assembles the cryptographic materials that are used
+to encrypt and decrypt data. The cryptographic materials include plaintext and encrypted data keys,
+and an optional message signing key.
 
 Cryptographic Materials Managers (CMMs) are composable; if you just want to extend the behavior of
-the default CMM, you can do this as demonstrated in this example. This is easy if you just want
-to add a small check to the CMM methods.
+the default CMM, you can do this as demonstrated in this example. This is the easiest approach if
+you are just adding a small check to the CMM methods, as in this example.
 
-Custom implementation of CMMs must implement get_encryption_materials and decrypt_materials.
-If your use case calls for fundamentally change aspects of the default CMM, you can also write
-your own implementation without extending a CMM.
+If your use case calls for fundamentally changing aspects of the default CMM, you can also write
+your own implementation without extending an existing CMM. The default CMM's implementation is a
+good reference to use if you need to write a custom CMM implementation from scratch.
+Custom implementations of CMMs must implement get_encryption_materials and decrypt_materials.
 
 For more information on a default implementation of a CMM,
 please look at the default_cryptographic_materials_manager_example.py example.
+
+For more information on Cryptographic Material Managers, see
+https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#crypt-materials-manager
 """
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
