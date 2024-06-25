@@ -1,6 +1,19 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example to create a custom implementation of the ESDK-MPL ICryptographicMaterialsManager class."""
+"""
+Example to create a custom implementation of the ESDK-MPL ICryptographicMaterialsManager class.
+
+Cryptographic Materials Managers (CMMs) are composable; if you just want to extend the behavior of
+the default CMM, you can do this as demonstrated in this example. This is easy if you just want
+to add a small check to the CMM methods.
+
+Custom implementation of CMMs must implement get_encryption_materials and decrypt_materials.
+If your use case calls for fundamentally change aspects of the default CMM, you can also write
+your own implementation without extending a CMM.
+
+For more information on a default implementation of a CMM,
+please look at the default_cryptographic_materials_manager_example.py example.
+"""
 
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
@@ -21,21 +34,25 @@ from aws_encryption_sdk import CommitmentPolicy
 class MPLCustomSigningSuiteOnlyCMM(ICryptographicMaterialsManager):
     """Example custom crypto materials manager class."""
 
-    def __init__(self, keyring: IKeyring) -> None:
+    def __init__(self, keyring: IKeyring, cmm: ICryptographicMaterialsManager = None) -> None:
         """Constructor for MPLCustomSigningSuiteOnlyCMM class."""
-        mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
-            config=MaterialProvidersConfig()
-        )
-
-        # Create a CryptographicMaterialsManager for encryption and decryption
-        cmm_input: CreateDefaultCryptographicMaterialsManagerInput = \
-            CreateDefaultCryptographicMaterialsManagerInput(
-                keyring=keyring
+        if cmm is not None:
+            self.underlying_cmm = cmm
+        else:
+            mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                config=MaterialProvidersConfig()
             )
 
-        self.underlying_cmm: ICryptographicMaterialsManager = mat_prov.create_default_cryptographic_materials_manager(
-            input=cmm_input
-        )
+            # Create a CryptographicMaterialsManager for encryption and decryption
+            cmm_input: CreateDefaultCryptographicMaterialsManagerInput = \
+                CreateDefaultCryptographicMaterialsManagerInput(
+                    keyring=keyring
+                )
+
+            self.underlying_cmm: ICryptographicMaterialsManager = \
+                mat_prov.create_default_cryptographic_materials_manager(
+                    input=cmm_input
+                )
 
     def get_encryption_materials(self, param):
         """Provides encryption materials appropriate for the request for the custom CMM.
@@ -85,30 +102,16 @@ def encrypt_decrypt_with_cmm(
     client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
     # Encrypt the plaintext source data
-    ciphertext, encryptor_header = client.encrypt(
+    ciphertext, _ = client.encrypt(
         source=EXAMPLE_DATA,
         materials_manager=cmm
     )
 
     # Decrypt the ciphertext
-    cycled_plaintext, decrypted_header = client.decrypt(
+    cycled_plaintext, _ = client.decrypt(
         source=ciphertext,
         materials_manager=cmm
     )
 
     # Verify that the "cycled" (encrypted, then decrypted) plaintext is identical to the source plaintext
     assert cycled_plaintext == EXAMPLE_DATA
-
-    # Verify that the encryption context used in the decrypt operation includes all key pairs from
-    # the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
-    #
-    # In production, always use a meaningful encryption context. In this sample, we omit the
-    # encryption context (no key pairs).
-    # The encryptor_header.encryption_context has items of the form
-    #     b'key': b'value'
-    # We convert these to strings for easier comparison with the decrypted header below.
-    for k, v in encryptor_header.encryption_context.items():
-        k = str(k.decode("utf-8"))
-        v = str(v.decode("utf-8"))
-        assert v == decrypted_header.encryption_context[k], \
-            "Encryption context does not match expected values"

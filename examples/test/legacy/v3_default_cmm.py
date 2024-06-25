@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Copy-paste of the V3 default CMM with small changes to pass linters.."""
+"""Copy-paste of the V3 default CMM with small changes to pass linters."""
 import logging
 
 import attr
