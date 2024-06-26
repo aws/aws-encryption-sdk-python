@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Test suite for the Raw AES keyring example with multi-threading."""
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pytest
 
 from ...src.raw_aes_keyring_example import encrypt_and_decrypt_with_keyring
@@ -15,9 +16,4 @@ def test_encrypt_and_decrypt_with_keyring(n_threads=10):
         thread_futures = {executor.submit(encrypt_and_decrypt_with_keyring): i for i in range(n_threads)}
 
         for future in as_completed(thread_futures):
-            thread_id = thread_futures[future]
-            try:
-                result = future.result()
-                print(f"Thread {thread_id} passed with result: {result}")
-            except Exception as e:
-                raise e
+            future.result()
