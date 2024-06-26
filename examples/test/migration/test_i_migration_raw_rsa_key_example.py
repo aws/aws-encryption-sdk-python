@@ -3,9 +3,7 @@
 """Test suite for the migration_raw_rsa_key_example."""
 import pytest
 
-from ...src.migration.migration_raw_rsa_key_example import (
-    migration_raw_rsa_key,
-)
+from ...src.migration.migration_raw_rsa_key_example import migration_raw_rsa_key
 
 pytestmark = [pytest.mark.examples]
 
