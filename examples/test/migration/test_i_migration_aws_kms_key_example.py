@@ -3,9 +3,7 @@
 """Test suite for the migration_aws_kms_key_example."""
 import pytest
 
-from ...src.migration.migration_aws_kms_key_example import (
-    migration_aws_kms_key,
-)
+from ...src.migration.migration_aws_kms_key_example import migration_aws_kms_key
 
 pytestmark = [pytest.mark.examples]
 
