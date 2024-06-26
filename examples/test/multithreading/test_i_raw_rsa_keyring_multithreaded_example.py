@@ -19,7 +19,7 @@ def test_encrypt_and_decrypt_with_keyring(n_threads=10):
     public_key, private_key = generate_rsa_keys()
     keyring = create_keyring(public_key=public_key, private_key=private_key)
     plaintext_data = b"Hello World"
-    esdk_client = aws_encryption_sdk.EncryptionSDKClient(
+    client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
 
@@ -27,7 +27,7 @@ def test_encrypt_and_decrypt_with_keyring(n_threads=10):
         thread_futures = {executor.submit(encrypt_and_decrypt_with_keyring,
                                           plaintext_data=plaintext_data,
                                           keyring=keyring,
-                                          esdk_client=esdk_client): i for i in range(n_threads)}
+                                          client=client): i for i in range(n_threads)}
 
         for future in as_completed(thread_futures):
             decrypted_plaintext_data = future.result()

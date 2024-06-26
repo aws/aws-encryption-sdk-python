@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""This file contains methdos to use for the multi-threaded Raw AES keyring."""
+"""This file contains methods to use for testing multi-threading for Raw AES keyring."""
 
 import secrets
 

@@ -10,17 +10,17 @@ import aws_encryption_sdk
 def encrypt_and_decrypt_with_keyring(
     plaintext_data: bytes,
     keyring: IKeyring,
-    esdk_client: aws_encryption_sdk.EncryptionSDKClient
+    client: aws_encryption_sdk.EncryptionSDKClient
 ):
-    """encrypt_and_decrypt_with_keyring how to encrypt plaintext data using a Raw AES keyring.
+    """Demonstrate how to encrypt and decrypt plaintext data using a keyring.
 
-    Usage: encrypt_and_decrypt_with_keyring(plaintext_data, keyring, esdk_client)
+    Usage: encrypt_and_decrypt_with_keyring(plaintext_data, keyring, client)
     :param plaintext_data: plaintext data you want to encrypt
     :type: bytes
     :param keyring: Keyring to use for encryption.
     :type keyring: IKeyring
-    :param esdk_client: The Encryption SDK client to use for encryption.
-    :type esdk_client: aws_encryption_sdk.EncryptionSDKClient
+    :param client: The Encryption SDK client to use for encryption.
+    :type client: aws_encryption_sdk.EncryptionSDKClient
     :return: encrypted and decrypted (cycled) plaintext data
     :rtype: bytes
     """
@@ -32,13 +32,13 @@ def encrypt_and_decrypt_with_keyring(
         "the data you are handling": "is what you think it is",
     }
 
-    ciphertext_data, _ = esdk_client.encrypt(
+    ciphertext_data, _ = client.encrypt(
         source=plaintext_data,
         keyring=keyring,
         encryption_context=encryption_context
     )
 
-    decrypted_plaintext_data, _ = esdk_client.decrypt(
+    decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,
         keyring=keyring
     )

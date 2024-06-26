@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""This file contains methdos to use for the multi-threaded Raw RSA keyring."""
+"""This file contains methods to use for testing multi-threading for Raw RSA keyring."""
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import CreateRawRsaKeyringInput, PaddingScheme
