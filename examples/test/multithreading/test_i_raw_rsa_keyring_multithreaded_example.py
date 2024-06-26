@@ -4,10 +4,12 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
-from ...src.multithreading.raw_rsa_keyring import generate_rsa_keys, create_keyring
-from ...src.multithreading import encrypt_and_decrypt_with_keyring
+
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
+
+from ...src.multithreading import encrypt_and_decrypt_with_keyring
+from ...src.multithreading.raw_rsa_keyring import create_keyring, generate_rsa_keys
 
 pytestmark = [pytest.mark.examples]
 
