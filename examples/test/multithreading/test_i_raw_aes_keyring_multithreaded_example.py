@@ -11,16 +11,11 @@ from aws_encryption_sdk import CommitmentPolicy
 from ...src.multithreading import run_encrypt_and_decrypt_with_keyring_for_duration_seconds
 from ...src.multithreading.raw_aes_keyring import create_keyring
 
-import time
-
 pytestmark = [pytest.mark.examples]
 
 
-def test_encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=16, duration=60):
+def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration=60):
     """Helper function for multi-threaded encrypt and decrypt using a keyring for fixed n_threads and duration."""
-    print(n_threads, duration)
-    start_time = time.time()
-    print('start_time', start_time)
     keyring = create_keyring()
     plaintext_data = b"Hello World"
     client = aws_encryption_sdk.EncryptionSDKClient(
@@ -36,15 +31,10 @@ def test_encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=16, dur
 
         for future in as_completed(thread_futures):
             future.result()
-    end_time = time.time()
-    print('end_time', end_time)
-    print('duration', end_time - start_time)
 
 
-# def test_encrypt_and_decrypt_with_keyring_multithreaded(n_threads_list: list = [4, 16, 64], duration_list: list = [2, 10, 60]):
-#     """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
-#     print('hello', n_threads_list, duration_list)
-#     for n in n_threads_list:
-#         for d in duration_list:
-#             print(n, d, time.time())
-#             encrypt_and_decrypt_with_keyring_helper(n_threads=n, duration=d)
+def test_encrypt_and_decrypt_with_keyring_multithreaded(n_threads_list: list = [1, 4, 16, 64], duration_list: list = [2, 10, 60]):
+    """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
+    for n in n_threads_list:
+        for d in duration_list:
+            encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=n, duration=d)
