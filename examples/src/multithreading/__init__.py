@@ -5,6 +5,7 @@ from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
+import time
 
 
 def encrypt_and_decrypt_with_keyring(
@@ -44,3 +45,18 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     return decrypted_plaintext_data
+
+
+def run_encrypt_and_decrypt_with_keyring_for_duration_seconds(
+    plaintext_data: bytes,
+    keyring: IKeyring,
+    client: aws_encryption_sdk.EncryptionSDKClient,
+    duration: int = 2
+):
+    """Helper function to repeatedly run an encrypt and decrypt cycle for 'duration' seconds."""
+    time_end = time.time() + duration
+
+    while time.time() < time_end:
+        decrypted_plaintext_data = encrypt_and_decrypt_with_keyring(plaintext_data, keyring, client)
+        assert decrypted_plaintext_data == plaintext_data, \
+            "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
