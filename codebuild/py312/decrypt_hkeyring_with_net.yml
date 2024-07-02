@@ -23,6 +23,7 @@ phases:
       - unzip 312_hkeyring_manifest.zip
       - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_manifest/manifest.json"
       - ls 312_hkeyring_manifest/
+      - cat 312_hkeyring_manifest/keys.json
       - pwd
 
       # Approach 1: "The Right Way":
