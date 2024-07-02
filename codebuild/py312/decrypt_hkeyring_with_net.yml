@@ -21,7 +21,6 @@ phases:
       # Download previously generated vectors
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_manifest.zip 312_hkeyring_manifest.zip
       - unzip 312_hkeyring_manifest.zip
-      - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_manifest/manifest.json"
       - ls 312_hkeyring_manifest/
       - cat 312_hkeyring_manifest/keys.json
       - pwd
@@ -42,4 +41,4 @@ phases:
   
   build:
     commands:
-      - dotnet test --framework net6.0
+      - DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_manifest/manifest.json" dotnet test --framework net6.0
