@@ -42,6 +42,8 @@ phases:
       - git pull
       - cd AwsEncryptionSDK/
       - make transpile_net
+      - cd ../mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - make transpile_net
 
       # Change TestVectors to reference the published .NET ESDK
       - cd runtimes/net/TestVectorsNative/TestVectors
