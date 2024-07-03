@@ -29,16 +29,22 @@ phases:
 
       # Approach 2: "The Quick Way:"
 
+      # Download dafny
+      - curl https://github.com/dafny-lang/dafny/releases/download/v$dafnyVersion/dafny-$dafnyVersion-x64-ubuntu-20.04.zip  -L -o dafny.zip
+      - unzip -qq dafny.zip && rm dafny.zip
+      - export PATH="$PWD/dafny:$PATH"
+
       # Clone SDK-Dafny repo to get test vectors runner
-      - git clone https://github.com/aws/aws-encryption-sdk-dafny.git
+      - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
       # TODO: Change branch to published when available
       - cd aws-encryption-sdk-dafny
       - git checkout lucmcdon/hkeyring-vectors
       - git pull
+      - cd AwsEncryptionSDK/
       - make transpile_net
 
       # Change TestVectors to reference the published .NET ESDK
-      - cd AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors
+      - cd runtimes/net/TestVectorsNative/TestVectors
       # - sed -i -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
       # - cd ../TestVectors
   
