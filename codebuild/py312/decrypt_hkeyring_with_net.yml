@@ -35,10 +35,10 @@ phases:
       - cd aws-encryption-sdk-dafny
       - git checkout lucmcdon/hkeyring-vectors
       - git pull
-      - cd ..
+      - make transpile_net
 
       # Change TestVectors to reference the published .NET ESDK
-      - cd aws-encryption-sdk-dafny/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors
+      - cd AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors
       # - sed -i -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
       # - cd ../TestVectors
   
