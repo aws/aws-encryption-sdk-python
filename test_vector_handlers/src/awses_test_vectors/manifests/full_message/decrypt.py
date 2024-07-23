@@ -8,6 +8,8 @@ Described in AWS Crypto Tools Test Vector Framework feature #0003 AWS Encryption
 import json
 import os
 from enum import Enum
+import contextlib
+import io
 
 import attr
 import aws_encryption_sdk
@@ -126,8 +128,17 @@ class MessageDecryptionTestErrorResultMatcher(object):
             # The ESDK implementations are not consistent in the types of errors they produce
             # or the exact error messages they use. The most important thing to test is that decryption
             # fails in some way, and hence the overly-broad implicit try/catch here.
+
             with pytest.raises(Exception):
-                decrypt_fn()
+                # When the exception is raised,
+                # it will write stderrs to console.
+                # However, this branch is expected to raise an exception,
+                # and will write that exception to console.
+                # Swallow the exception so CI build logs are cleaner,
+                # and any actual issues are easier to see.
+                f = io.StringIO()
+                with contextlib.redirect_stderr(f):
+                    decrypt_fn()
         except BaseException:
             # Translate the exception just to attach context.
             raise RuntimeError(
