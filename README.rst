@@ -42,8 +42,8 @@ Required Prerequisites
 Recommended Prerequisites
 =========================
 
-* aws-cryptographic-material-providers: >= 1.0.0 (TODO-MPL: versionme)
-  * Requires Python 3.11+.
+* aws-cryptographic-material-providers: >= TODO.TODO.TODO (TODO-MPL: versionme)
+    * Requires Python 3.11+.
 
 Installation
 ============
