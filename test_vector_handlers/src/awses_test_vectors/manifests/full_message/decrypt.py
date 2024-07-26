@@ -130,12 +130,14 @@ class MessageDecryptionTestErrorResultMatcher(object):
             # fails in some way, and hence the overly-broad implicit try/catch here.
 
             with pytest.raises(Exception):
-                # When the exception is raised,
-                # it will write stderrs to console.
-                # However, this branch is expected to raise an exception,
-                # and will write that exception to console.
-                # Swallow the exception so CI build logs are cleaner,
+                # Here, an exception is expected.
+                # However, when the expected exception is raised,
+                # the Python environment will write stderrs to console.
+                # Redirect stderr to null-like sink
+                # so local and CI build logs are cleaner,
                 # and any actual issues are easier to see.
+                # If an exception is not raised as expected,
+                # `pytest.raises` will fail.
                 f = io.StringIO()
                 with contextlib.redirect_stderr(f):
                     decrypt_fn()

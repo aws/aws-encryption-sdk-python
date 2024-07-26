@@ -77,7 +77,6 @@ try:
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
 
 except ImportError as e:
-    print("streamingerror " + str(e))
     _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
