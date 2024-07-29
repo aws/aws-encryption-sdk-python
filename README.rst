@@ -160,6 +160,7 @@ in any of its keyrings can decrypt that data.
 
 On encryption, the generator keyring generates and encrypts the plaintext data key.
 Then, all of the wrapping keys in all of the child keyrings encrypt the same plaintext data key.
+The final `encrypted message`_ will include a copy of the data key encrypted by each configured key.
 On decryption, the AWS Encryption SDK uses the keyrings to try to decrypt one of the encrypted data keys.
 The keyrings are called in the order that they are specified in the multi-keyring.
 Processing stops as soon as any key in any keyring can decrypt an encrypted data key.
