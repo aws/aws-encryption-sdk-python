@@ -25,8 +25,6 @@ class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
         """Returns branch key ID from the tenant ID in input's encryption context."""
         encryption_context: Dict[str, str] = param.encryption_context
 
-        print(f"{encryption_context=}")
-
         if "tenant" not in encryption_context:
             raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
 
