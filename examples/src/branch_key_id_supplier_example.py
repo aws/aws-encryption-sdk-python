@@ -25,15 +25,17 @@ class ExampleBranchKeyIdSupplier(IBranchKeyIdSupplier):
         """Returns branch key ID from the tenant ID in input's encryption context."""
         encryption_context: Dict[str, str] = param.encryption_context
 
-        if b"tenant" not in encryption_context:
+        print(f"{encryption_context=}")
+
+        if "tenant" not in encryption_context:
             raise ValueError("EncryptionContext invalid, does not contain expected tenant key value pair.")
 
-        tenant_key_id: str = encryption_context.get(b"tenant")
+        tenant_key_id: str = encryption_context.get("tenant")
         branch_key_id: str
 
-        if tenant_key_id == b"TenantA":
+        if tenant_key_id == "TenantA":
             branch_key_id = self.branch_key_id_for_tenant_A
-        elif tenant_key_id == b"TenantB":
+        elif tenant_key_id == "TenantB":
             branch_key_id = self.branch_key_id_for_tenant_B
         else:
             raise ValueError(f"Item does not contain valid tenant ID: {tenant_key_id=}")
