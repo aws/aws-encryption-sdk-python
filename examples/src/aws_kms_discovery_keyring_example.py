@@ -51,10 +51,6 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 EXAMPLE_DATA: bytes = b"Hello World"
 
 
-from aws_cryptographic_materialproviders.smithygenerated.aws_cryptography_keystore.models import KMSConfigurationMrDiscovery
-
-a = KMSConfigurationMrDiscovery()
-
 def encrypt_and_decrypt_with_keyring(
     kms_key_id: str,
     aws_account_id: str,

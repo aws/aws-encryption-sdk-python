@@ -21,7 +21,7 @@ phases:
       - pip install "tox < 4.0"
       - cd test_vector_handlers
       - |
-        tox -e py312-full_decrypt_generate-mpl -- \
+        tox -- \
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0006-awses-message-decryption-generation.v2.json \
           --output 312_keyrings \
           --keyrings
