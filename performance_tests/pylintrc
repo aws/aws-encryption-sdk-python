@@ -1,0 +1,45 @@
+[MESSAGE CONTROL]
+# Disabling messages that either we don't care about we intentionally break.
+disable =
+    import-error, # ignore mpl import errors
+    invalid-name,  # we prefer long, descriptive, names for examples
+    bad-continuation,  # we let black handle this
+    ungrouped-imports,  # we let isort handle this
+    no-member,  # breaks with attrs
+    no-self-use,  # interesting to keep in mind for later refactoring, but not blocking
+    useless-object-inheritance,  # we need to support Python 2, so no, not useless
+    duplicate-code,  # some examples may be similar
+    too-few-public-methods,  # does not allow value stores
+    too-many-locals,  # examples may sometimes have more locals defined for clarity than would be appropriate in code
+    no-else-return,  # we omit this on purpose for brevity where it would add no value
+    attribute-defined-outside-init,  # breaks with attrs_post_init
+    abstract-method,  # throws false positives on io.BaseIO grandchildren
+    redefined-outer-name,  # we do this on purpose in multiple places
+    consider-using-f-string # disable until 2022-05-05; 6 months after 3.5 deprecation
+
+[BASIC]
+# Allow function names up to 50 characters
+function-rgx = [a-z_][a-z0-9_]{2,50}$
+# Allow method names up to 50 characters
+method-rgx = [a-z_][a-z0-9_]{2,50}$
+# Allow class attribute names up to 50 characters
+# Whitelist class attribute names: iv
+class-attribute-rgx = (([A-Za-z_][A-Za-z0-9_]{2,50}|(__.*__))$)|(^iv$)
+# Whitelist attribute names: iv
+attr-rgx = ([a-z_][a-z0-9_]{2,30}$)|(^iv$)
+# Whitelist argument names: iv, b
+argument-rgx = ([a-z_][a-z0-9_]{2,30}$)|(^iv$)|(^b$)
+# Whitelist variable names: iv, b, _b, x, y, r, s
+variable-rgx = ([a-z_][a-z0-9_]{2,30}$)|(^iv$)|(^b$)|(^_b$)|(^x$)|(^y$)|(^r$)|(^s$)
+
+[VARIABLES]
+additional-builtins = raw_input
+
+[DESIGN]
+max-args = 10
+
+[FORMAT]
+max-line-length = 120
+
+[REPORTS]
+msg-template = {path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
