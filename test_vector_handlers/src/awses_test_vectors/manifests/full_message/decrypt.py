@@ -138,8 +138,8 @@ class MessageDecryptionTestErrorResultMatcher(object):
                 # and any actual issues are easier to see.
                 # If an exception is not raised as expected,
                 # `pytest.raises` will fail.
-                f = io.StringIO()
-                with contextlib.redirect_stderr(f):
+                tmp_file = io.StringIO()
+                with contextlib.redirect_stderr(tmp_file):
                     decrypt_fn()
         except BaseException:
             # Translate the exception just to attach context.
