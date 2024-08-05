@@ -31,7 +31,6 @@ table must be configured with the following primary key configuration: - Partiti
 This example also requires using a KMS Key. You need the following access on this key: -
 GenerateDataKeyWithoutPlaintext - Decrypt
 """
-import sys
 
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example
@@ -54,11 +53,6 @@ from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from .branch_key_id_supplier_example import ExampleBranchKeyIdSupplier
-
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks.
-module_root_dir = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(module_root_dir)
 
 EXAMPLE_DATA: bytes = b"Hello World"
 
