@@ -6,7 +6,6 @@ A required encryption context CMM asks for required keys in the encryption conte
 on encrypt such that they will not be stored on the message, but WILL be included in the header signature.
 On decrypt, the client MUST supply the key/value pair(s) that were not stored to successfully decrypt the message.
 """
-import sys
 
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example
@@ -24,11 +23,6 @@ from typing import Dict, List  # noqa pylint: disable=wrong-import-order
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
 from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-
-# TODO-MPL: Remove this as part of removing PYTHONPATH hacks
-module_root_dir = '/'.join(__file__.split("/")[:-1])
-
-sys.path.append(module_root_dir)
 
 EXAMPLE_DATA: bytes = b"Hello World"
 
