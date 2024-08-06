@@ -34,7 +34,10 @@ def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration
             future.result()
 
 
-def test_encrypt_and_decrypt_with_keyring_multithreaded(n_threads_list: list = [1, 4, 16, 64], duration_list: list = [2, 10, 60]):
+def test_encrypt_and_decrypt_with_keyring_multithreaded(
+    n_threads_list: list = [1, 4, 16, 64], # pylint: disable=W0102
+    duration_list: list = [2, 10, 60] # pylint: disable=W0102
+):
     """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
     for n in n_threads_list:
         for d in duration_list:
