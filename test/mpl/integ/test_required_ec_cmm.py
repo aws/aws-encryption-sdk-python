@@ -7,9 +7,7 @@ import boto3
 import pytest
 from aws_cryptographic_materialproviders.keystore import KeyStore
 from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-from aws_cryptographic_materialproviders.keystore.models import (
-    KMSConfigurationKmsKeyArn,
-)
+from aws_cryptographic_materialproviders.keystore.models import KMSConfigurationKmsKeyArn
 from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_materialproviders.mpl.models import (
