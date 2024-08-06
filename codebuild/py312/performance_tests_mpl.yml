@@ -1,0 +1,38 @@
+# Runs the performance tests for the MPL in an environment with the MPL installed
+version: 0.2
+
+env:
+  variables:
+    # No TOXENV. This runs multiple environments.
+    REGION: "us-west-2"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+  build:
+    commands:
+      - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
+      - pyenv install --skip-existing 3.12.0
+      - pyenv local 3.12.0
+      - pip install --upgrade pip
+      - pip install setuptools
+      - pip install "tox < 4.0"
+      # Assume special role to access keystore
+      - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-Py312ExamplesMpl")
+      - export TMP_ROLE
+      - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
+      - aws sts get-caller-identity
+      # Run MPL-specific tests with special role
+      - cd performance_tests/
+      - tox -e py312-performance_tests-mpl
