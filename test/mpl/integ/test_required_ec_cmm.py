@@ -218,6 +218,7 @@ def test_GIVEN_same_EC_on_encrypt_and_decrypt_WHEN_encrypt_decrypt_cycle_THEN_de
         pt, _ = client.decrypt(
             source=ct,
             # Given: same encryption context on encrypt and decrypt
+            encryption_context=encryption_context,
             keyring=decrypt_keyring
         )
 
@@ -260,8 +261,9 @@ def test_GIVEN_RECCMM_with_one_REC_key_on_encrypt_AND_default_CMM_with_valid_rep
     # When: encrypt/decrypt cycle
     ct, _ = client.encrypt(
         source=SOME_PLAINTEXT,
-        materials_manager=required_ec_cmm,
         # Given: required encryption context CMM (RECCMM) on encrypt
+        materials_manager=required_ec_cmm,
+        # Given: encryption context with REC key on encrypt
         encryption_context=encryption_context,
     )
 
@@ -313,8 +315,9 @@ def test_GIVEN_RECCMM_with_one_REC_key_on_encrypt_AND_RECCMM_with_valid_reproduc
     # When: encrypt/decrypt cycle
     ct, _ = client.encrypt(
         source=SOME_PLAINTEXT,
-        materials_manager=required_ec_cmm_encrypt,
         # Given: required encryption context CMM (RECCMM) on encrypt
+        materials_manager=required_ec_cmm_encrypt,
+        # Given: encryption context with REC key on encrypt
         encryption_context=encryption_context,
     )
 
@@ -327,8 +330,9 @@ def test_GIVEN_RECCMM_with_one_REC_key_on_encrypt_AND_RECCMM_with_valid_reproduc
 
         required_ec_cmm_decrypt = mpl_client.create_required_encryption_context_cmm(
             CreateRequiredEncryptionContextCMMInput(
+                # Given: required encryption context CMM (RECCMM) on decrypt
                 underlying_cmm=default_cmm_decrypt,
-                # Given: one required encryption context (REC) key
+                # Given: correct required encryption context (REC) keys on decrypt
                 required_encryption_context_keys=required_ec_keys
             )
         )
@@ -373,8 +377,8 @@ def test_GIVEN_default_CMM_on_encrypt_AND_default_CMM_with_valid_reproduced_EC_o
     # When: encrypt/decrypt cycle
     ct, _ = client.encrypt(
         source=SOME_PLAINTEXT,
-        materials_manager=default_cmm_encrypt,
         # Given: default CMM on encrypt
+        materials_manager=default_cmm_encrypt,
         encryption_context=encryption_context,
     )
 
