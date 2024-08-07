@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.examples]
 
 
 def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration=60):
-    """Helper function for multi-threaded encrypt and decrypt using a keyring for fixed n_threads and duration."""
+    """Encrypt and decrypt using a keyring for fixed n_threads and duration."""
     keyring = create_keyring()
     plaintext_data = b"Hello World"
     client = aws_encryption_sdk.EncryptionSDKClient(
@@ -37,17 +37,16 @@ def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration
 def test_encrypt_and_decrypt_with_keyring_multithreaded(
     # These default value are not used dangerously (i.e. mutably)
     # and these are only used in tests.
-    # This is beneficial as-is because it lets 
-    n_threads_list: Optional[list[int]],
-    duration_list: Optional[list[int]],
+    # This is beneficial as-is because it lets
+    n_threads_list: Optional[list],
+    duration_list: Optional[list],
 ):
+    """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
     # Set defaults if no value is provided
     if n_threads_list is None:
         n_threads_list = [1, 4, 16, 64]
     if duration_list is None:
         duration_list = [2, 10, 60]
-
-    """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
     for n in n_threads_list:
         for d in duration_list:
             encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=n, duration=d)
