@@ -37,8 +37,8 @@ def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration
 
 
 def test_encrypt_and_decrypt_with_keyring_multithreaded(
-    n_threads_list: Optional[list],
-    duration_list: Optional[list],
+    n_threads_list: Optional[list] = None,
+    duration_list: Optional[list] = None,
 ):
     """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
     # Set defaults if no value is provided
