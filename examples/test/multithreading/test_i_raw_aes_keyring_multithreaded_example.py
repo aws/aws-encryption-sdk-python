@@ -4,6 +4,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
+from typing import Optional
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
@@ -34,9 +35,18 @@ def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration
 
 
 def test_encrypt_and_decrypt_with_keyring_multithreaded(
-    n_threads_list: list = [1, 4, 16, 64], # pylint: disable=W0102
-    duration_list: list = [2, 10, 60] # pylint: disable=W0102
+    # These default value are not used dangerously (i.e. mutably)
+    # and these are only used in tests.
+    # This is beneficial as-is because it lets 
+    n_threads_list: Optional[list[int]],
+    duration_list: Optional[list[int]],
 ):
+    # Set defaults if no value is provided
+    if n_threads_list is None:
+        n_threads_list = [1, 4, 16, 64]
+    if duration_list is None:
+        duration_list = [2, 10, 60]
+
     """Test function for multi-threaded encrypt and decrypt using a keyring for different n_threads and duration."""
     for n in n_threads_list:
         for d in duration_list:
