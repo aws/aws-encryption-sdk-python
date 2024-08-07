@@ -312,7 +312,9 @@ Resources:
               "Effect": "Allow",
               "Resource": [
                 "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiCryptoTools-SxeLBh",
-                "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T"
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:TestPyPiAPIToken-uERFjs",
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAdmin-ZWyd1T",
+                "arn:aws:secretsmanager:us-west-2:587316601012:secret:PyPiAPIToken-nu1Gu6"
               ],
               "Action": "secretsmanager:GetSecretValue"
             }
