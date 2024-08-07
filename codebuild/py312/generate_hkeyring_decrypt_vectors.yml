@@ -20,14 +20,14 @@ phases:
     commands:
       - pip install "tox < 4.0"
       - cd test_vector_handlers/test/aws-crypto-tools-test-vector-framework
-      # Checkout WIP branch
+      # Checkout WIP branch with manifest containing HKeyring and required EC CMM test cases
       - git checkout lucmcdon/hierarchy-test-vectors
       - git pull
       - cd ../..
       - |
         tox -- \
           --input test/aws-crypto-tools-test-vector-framework/features/CANONICAL-GENERATED-MANIFESTS/0007-hkeyring-reccmm-generate-manifest.json \
-          --output 312_hkeyring_manifest \
+          --output 312_hkeyring_reccmm_manifest \
           --keyrings
-      - zip -r 312_hkeyring_manifest.zip 312_hkeyring_manifest
-      - aws s3 cp 312_hkeyring_manifest.zip s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_manifest.zip
+      - zip -r 312_hkeyring_reccmm_manifest.zip 312_hkeyring_reccmm_manifest
+      - aws s3 cp 312_hkeyring_reccmm_manifest.zip s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_reccmm_manifest.zip

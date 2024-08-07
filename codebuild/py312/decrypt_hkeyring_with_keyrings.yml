@@ -19,13 +19,14 @@ phases:
   pre_build:
     commands:
       # Download previously generated vectors
-      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_manifest.zip 312_hkeyring_manifest.zip
-      - unzip 312_hkeyring_manifest.zip
+      # This manifest has coverage for both HKeyring and required encryption context CMM
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_reccmm_manifest.zip 312_hkeyring_reccmm_manifest.zip
+      - unzip 312_hkeyring_reccmm_manifest.zip
   build:
     commands:
       - pip install "tox < 4.0"
       - cd test_vector_handlers
       - |
         tox -- \
-          --input ../312_hkeyring_manifest/manifest.json \
+          --input ../312_hkeyring_reccmm_manifest/manifest.json \
           --keyrings
