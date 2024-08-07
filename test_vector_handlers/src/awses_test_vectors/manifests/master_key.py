@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
     # We only actually need these imports when running the mypy checks
     pass
 
-KNOWN_TYPES = ("aws-kms", "aws-kms-mrk-aware", "aws-kms-mrk-aware-discovery", "raw")
+KNOWN_TYPES = ("aws-kms", "aws-kms-mrk-aware", "aws-kms-mrk-aware-discovery", "raw", )
 KNOWN_ALGORITHMS = ("aes", "rsa")
 KNOWN_PADDING = ("pkcs1", "oaep-mgf1")
 KNOWN_PADDING_HASH = ("sha1", "sha256", "sha384", "sha512")
@@ -301,7 +301,17 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
     :return: Master key provider combining all loaded master keys
     :rtype: MasterKeyProvider
     """
-    master_keys = [spec.master_key(keys) for spec in master_key_specs]
+    master_keys = []
+    for spec in master_key_specs:
+        try:
+            master_keys.append(spec.master_key(keys))
+        # If spec is not a valid master key
+        # (e.g. hierarchical keyring)
+        # do not make a master key
+        except KeyError:
+            pass
+    if len(master_keys) == 0:
+        return None
     primary = master_keys[0]
     others = master_keys[1:]
     for master_key in others:

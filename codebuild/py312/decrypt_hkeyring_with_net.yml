@@ -1,0 +1,50 @@
+version: 0.2
+
+env:
+  variables:
+    TOXENV: "py312-full_decrypt-mpl"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b35311ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+  pre_build:
+    commands:
+      # Download previously generated vectors
+      # This manifest has coverage for both HKeyring and required encryption context CMM
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_reccmm_manifest.zip 312_hkeyring_reccmm_manifest.zip
+      - unzip 312_hkeyring_reccmm_manifest.zip
+      - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_reccmm_manifest/manifest.json"
+
+      # Download dafny
+      - curl https://github.com/dafny-lang/dafny/releases/download/v4.7.0/dafny-4.7.0-x64-ubuntu-20.04.zip  -L -o dafny.zip
+      - unzip -qq dafny.zip && rm dafny.zip
+      - export PATH="$PWD/dafny:$PATH"
+
+      # Clone SDK-Dafny repo to get test vectors runner
+      - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
+      # TODO: Change branch to published when available
+      - cd aws-encryption-sdk-dafny
+      - git checkout lucmcdon/hkeyring-vectors
+      - git pull
+      - cd AwsEncryptionSDK/
+      - make transpile_net
+      - cd ../mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - make transpile_net
+
+      # Change TestVectors to reference the published .NET ESDK
+      - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors
+      # - sed -i -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
+      # - cd ../TestVectors
+  
+  build:
+    commands:
+      - dotnet test --framework net6.0

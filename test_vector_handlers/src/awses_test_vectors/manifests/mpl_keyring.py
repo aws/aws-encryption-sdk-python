@@ -36,10 +36,20 @@ from standard_library.internaldafny.generated import UTF8
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module
 from awses_test_vectors.internal.mpl.keyvectors_provider import KeyVectorsProvider
+from awses_test_vectors.internal.util import membership_validator
 from awses_test_vectors.manifests.keys import KeysManifest  # noqa: disable=F401
 
+from .master_key import KNOWN_TYPES as MASTER_KEY_KNOWN_TYPES, MasterKeySpec
 
-from .master_key import MasterKeySpec
+try:  # Python 3.5.0 and 3.5.1 have incompatible typing modules
+    from typing import Iterable  # noqa pylint: disable=unused-import
+
+    from awses_test_vectors.internal.mypy_types import MASTER_KEY_SPEC  # noqa pylint: disable=unused-import
+except ImportError:  # pragma: no cover
+    # We only actually need these imports when running the mypy checks
+    pass
+
+KEYRING_ONLY_KNOWN_TYPES = ("aws-kms-hierarchy", )
 
 
 @attr.s
@@ -55,6 +65,30 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
     :param str padding_algorithm: Wrapping key padding algorithm (required for raw master keys)
     :param str padding_hash: Wrapping key padding hash (required for raw master keys)
     """
+
+    type_name = attr.ib(validator=membership_validator(
+        set(MASTER_KEY_KNOWN_TYPES).union(set(KEYRING_ONLY_KNOWN_TYPES))
+    ))
+
+    @classmethod
+    def from_scenario(cls, spec):
+        # type: (MASTER_KEY_SPEC) -> KeyringSpec
+        """Load from a keyring specification.
+
+        :param dict spec: Master key specification JSON
+        :return: Loaded master key specification
+        :rtype: MasterKeySpec
+        """
+        return cls(
+            type_name=spec["type"],
+            key_name=spec.get("key"),
+            default_mrk_region=spec.get("default-mrk-region"),
+            discovery_filter=cls._discovery_filter_from_spec(spec.get("aws-kms-discovery-filter")),
+            provider_id=spec.get("provider-id"),
+            encryption_algorithm=spec.get("encryption-algorithm"),
+            padding_algorithm=spec.get("padding-algorithm"),
+            padding_hash=spec.get("padding-hash"),
+        )
 
     def keyring(self, keys_uri, mode):
         # type: (KeysManifest) -> IKeyring
@@ -73,8 +107,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             "key": self.key_name,
             "provider-id": self.provider_id,
             "encryption-algorithm": self.encryption_algorithm,
-
         }
+
         if self.padding_algorithm is not None and self.padding_algorithm != "":
             input_kwargs["padding-algorithm"] = self.padding_algorithm
         if self.padding_hash is not None:
