@@ -4,7 +4,8 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
-from typing import Optional
+# pylint and isort disagree about where this goes; listen to isort
+from typing import Optional # pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
