@@ -36,9 +36,6 @@ def encrypt_and_decrypt_with_keyring_multithreaded_helper(n_threads=64, duration
 
 
 def test_encrypt_and_decrypt_with_keyring_multithreaded(
-    # These default value are not used dangerously (i.e. mutably)
-    # and these are only used in tests.
-    # This is beneficial as-is because it lets
     n_threads_list: Optional[list],
     duration_list: Optional[list],
 ):
