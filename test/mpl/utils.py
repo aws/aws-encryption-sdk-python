@@ -5,7 +5,6 @@ import secrets
 import string
 
 import boto3
-import pytest
 from aws_cryptographic_materialproviders.keystore import KeyStore
 from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
 from aws_cryptographic_materialproviders.keystore.models import KMSConfigurationKmsKeyArn
@@ -27,14 +26,11 @@ from cryptography.hazmat.backends import default_backend as crypto_default_backe
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-
-pytestmark = [pytest.mark.integ]
-
-
 # MPL client. Used to create keyrings.
 mpl_client: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
     config=MaterialProvidersConfig()
 )
+
 
 class TestKeyringCreator:
 
@@ -56,7 +52,6 @@ class TestKeyringCreator:
         )
 
         return raw_aes_keyring
-
 
     # Private raw RSA keyring creator.
     # Lifted from raw RSA keyring example.
@@ -97,7 +92,6 @@ class TestKeyringCreator:
 
         return raw_rsa_keyring
 
-
     # Private KMS keyring creator.
     # Lifted KMS keyring example.
     @staticmethod
@@ -113,7 +107,6 @@ class TestKeyringCreator:
         )
 
         return kms_keyring
-
 
     # Private hierarchical keyring creator.
     # Lifted hierarchical keyring example.
@@ -151,7 +144,6 @@ class TestKeyringCreator:
 
         return hierarchical_keyring
 
-
     # Private multi-keyring creator.
     @staticmethod
     def _create_multi_keyring(keyrings):
@@ -160,6 +152,7 @@ class TestKeyringCreator:
             child_keyrings=keyrings[1:]
         ))
         return a
+
 
 class TestEncryptionContexts:
 
