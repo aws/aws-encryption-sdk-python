@@ -27,12 +27,9 @@ from cryptography.hazmat.backends import default_backend as crypto_default_backe
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-import aws_encryption_sdk
 
 pytestmark = [pytest.mark.integ]
 
-# ESDK client. Used to encrypt/decrypt in each test.
-client = aws_encryption_sdk.EncryptionSDKClient()
 
 # MPL client. Used to create keyrings.
 mpl_client: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(

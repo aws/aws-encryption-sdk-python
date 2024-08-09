@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.integ]
 # ESDK client. Used to encrypt/decrypt in each test.
 client = aws_encryption_sdk.EncryptionSDKClient()
 
-# MPL client. Used to create keyrings.
+# MPL client. Used to create CMMs.
 mpl_client: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
     config=MaterialProvidersConfig()
 )
