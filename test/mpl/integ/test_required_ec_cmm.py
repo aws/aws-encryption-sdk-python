@@ -247,6 +247,7 @@ def test_GIVEN_default_CMM_on_encrypt_AND_default_CMM_with_valid_reproduced_EC_o
         # Then: decrypted plaintext matches original plaintext
         assert pt == SOME_PLAINTEXT
 
+
 # This test needs >=2 items in EC so it can swap their key/value pairs
 @pytest.mark.parametrize("encryption_context", TestEncryptionContexts.AT_LEAST_TWO_ITEMS_ENCRYPTION_CONTEXTS)
 # FAILURE CASE 1
