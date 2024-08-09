@@ -2,6 +2,27 @@
 Changelog
 *********
 
+3.3.0 -- 2024-05-20
+===================
+
+Deprecation
+-----------
+The AWS Encryption SDK for Python no longer supports Python 3.7
+as of version 3.3; only Python 3.8+ is supported.
+
+Fixes
+-----------
+* fix: Handle errors when decrypting multiple EDKs with raw RSA MKPs (#672 (https://github.com/aws/aws-encryption-sdk-python/pull/672))
+* chore: Updated description of decrypt() usage in src/aws_encryption_sdk/__init__.py (#660 (https://github.com/aws/aws-encryption-sdk-python/pull/660))
+* fix(CI): removed appveyor.yml (#668 (https://github.com/aws/aws-encryption-sdk-python/pull/668))
+* fix(CI): updated ci_test-vector-handler.yaml and ci_tests.yaml (#665 (https://github.com/aws/aws-encryption-sdk-python/pull/665))
+
+Maintenance
+-----------
+* feat: remove Python3.7 support (#648 (https://github.com/aws/aws-encryption-sdk-python/pull/648))
+* chore: Update copyright headers (#677 (https://github.com/aws/aws-encryption-sdk-python/pull/677))
+* chore(CFN): Changes for MPL TestVectors (#653 (https://github.com/aws/aws-encryption-sdk-python/pull/653))
+
 3.2.0 -- 2024-03-18
 ===================
 
