@@ -213,7 +213,7 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
         encryption_context=encryption_context,
     )
 
-    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 7. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
@@ -222,14 +222,14 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
     # decryption of the original ciphertext is not possible with a different keyring (Bob's).
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
-    # 9. Create a new Raw RSA keyring for Bob
+    # 8. Create a new Raw RSA keyring for Bob
     # Generate new keys
     public_key_bob, private_key_bob = generate_rsa_keys()
 
     # Create the keyring
     raw_rsa_keyring_bob = create_rsa_keyring(public_key=public_key_bob, private_key=private_key_bob)
 
-    # 10. Test decrypt for the original ciphertext using raw_rsa_keyring_bob
+    # 9. Test decrypt for the original ciphertext using raw_rsa_keyring_bob
     try:
         plaintext_bytes_bob, _ = client.decrypt(  # pylint: disable=unused-variable
             source=ciphertext,

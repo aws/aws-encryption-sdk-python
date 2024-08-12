@@ -221,7 +221,7 @@ def encrypt_and_decrypt_with_keyring(
     except AWSEncryptionSDKClientError:
         pass
 
-    # 10. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
+    # 11. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
     #     and that the decrypted data matches the input data.
     plaintext_bytes_a, _ = client.decrypt(
         source=ciphertext_a,

@@ -132,7 +132,7 @@ def encrypt_and_decrypt_with_keyring(
         encryption_context=encryption_context,
     )
 
-    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 7. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
@@ -141,7 +141,7 @@ def encrypt_and_decrypt_with_keyring(
     # multi-keyring used to encrypt the data is also capable of decrypting the data.
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
-    # 9. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
+    # 8. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
 
     # Create a boto3 client for KMS in the second region which is the region for mrk_replica_key_id.
     second_region_kms_client = boto3.client('kms', region_name=mrk_replica_decrypt_region)
@@ -155,7 +155,7 @@ def encrypt_and_decrypt_with_keyring(
         input=second_region_mrk_keyring_input
     )
 
-    # 10. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
+    # 9. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
     plaintext_bytes_second_region, dec_header_second_region = client.decrypt(
         source=ciphertext,
         keyring=second_region_mrk_keyring,
@@ -164,7 +164,7 @@ def encrypt_and_decrypt_with_keyring(
         encryption_context=encryption_context,
     )
 
-    # 12. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes_second_region == EXAMPLE_DATA
 
