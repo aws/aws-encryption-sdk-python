@@ -202,7 +202,7 @@ def encrypt_and_decrypt_with_keyring(
             source=ciphertext_a,
             keyring=hierarchical_keyring_b,
             # Verify that the encryption context in the result contains the
-            # encryption context supplied to the encryptData method
+            # encryption context supplied to the encrypt method
             encryption_context=encryption_context_a,
         )
     except AWSEncryptionSDKClientError:
@@ -215,7 +215,7 @@ def encrypt_and_decrypt_with_keyring(
             source=ciphertext_b,
             keyring=hierarchical_keyring_a,
             # Verify that the encryption context in the result contains the
-            # encryption context supplied to the encryptData method
+            # encryption context supplied to the encrypt method
             encryption_context=encryption_context_b,
         )
     except AWSEncryptionSDKClientError:
@@ -227,7 +227,7 @@ def encrypt_and_decrypt_with_keyring(
         source=ciphertext_a,
         keyring=hierarchical_keyring_a,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context_a,
     )
     assert plaintext_bytes_a == EXAMPLE_DATA, \
@@ -237,7 +237,7 @@ def encrypt_and_decrypt_with_keyring(
         source=ciphertext_b,
         keyring=hierarchical_keyring_b,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context_b,
     )
     assert plaintext_bytes_b == EXAMPLE_DATA, \

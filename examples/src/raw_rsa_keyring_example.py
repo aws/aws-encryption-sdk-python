@@ -209,7 +209,7 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
         source=ciphertext,
         keyring=raw_rsa_keyring,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context,
     )
 

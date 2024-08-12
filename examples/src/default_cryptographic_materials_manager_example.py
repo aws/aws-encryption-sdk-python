@@ -113,7 +113,7 @@ def encrypt_and_decrypt_with_default_cmm(
         source=ciphertext,
         materials_manager=cmm,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context,
     )
 

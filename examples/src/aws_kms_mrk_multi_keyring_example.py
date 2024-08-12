@@ -128,7 +128,7 @@ def encrypt_and_decrypt_with_keyring(
         source=ciphertext,
         keyring=kms_mrk_multi_keyring,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context,
     )
 
@@ -160,7 +160,7 @@ def encrypt_and_decrypt_with_keyring(
         source=ciphertext,
         keyring=second_region_mrk_keyring,
         # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encryptData method
+        # encryption context supplied to the encrypt method
         encryption_context=encryption_context,
     )
 
