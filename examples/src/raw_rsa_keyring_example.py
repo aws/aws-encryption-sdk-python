@@ -207,14 +207,11 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
     # 6. Decrypt your encrypted data using the same keyring you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        keyring=raw_rsa_keyring
+        keyring=raw_rsa_keyring,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context,
     )
-
-    # 7. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
 
     # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)

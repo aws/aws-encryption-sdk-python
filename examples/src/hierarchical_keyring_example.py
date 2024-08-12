@@ -200,7 +200,10 @@ def encrypt_and_decrypt_with_keyring(
     try:
         client.decrypt(
             source=ciphertext_a,
-            keyring=hierarchical_keyring_b
+            keyring=hierarchical_keyring_b,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encryptData method
+            encryption_context=encryption_context_a,
         )
     except AWSEncryptionSDKClientError:
         pass
@@ -210,7 +213,10 @@ def encrypt_and_decrypt_with_keyring(
     try:
         client.decrypt(
             source=ciphertext_b,
-            keyring=hierarchical_keyring_a
+            keyring=hierarchical_keyring_a,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encryptData method
+            encryption_context=encryption_context_b,
         )
     except AWSEncryptionSDKClientError:
         pass
@@ -219,13 +225,20 @@ def encrypt_and_decrypt_with_keyring(
     #     and that the decrypted data matches the input data.
     plaintext_bytes_a, _ = client.decrypt(
         source=ciphertext_a,
-        keyring=hierarchical_keyring_a
+        keyring=hierarchical_keyring_a,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context_a,
     )
     assert plaintext_bytes_a == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
+
     plaintext_bytes_b, _ = client.decrypt(
         source=ciphertext_b,
-        keyring=hierarchical_keyring_b
+        keyring=hierarchical_keyring_b,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context_b,
     )
     assert plaintext_bytes_b == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"

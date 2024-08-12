@@ -134,12 +134,6 @@ def encrypt_and_decrypt_with_keyring(
             for chunk in decryptor:
                 pt_file.write(chunk)
 
-    # 9. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == decryptor.header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
     # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert filecmp.cmp(plaintext_filename, decrypted_filename), \

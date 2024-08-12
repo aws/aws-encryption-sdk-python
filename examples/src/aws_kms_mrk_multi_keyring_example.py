@@ -126,14 +126,11 @@ def encrypt_and_decrypt_with_keyring(
     # the first available KMS key on the keyring that is capable of decrypting the data.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        keyring=kms_mrk_multi_keyring
+        keyring=kms_mrk_multi_keyring,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context,
     )
-
-    # 7. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
 
     # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
@@ -161,14 +158,11 @@ def encrypt_and_decrypt_with_keyring(
     # 10. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
     plaintext_bytes_second_region, dec_header_second_region = client.decrypt(
         source=ciphertext,
-        keyring=second_region_mrk_keyring
+        keyring=second_region_mrk_keyring,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context,
     )
-
-    # 11. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header_second_region.encryption_context[k], \
-            "Encryption context does not match expected values"
 
     # 12. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)

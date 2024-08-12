@@ -111,14 +111,11 @@ def encrypt_and_decrypt_with_default_cmm(
     # 7. Decrypt your encrypted data using the same cmm you used on encrypt.
     plaintext_bytes, dec_header = client.decrypt(
         source=ciphertext,
-        materials_manager=cmm
+        materials_manager=cmm,
+        # Verify that the encryption context in the result contains the
+        # encryption context supplied to the encryptData method
+        encryption_context=encryption_context,
     )
-
-    # 8. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
 
     # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
