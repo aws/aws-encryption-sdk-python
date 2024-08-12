@@ -153,7 +153,7 @@ def encrypt_and_decrypt_with_keyring(
     # successfully decrypted. The resulting data key is used to decrypt the
     # ciphertext's message.
     # If all calls to KMS fail, the decryption fails.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
         keyring=discovery_keyring,
         # Verify that the encryption context in the result contains the

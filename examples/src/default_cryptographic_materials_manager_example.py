@@ -109,7 +109,7 @@ def encrypt_and_decrypt_with_default_cmm(
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 7. Decrypt your encrypted data using the same cmm you used on encrypt.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
         materials_manager=cmm,
         # Verify that the encryption context in the result contains the

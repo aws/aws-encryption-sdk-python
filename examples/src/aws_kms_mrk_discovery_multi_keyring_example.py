@@ -172,7 +172,7 @@ def encrypt_and_decrypt_with_keyring(
     # All of this is done serially, until a success occurs or all keyrings have failed
     # all (filtered) EDKs. KMS MRK Discovery Keyrings will attempt to decrypt
     # Multi Region Keys (MRKs) and regular KMS Keys.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
         keyring=decrypt_discovery_keyring,
         # Verify that the encryption context in the result contains the

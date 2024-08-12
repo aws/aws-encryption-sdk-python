@@ -124,7 +124,7 @@ def encrypt_and_decrypt_with_keyring(
     # 6. Decrypt your encrypted data using the same AwsKmsMrkMultiKeyring you used on encrypt.
     # It will decrypt the data using the generator key (in this case, the MRK), since that is
     # the first available KMS key on the keyring that is capable of decrypting the data.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
         keyring=kms_mrk_multi_keyring,
         # Verify that the encryption context in the result contains the
@@ -156,7 +156,7 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 9. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
-    plaintext_bytes_second_region, dec_header_second_region = client.decrypt(
+    plaintext_bytes_second_region, _ = client.decrypt(
         source=ciphertext,
         keyring=second_region_mrk_keyring,
         # Verify that the encryption context in the result contains the
