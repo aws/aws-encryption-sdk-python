@@ -233,7 +233,10 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
     try:
         plaintext_bytes_bob, _ = client.decrypt(  # pylint: disable=unused-variable
             source=ciphertext,
-            keyring=raw_rsa_keyring_bob
+            keyring=raw_rsa_keyring_bob,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encrypt method
+            encryption_context=encryption_context,
         )
 
         raise AssertionError("client.decrypt should throw an error of type AWSEncryptionSDKClientError!")
