@@ -134,8 +134,7 @@ def encrypt_and_decrypt_with_keyring(
     plaintext_bytes_multi_keyring, _ = client.decrypt(
         source=ciphertext,
         keyring=kms_multi_keyring,
-        # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encrypt method
+        # Provide the encryption context that was supplied to the encrypt method
         encryption_context=encryption_context,
     )
 
@@ -168,8 +167,7 @@ def encrypt_and_decrypt_with_keyring(
     plaintext_bytes_default_region_kms_keyring, _ = client.decrypt(
         source=ciphertext,
         keyring=default_region_kms_keyring,
-        # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encrypt method
+        # Provide the encryption context that was supplied to the encrypt method
         encryption_context=encryption_context,
     )
 
@@ -199,8 +197,7 @@ def encrypt_and_decrypt_with_keyring(
     plaintext_bytes_second_region_kms_keyring, _ = client.decrypt(
         source=ciphertext,
         keyring=second_region_kms_keyring,
-        # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encrypt method
+        # Provide the encryption context that was supplied to the encrypt method
         encryption_context=encryption_context,
     )
 

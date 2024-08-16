@@ -112,8 +112,7 @@ def encrypt_and_decrypt_with_default_cmm(
     plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
         materials_manager=cmm,
-        # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encrypt method
+        # Provide the encryption context that was supplied to the encrypt method
         encryption_context=encryption_context,
     )
 

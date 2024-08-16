@@ -43,8 +43,7 @@ def encrypt_and_decrypt_with_keyring(
     decrypted_plaintext_data, _ = client.decrypt(
         source=ciphertext_data,
         keyring=keyring,
-        # Verify that the encryption context in the result contains the
-        # encryption context supplied to the encrypt method
+        # Provide the encryption context that was supplied to the encrypt method
         encryption_context=encryption_context,
     )
 
