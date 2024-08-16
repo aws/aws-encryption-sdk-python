@@ -193,7 +193,7 @@ def migration_raw_aes_key():
     # that the encryption context used in the decrypt operation
     # includes all key pairs from the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
     assert all(
-        pair in decrypted_header_keyring_using_mkp.encryption_context.items() \
+        pair in decrypted_header_keyring_using_mkp.encryption_context.items()
             for pair in enc_header_keyring.encryption_context.items()
     )
 
@@ -220,8 +220,8 @@ def migration_raw_aes_key():
     # that the encryption context used in the decrypt operation
     # includes all key pairs from the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
     assert all(
-        pair in decrypted_header_mkp_using_mkp.encryption_context.items() \
-            for pair in enc_header_mkp.encryption_context.items()
+        pair in decrypted_header_mkp_using_mkp.encryption_context.items()
+        for pair in enc_header_mkp.encryption_context.items()
     )
 
     assert decrypted_ciphertext_mkp_using_keyring == decrypted_ciphertext_mkp_using_mkp \
