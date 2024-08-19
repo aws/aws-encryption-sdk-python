@@ -156,14 +156,14 @@ def migration_raw_aes_key():
     raw_aes_master_key_provider = create_key_provider()
 
     # 2a. Encrypt EXAMPLE_DATA using Raw AES Keyring
-    ciphertext_keyring, enc_header_keyring = client.encrypt(
+    ciphertext_keyring, encrypted_header_keyring = client.encrypt(
         source=EXAMPLE_DATA,
         keyring=raw_aes_keyring,
         encryption_context=DEFAULT_ENCRYPTION_CONTEXT
     )
 
     # 2b. Encrypt EXAMPLE_DATA using Raw AES Master Key Provider
-    ciphertext_mkp, enc_header_mkp = client.encrypt(
+    ciphertext_mkp, encrypted_header_mkp = client.encrypt(
         source=EXAMPLE_DATA,
         key_provider=raw_aes_master_key_provider,
         encryption_context=DEFAULT_ENCRYPTION_CONTEXT
@@ -194,7 +194,7 @@ def migration_raw_aes_key():
     # includes all key pairs from the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
     assert all(
         pair in decrypted_header_keyring_using_mkp.encryption_context.items()
-        for pair in enc_header_keyring.encryption_context.items()
+        for pair in encrypted_header_keyring.encryption_context.items()
     )
 
     assert decrypted_ciphertext_keyring_using_keyring == decrypted_ciphertext_keyring_using_mkp \
@@ -221,7 +221,7 @@ def migration_raw_aes_key():
     # includes all key pairs from the encrypt operation. (The SDK can add pairs, so don't require an exact match.)
     assert all(
         pair in decrypted_header_mkp_using_mkp.encryption_context.items()
-        for pair in enc_header_mkp.encryption_context.items()
+        for pair in encrypted_header_mkp.encryption_context.items()
     )
 
     assert decrypted_ciphertext_mkp_using_keyring == decrypted_ciphertext_mkp_using_mkp \
