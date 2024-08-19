@@ -153,18 +153,14 @@ def encrypt_and_decrypt_with_keyring(
     # successfully decrypted. The resulting data key is used to decrypt the
     # ciphertext's message.
     # If all calls to KMS fail, the decryption fails.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
-        keyring=discovery_keyring
+        keyring=discovery_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 9. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
@@ -192,7 +188,10 @@ def encrypt_and_decrypt_with_keyring(
     try:
         plaintext_bytes, _ = client.decrypt(
             source=ciphertext,
-            keyring=discovery_keyring_bob
+            keyring=discovery_keyring_bob,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encrypt method
+            encryption_context=encryption_context,
         )
 
         raise AssertionError("Decrypt using discovery keyring with wrong AWS Account ID should"

@@ -172,17 +172,13 @@ def encrypt_and_decrypt_with_keyring(
     # All of this is done serially, until a success occurs or all keyrings have failed
     # all (filtered) EDKs. KMS MRK Discovery Keyrings will attempt to decrypt
     # Multi Region Keys (MRKs) and regular KMS Keys.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
-        keyring=decrypt_discovery_keyring
+        keyring=decrypt_discovery_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 8. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA

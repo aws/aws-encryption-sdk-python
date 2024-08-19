@@ -103,18 +103,14 @@ def encrypt_and_decrypt_with_keyring(
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 7. Decrypt your encrypted data using the same keyring you used on encrypt.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
-        keyring=kms_rsa_keyring
+        keyring=kms_rsa_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 8. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 9. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"

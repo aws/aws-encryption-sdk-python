@@ -205,18 +205,14 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
         "Ciphertext and plaintext data are the same. Invalid encryption"
 
     # 6. Decrypt your encrypted data using the same keyring you used on encrypt.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
-        keyring=raw_rsa_keyring
+        keyring=raw_rsa_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 7. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 7. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
@@ -225,18 +221,21 @@ def encrypt_and_decrypt_with_keyring(public_key_file_name=None, private_key_file
     # decryption of the original ciphertext is not possible with a different keyring (Bob's).
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
-    # 9. Create a new Raw RSA keyring for Bob
+    # 8. Create a new Raw RSA keyring for Bob
     # Generate new keys
     public_key_bob, private_key_bob = generate_rsa_keys()
 
     # Create the keyring
     raw_rsa_keyring_bob = create_rsa_keyring(public_key=public_key_bob, private_key=private_key_bob)
 
-    # 10. Test decrypt for the original ciphertext using raw_rsa_keyring_bob
+    # 9. Test decrypt for the original ciphertext using raw_rsa_keyring_bob
     try:
         plaintext_bytes_bob, _ = client.decrypt(  # pylint: disable=unused-variable
             source=ciphertext,
-            keyring=raw_rsa_keyring_bob
+            keyring=raw_rsa_keyring_bob,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encrypt method
+            encryption_context=encryption_context,
         )
 
         raise AssertionError("client.decrypt should throw an error of type AWSEncryptionSDKClientError!")

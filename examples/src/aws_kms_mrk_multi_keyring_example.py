@@ -124,18 +124,14 @@ def encrypt_and_decrypt_with_keyring(
     # 6. Decrypt your encrypted data using the same AwsKmsMrkMultiKeyring you used on encrypt.
     # It will decrypt the data using the generator key (in this case, the MRK), since that is
     # the first available KMS key on the keyring that is capable of decrypting the data.
-    plaintext_bytes, dec_header = client.decrypt(
+    plaintext_bytes, _ = client.decrypt(
         source=ciphertext,
-        keyring=kms_mrk_multi_keyring
+        keyring=kms_mrk_multi_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 7. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 8. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 7. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
@@ -144,7 +140,7 @@ def encrypt_and_decrypt_with_keyring(
     # multi-keyring used to encrypt the data is also capable of decrypting the data.
     # (This is an example for demonstration; you do not need to do this in your own code.)
 
-    # 9. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
+    # 8. Create a single AwsKmsMrkKeyring with the replica KMS MRK from the second region.
 
     # Create a boto3 client for KMS in the second region which is the region for mrk_replica_key_id.
     second_region_kms_client = boto3.client('kms', region_name=mrk_replica_decrypt_region)
@@ -158,19 +154,15 @@ def encrypt_and_decrypt_with_keyring(
         input=second_region_mrk_keyring_input
     )
 
-    # 10. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
-    plaintext_bytes_second_region, dec_header_second_region = client.decrypt(
+    # 9. Decrypt your encrypted data using the second region AwsKmsMrkKeyring
+    plaintext_bytes_second_region, _ = client.decrypt(
         source=ciphertext,
-        keyring=second_region_mrk_keyring
+        keyring=second_region_mrk_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
-    # 11. Demonstrate that the encryption context is correct in the decrypted message header
-    # (This is an example for demonstration; you do not need to do this in your own code.)
-    for k, v in encryption_context.items():
-        assert v == dec_header_second_region.encryption_context[k], \
-            "Encryption context does not match expected values"
-
-    # 12. Demonstrate that the decrypted plaintext is identical to the original plaintext.
+    # 10. Demonstrate that the decrypted plaintext is identical to the original plaintext.
     # (This is an example for demonstration; you do not need to do this in your own code.)
     assert plaintext_bytes_second_region == EXAMPLE_DATA
 

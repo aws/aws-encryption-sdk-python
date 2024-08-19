@@ -164,7 +164,9 @@ def encrypt_and_decrypt_with_keyring(
     # 10a. Decrypt your encrypted data using the same multi_keyring you used on encrypt.
     plaintext_bytes_multi_keyring, _ = client.decrypt(
         source=ciphertext,
-        keyring=multi_keyring
+        keyring=multi_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
     # 10b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
@@ -182,7 +184,9 @@ def encrypt_and_decrypt_with_keyring(
     # 11a. Decrypt your encrypted data using the kms_keyring.
     plaintext_bytes_kms_keyring, _ = client.decrypt(
         source=ciphertext,
-        keyring=kms_keyring
+        keyring=kms_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
     # 11b. Demonstrate that the decrypted plaintext is identical to the original plaintext.
@@ -197,7 +201,9 @@ def encrypt_and_decrypt_with_keyring(
     # 12a. Decrypt your encrypted data using the raw_aes_keyring.
     plaintext_bytes_raw_aes_keyring, _ = client.decrypt(
         source=ciphertext,
-        keyring=raw_aes_keyring
+        keyring=raw_aes_keyring,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context,
     )
 
     # 12b. Demonstrate that the decrypted plaintext is identical to the original plaintext.

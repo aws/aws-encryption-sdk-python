@@ -200,7 +200,10 @@ def encrypt_and_decrypt_with_keyring(
     try:
         client.decrypt(
             source=ciphertext_a,
-            keyring=hierarchical_keyring_b
+            keyring=hierarchical_keyring_b,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encrypt method
+            encryption_context=encryption_context_a,
         )
     except AWSEncryptionSDKClientError:
         pass
@@ -210,22 +213,30 @@ def encrypt_and_decrypt_with_keyring(
     try:
         client.decrypt(
             source=ciphertext_b,
-            keyring=hierarchical_keyring_a
+            keyring=hierarchical_keyring_a,
+            # Verify that the encryption context in the result contains the
+            # encryption context supplied to the encrypt method
+            encryption_context=encryption_context_b,
         )
     except AWSEncryptionSDKClientError:
         pass
 
-    # 10. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
+    # 11. Demonstrate that data encrypted by one tenant's branch key can be decrypted by that tenant,
     #     and that the decrypted data matches the input data.
     plaintext_bytes_a, _ = client.decrypt(
         source=ciphertext_a,
-        keyring=hierarchical_keyring_a
+        keyring=hierarchical_keyring_a,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context_a,
     )
     assert plaintext_bytes_a == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
+
     plaintext_bytes_b, _ = client.decrypt(
         source=ciphertext_b,
-        keyring=hierarchical_keyring_b
+        keyring=hierarchical_keyring_b,
+        # Provide the encryption context that was supplied to the encrypt method
+        encryption_context=encryption_context_b,
     )
     assert plaintext_bytes_b == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
