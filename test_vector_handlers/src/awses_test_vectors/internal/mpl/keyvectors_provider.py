@@ -1,12 +1,12 @@
 """Singleton provider for the KeyVectors client."""
 # # Ignore missing MPL TestVectors for pylint, but the MPL TestVectors is required for this file
 # pylint: disable=import-error
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-    aws_cryptography_materialproviderstestvectorkeys.client import (
+from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
+    aws_cryptography_materialproviders_test_vectors.client import (
         KeyVectors,
     )
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
-    aws_cryptography_materialproviderstestvectorkeys.config import (
+from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
+    aws_cryptography_materialproviders_test_vectors.config import (
         KeyVectorsConfig
     )
 
