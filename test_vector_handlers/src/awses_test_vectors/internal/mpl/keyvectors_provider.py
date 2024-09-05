@@ -7,7 +7,7 @@ from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
     )
 from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
     aws_cryptography_materialproviderstestvectorkeys.config import (
-        KeyVectorsConfig 
+        KeyVectorsConfig
     )
 
 keyvectors_instances = {}
