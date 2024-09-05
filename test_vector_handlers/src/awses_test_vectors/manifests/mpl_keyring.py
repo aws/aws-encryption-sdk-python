@@ -20,7 +20,7 @@ import attr
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
 from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
-    aws_cryptography_materialproviders_test_vectors.models import (
+    aws_cryptography_materialproviderstestvectorkeys.models import (
         GetKeyDescriptionInput,
         GetKeyDescriptionOutput,
         TestVectorKeyringInput,
