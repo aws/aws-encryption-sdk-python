@@ -8,7 +8,8 @@ from awses_test_vectors.manifests.full_message.decrypt import MessageDecryptionM
 try:
     import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import,import-error
     _HAS_MPL = True
-except ImportError:
+except ImportError as e:
+    print(e)
     _HAS_MPL = False
 
 
