@@ -31,7 +31,7 @@ from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
 import _dafny
-from standard_library.internaldafny.generated import UTF8
+from smithy_dafny_standard_library.internaldafny.generated import UTF8
 
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module
