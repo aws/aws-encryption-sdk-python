@@ -3,7 +3,7 @@
 """Command to generate AWS Encryption SDK full message decryption vectors."""
 import argparse
 
-from awses_test_vectors.manifests.full_message.decrypt_generation import MessageDecryptionGenerationManifest
+from awses_test_vectors.manifests.full_message.decrypt_generation import MessageDecryptionGenerationManifest 
 
 try:
     import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import,import-error
