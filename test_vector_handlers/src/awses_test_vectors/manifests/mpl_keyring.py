@@ -19,7 +19,7 @@ import attr
 
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-from aws_cryptography_materialproviderstestvectorkeys.smithygenerated.\
+from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
     aws_cryptography_materialproviderstestvectorkeys.models import (
         GetKeyDescriptionInput,
         GetKeyDescriptionOutput,
@@ -31,7 +31,7 @@ from aws_cryptographic_materialproviders.mpl.references import IKeyring
 from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
 import _dafny
-from standard_library.internaldafny.generated import UTF8
+from smithy_dafny_standard_library.internaldafny.generated import UTF8
 
 # Ignore pylint not being able to read a module that requires the MPL
 # pylint: disable=no-name-in-module
