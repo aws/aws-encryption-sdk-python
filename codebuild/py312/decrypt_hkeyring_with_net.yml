@@ -35,6 +35,7 @@ phases:
 
       # Build ESDK test vector runner
       - cd aws-encryption-sdk-dafny
+      # TODO: Change branch to published when available
       - git checkout lucmcdon/hkeyring-vectors
       - git pull
       - cd AwsEncryptionSDK/
