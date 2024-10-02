@@ -145,7 +145,6 @@ def _cloudformation_role() -> iam.Role:
     )
 
 
-# pylint: disable=too-many-positional-arguments
 def _pipeline(
     pipeline_role: iam.Role,
     cfn_role: iam.Role,
