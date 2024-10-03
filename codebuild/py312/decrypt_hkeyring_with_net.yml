@@ -37,7 +37,7 @@ phases:
       # TODO: Change branch to published when available
       - git checkout lucmcdon/hkeyring-vectors
       - git pull
-      - cd ../mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - cd mpl/TestVectorsAwsCryptographicMaterialProviders/
       - make transpile_net
 
       # Change TestVectors to reference the published .NET ESDK
