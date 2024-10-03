@@ -37,8 +37,6 @@ phases:
       # TODO: Change branch to published when available
       - git checkout lucmcdon/hkeyring-vectors
       - git pull
-      - cd AwsEncryptionSDK/
-      - make transpile_net
       - cd ../mpl/TestVectorsAwsCryptographicMaterialProviders/
       - make transpile_net
 
