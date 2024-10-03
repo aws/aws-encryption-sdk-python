@@ -23,17 +23,16 @@ phases:
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_reccmm_manifest.zip 312_hkeyring_reccmm_manifest.zip
       - unzip 312_hkeyring_reccmm_manifest.zip
       - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_reccmm_manifest/manifest.json"
-
-      # Build the ESDK-Dafny test vector runner
-      # Clone SDK-Dafny repo to get test vectors runner source code
+      
+      # Clone SDK-Dafny repo to get test vectors runner source code and the Dafny version to use
       - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
-      # Download Dafny to build the test vector runner; get Dafny version from project.properties file
+      # Download Dafny to build the test vector runner; get Dafny version from ESDK's project.properties file
       - export dafnyVersion=$(grep '^dafnyVersion=' aws-encryption-sdk-dafny/AwsEncryptionSDK/project.properties | cut -d '=' -f 2)
       - curl https://github.com/dafny-lang/dafny/releases/download/v$dafnyVersion/dafny-$dafnyVersion-x64-ubuntu-20.04.zip  -L -o dafny.zip
       - unzip -qq dafny.zip && rm dafny.zip
       - export PATH="$PWD/dafny:$PATH"
 
-      # Build ESDK test vector runner
+      # Build ESDK test vector runner from source
       - cd aws-encryption-sdk-dafny
       # TODO: Change branch to published when available
       - git checkout lucmcdon/hkeyring-vectors
@@ -44,9 +43,8 @@ phases:
       - make transpile_net
 
       # Change TestVectors to reference the published .NET ESDK
-      - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors
-      # - sed -i -e 's/<ProjectReference Include="\.\.\/\.\.\/ESDK\.csproj" \/>/<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="4.0.1" \/>/g' AWSEncryptionSDKTestVectorLib.csproj
-      # - cd ../TestVectors
+      - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorLib
+      - sed -i 's/<ProjectReference Include="\.\./\.\./ESDK\.csproj" />/<PackageReference Include="AWS.Cryptography.EncryptionSDK" />/g' AWSEncryptionSDKTestVectorLib.csproj
   
   build:
     commands:
