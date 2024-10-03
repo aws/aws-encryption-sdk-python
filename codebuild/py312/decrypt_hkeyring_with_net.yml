@@ -43,6 +43,7 @@ phases:
       # Change TestVectors to reference the published .NET ESDK
       - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorLib
       - sed -i 's/<ProjectReference Include="\.\./\.\./ESDK\.csproj" />/<PackageReference Include="AWS.Cryptography.EncryptionSDK" />/g' AWSEncryptionSDKTestVectorLib.csproj
+      - cd ../TestVectors
   
   build:
     commands:
