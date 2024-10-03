@@ -27,6 +27,11 @@ phases:
       # Build the ESDK-Dafny test vector runner
       # Clone SDK-Dafny repo to get test vectors runner source code
       - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
+      - ls
+      - cd aws-encryption-sdk-dafny
+      - ls
+      - cd AwsEncryptionSdk
+      - ls
       # Download Dafny to build the test vector runner; get Dafny version from project.properties file
       - export dafnyVersion=$(grep '^dafnyVersion=' aws-encryption-sdk-dafny/AwsEncryptionSdk/project.properties | cut -d '=' -f 2)
       - curl https://github.com/dafny-lang/dafny/releases/download/v$dafnyVersion/dafny-$dafnyVersion-x64-ubuntu-20.04.zip  -L -o dafny.zip
