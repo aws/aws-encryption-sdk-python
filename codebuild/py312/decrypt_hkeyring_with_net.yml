@@ -44,7 +44,7 @@ phases:
       - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorLib
       # CodeBuild seems to want to use ESDK-NET 4.0.0, which is not a good version...
       # Pin to at least 4.1.0; this is the most recent version at time of writing.
-      # Hopefully CodeBuild will find more recent versions in the future, but this cannot be guaranteed I guess...
+      # Hopefully CodeBuild will find more recent versions in the future
       - sed -i 's|<ProjectReference Include="\.\./\.\./ESDK\.csproj" />|<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="[4.1.0,)" />|g' AWSEncryptionSDKTestVectorLib.csproj
       - cd ../TestVectors
   
