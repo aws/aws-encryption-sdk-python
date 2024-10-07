@@ -21,8 +21,7 @@ This example creates a KMS MRK Keyring and then encrypts a custom input EXAMPLE_
 with an encryption context. This encrypted ciphertext is then decrypted using an
 MRK Discovery keyring. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
-2. Encryption context is correct in the decrypted message header
-3. Decrypted plaintext value matches EXAMPLE_DATA
+2. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 For information about using multi-Region keys with the AWS Encryption SDK, see

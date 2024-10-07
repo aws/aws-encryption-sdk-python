@@ -7,8 +7,7 @@ This example creates a KMS RSA Keyring and then encrypts a custom input
 EXAMPLE_DATA with an encryption context. This example also includes some sanity checks for
 demonstration:
 1. Ciphertext and plaintext data are not the same
-2. Encryption context is correct in the decrypted message header
-3. Decrypted plaintext value matches EXAMPLE_DATA
+2. Decrypted plaintext value matches EXAMPLE_DATA
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 # For more information on how to use KMS keyrings, see

@@ -23,9 +23,8 @@ This example creates a KMS Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context. This encrypted ciphertext is then decrypted using the Discovery keyring.
 This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
-2. Encryption context is correct in the decrypted message header
-3. Decrypted plaintext value matches EXAMPLE_DATA
-4. Decryption is only possible if the Discovery Keyring contains the correct AWS Account ID's to
+2. Decrypted plaintext value matches EXAMPLE_DATA
+3. Decryption is only possible if the Discovery Keyring contains the correct AWS Account ID's to
     which the KMS key used for encryption belongs
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
