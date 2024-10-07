@@ -164,7 +164,7 @@ def encrypt_and_decrypt_with_keyring(
     assert plaintext_bytes == EXAMPLE_DATA, \
         "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
 
-    # 11. Demonstrate that if a discovery keyring (Bob's) doesn't have the correct AWS Account ID's,
+    # 10. Demonstrate that if a discovery keyring (Bob's) doesn't have the correct AWS Account ID's,
     # the decrypt will fail with an error message
     # Note that this assumes Account ID used here ('888888888888') is different than the one used
     # during encryption
