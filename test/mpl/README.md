@@ -1,0 +1,1 @@
+Tests in this directory REQUIRE the [aws-cryptographic-material-providers](https://github.com/aws/aws-cryptographic-material-providers-library) library to execute.

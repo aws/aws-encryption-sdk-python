@@ -1,0 +1,22 @@
+[MESSAGES CONTROL]
+# Disabling messages that we either don't care about for tests or are necessary to break for tests.
+disable =
+    invalid-name,  # we prefer long, descriptive, names for tests
+    missing-docstring,  # we don't write docstrings for tests
+    wrong-import-position,  # similar to E0401, pylint does not appear to identify
+                            # unknown modules as non-standard-library. flake8 tests for this as well
+                            # and does treat them properly
+    duplicate-code,  # tests for similar things tend to be similar
+    consider-using-f-string # disable until 2022-05-05; 6 months after 3.5 deprecation
+
+[VARIABLES]
+additional-builtins = raw_input
+
+[DESIGN]
+max-args = 10
+
+[FORMAT]
+max-line-length = 120
+
+[REPORTS]
+msg-template = {path}:{line}: [{msg_id}({symbol}), {obj}] {msg}

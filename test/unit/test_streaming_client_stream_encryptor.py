@@ -1,10 +1,12 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for aws_encryption_sdk.streaming_client.StreamEncryptor"""
+# noqa pylint: disable=too-many-lines
 import io
 
 import pytest
 import six
+from cryptography.hazmat.primitives import serialization
 from mock import MagicMock, call, patch, sentinel
 
 import aws_encryption_sdk.internal.defaults
@@ -25,6 +27,17 @@ from aws_encryption_sdk.structures import MessageHeader
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+
+# Check if MPL is installed, and skip tests based on its installation status
+# Ideally, this logic would be based on mocking imports and testing logic,
+# but doing that introduces errors that cause other tests to fail.
+try:
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+    HAS_MPL = True
+
+except ImportError:
+    HAS_MPL = False
 
 
 class TestStreamEncryptor(object):
@@ -49,6 +62,10 @@ class TestStreamEncryptor(object):
             self.mock_primary_master_key,
             self.mock_master_keys_set,
         )
+
+        if HAS_MPL:
+            self.mock_mpl_materials_manager = MagicMock(__class__=CryptoMaterialsManagerFromMPL)
+            self.mock_mpl_materials_manager.get_encryption_materials.return_value = self.mock_encryption_materials
 
         self.mock_master_key = MagicMock(__class__=MasterKey)
 
@@ -356,6 +373,188 @@ class TestStreamEncryptor(object):
         test_encryptor._prep_message()
         mock_prep_non_framed.assert_called_once_with()
 
+    # Given: no MPL
+    @pytest.mark.skipif(HAS_MPL, reason="Test should only be executed without MPL in installation")
+    def test_GIVEN_no_mpl_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_default_encoding(self):
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+            commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
+        )
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep message
+            test_encryptor._prep_message()
+            # Then: calls from_key_bytes with default encoding
+            self.mock_signer.from_key_bytes.assert_called_once_with(
+                algorithm=self.mock_encryption_materials.algorithm,
+                key_bytes=self.mock_encryption_materials.signing_key
+            )
+
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_mpl_AND_not_MPLCMM_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_default_encoding(self):
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            # Given: native CMM
+            materials_manager=self.mock_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+            commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
+        )
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep_message
+            test_encryptor._prep_message()
+            # Then: calls from_key_bytes with default encoding
+            self.mock_signer.from_key_bytes.assert_called_once_with(
+                algorithm=self.mock_encryption_materials.algorithm,
+                key_bytes=self.mock_encryption_materials.signing_key
+            )
+
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_mpl_AND_has_MPLCMM_AND_uses_signer_WHEN_prep_message_THEN_signer_uses_PEM_encoding(self):
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            # Given: MPL CMM
+            materials_manager=self.mock_mpl_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+            commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
+        )
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        with patch.object(self.mock_signer, "from_key_bytes"):
+            # When: prep_message
+            test_encryptor._prep_message()
+            self.mock_signer.from_key_bytes.assert_called_once_with(
+                algorithm=self.mock_encryption_materials.algorithm,
+                key_bytes=self.mock_encryption_materials.signing_key,
+                # Then: calls from_key_bytes with PEM encoding
+                encoding=serialization.Encoding.PEM
+            )
+
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_mpl_AND_encryption_materials_has_required_EC_keys_WHEN_prep_message_THEN_paritions_stored_and_required_EC(  # noqa pylint: disable=line-too-long
+        self
+    ):
+        # Create explicit values to explicitly test logic in smaller cases
+        required_encryption_context_keys_values = [
+            # Case of empty encryption context list is not allowed;
+            # if a list is provided, it must be non-empty.
+            # The MPL enforces this behavior on construction.
+            ["one_key"],
+            ["one_key", "two_key"],
+            ["one_key", "two_key", "red_key"],
+            ["one_key", "two_key", "red_key", "blue_key"],
+        ]
+
+        encryption_context_values = [
+            {},
+            {"one_key": "some_value"},
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+            },
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+                "red_key": "some_red_value",
+            },
+            {
+                "one_key": "some_value",
+                "two_key": "some_other_value",
+                "red_key": "some_red_value",
+                "blue_key": "some_blue_value",
+            }
+        ]
+
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
+
+        for required_encryption_context_keys in required_encryption_context_keys_values:
+
+            # Given: encryption context has required_encryption_context_keys
+            self.mock_encryption_materials.required_encryption_context_keys = \
+                required_encryption_context_keys
+
+            for encryption_context in encryption_context_values:
+                self.mock_encryption_materials.encryption_context = encryption_context
+
+                test_encryptor = StreamEncryptor(
+                    source=VALUES["data_128"],
+                    materials_manager=self.mock_mpl_materials_manager,
+                    frame_length=self.mock_frame_length,
+                    algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+                    commitment_policy=self.mock_commitment_policy,
+                    signature_policy=self.mock_signature_policy,
+                )
+                test_encryptor.content_type = ContentType.FRAMED_DATA
+                # When: prep_message
+                test_encryptor._prep_message()
+
+                # Then: Assert correctness of partitioned EC
+                for k, v in encryption_context.items():
+                    # If a key is in required_encryption_context_keys, then
+                    if k in required_encryption_context_keys:
+                        # 1) Its EC is in the StreamEncryptor._required_encryption_context
+                        assert k in test_encryptor._required_encryption_context
+                        assert test_encryptor._required_encryption_context[k] == v
+                        # 2) Its EC is NOT in the StreamEncryptor._stored_encryption_context
+                        assert k not in test_encryptor._stored_encryption_context
+                    # If a key is NOT in required_encryption_context_keys, then
+                    else:
+                        # 1) Its EC is NOT in the StreamEncryptor._required_encryption_context
+                        assert k not in test_encryptor._required_encryption_context
+                        # 2) Its EC is in the StreamEncryptor._stored_encryption_context
+                        assert k in test_encryptor._stored_encryption_context
+                        assert test_encryptor._stored_encryption_context[k] == v
+
+                # Assert size(stored_EC) + size(required_EC) == size(EC)
+                # (i.e. every EC was sorted into one or the other)
+                assert len(test_encryptor._required_encryption_context) \
+                    + len(test_encryptor._stored_encryption_context) \
+                    == len(encryption_context)
+
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_mpl_AND_encryption_materials_does_not_have_required_EC_keys_WHEN_prep_message_THEN_stored_EC_is_EC(  # noqa pylint: disable=line-too-long
+        self
+    ):
+
+        self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
+
+        mock_encryption_context = MagicMock(__class__=dict)
+        self.mock_encryption_materials.encryption_context = mock_encryption_context
+        # Given: encryption materials does not have required encryption context keys
+        # (MagicMock default is to "make up" "Some" value here; this deletes that value)
+        del self.mock_encryption_materials.required_encryption_context_keys
+
+        test_encryptor = StreamEncryptor(
+            source=VALUES["data_128"],
+            materials_manager=self.mock_mpl_materials_manager,
+            frame_length=self.mock_frame_length,
+            algorithm=Algorithm.AES_128_GCM_IV12_TAG16,
+            commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
+        )
+        test_encryptor.content_type = ContentType.FRAMED_DATA
+        # When: prep_message
+        test_encryptor._prep_message()
+
+        # Then: _stored_encryption_context is the provided encryption_context
+        assert test_encryptor._stored_encryption_context == mock_encryption_context
+        # Then: _required_encryption_context is None
+        assert test_encryptor._required_encryption_context is None
+
     def test_prep_message_no_signer(self):
         self.mock_encryption_materials.algorithm = Algorithm.AES_128_GCM_IV12_TAG16
         test_encryptor = StreamEncryptor(
@@ -477,6 +676,53 @@ class TestStreamEncryptor(object):
             header=b"12345",
             data_encryption_key=sentinel.derived_data_key,
             signer=sentinel.signer,
+        )
+        assert test_encryptor.output_buffer == b"1234567890"
+
+    @patch("aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context")
+    # Given: has MPL
+    @pytest.mark.skipif(not HAS_MPL, reason="Test should only be executed with MPL in installation")
+    def test_GIVEN_has_mpl_AND_has_required_EC_WHEN_write_header_THEN_adds_serialized_required_ec_to_header_auth(
+        self,
+        serialize_encryption_context
+    ):
+        self.mock_serialize_header.return_value = b"12345"
+        self.mock_serialize_header_auth.return_value = b"67890"
+        pt_stream = io.BytesIO(self.plaintext)
+        test_encryptor = StreamEncryptor(
+            source=pt_stream,
+            materials_manager=self.mock_materials_manager,
+            algorithm=aws_encryption_sdk.internal.defaults.ALGORITHM,
+            frame_length=self.mock_frame_length,
+            commitment_policy=self.mock_commitment_policy,
+            signature_policy=self.mock_signature_policy,
+        )
+        test_encryptor.signer = sentinel.signer
+        test_encryptor.content_type = sentinel.content_type
+        test_encryptor._header = sentinel.header
+        sentinel.header.version = SerializationVersion.V1
+        test_encryptor.output_buffer = b""
+        test_encryptor._encryption_materials = self.mock_encryption_materials
+        test_encryptor._derived_data_key = sentinel.derived_data_key
+
+        # Given: StreamEncryptor has _required_encryption_context
+        mock_required_ec = MagicMock(__class__=dict)
+        test_encryptor._required_encryption_context = mock_required_ec
+        mock_serialized_required_ec = MagicMock(__class__=bytes)
+        serialize_encryption_context.return_value = mock_serialized_required_ec
+
+        # When: _write_header()
+        test_encryptor._write_header()
+
+        self.mock_serialize_header.assert_called_once_with(header=test_encryptor._header, signer=sentinel.signer)
+        self.mock_serialize_header_auth.assert_called_once_with(
+            version=sentinel.header.version,
+            algorithm=self.mock_encryption_materials.algorithm,
+            header=b"12345",
+            data_encryption_key=sentinel.derived_data_key,
+            signer=sentinel.signer,
+            # Then: Pass serialized required EC to serialize_header_auth
+            required_ec_bytes=mock_serialized_required_ec,
         )
         assert test_encryptor.output_buffer == b"1234567890"
 
