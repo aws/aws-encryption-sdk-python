@@ -15,9 +15,8 @@ decrypts the data key using the private key.
 This example creates a Raw RSA Keyring and then encrypts a custom input EXAMPLE_DATA
 with an encryption context. This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
-2. Encryption context is correct in the decrypted message header
-3. Decrypted plaintext value matches EXAMPLE_DATA
-4. The original ciphertext is not decryptable using a keyring with a different RSA key pair
+2. Decrypted plaintext value matches EXAMPLE_DATA
+3. The original ciphertext is not decryptable using a keyring with a different RSA key pair
 These sanity checks are for demonstration in the example only. You do not need these in your code.
 
 A Raw RSA keyring that encrypts and decrypts must include an asymmetric public key and private

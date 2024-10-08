@@ -14,9 +14,8 @@ as a child key, and then encrypts a custom input EXAMPLE_DATA with an encryption
 Either KMS Key individually is capable of decrypting data encrypted under this keyring.
 This example also includes some sanity checks for demonstration:
 1. Ciphertext and plaintext data are not the same
-2. Encryption context is correct in the decrypted message header
-3. Decrypted plaintext value matches EXAMPLE_DATA
-4. Ciphertext can be decrypted using an AwsKmsMrkKeyring containing a replica of the
+2. Decrypted plaintext value matches EXAMPLE_DATA
+3. Ciphertext can be decrypted using an AwsKmsMrkKeyring containing a replica of the
    MRK (from the multi-keyring used for encryption) copied from the first region into
    the second region
 These sanity checks are for demonstration in the example only. You do not need these in your code.
