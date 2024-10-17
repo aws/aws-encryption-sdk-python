@@ -96,10 +96,10 @@ class EncryptionSDKClient(object):
         .. code:: python
 
             >>> import boto3
-            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
-            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
+            >>> from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_material_providers.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
             >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
@@ -129,7 +129,7 @@ class EncryptionSDKClient(object):
         :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
         :param keyring: `IKeyring` that returns keyring for encryption
             (requires either `materials_manager` or `keyring`)
-        :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
+        :type keyring: aws_cryptographic_material_providers.mpl.references.IKeyring
         :param int source_length: Length of source data (optional)
 
             .. note::
@@ -164,10 +164,10 @@ class EncryptionSDKClient(object):
         .. code:: python
 
             >>> import boto3
-            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
-            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
+            >>> from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_material_providers.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
             >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
@@ -197,7 +197,7 @@ class EncryptionSDKClient(object):
         :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
         :param keyring: `IKeyring` that returns keyring for encryption
             (requires either `materials_manager` or `keyring`)
-        :type keyring: aws_cryptographic_materialproviders.mpl.references.IKeyring
+        :type keyring: aws_cryptographic_material_providers.mpl.references.IKeyring
         :param int source_length: Length of source data (optional)
 
             .. note::
@@ -238,10 +238,10 @@ class EncryptionSDKClient(object):
         .. code:: python
 
             >>> import boto3
-            >>> from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-            >>> from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-            >>> from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
-            >>> from aws_cryptographic_materialproviders.mpl.references import IKeyring
+            >>> from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+            >>> from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+            >>> from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsKeyringInput
+            >>> from aws_cryptographic_material_providers.mpl.references import IKeyring
             >>> import aws_encryption_sdk
             >>> client = aws_encryption_sdk.EncryptionSDKClient()
             >>> mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(

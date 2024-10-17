@@ -10,14 +10,14 @@ On decrypt, the client MUST supply the key/value pair(s) that were not stored to
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CreateAwsKmsKeyringInput,
     CreateDefaultCryptographicMaterialsManagerInput,
     CreateRequiredEncryptionContextCMMInput,
 )
-from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
+from aws_cryptographic_material_providers.mpl.references import ICryptographicMaterialsManager, IKeyring
 from typing import Dict, List  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk

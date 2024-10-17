@@ -35,17 +35,17 @@ GenerateDataKeyWithoutPlaintext - Decrypt
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-from aws_cryptographic_materialproviders.keystore import KeyStore
-from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-from aws_cryptographic_materialproviders.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.keystore import KeyStore
+from aws_cryptographic_material_providers.keystore.config import KeyStoreConfig
+from aws_cryptographic_material_providers.keystore.models import CreateKeyInput, KMSConfigurationKmsKeyArn
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CacheTypeDefault,
     CreateAwsKmsHierarchicalKeyringInput,
     DefaultCache,
 )
-from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier, IKeyring
+from aws_cryptographic_material_providers.mpl.references import IBranchKeyIdSupplier, IKeyring
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk

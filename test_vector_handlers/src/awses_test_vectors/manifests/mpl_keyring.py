@@ -25,10 +25,10 @@ from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
         GetKeyDescriptionOutput,
         TestVectorKeyringInput,
     )
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
-from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.references import IKeyring
+from aws_cryptographic_material_providers.mpl.models import CreateMultiKeyringInput
 
 import _dafny
 from smithy_dafny_standard_library.internaldafny.generated import UTF8

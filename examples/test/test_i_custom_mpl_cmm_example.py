@@ -3,10 +3,10 @@
 """Test suite for encryption and decryption using custom CMM."""
 import boto3
 import pytest
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsKeyringInput
+from aws_cryptographic_material_providers.mpl.references import IKeyring
 
 from ..src.custom_mpl_cmm_example import MPLCustomSigningSuiteOnlyCMM, encrypt_decrypt_with_cmm
 

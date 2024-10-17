@@ -6,7 +6,7 @@ import argparse
 from awses_test_vectors.manifests.full_message.decrypt import MessageDecryptionManifest
 
 try:
-    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import,import-error
+    import aws_cryptographic_material_providers  # noqa pylint: disable=unused-import,import-error
     _HAS_MPL = True
 except ImportError:
     _HAS_MPL = False
