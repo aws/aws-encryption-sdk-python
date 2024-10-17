@@ -45,7 +45,7 @@ setup(
     extras_require={
         "MPL": ["aws-cryptographic-material-providers @" \
                 "git+https://github.com/aws/aws-cryptographic-material-providers-library.git@" \
-                "python-with-dafny-code#subdirectory=AwsCryptographicMaterialProviders/runtimes/python"],
+                "python-main-with-dafny-code#subdirectory=AwsCryptographicMaterialProviders/runtimes/python"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
