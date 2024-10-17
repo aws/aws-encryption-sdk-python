@@ -202,7 +202,7 @@ class MasterKeyProvider(object):
         self._decrypt_key_index[key_info] = decrypt_master_key
         return decrypt_master_key
 
-    def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
+    def decrypt_data_key_mkp(self, encrypted_data_key, algorithm, encryption_context):
         """Iterates through all currently added Master Keys and Master Key Providers
         to attempt to decrypt data key.
 
@@ -302,7 +302,7 @@ class MasterKeyProvider(object):
         data_key = None
         for encrypted_data_key in encrypted_data_keys:
             try:
-                data_key = self.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
+                data_key = self.decrypt_data_key_mkp(encrypted_data_key, algorithm, encryption_context)
             # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
             # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
             except (DecryptKeyError, IncorrectMasterKeyError):
