@@ -12,6 +12,7 @@ from aws_encryption_sdk.exceptions import (
     ConfigMismatchError,
     DecryptKeyError,
     IncorrectMasterKeyError,
+    InvalidDataKeyError,
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
@@ -305,7 +306,7 @@ class MasterKeyProvider(object):
                 data_key = self.decrypt_data_key_mkp(encrypted_data_key, algorithm, encryption_context)
             # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
             # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
-            except (DecryptKeyError, IncorrectMasterKeyError):
+            except (DecryptKeyError, IncorrectMasterKeyError, InvalidDataKeyError):
                 continue
             else:
                 break
