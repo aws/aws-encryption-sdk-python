@@ -5,12 +5,12 @@ import secrets
 import string
 
 import boto3
-from aws_cryptographic_materialproviders.keystore import KeyStore
-from aws_cryptographic_materialproviders.keystore.config import KeyStoreConfig
-from aws_cryptographic_materialproviders.keystore.models import KMSConfigurationKmsKeyArn
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.keystore import KeyStore
+from aws_cryptographic_material_providers.keystore.config import KeyStoreConfig
+from aws_cryptographic_material_providers.keystore.models import KMSConfigurationKmsKeyArn
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     AesWrappingAlg,
     CacheTypeDefault,
     CreateAwsKmsHierarchicalKeyringInput,
@@ -21,7 +21,7 @@ from aws_cryptographic_materialproviders.mpl.models import (
     DefaultCache,
     PaddingScheme,
 )
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_material_providers.mpl.references import IKeyring
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa

@@ -196,7 +196,7 @@ def _serialize_header_auth_v1(
     :type signer: aws_encryption_sdk.Signer
     :param required_encryption_context_bytes: Serialized encryption context items
         for all items whose keys are in the required_encryption_context list.
-        This is ONLY processed if using the aws-cryptographic-materialproviders library
+        This is ONLY processed if using the aws-cryptographic-material-providers library
         AND its required encryption context CMM. (optional)
     :type required_encryption_context_bytes: bytes
     :returns: Serialized header authentication data
@@ -250,7 +250,7 @@ def _serialize_header_auth_v2(
     :type signer: aws_encryption_sdk.Signer
     :param required_encryption_context_bytes: Serialized encryption context items
         for all items whose keys are in the required_encryption_context list.
-        This is ONLY processed if using the aws-cryptographic-materialproviders library
+        This is ONLY processed if using the aws-cryptographic-material-providers library
         AND its required encryption context CMM. (optional)
     :type required_encryption_context_bytes: bytes
     :returns: Serialized header authentication data
@@ -306,7 +306,7 @@ def serialize_header_auth(
     :type signer: aws_encryption_sdk.Signer
     :param required_encryption_context_bytes: Serialized encryption context items
         for all items whose keys are in the required_encryption_context list.
-        This is ONLY processed if using the aws-cryptographic-materialproviders library
+        This is ONLY processed if using the aws-cryptographic-material-providers library
         AND its required encryption context CMM. (optional)
     :type required_encryption_context_bytes: bytes
     :returns: Serialized header authentication data

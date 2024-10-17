@@ -29,10 +29,10 @@ from awses_test_vectors.manifests.master_key import MasterKeySpec, master_key_pr
 
 try:
     from awses_test_vectors.manifests.mpl_keyring import KeyringSpec, keyring_from_master_key_specs
-    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager
-    from aws_cryptographic_materialproviders.mpl.models import (
+    from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_material_providers.mpl.references import ICryptographicMaterialsManager
+    from aws_cryptographic_material_providers.mpl.models import (
         CreateDefaultCryptographicMaterialsManagerInput,
         CreateRequiredEncryptionContextCMMInput,
     )

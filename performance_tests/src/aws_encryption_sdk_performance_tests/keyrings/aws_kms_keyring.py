@@ -4,10 +4,10 @@
 
 import aws_encryption_sdk
 import boto3
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import CreateAwsKmsKeyringInput
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsKeyringInput
+from aws_cryptographic_material_providers.mpl.references import IKeyring
 
 
 def create_keyring(

@@ -23,13 +23,13 @@ For more information on Cryptographic Material Managers, see
 https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#crypt-materials-manager
 """
 
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CreateDefaultCryptographicMaterialsManagerInput,
     SignatureAlgorithmNone,
 )
-from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
+from aws_cryptographic_material_providers.mpl.references import ICryptographicMaterialsManager, IKeyring
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
@@ -65,10 +65,10 @@ class MPLCustomSigningSuiteOnlyCMM(ICryptographicMaterialsManager):
     def get_encryption_materials(self, param):
         """Provides encryption materials appropriate for the request for the custom CMM.
 
-        :param aws_cryptographic_materialproviders.mpl.models.GetEncryptionMaterialsInput param: Input object to
+        :param aws_cryptographic_material_providers.mpl.models.GetEncryptionMaterialsInput param: Input object to
         provide to a crypto material manager's `get_encryption_materials` method.
         :returns: Encryption materials output
-        :rtype: aws_cryptographic_materialproviders.mpl.models.GetEncryptionMaterialsOutput
+        :rtype: aws_cryptographic_material_providers.mpl.models.GetEncryptionMaterialsOutput
         """
         materials = self.underlying_cmm.get_encryption_materials(param)
         if isinstance(materials.encryption_materials.algorithm_suite.signature, SignatureAlgorithmNone):
@@ -81,10 +81,10 @@ class MPLCustomSigningSuiteOnlyCMM(ICryptographicMaterialsManager):
     def decrypt_materials(self, param):
         """Provides decryption materials appropriate for the request for the custom CMM.
 
-        :param aws_cryptographic_materialproviders.mpl.models.DecryptMaterialsInput param: Input object to provide
+        :param aws_cryptographic_material_providers.mpl.models.DecryptMaterialsInput param: Input object to provide
         to a crypto material manager's `decrypt_materials` method.
         :returns: Decryption materials output
-        :rtype: aws_cryptographic_materialproviders.mpl.models.GetDecryptionMaterialsOutput
+        :rtype: aws_cryptographic_material_providers.mpl.models.GetDecryptionMaterialsOutput
         """
         materials = self.underlying_cmm.decrypt_materials(param)
         if isinstance(materials.decryption_materials.algorithm_suite.signature, SignatureAlgorithmNone):
