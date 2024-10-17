@@ -30,7 +30,10 @@ https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview
 import boto3
 from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_material_providers.mpl.models import CreateAwsKmsMrkKeyringInput, CreateAwsKmsMrkMultiKeyringInput
+from aws_cryptographic_material_providers.mpl.models import (
+    CreateAwsKmsMrkKeyringInput,
+    CreateAwsKmsMrkMultiKeyringInput
+)
 from aws_cryptographic_material_providers.mpl.references import IKeyring
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
