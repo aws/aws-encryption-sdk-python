@@ -32,7 +32,7 @@ from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialPro
 from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_material_providers.mpl.models import (
     CreateAwsKmsMrkKeyringInput,
-    CreateAwsKmsMrkMultiKeyringInput
+    CreateAwsKmsMrkMultiKeyringInput,
 )
 from aws_cryptographic_material_providers.mpl.references import IKeyring
 from typing import Dict  # noqa pylint: disable=wrong-import-order
