@@ -256,7 +256,7 @@ class MasterKeyProvider(object):
                     # //# input encryption context.
 
                     data_key = master_key.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
-                except (IncorrectMasterKeyError, DecryptKeyError) as error:
+                except (IncorrectMasterKeyError, DecryptKeyError, InvalidDataKeyError) as error:
                     _LOGGER.debug(
                         "%s raised when attempting to decrypt data key with master key %s",
                         repr(error),
@@ -304,8 +304,8 @@ class MasterKeyProvider(object):
             try:
                 data_key = self.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
             # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
-            # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
-            except (DecryptKeyError, IncorrectMasterKeyError):
+            # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError and InvalidDataKeyError
+            except (DecryptKeyError, IncorrectMasterKeyError, InvalidDataKeyError):
                 continue
             else:
                 break

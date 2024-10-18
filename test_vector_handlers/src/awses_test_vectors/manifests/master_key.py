@@ -64,16 +64,21 @@ _RAW_ENCRYPTION_KEY_TYPE = {
 }
 
 class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
+    """
+    Provider for other MasterKeyProviders.
+    Allows a "multi" MasterKeyProvider for use in test vectors.
+
+    In Python ESDK, MasterKey extends MasterKeyProvider.
+    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
+    From AWS ESDK specification:
+    "A master key MUST supply itself and MUST NOT supply any other master keys."
+    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
+    
+    
+    """
 
     _config_class = MasterKeyProviderConfig
     provider_id = "aws-test-vectors-multi-master-key-provider"
-
-    # @attr.s
-    # class _MultiMasterKeyProviderConfig(MasterKeyProviderConfig):
-    #     key_provider_for_key_id = {}
-
-    # provider_id = "aws-test-vectors"
-    # _config_class = _RawMultiMKPConfig
 
     def __init__(self):
         self.key_provider_for_key_id = {}
@@ -83,76 +88,6 @@ class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
 
     def _new_master_key(self, key_id):
         raise InvalidKeyIdError()
-
-
-# class StaticRawMasterKeyProvider(RawMasterKeyProvider):
-#     """Provides a primary master key and others."""
-
-#     def __init__(self, raw_master_key):  # pylint: disable=unused-argument
-#         """Initialize empty map of keys."""
-#         self.raw_master_key = raw_master_key
-        
-#     def add_primary_key(self, primary_key):
-#         self._primary_key = primary_key
-#         self.add_master_key(primary_key)
-
-#     def add_other_key(self, other_key):
-#         self._other_keys.append(other_key)
-#         self.add_master_key(other_key)
-
-#     def _get_raw_key(self, key_id):
-#         """Returns a static, randomly-generated symmetric key for the specified key ID.
-
-#         :param str key_id: Key ID
-#         :returns: Wrapping key that contains the specified static key
-#         :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
-#         """
-#         try:
-#             static_key = self._static_keys[key_id]
-#         except KeyError:
-#             raise IncorrectMasterKeyError(f"StaticMasterKeyProvider does not have key_id={key_id}")
-#         return WrappingKey(
-#             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-#             wrapping_key=static_key,
-#             wrapping_key_type=EncryptionKeyType.SYMMETRIC,
-#         )
-
-# This is a helper class necessary for the Raw AES master key provider
-# In the StaticMasterKeyProvider, we fix the static key to
-# DEFAULT_AES_256_STATIC_KEY in order to make the test deterministic.
-# Thus, both the Raw AES keyring and Raw AES MKP have the same key
-# and we are able to encrypt data using keyrings and decrypt using MKP and vice versa
-# In practice, users should generate a new random key for each key id.
-# class StaticMasterKeyProvider(RawMasterKeyProvider):
-#     """Generates 256-bit keys for each unique key ID."""
-
-#     # The key namespace in the Raw keyrings is equivalent to Provider ID (or Provider) field
-#     # in the Raw Master Key Providers
-#     provider_id = DEFAULT_KEY_NAME_SPACE
-
-#     def __init__(self, **kwargs):  # pylint: disable=unused-argument
-#         """Initialize empty map of keys."""
-#         self._static_keys = {}
-
-#     def add_key(self, key):
-#         self._static_keys[key_id]
-
-#     def _get_raw_key(self, key_id):
-#         """Returns a static, symmetric key for the specified key ID.
-
-#         :param str key_id: Key ID
-#         :returns: Wrapping key that contains the specified static key
-#         :rtype: :class:`aws_encryption_sdk.internal.crypto.WrappingKey`
-#         """
-#         try:
-#             static_key = self._static_keys[key_id]
-#         except KeyError:
-#             raise IncorrectMasterKeyError(f"StaticMasterKeyProvider does not have key_id={key_id}")
-#         return WrappingKey(
-#             wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
-#             wrapping_key=static_key,
-#             wrapping_key_type=EncryptionKeyType.SYMMETRIC,
-#         )
 
 @attr.s
 class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
@@ -287,7 +222,6 @@ class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
 
         key_spec = keys.key(self.key_name)
         wrapping_key = self._wrapping_key(key_spec)
-        print(f"_raw_master_key_from_spec {self.key_name=} {key_spec=}")
         return RawMasterKey(provider_id=self.provider_id, key_id=key_spec.key_id, wrapping_key=wrapping_key)
 
     def _kms_master_key_from_spec(self, keys):
@@ -395,7 +329,6 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
     """
     master_keys = []
     for spec in master_key_specs:
-        print(f"{spec=}")
         try:
             master_keys.append(spec.master_key(keys))
         # If spec is not a valid master key
@@ -405,14 +338,8 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
             pass
     if len(master_keys) == 0:
         return None
-    print(master_keys)
     # master_key_ids = [master_key.key_id for master_key in master_keys]
     mkp = TestVectorsMultiMasterKeyProvider()
     for master_key in master_keys:
-        mkp.add_key(master_key)
-    # primary = master_keys[0]
-    # mkp.add_key(primary.key_id, primary)
-    # others = master_keys[1:]
-    # for master_key in others:
-    #     mkp.add_key(master_key.key_id, master_key)
+        mkp.add_key(master_key.key_id, master_key)
     return mkp
