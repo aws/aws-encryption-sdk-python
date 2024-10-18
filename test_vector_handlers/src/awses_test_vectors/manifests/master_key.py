@@ -290,6 +290,40 @@ class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
         return spec
 
 
+class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
+    """
+    Provider for other MasterKeyProviders.
+    Acts as a "multi" MasterKeyProvider for use in test vectors.
+
+    There is some disagreement between the spec
+    and how Python ESDK implements MasterKey;
+    this class fills that gap.
+
+    In the ESDK-Python, MasterKey extends MasterKeyProvider;
+    i.e. MasterKey "is a" MasterKeyProvider; isinstance(some_master_key, MasterKeyProvider) == True.
+
+    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
+    From AWS ESDK specification:
+    "A master key MUST supply itself and MUST NOT supply any other master keys."
+    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
+
+    This suggests that this "is a" relationship is not entirely true.
+
+    master_key_provider_from_master_key_specs uses this class to provide all loaded MasterKeyProviders (or MasterKeys)
+    from an interface that supports supplying other master keys.
+    """
+
+    _config_class = MasterKeyProviderConfig
+    provider_id = "aws-test-vectors-multi-master-key-provider"
+
+    def add_key(self, key_provider):
+        self._members.append(key_provider)
+
+    def _new_master_key(self, key_id):
+        # This MKP does not have a key associated with it.
+        raise InvalidKeyIdError()
+
+
 def master_key_provider_from_master_key_specs(keys, master_key_specs):
     # type: (KeysManifest, Iterable[MasterKeySpec]) -> MasterKeyProvider
     """Build and combine all master key providers identified by the provided specs and
@@ -302,8 +336,7 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
     :rtype: MasterKeyProvider
     """
     master_keys = [spec.master_key(keys) for spec in master_key_specs]
-    primary = master_keys[0]
-    others = master_keys[1:]
-    for master_key in others:
-        primary.add_master_key_provider(master_key)
-    return primary
+    mkp = TestVectorsMultiMasterKeyProvider()
+    for master_key in master_keys:
+        mkp.add_key(master_key)
+    return mkp
