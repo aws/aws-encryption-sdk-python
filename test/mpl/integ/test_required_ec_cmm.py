@@ -3,9 +3,9 @@
 import copy
 
 import pytest
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CreateDefaultCryptographicMaterialsManagerInput,
     CreateRequiredEncryptionContextCMMInput,
 )

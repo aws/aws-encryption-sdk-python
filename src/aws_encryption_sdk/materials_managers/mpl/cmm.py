@@ -7,11 +7,11 @@ The aws-cryptographic-materials-library MUST be installed to use this module.
 # pylint should pass even if the MPL isn't installed
 # Also thinks these imports aren't used if it can't import them
 # noqa pylint: disable=import-error,unused-import
-from aws_cryptographic_materialproviders.mpl.errors import (
+from aws_cryptographic_material_providers.mpl.errors import (
     AwsCryptographicMaterialProvidersException,
     CollectionOfErrors,
 )
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
     CommitmentPolicyESDK as MPL_CommitmentPolicyESDK,
     DecryptMaterialsInput as MPL_DecryptMaterialsInput,
@@ -20,7 +20,7 @@ from aws_cryptographic_materialproviders.mpl.models import (
     GetEncryptionMaterialsInput as MPL_GetEncryptionMaterialsInput,
     GetEncryptionMaterialsOutput as MPL_GetEncryptionMaterialsOutput,
 )
-from aws_cryptographic_materialproviders.mpl.references import (
+from aws_cryptographic_material_providers.mpl.references import (
     ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
 )
 # noqa pylint: enable=import-error,unused-import
@@ -38,7 +38,7 @@ from aws_encryption_sdk.structures import EncryptedDataKey as Native_EncryptedDa
 class CryptoMaterialsManagerFromMPL(CryptoMaterialsManager):
     """
     In instances where encryption materials are provided by an implementation of the MPL's
-    `aws_cryptographic_materialproviders.mpl.references.MPL_ICryptographicMaterialsManager`,
+    `aws_cryptographic_material_providers.mpl.references.MPL_ICryptographicMaterialsManager`,
     this maps the ESDK-Python CMM interfaces to the MPL CMM.
     """
 

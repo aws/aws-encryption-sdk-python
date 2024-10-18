@@ -7,14 +7,15 @@ Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 """
 import attr
 import six
+from aws_encryption_sdk.exceptions import IncorrectMasterKeyError, InvalidKeyIdError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider  # noqa pylint: disable=unused-import
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig  # noqa pylint: disable=unused-import
 from aws_encryption_sdk.key_providers.kms import (  # noqa pylint: disable=unused-import
     DiscoveryFilter,
     KMSMasterKey,
     MRKAwareDiscoveryAwsKmsMasterKeyProvider,
 )
-from aws_encryption_sdk.key_providers.raw import RawMasterKey
+from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyProvider
 
 from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER, KMS_MRK_AWARE_MASTER_KEY_PROVIDER
 from awses_test_vectors.internal.util import membership_validator
@@ -62,6 +63,31 @@ _RAW_ENCRYPTION_KEY_TYPE = {
     "public": EncryptionKeyType.PUBLIC,
 }
 
+class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
+    """
+    Provider for other MasterKeyProviders.
+    Allows a "multi" MasterKeyProvider for use in test vectors.
+
+    In Python ESDK, MasterKey extends MasterKeyProvider.
+    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
+    From AWS ESDK specification:
+    "A master key MUST supply itself and MUST NOT supply any other master keys."
+    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
+    
+
+    """
+
+    _config_class = MasterKeyProviderConfig
+    provider_id = "aws-test-vectors-multi-master-key-provider"
+
+    def __init__(self):
+        self.key_provider_for_key_id = {}
+
+    def add_key(self, key_provider):
+        self._members.append(key_provider)
+
+    def _new_master_key(self, key_id):
+        raise InvalidKeyIdError()
 
 @attr.s
 class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
@@ -312,8 +338,7 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
             pass
     if len(master_keys) == 0:
         return None
-    primary = master_keys[0]
-    others = master_keys[1:]
-    for master_key in others:
-        primary.add_master_key_provider(master_key)
-    return primary
+    mkp = TestVectorsMultiMasterKeyProvider()
+    for master_key in master_keys:
+        mkp.add_key(master_key)
+    return mkp

@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.local]
 # Ideally, this logic would be based on mocking imports and testing logic,
 # but doing that introduces errors that cause other tests to fail.
 try:
-    import aws_cryptographic_materialproviders  # noqa pylint: disable=unused-import
+    import aws_cryptographic_material_providers  # noqa pylint: disable=unused-import
     HAS_MPL = True
 except ImportError:
     HAS_MPL = False

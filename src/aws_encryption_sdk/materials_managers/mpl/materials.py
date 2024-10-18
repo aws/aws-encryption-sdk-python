@@ -6,7 +6,7 @@ The aws-cryptographic-materials-library MUST be installed to use this module.
 """
 # pylint should pass even if the MPL isn't installed
 # noqa pylint: disable=import-error
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl.models import (
     DecryptionMaterials as MPL_DecryptionMaterials,
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
@@ -30,7 +30,7 @@ def _mpl_algorithm_id_to_native_algorithm_id(mpl_algorithm_id: str) -> int:
 class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
     """
     In instances where encryption materials are be provided by
-    the MPL's `aws_cryptographic_materialproviders.mpl.models.EncryptionMaterials`,
+    the MPL's `aws_cryptographic_material_providers.mpl.models.EncryptionMaterials`,
     this maps the ESDK interfaces to the underlying MPL materials.
     """
 
@@ -107,7 +107,7 @@ class EncryptionMaterialsFromMPL(Native_EncryptionMaterials):
 class DecryptionMaterialsFromMPL(Native_DecryptionMaterials):
     """
     In instances where decryption materials are be provided by
-    the MPL's `aws_cryptographic_materialproviders.mpl.models.DecryptionMaterials`,
+    the MPL's `aws_cryptographic_material_providers.mpl.models.DecryptionMaterials`,
     this maps the ESDK interfaces to the underlying MPL materials.
     """
 

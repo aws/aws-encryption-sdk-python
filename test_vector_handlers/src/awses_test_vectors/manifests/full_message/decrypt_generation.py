@@ -19,12 +19,12 @@ from aws_encryption_sdk.materials_managers.caching import CachingCryptoMaterials
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 
 try:
-    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.mpl.references import (
+    from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_material_providers.mpl.references import (
         IKeyring,
     )
-    from aws_cryptographic_materialproviders.mpl.models import (
+    from aws_cryptographic_material_providers.mpl.models import (
         CreateDefaultCryptographicMaterialsManagerInput,
     )
     from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL

@@ -6,7 +6,7 @@ The aws-cryptographic-materials-library MUST be installed to run tests in this m
 """
 
 import pytest
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl.models import (
     DecryptionMaterials as MPL_DecryptionMaterials,
     EncryptedDataKey as MPL_EncryptedDataKey,
     EncryptionMaterials as MPL_EncryptionMaterials,
