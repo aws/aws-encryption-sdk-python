@@ -12,14 +12,11 @@ from aws_encryption_sdk.exceptions import (
     ConfigMismatchError,
     DecryptKeyError,
     IncorrectMasterKeyError,
-    InvalidDataKeyError,
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import MasterKeyInfo
-
-import botocore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -205,7 +202,7 @@ class MasterKeyProvider(object):
         self._decrypt_key_index[key_info] = decrypt_master_key
         return decrypt_master_key
 
-    def decrypt_data_key_as_provider(self, encrypted_data_key, algorithm, encryption_context):
+    def decrypt_data_key(self, encrypted_data_key, algorithm, encryption_context):
         """Iterates through all currently added Master Keys and Master Key Providers
         to attempt to decrypt data key.
 
@@ -259,7 +256,7 @@ class MasterKeyProvider(object):
                     # //# input encryption context.
 
                     data_key = master_key.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
-                except (IncorrectMasterKeyError, DecryptKeyError, InvalidDataKeyError, botocore.exceptions.ClientError) as error:
+                except (IncorrectMasterKeyError, DecryptKeyError) as error:
                     _LOGGER.debug(
                         "%s raised when attempting to decrypt data key with master key %s",
                         repr(error),
@@ -305,10 +302,10 @@ class MasterKeyProvider(object):
         data_key = None
         for encrypted_data_key in encrypted_data_keys:
             try:
-                data_key = self.decrypt_data_key_as_provider(encrypted_data_key, algorithm, encryption_context)
+                data_key = self.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
             # MasterKeyProvider.decrypt_data_key throws DecryptKeyError
             # but MasterKey.decrypt_data_key throws IncorrectMasterKeyError
-            except (DecryptKeyError, IncorrectMasterKeyError, InvalidDataKeyError):
+            except (DecryptKeyError, IncorrectMasterKeyError):
                 continue
             else:
                 break
