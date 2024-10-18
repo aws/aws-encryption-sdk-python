@@ -12,6 +12,7 @@ from aws_encryption_sdk.exceptions import (
     ConfigMismatchError,
     DecryptKeyError,
     IncorrectMasterKeyError,
+    InvalidDataKeyError,
     InvalidKeyIdError,
     MasterKeyProviderError,
 )
