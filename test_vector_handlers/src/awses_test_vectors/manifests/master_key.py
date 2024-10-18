@@ -302,15 +302,16 @@ class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
     In the ESDK-Python, MasterKey extends MasterKeyProvider;
     i.e. MasterKey "is a" MasterKeyProvider; isinstance(some_master_key, MasterKeyProvider) == True.
 
-    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
     From AWS ESDK specification:
     "A master key MUST supply itself and MUST NOT supply any other master keys."
     https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
 
-    This suggests that this "is a" relationship is not entirely true.
+    The MasterKey class overrides MasterKeyProvider's `decrypt_data_key` method to correct this gap.
+    However, this modification suggests that this "is a" relationship is not entirely true.
 
-    master_key_provider_from_master_key_specs uses this class to provide all loaded MasterKeyProviders (or MasterKeys)
-    from an interface that supports supplying other master keys.
+    master_key_provider_from_master_key_specs expects to return a MasterKeyProvider, not a MasterKey.
+    master_key_provider_from_master_key_specs uses this class to always return a MasterKeyProvider
+    that wraps any MasterKeyProvider or MasterKey loaded from a spec.
     """
 
     _config_class = MasterKeyProviderConfig
@@ -321,6 +322,7 @@ class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
 
     def _new_master_key(self, key_id):
         # This MKP does not have a key associated with it.
+        # ESDK-Python will find keys in _members.
         raise InvalidKeyIdError()
 
 
