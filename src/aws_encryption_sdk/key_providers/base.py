@@ -19,6 +19,8 @@ from aws_encryption_sdk.exceptions import (
 from aws_encryption_sdk.internal.str_ops import to_bytes
 from aws_encryption_sdk.structures import MasterKeyInfo
 
+import botoccre
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -257,7 +259,7 @@ class MasterKeyProvider(object):
                     # //# input encryption context.
 
                     data_key = master_key.decrypt_data_key(encrypted_data_key, algorithm, encryption_context)
-                except (IncorrectMasterKeyError, DecryptKeyError) as error:
+                except (IncorrectMasterKeyError, DecryptKeyError, InvalidDataKeyError, botocore.exceptions.ClientError) as error:
                     _LOGGER.debug(
                         "%s raised when attempting to decrypt data key with master key %s",
                         repr(error),
