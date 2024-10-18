@@ -74,7 +74,7 @@ class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
     "A master key MUST supply itself and MUST NOT supply any other master keys."
     https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
     
-    
+
     """
 
     _config_class = MasterKeyProviderConfig
@@ -338,8 +338,7 @@ def master_key_provider_from_master_key_specs(keys, master_key_specs):
             pass
     if len(master_keys) == 0:
         return None
-    # master_key_ids = [master_key.key_id for master_key in master_keys]
     mkp = TestVectorsMultiMasterKeyProvider()
     for master_key in master_keys:
-        mkp.add_key(master_key.key_id, master_key)
+        mkp.add_key(master_key)
     return mkp
