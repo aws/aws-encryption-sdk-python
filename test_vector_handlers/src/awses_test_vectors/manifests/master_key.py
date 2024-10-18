@@ -7,8 +7,9 @@ Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 """
 import attr
 import six
+from aws_encryption_sdk.exceptions import InvalidKeyIdError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider  # noqa pylint: disable=unused-import
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.kms import (  # noqa pylint: disable=unused-import
     DiscoveryFilter,
     KMSMasterKey,
@@ -316,8 +317,10 @@ class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
 
     _config_class = MasterKeyProviderConfig
     provider_id = "aws-test-vectors-multi-master-key-provider"
+    _members = []
 
     def add_key(self, key_provider):
+        """Add a MKP to the list of configured MKPs."""
         self._members.append(key_provider)
 
     def _new_master_key(self, key_id):
