@@ -7,9 +7,9 @@ Described in AWS Crypto Tools Test Vector Framework features #0003 and #0004.
 """
 import attr
 import six
-from aws_encryption_sdk.exceptions import IncorrectMasterKeyError, InvalidKeyIdError
+from aws_encryption_sdk.exceptions import InvalidKeyIdError
 from aws_encryption_sdk.identifiers import EncryptionKeyType, WrappingAlgorithm
-from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig  # noqa pylint: disable=unused-import
+from aws_encryption_sdk.key_providers.base import MasterKeyProvider, MasterKeyProviderConfig
 from aws_encryption_sdk.key_providers.kms import (  # noqa pylint: disable=unused-import
     DiscoveryFilter,
     KMSMasterKey,
@@ -63,31 +63,6 @@ _RAW_ENCRYPTION_KEY_TYPE = {
     "public": EncryptionKeyType.PUBLIC,
 }
 
-class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
-    """
-    Provider for other MasterKeyProviders.
-    Allows a "multi" MasterKeyProvider for use in test vectors.
-
-    In Python ESDK, MasterKey extends MasterKeyProvider.
-    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
-    From AWS ESDK specification:
-    "A master key MUST supply itself and MUST NOT supply any other master keys."
-    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
-    
-
-    """
-
-    _config_class = MasterKeyProviderConfig
-    provider_id = "aws-test-vectors-multi-master-key-provider"
-
-    def __init__(self):
-        self.key_provider_for_key_id = {}
-
-    def add_key(self, key_provider):
-        self._members.append(key_provider)
-
-    def _new_master_key(self, key_id):
-        raise InvalidKeyIdError()
 
 @attr.s
 class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
@@ -314,6 +289,44 @@ class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
                 spec["padding-hash"] = self.padding_hash
 
         return spec
+
+
+class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
+    """
+    Provider for other MasterKeyProviders.
+    Acts as a "multi" MasterKeyProvider for use in test vectors.
+
+    There is some disagreement between the spec
+    and how Python ESDK implements MasterKey;
+    this class fills that gap.
+
+    In the ESDK-Python, MasterKey extends MasterKeyProvider;
+    i.e. MasterKey "is a" MasterKeyProvider; isinstance(some_master_key, MasterKeyProvider) == True.
+
+    From AWS ESDK specification:
+    "A master key MUST supply itself and MUST NOT supply any other master keys."
+    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
+
+    The MasterKey class overrides MasterKeyProvider's `decrypt_data_key` method to correct this gap.
+    However, this modification suggests that this "is a" relationship is not entirely true.
+
+    master_key_provider_from_master_key_specs expects to return a MasterKeyProvider, not a MasterKey.
+    master_key_provider_from_master_key_specs uses this class to always return a MasterKeyProvider
+    that wraps any MasterKeyProvider or MasterKey loaded from a spec.
+    """
+
+    _config_class = MasterKeyProviderConfig
+    provider_id = "aws-test-vectors-multi-master-key-provider"
+    _members = []
+
+    def add_key(self, key_provider):
+        """Add a MKP to the list of configured MKPs."""
+        self._members.append(key_provider)
+
+    def _new_master_key(self, key_id):
+        # This MKP does not have a key associated with it.
+        # ESDK-Python will find keys in _members.
+        raise InvalidKeyIdError()
 
 
 def master_key_provider_from_master_key_specs(keys, master_key_specs):

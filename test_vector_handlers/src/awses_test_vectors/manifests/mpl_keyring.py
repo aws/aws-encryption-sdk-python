@@ -25,10 +25,10 @@ from aws_cryptography_materialproviders_test_vectors.smithygenerated.\
         GetKeyDescriptionOutput,
         TestVectorKeyringInput,
     )
-from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_material_providers.mpl.references import IKeyring
-from aws_cryptographic_material_providers.mpl.models import CreateMultiKeyringInput
+from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_materialproviders.mpl.models import CreateMultiKeyringInput
 
 import _dafny
 from smithy_dafny_standard_library.internaldafny.generated import UTF8
@@ -180,7 +180,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
         # But this seems weird, and we didn't have to do this in Java.
         if hasattr(keyring, "_impl"):  # pylint: disable=protected-access
             if hasattr(keyring._impl, "_keyName"):  # pylint: disable=protected-access
-                if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value:
+                if keyring._impl._keyName == UTF8.default__.Encode(_dafny.Seq("rsa-4096-public")).value \
+                        and mode in ("decrypt-generate", "encrypt"):  # pylint: disable=protected-access
                     if changed_key_name_from_private_to_public:
                         # pylint: disable=protected-access
                         keyring._impl._keyName = UTF8.default__.Encode(_dafny.Seq("rsa-4096-private")).value
