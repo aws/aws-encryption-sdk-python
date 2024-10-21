@@ -15,7 +15,7 @@ from aws_encryption_sdk.key_providers.kms import (  # noqa pylint: disable=unuse
     KMSMasterKey,
     MRKAwareDiscoveryAwsKmsMasterKeyProvider,
 )
-from aws_encryption_sdk.key_providers.raw import RawMasterKey, RawMasterKeyProvider
+from aws_encryption_sdk.key_providers.raw import RawMasterKey
 
 from awses_test_vectors.internal.aws_kms import KMS_MASTER_KEY_PROVIDER, KMS_MRK_AWARE_MASTER_KEY_PROVIDER
 from awses_test_vectors.internal.util import membership_validator
