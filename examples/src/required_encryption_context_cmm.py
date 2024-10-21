@@ -142,7 +142,7 @@ def encrypt_and_decrypt_with_keyring(
     try:
         plaintext_bytes_a, _ = client.decrypt(
             source=ciphertext,
-            materials_manager=required_ec_cmm,
+            materials_manager=underlying_cmm,
             # No reproduced encryption context for required EC CMM-produced message makes decryption fail.
         )
         raise Exception("If this exception is raised, decryption somehow succeeded!")
