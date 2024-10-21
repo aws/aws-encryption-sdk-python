@@ -63,31 +63,6 @@ _RAW_ENCRYPTION_KEY_TYPE = {
     "public": EncryptionKeyType.PUBLIC,
 }
 
-class TestVectorsMultiMasterKeyProvider(MasterKeyProvider):
-    """
-    Provider for other MasterKeyProviders.
-    Allows a "multi" MasterKeyProvider for use in test vectors.
-
-    In Python ESDK, MasterKey extends MasterKeyProvider.
-    However, MasterKey overrides MasterKeyProvider's `decrypt_data_key` method.
-    From AWS ESDK specification:
-    "A master key MUST supply itself and MUST NOT supply any other master keys."
-    https://github.com/awslabs/aws-encryption-sdk-specification/blob/master/framework/master-key-interface.md#get-master-key
-    
-
-    """
-
-    _config_class = MasterKeyProviderConfig
-    provider_id = "aws-test-vectors-multi-master-key-provider"
-
-    def __init__(self):
-        self.key_provider_for_key_id = {}
-
-    def add_key(self, key_provider):
-        self._members.append(key_provider)
-
-    def _new_master_key(self, key_id):
-        raise InvalidKeyIdError()
 
 @attr.s
 class MasterKeySpec(object):  # pylint: disable=too-many-instance-attributes
