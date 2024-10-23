@@ -6,8 +6,8 @@ The aws-cryptographic-materials-library MUST be installed to run tests in this m
 """
 
 import pytest
-from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl.errors import AwsCryptographicMaterialProvidersException
+from aws_cryptographic_material_providers.mpl.models import (
     AlgorithmSuiteIdESDK as MPL_AlgorithmSuiteIdESDK,
     CommitmentPolicyESDK as MPL_CommitmentPolicyESDK,
     DecryptionMaterials as MPL_DecryptionMaterials,
@@ -16,7 +16,7 @@ from aws_cryptographic_materialproviders.mpl.models import (
     GetEncryptionMaterialsInput as MPL_GetEncryptionMaterialsInput,
     GetEncryptionMaterialsOutput as MPL_GetEncryptionMaterialsOutput,
 )
-from aws_cryptographic_materialproviders.mpl.references import (
+from aws_cryptographic_material_providers.mpl.references import (
     ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
 )
 from mock import MagicMock, patch

@@ -3,7 +3,7 @@
 """init file for multi-threading examples."""
 import time
 
-from aws_cryptographic_materialproviders.mpl.references import IKeyring
+from aws_cryptographic_material_providers.mpl.references import IKeyring
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk

@@ -10,14 +10,14 @@ On decrypt, the client MUST supply the key/value pair(s) that were not stored to
 import boto3
 # Ignore missing MPL for pylint, but the MPL is required for this example
 # noqa pylint: disable=import-error
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CreateAwsKmsKeyringInput,
     CreateDefaultCryptographicMaterialsManagerInput,
     CreateRequiredEncryptionContextCMMInput,
 )
-from aws_cryptographic_materialproviders.mpl.references import ICryptographicMaterialsManager, IKeyring
+from aws_cryptographic_material_providers.mpl.references import ICryptographicMaterialsManager, IKeyring
 from typing import Dict, List  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
@@ -142,7 +142,7 @@ def encrypt_and_decrypt_with_keyring(
     try:
         plaintext_bytes_a, _ = client.decrypt(
             source=ciphertext,
-            materials_manager=required_ec_cmm,
+            materials_manager=underlying_cmm,
             # No reproduced encryption context for required EC CMM-produced message makes decryption fail.
         )
         raise Exception("If this exception is raised, decryption somehow succeeded!")

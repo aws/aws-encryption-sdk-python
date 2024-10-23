@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Example implementation of a branch key ID supplier."""
 
-from aws_cryptographic_materialproviders.mpl.models import GetBranchKeyIdInput, GetBranchKeyIdOutput
-from aws_cryptographic_materialproviders.mpl.references import IBranchKeyIdSupplier
+from aws_cryptographic_material_providers.mpl.models import GetBranchKeyIdInput, GetBranchKeyIdOutput
+from aws_cryptographic_material_providers.mpl.references import IBranchKeyIdSupplier
 from typing import Dict  # noqa pylint: disable=wrong-import-order
 
 

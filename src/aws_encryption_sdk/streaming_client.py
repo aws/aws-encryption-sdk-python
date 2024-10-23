@@ -63,11 +63,11 @@ from aws_encryption_sdk.structures import MessageHeader
 try:
     # pylint should pass even if the MPL isn't installed
     # noqa pylint: disable=import-error
-    from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-    from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-    from aws_cryptographic_materialproviders.mpl.errors import AwsCryptographicMaterialProvidersException
-    from aws_cryptographic_materialproviders.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
-    from aws_cryptographic_materialproviders.mpl.references import (
+    from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_material_providers.mpl.errors import AwsCryptographicMaterialProvidersException
+    from aws_cryptographic_material_providers.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
+    from aws_cryptographic_material_providers.mpl.references import (
         ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
         IKeyring as MPL_IKeyring,
     )
@@ -425,10 +425,10 @@ class EncryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.mpl.references.IKeyring
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -480,10 +480,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.mpl.references.IKeyring
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -867,10 +867,10 @@ class DecryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `keyring`, `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.mpl.references.IKeyring
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -915,10 +915,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
-    :param keyring: `IKeyring` from the aws_cryptographic_materialproviders library
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
         which handles encryption and decryption
     :type keyring:
-        aws_cryptographic_materialproviders.mpl.references.IKeyring
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::

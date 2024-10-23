@@ -16,9 +16,9 @@ from aws_encryption_sdk.materials_managers.mpl.materials import (
 from aws_encryption_sdk.materials_managers.mpl.cmm import (
     CryptoMaterialsManagerFromMPL
 )
-from aws_cryptographic_materialproviders.mpl import AwsCryptographicMaterialProviders
-from aws_cryptographic_materialproviders.mpl.config import MaterialProvidersConfig
-from aws_cryptographic_materialproviders.mpl.models import (
+from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+from aws_cryptographic_material_providers.mpl.models import (
     CreateDefaultCryptographicMaterialsManagerInput,
 )
 
