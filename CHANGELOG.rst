@@ -2,6 +2,27 @@
 Changelog
 *********
 
+4.0.0 -- 2024-10-28
+===================
+
+Features
+--------
+* Add support for constructs from the [AWS Cryptographic Material Providers Library (MPL)](https://github.com/aws/aws-cryptographic-material-providers-library).
+  The MPL contains new constructs for encrypting and decrypting your data.
+  We highly recommend installing the MPL. See [Installing](https://github.com/aws/aws-encryption-sdk-python/tree/master?tab=readme-ov-file#installation) for instructions.
+
+Breaking Changes
+^^^^^^^^^^^^^^^^
+* Messages constructed with the MPL's Required Encryption Context Cryptographic Materials Manager ("required EC CMM") will not be readable from versions of the ESDK <4.0.0.
+  The MPL introduces the "required EC CMM" as a new construct for protecting your data.
+  It requires that, for a specified set of encryption context keys, a decryptor must supply the same encryption context pairs that were used to encrypt the message.
+  No version of ESDK < 4.0.0 supports reading messages encrypted with the required EC CMM.
+  A message that is encrypted with the required EC CMM must be decrypted with a CMM from the MPL.
+
+Fixes
+-----------
+* fix: MKPs attempt to decrypt with remaining keys if a preceding raw RSA key failed to decrypt (#707 (https://github.com/aws/aws-encryption-sdk-python/pull/707))
+
 3.3.0 -- 2024-05-20
 ===================
 
