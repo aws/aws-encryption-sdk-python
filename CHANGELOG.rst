@@ -7,9 +7,9 @@ Changelog
 
 Features
 --------
-* Add support for constructs from the [AWS Cryptographic Material Providers Library (MPL)](https://github.com/aws/aws-cryptographic-material-providers-library).
+* Add support for constructs from the `AWS Cryptographic Material Providers Library (MPL) <https://github.com/aws/aws-cryptographic-material-providers-library>`_.
   The MPL contains new constructs for encrypting and decrypting your data.
-  We highly recommend installing the MPL. See [Installing](https://github.com/aws/aws-encryption-sdk-python/tree/master?tab=readme-ov-file#installation) for instructions.
+  We highly recommend installing the MPL. See `Installing <https://github.com/aws/aws-encryption-sdk-python/tree/master?tab=readme-ov-file#installation>`_ for instructions.
 
 Breaking Changes
 ^^^^^^^^^^^^^^^^
@@ -21,7 +21,8 @@ Breaking Changes
 
 Fixes
 -----------
-* fix: MKPs attempt to decrypt with remaining keys if a preceding raw RSA key failed to decrypt (#707 (https://github.com/aws/aws-encryption-sdk-python/pull/707))
+* fix: MKPs attempt to decrypt with remaining keys if a preceding raw RSA key failed to decrypt
+  `#707 <https://github.com/aws/aws-encryption-sdk-python/pull/707>`_
 
 3.3.0 -- 2024-05-20
 ===================
