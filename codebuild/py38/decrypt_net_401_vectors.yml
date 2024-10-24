@@ -1,0 +1,35 @@
+version: 0.2
+# Runs Only the ESDK-NET v4.0.1 Decryption Vectors, testing Required EC CMM
+
+env:
+  variables:
+    TOXENV: "py38-full_decrypt"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+  pre_build:
+    commands:
+      # Fetch ESDK .NET v4.0.1 Test Vectors
+      - VECTOR_ZIP=$CODEBUILD_SRC_DIR/v4-Net-4.0.1.zip
+      - VECTORS_URL=https://github.com/aws/aws-encryption-sdk-dafny/raw/mainline/AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectors/resources/v4-Net-4.0.1.zip
+      - curl -s --output $VECTOR_ZIP --location $VECTORS_URL
+      - UNZIPPED_VECTORS_DIR=$CODEBUILD_SRC_DIR/test_vector_handlers/net_401_vectors
+      - unzip $VECTOR_ZIP -d $UNZIPPED_VECTORS_DIR
+  build:
+    commands:
+      # NOTE: We need to pass the absolute path of the vectors
+      - pip install "tox < 4.0"
+      - cd $CODEBUILD_SRC_DIR/test_vector_handlers
+      - |
+        tox -- \
+          --input $UNZIPPED_VECTORS_DIR/manifest.json
