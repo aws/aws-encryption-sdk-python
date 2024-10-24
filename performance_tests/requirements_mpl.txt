@@ -1,1 +1,1 @@
-aws-cryptographic-material-providers @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@python-main-with-dafny-code#subdirectory=AwsCryptographicMaterialProviders/runtimes/python
+aws-cryptographic-material-providers==1.7.2
