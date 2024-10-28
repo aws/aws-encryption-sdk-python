@@ -630,21 +630,11 @@ class MessageDecryptionManifest(object):
         client_name = raw_manifest["client"]["name"]  # type: str
         client_version = raw_manifest["client"]["version"]  # type: str
         raw_scenarios = raw_manifest["tests"]  # type: Dict[str, DECRYPT_SCENARIO_SPEC]
-        test_scenarios = {
-            name: MessageDecryptionTestScenario.from_scenario(
-                scenario=scenario,
-                plaintext_reader=root_reader,
-                ciphertext_reader=root_reader,
-                keys=keys,
-                keyrings=False,
-                keys_uri=keys_abs_path,
-            )
-            for name, scenario in raw_scenarios.items()
-        }
-        # If optional keyrings argument is true,
-        # also add scenarios to decrypt with keyrings.
+
+        # If optional keyrings argument is specified,
+        # decrypt with keyrings
         if keyrings:
-            keyrings_test_scenarios = {
+            test_scenarios = {
                 name + "-keyring": MessageDecryptionTestScenario.from_scenario(
                     scenario=scenario,
                     plaintext_reader=root_reader,
@@ -655,8 +645,20 @@ class MessageDecryptionManifest(object):
                 )
                 for name, scenario in raw_scenarios.items()
             }
-            # Merge keyring scenarios into test_scenarios
-            test_scenarios = {**keyrings_test_scenarios, **test_scenarios}
+        # If optional keyrings argument is not specified,
+        # decrypt with master key providers
+        else:
+            test_scenarios = {
+                name: MessageDecryptionTestScenario.from_scenario(
+                    scenario=scenario,
+                    plaintext_reader=root_reader,
+                    ciphertext_reader=root_reader,
+                    keys=keys,
+                    keyrings=False,
+                    keys_uri=keys_abs_path,
+                )
+                for name, scenario in raw_scenarios.items()
+            }
 
         # Remove any `None` scenarios from test scenarios.
         # `None` scenarios indicate the loader determined the scenario is invalid.
