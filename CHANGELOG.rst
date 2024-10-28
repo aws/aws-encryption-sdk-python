@@ -13,11 +13,13 @@ Features
 
 Breaking Changes
 ^^^^^^^^^^^^^^^^
-* Messages constructed with the MPL's Required Encryption Context Cryptographic Materials Manager ("required EC CMM")
-  will not be readable from versions of the ESDK <4.0.0.
-  The MPL introduces the "required EC CMM" as a new construct for protecting your data.
-  It requires that, for a specified set of encryption context keys,
-  a decryptor must supply the same encryption context pairs that were used when encrypting the message.
+* The MPL introduces the Required Encryption Context Cryptographic Materials Manager
+  ("required EC CMM") as a new construct for protecting your data.
+  On encrypt, the required EC CMM will use specific configured encryption context key-value pairs to calculate the message signature,
+  but will not store those pairs in the ESDK message.
+  On decrypt, decryptors must supply these same pairs that were used when encrypting the message.
+  All messages that have been encrypted with versions of the ESDK <4.0.0 are forward compatible with this change.
+  However, messages that are constructed with the required EC CMM are not backward compatbile with ESDK <4.0.0.
   No version of ESDK < 4.0.0 supports reading messages encrypted with the required EC CMM.
   A message that is encrypted with the required EC CMM from the MPL must be decrypted with a CMM from the MPL.
 
