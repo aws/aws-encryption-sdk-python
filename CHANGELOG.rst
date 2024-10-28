@@ -19,8 +19,8 @@ Breaking Changes
   but will not store those pairs in the ESDK message.
   On decrypt, decryptors must supply these same pairs that were used when encrypting the message.
   All messages that have been encrypted with versions of the ESDK <4.0.0 are forward compatible with this change.
-  However, messages that are constructed with the required EC CMM are not backward compatbile with ESDK <4.0.0.
-  No version of ESDK < 4.0.0 supports reading messages encrypted with the required EC CMM.
+  However, messages that are constructed with the required EC CMM are not backward compatbile with ESDK <4.0.0,
+  as no version of ESDK <4.0.0 supports reading messages encrypted with the required EC CMM.
   A message that is encrypted with the required EC CMM from the MPL must be decrypted with a CMM from the MPL.
 
 Fixes
