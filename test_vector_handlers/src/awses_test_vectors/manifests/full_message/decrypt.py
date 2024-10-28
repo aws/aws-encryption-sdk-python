@@ -646,7 +646,7 @@ class MessageDecryptionManifest(object):
                 for name, scenario in raw_scenarios.items()
             }
         # If optional keyrings argument is not specified,
-        # decrypt with master key providers
+        # decrypt with master key providers.
         else:
             test_scenarios = {
                 name: MessageDecryptionTestScenario.from_scenario(
