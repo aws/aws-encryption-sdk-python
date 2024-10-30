@@ -273,7 +273,7 @@ class MessageDecryptionTestScenario(object):
         keyrings,  # type: bool
         keys_uri,  # type: str
     ):
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-branches
         # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
 
@@ -336,8 +336,8 @@ class MessageDecryptionTestScenario(object):
             # Caller logic should expect `None` to mean "no scenario".
             if master_key_provider_fn() is None:
                 return None
-        except Exception as e:
-            # If there is some exception when loading the key, continue to create the test scenario.
+        except Exception:  # pylint: disable=broad-exception
+            # If there is any exception when loading the key, continue to create the test scenario.
             # Some test scenarios have bad keys that should fail during the test execution.
             pass
 
