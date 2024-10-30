@@ -115,6 +115,12 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             input_kwargs["padding-hash"] = self.padding_hash
         if self.default_mrk_region is not None:
             input_kwargs["default-mrk-region"] = self.default_mrk_region
+        if self.discovery_filter is not None:
+            input_kwargs["aws-kms-discovery-filter"] = {}
+            if self.discovery_filter.partition is not None:
+                input_kwargs["aws-kms-discovery-filter"]["partition"] = self.discovery_filter.partition
+            if self.discovery_filter.account_ids is not None:
+                input_kwargs["aws-kms-discovery-filter"]["account-ids"] = self.discovery_filter.account_ids
 
         if input_kwargs["type"] == "raw" \
                 and input_kwargs["encryption-algorithm"] == "rsa":
