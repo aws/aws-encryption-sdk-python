@@ -24,6 +24,7 @@ phases:
   build:
     commands:
       - pip install "tox < 4.0"
+      - ls
       - cd test_vector_handlers
       - |
         tox -- \
