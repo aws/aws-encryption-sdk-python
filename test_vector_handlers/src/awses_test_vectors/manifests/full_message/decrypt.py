@@ -264,7 +264,7 @@ class MessageDecryptionTestScenario(object):
         attr.validate(self)
 
     @classmethod
-    def from_scenario(
+    def from_scenario(  # noqa: C901
         cls,
         scenario,  # type: DECRYPT_SCENARIO_SPEC
         plaintext_reader,  # type: Callable[[str], bytes]
@@ -273,7 +273,7 @@ class MessageDecryptionTestScenario(object):
         keyrings,  # type: bool
         keys_uri,  # type: str
     ):
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-branches
         # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
 
@@ -330,11 +330,16 @@ class MessageDecryptionTestScenario(object):
             # If unspecified, set "Default" as the default
             cmm_type = "Default"
 
-        # If this scenario does not have any key providers,
-        # do not create a scenario.
-        # Caller logic should expect `None` to mean "no scenario".
-        if master_key_provider_fn() is None:
-            return None
+        try:
+            # If this scenario does not have any key providers,
+            # do not create a scenario.
+            # Caller logic should expect `None` to mean "no scenario".
+            if master_key_provider_fn() is None:
+                return None
+        except Exception:  # nosec,pylint: disable=broad-except
+            # If there is any exception when loading the key, continue to create the test scenario.
+            # Some test scenarios have bad keys that should fail during the test execution.
+            pass
 
         return cls(
             ciphertext_uri=scenario["ciphertext"],

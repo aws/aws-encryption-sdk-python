@@ -90,7 +90,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             padding_hash=spec.get("padding-hash"),
         )
 
-    def keyring(self, keys_uri, mode):
+    def keyring(self, keys_uri, mode):  # noqa: C901
+        # pylint: disable=too-many-branches
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
         :param str keys_uri: Path to the keys manifest
@@ -113,6 +114,14 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             input_kwargs["padding-algorithm"] = self.padding_algorithm
         if self.padding_hash is not None:
             input_kwargs["padding-hash"] = self.padding_hash
+        if self.default_mrk_region is not None:
+            input_kwargs["default-mrk-region"] = self.default_mrk_region
+        if self.discovery_filter is not None:
+            input_kwargs["aws-kms-discovery-filter"] = {}
+            if self.discovery_filter.partition is not None:
+                input_kwargs["aws-kms-discovery-filter"]["partition"] = self.discovery_filter.partition
+            if self.discovery_filter.account_ids is not None:
+                input_kwargs["aws-kms-discovery-filter"]["account-ids"] = self.discovery_filter.account_ids
 
         if input_kwargs["type"] == "raw" \
                 and input_kwargs["encryption-algorithm"] == "rsa":
