@@ -330,13 +330,15 @@ class MessageDecryptionTestScenario(object):
             # If unspecified, set "Default" as the default
             cmm_type = "Default"
 
-        # If this scenario does not have any key providers,
-        # do not create a scenario.
-        # Caller logic should expect `None` to mean "no scenario".
         try:
+            # If this scenario does not have any key providers,
+            # do not create a scenario.
+            # Caller logic should expect `None` to mean "no scenario".
             if master_key_provider_fn() is None:
                 return None
         except Exception as e:
+            # If there is some exception when loading the key, continue to create the test scenario.
+            # Some test scenarios have bad keys that should fail during the test execution.
             pass
 
         return cls(
@@ -628,7 +630,6 @@ class MessageDecryptionManifest(object):
         keys_abs_path = os.path.join(parent_dir, keys_filename)
 
         raw_keys_manifest = json.loads(root_reader(keys_uri).decode(ENCODING))
-        print("yes")
         keys = KeysManifest.from_manifest_spec(raw_keys_manifest)
 
         client_name = raw_manifest["client"]["name"]  # type: str
