@@ -113,6 +113,8 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             input_kwargs["padding-algorithm"] = self.padding_algorithm
         if self.padding_hash is not None:
             input_kwargs["padding-hash"] = self.padding_hash
+        if self.default_mrk_region is not None:
+            input_kwargs["default-mrk-region"] = self.default_mrk_region
 
         if input_kwargs["type"] == "raw" \
                 and input_kwargs["encryption-algorithm"] == "rsa":
