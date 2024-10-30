@@ -272,9 +272,8 @@ class MessageDecryptionTestScenario(object):
         keys,  # type: KeysManifest
         keyrings,  # type: bool
         keys_uri,  # type: str
-    ):
+    ):  # noqa: C901
         # pylint: disable=too-many-locals,too-many-branches
-        # noqa: C901
         # type: (...) -> MessageDecryptionTestScenario
         """Load from a scenario specification.
 
