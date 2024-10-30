@@ -90,7 +90,7 @@ class KeyringSpec(MasterKeySpec):  # pylint: disable=too-many-instance-attribute
             padding_hash=spec.get("padding-hash"),
         )
 
-    def keyring(self, keys_uri, mode):  # pylint: disable=too-many-branches
+    def keyring(self, keys_uri, mode):  # pylint: disable=too-many-branches, noqa: C901
         # type: (KeysManifest) -> IKeyring
         """Build a keyring using this specification.
         :param str keys_uri: Path to the keys manifest
