@@ -263,9 +263,8 @@ class MessageDecryptionTestScenario(object):
         self.description = description
         attr.validate(self)
 
-    # noqa: C901
     @classmethod
-    def from_scenario(
+    def from_scenario(  # noqa: C901
         cls,
         scenario,  # type: DECRYPT_SCENARIO_SPEC
         plaintext_reader,  # type: Callable[[str], bytes]
