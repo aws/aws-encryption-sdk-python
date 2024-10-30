@@ -336,7 +336,7 @@ class MessageDecryptionTestScenario(object):
             # Caller logic should expect `None` to mean "no scenario".
             if master_key_provider_fn() is None:
                 return None
-        except Exception:  # pylint: disable=broad-exception
+        except Exception:  # pylint: disable=broad-except
             # If there is any exception when loading the key, continue to create the test scenario.
             # Some test scenarios have bad keys that should fail during the test execution.
             pass
