@@ -43,7 +43,7 @@ setup(
     # TODO-MPL: Point at PyPI once MPL is released.
     # This blocks releasing ESDK-Python MPL integration.
     extras_require={
-        "MPL": ["aws-cryptographic-material-providers==1.7.2"],
+        "MPL": ["aws-cryptographic-material-providers==1.7.3"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
