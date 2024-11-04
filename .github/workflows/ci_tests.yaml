@@ -26,7 +26,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-12
+          - macos-13
         python:
           - 3.8
           - 3.9
@@ -48,7 +48,7 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-12
+          - os: macos-13
             architecture: x86
     steps:
       - uses: actions/checkout@v4
