@@ -22,6 +22,8 @@ phases:
       python: 3.12
   pre_build:
     commands:
+      # Build and install MPL test vector Python package
+      - tox -e install-mpl-runner
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
       - |

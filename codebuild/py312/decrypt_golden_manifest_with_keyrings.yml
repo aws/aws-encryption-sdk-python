@@ -21,6 +21,8 @@ phases:
       # Download "golden manifest"
       - curl -L -o python-2.3.0.zip https://github.com/awslabs/aws-encryption-sdk-test-vectors/raw/master/vectors/awses-decrypt/python-2.3.0.zip
       - unzip python-2.3.0.zip -d python-2.3.0
+      # Build and install MPL test vector Python package
+      - tox -e install-mpl-runner
   build:
     commands:
       - pip install "tox < 4.0"
