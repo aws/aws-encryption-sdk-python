@@ -24,7 +24,9 @@ phases:
     commands:
       # Build and install MPL test vector Python package
       - pip install "tox < 4.0"
+      - cd test_vector_handlers/
       - tox -e install-mpl-runner
+      - cd ..
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
       - |
