@@ -68,6 +68,7 @@ phases:
       - unzip net41.zip -d net41
   build:
     commands:
+      - pip install "tox < 4.0"
       - cd test_vector_handlers
       - |
         tox -- \
