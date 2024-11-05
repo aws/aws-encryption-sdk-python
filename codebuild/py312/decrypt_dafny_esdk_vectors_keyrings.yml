@@ -23,6 +23,7 @@ phases:
   pre_build:
     commands:
       # Build and install MPL test vector Python package
+      - pip install "tox < 4.0"
       - tox -e install-mpl-runner
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
@@ -53,7 +54,6 @@ phases:
       - unzip net41.zip -d net41
   build:
     commands:
-      - pip install "tox < 4.0"
       - cd test_vector_handlers
       - |
         tox -- \
