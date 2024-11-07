@@ -1,0 +1,29 @@
+name: AWS CodeBuild CI
+
+on:
+  pull_request:
+  push:
+  # Run once a day
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  codebuild-tests:
+    name: AWS CodeBuild CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 3600
+      - name: Run CodeBuild CI
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 60
+        with:
+          project-name: python-esdk

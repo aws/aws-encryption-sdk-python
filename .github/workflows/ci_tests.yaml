@@ -83,18 +83,3 @@ jobs:
           env:
             TOXENV: ${{ matrix.category }}
           run: tox -- -vv
-  codebuild-tests:
-    name: CodeBuild CI
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
-          aws-region: us-west-2
-          role-duration-seconds: 3600
-      - name: Run CodeBuild CI
-        uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 60
-        with:
-          project-name: python-esdk
