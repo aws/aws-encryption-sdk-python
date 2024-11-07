@@ -27,10 +27,10 @@ jobs:
           - "awses_local.yml"
           - "examples.yml"
           - "integ.yml"
-      exclude:
-        # No "awses_local.yml" file exists in py39/
-        - python: "39"
-          codebuild_file_name: "awses_local.yml"
+        exclude:
+          # No "awses_local.yml" file exists in py39/
+          - python: "39"
+            codebuild_file_name: "awses_local.yml"
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
