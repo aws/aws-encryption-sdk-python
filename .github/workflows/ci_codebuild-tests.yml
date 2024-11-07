@@ -33,7 +33,7 @@ jobs:
           - "examples.yml"
           - "integ.yml"
         exclude:
-          # (Nested exclude syntax is weird: https://github.com/actions/runner/issues/1512)
+          # (Nested `exclude` syntax is weird: https://github.com/actions/runner/issues/1512)
           # No "awses_local.yml" file exists in py39/
           - { python: {
                         python_version: "39",
