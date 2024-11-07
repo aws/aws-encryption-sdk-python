@@ -18,11 +18,16 @@ jobs:
     strategy:
       matrix:
         python:
-          - "38"
-          - "39"
-          - "310"
-          - "311"
-          - "312"
+          - python_version: "38"
+            image: "aws/codebuild/standard:5.0"
+          - python_version: "39"
+            image: "aws/codebuild/standard:5.0"
+          - python_version: "310"
+            image: "aws/codebuild/standard:6.0"
+          - python_version: "311"
+            image: "aws/codebuild/standard:7.0"
+          - python_version: "312"
+            image: "aws/codebuild/standard:7.0"
         codebuild_file_name:
           - "awses_local.yml"
           - "examples.yml"
@@ -44,3 +49,4 @@ jobs:
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py${{ matrix.python }}/${{ matrix.codebuild_file_name }}
+          image-override: ${{ matrix.platform.image }}
