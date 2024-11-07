@@ -16,7 +16,7 @@ jobs:
     name: AWS CodeBuild CI
     runs-on: ubuntu-latest
     strategy:
-    matrix:
+      matrix:
         python:
           - "38"
           - "39"
