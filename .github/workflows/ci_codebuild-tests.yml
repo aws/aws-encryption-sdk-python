@@ -5,7 +5,7 @@ on:
   push:
   # Run once a day
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 permissions:
   id-token: write
@@ -16,18 +16,19 @@ jobs:
     name: AWS CodeBuild CI
     runs-on: ubuntu-latest
     strategy:
-      python:
-        - "38"
-        - "39"
-        - "310"
-        - "311"
-        - "312"
-      codebuild_file_name:
-        - "awses_local.yml"
-        - "examples.yml"
-        - "integ.yml"
+    matrix:
+        python:
+          - "38"
+          - "39"
+          - "310"
+          - "311"
+          - "312"
+        codebuild_file_name:
+          - "awses_local.yml"
+          - "examples.yml"
+          - "integ.yml"
       exclude:
-        # No "awses_local" for py39
+        # No "awses_local.yml" file exists in py39/
         - python: "39"
           codebuild_file_name: "awses_local.yml"
     steps:
