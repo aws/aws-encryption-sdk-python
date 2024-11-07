@@ -34,7 +34,8 @@ jobs:
           - "integ.yml"
         exclude:
           # No "awses_local.yml" file exists in py39/
-          - python.python_version: "39"
+          - python:
+              - python_version: "39"
             codebuild_file_name: "awses_local.yml"
     steps:
       - name: Configure AWS Credentials
