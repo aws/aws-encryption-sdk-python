@@ -43,10 +43,10 @@ jobs:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
           role-duration-seconds: 3600
-      - name: Run python-${{ matrix.python }} ${{ matrix.codebuild_file_name }}
+      - name: Run python-${{ matrix.python.python_version }} ${{ matrix.codebuild_file_name }}
         uses: aws-actions/aws-codebuild-run-build@v1
         timeout-minutes: 60
         with:
           project-name: python-esdk
-          buildspec-override: codebuild/py${{ matrix.python }}/${{ matrix.codebuild_file_name }}
-          image-override: ${{ matrix.platform.image }}
+          buildspec-override: codebuild/py${{ matrix.python.python_version }}/${{ matrix.codebuild_file_name }}
+          image-override: ${{ matrix.python.image }}
