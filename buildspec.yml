@@ -24,7 +24,8 @@ batch:
       buildspec: codebuild/py39/examples.yml
       env:
         image: aws/codebuild/standard:5.0
-    - identifier: py39_awses_latest
+    - identifier: py39_awses_local
+      buildspec: codebuild/py39/awses_local.yml
       env:
         image: aws/codebuild/standard:5.0
 
