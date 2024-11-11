@@ -32,20 +32,6 @@ jobs:
           - "awses_local.yml"
           - "examples.yml"
           - "integ.yml"
-        exclude:
-          # (Nested config syntax is weird: https://github.com/actions/runner/issues/1512)
-          # py39 "awses_local.yml" is called "awses_latest"
-          - { python: {
-                        python_version: "39",
-                        image: "aws/codebuild/standard:5.0" },
-              codebuild_file_name: "awses_local.yml"
-            }
-        include:
-          - { python: {
-                        python_version: "39",
-                        image: "aws/codebuild/standard:5.0" },
-              codebuild_file_name: "awses_latest.yml"
-            }
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
