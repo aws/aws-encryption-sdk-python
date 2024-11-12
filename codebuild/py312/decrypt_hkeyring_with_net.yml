@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    TOXENV: "py312-full_decrypt-mpl"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b35311ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+  pre_build:
+    commands:
+      # Download previously generated vectors
+      # This manifest has coverage for both HKeyring and required encryption context CMM
+      - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/312_hkeyring_reccmm_manifest.zip 312_hkeyring_reccmm_manifest.zip
+      - unzip 312_hkeyring_reccmm_manifest.zip
+      - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_reccmm_manifest/manifest.json"
+      
+      # Clone SDK-Dafny repo to get test vectors runner source code and the Dafny version to use
+      - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
+      # Download Dafny to build the test vector runner; get Dafny version from ESDK's project.properties file
+      - export dafnyVersion=$(grep '^dafnyVersion=' aws-encryption-sdk-dafny/AwsEncryptionSDK/project.properties | cut -d '=' -f 2)
+      - curl https://github.com/dafny-lang/dafny/releases/download/v$dafnyVersion/dafny-$dafnyVersion-x64-ubuntu-20.04.zip  -L -o dafny.zip
+      - unzip -qq dafny.zip && rm dafny.zip
+      - export PATH="$PWD/dafny:$PATH"
+
+      # Build MPL test vector runner from source
+      - cd aws-encryption-sdk-dafny/mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - make transpile_net
+
+      # Change ESDK TestVectors project to reference the published .NET ESDK
+      - cd ../../AwsEncryptionSDK/runtimes/net/TestVectorsNative/TestVectorLib
+      # CodeBuild seems to want to use ESDK-NET 4.0.0, which is not the most recent version...
+      # Pin to at least 4.1.0; this is the most recent version at time of writing.
+      # Hopefully CodeBuild will find more recent versions in the future
+      - sed -i 's|<ProjectReference Include="\.\./\.\./ESDK\.csproj" />|<PackageReference Include="AWS.Cryptography.EncryptionSDK" Version="[4.1.0,)" />|g' AWSEncryptionSDKTestVectorLib.csproj
+      - cd ../TestVectors
+  
+  build:
+    commands:
+      - dotnet test --framework net6.0

@@ -1,0 +1,1 @@
+aws-cryptographic-material-providers==1.7.4

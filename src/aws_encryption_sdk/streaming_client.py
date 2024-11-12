@@ -4,6 +4,7 @@
 from __future__ import division
 
 import abc
+import base64
 import hmac
 import io
 import logging
@@ -11,6 +12,7 @@ import math
 
 import attr
 import six
+from cryptography.hazmat.primitives import serialization
 
 import aws_encryption_sdk.internal.utils
 from aws_encryption_sdk.exceptions import (
@@ -46,6 +48,7 @@ from aws_encryption_sdk.internal.formatting.serialize import (
     serialize_non_framed_close,
     serialize_non_framed_open,
 )
+from aws_encryption_sdk.internal.utils import exactly_one_arg_is_not_none
 from aws_encryption_sdk.internal.utils.commitment import (
     validate_commitment_policy_on_decrypt,
     validate_commitment_policy_on_encrypt,
@@ -56,6 +59,25 @@ from aws_encryption_sdk.materials_managers import DecryptionMaterialsRequest, En
 from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
 from aws_encryption_sdk.materials_managers.default import DefaultCryptoMaterialsManager
 from aws_encryption_sdk.structures import MessageHeader
+
+try:
+    # pylint should pass even if the MPL isn't installed
+    # noqa pylint: disable=import-error
+    from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
+    from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
+    from aws_cryptographic_material_providers.mpl.errors import AwsCryptographicMaterialProvidersException
+    from aws_cryptographic_material_providers.mpl.models import CreateDefaultCryptographicMaterialsManagerInput
+    from aws_cryptographic_material_providers.mpl.references import (
+        ICryptographicMaterialsManager as MPL_ICryptographicMaterialsManager,
+        IKeyring as MPL_IKeyring,
+    )
+    _HAS_MPL = True
+
+    # Import internal ESDK modules that depend on the MPL
+    from aws_encryption_sdk.materials_managers.mpl.cmm import CryptoMaterialsManagerFromMPL
+
+except ImportError:
+    _HAS_MPL = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -97,12 +119,38 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
     max_encrypted_data_keys = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(int))
     )
-    materials_manager = attr.ib(
-        hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(CryptoMaterialsManager))
-    )
+    if _HAS_MPL:
+        # With the MPL, the provided materials_manager can be an instance of
+        # either the native interface or an MPL interface.
+        # If it implements the MPL interface, this constructor will
+        # internally wrap it in a native interface.
+        materials_manager = attr.ib(
+            hash=True,
+            default=None,
+            validator=attr.validators.optional(
+                attr.validators.instance_of(
+                    (CryptoMaterialsManager, MPL_ICryptographicMaterialsManager)
+                )
+            )
+        )
+    else:
+        materials_manager = attr.ib(
+            hash=True,
+            default=None,
+            validator=attr.validators.optional(
+                attr.validators.instance_of(
+                    CryptoMaterialsManager
+                )
+            )
+        )
     key_provider = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MasterKeyProvider))
     )
+    if _HAS_MPL:
+        # Keyrings are only available if the MPL is installed in the runtime
+        keyring = attr.ib(
+            hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(MPL_IKeyring))
+        )
     source_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
     )
@@ -110,8 +158,45 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
         hash=True, default=LINE_LENGTH, validator=attr.validators.instance_of(six.integer_types)
     )  # DEPRECATED: Value is no longer configurable here.  Parameter left here to avoid breaking consumers.
 
-    def __attrs_post_init__(self):
-        """Normalize inputs to crypto material manager."""
+    def _has_mpl_attrs_post_init(self):
+        """If the MPL is present in the runtime, perform MPL-specific post-init logic
+        to validate the new object has a valid state.
+        """
+        if not exactly_one_arg_is_not_none(self.materials_manager, self.key_provider, self.keyring):
+            raise TypeError("Exactly one of keyring, materials_manager, or key_provider must be provided")
+        if self.materials_manager is None:
+            if self.key_provider is not None:
+                # No CMM, provided legacy native `key_provider` => create legacy native DefaultCryptoMaterialsManager
+                self.materials_manager = DefaultCryptoMaterialsManager(
+                    master_key_provider=self.key_provider
+                )
+            elif self.keyring is not None:
+                try:
+                    mat_prov: AwsCryptographicMaterialProviders = AwsCryptographicMaterialProviders(
+                        config=MaterialProvidersConfig()
+                    )
+                    cmm = mat_prov.create_default_cryptographic_materials_manager(
+                        CreateDefaultCryptographicMaterialsManagerInput(
+                            keyring=self.keyring
+                        )
+                    )
+                    cmm_handler: CryptoMaterialsManager = CryptoMaterialsManagerFromMPL(cmm)
+                    self.materials_manager = cmm_handler
+                except AwsCryptographicMaterialProvidersException as mpl_exception:
+                    # Wrap MPL error into the ESDK error type
+                    # so customers only have to catch ESDK error types.
+                    raise AWSEncryptionSDKClientError(mpl_exception)
+
+        # If the provided materials_manager is directly from the MPL, wrap it in a native interface
+        # for internal use.
+        elif (self.materials_manager is not None
+              and isinstance(self.materials_manager, MPL_ICryptographicMaterialsManager)):
+            self.materials_manager = CryptoMaterialsManagerFromMPL(self.materials_manager)
+
+    def _no_mpl_attrs_post_init(self):
+        """If the MPL is NOT present in the runtime, perform post-init logic
+        to validate the new object has a valid state.
+        """
         both_cmm_and_mkp_defined = self.materials_manager is not None and self.key_provider is not None
         neither_cmm_nor_mkp_defined = self.materials_manager is None and self.key_provider is None
 
@@ -119,6 +204,13 @@ class _ClientConfig(object):  # pylint: disable=too-many-instance-attributes
             raise TypeError("Exactly one of materials_manager or key_provider must be provided")
         if self.materials_manager is None:
             self.materials_manager = DefaultCryptoMaterialsManager(master_key_provider=self.key_provider)
+
+    def __attrs_post_init__(self):
+        """Normalize inputs to crypto material manager."""
+        if _HAS_MPL:
+            self._has_mpl_attrs_post_init()
+        else:
+            self._no_mpl_attrs_post_init()
 
 
 class _EncryptionStream(io.IOBase):
@@ -333,6 +425,10 @@ class EncryptorConfig(_ClientConfig):
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -384,6 +480,10 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for encryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -470,9 +570,18 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.signing_key is None:
             self.signer = None
         else:
-            self.signer = Signer.from_key_bytes(
-                algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
-            )
+            # MPL verification key is PEM bytes, not DER bytes.
+            # If the underlying CMM is from the MPL, load PEM bytes.
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key,
+                    encoding=serialization.Encoding.PEM,
+                )
+            else:
+                self.signer = Signer.from_key_bytes(
+                    algorithm=self._encryption_materials.algorithm, key_bytes=self._encryption_materials.signing_key
+                )
         aws_encryption_sdk.internal.utils.validate_frame_length(
             frame_length=self.config.frame_length, algorithm=self._encryption_materials.algorithm
         )
@@ -504,11 +613,27 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._encryption_materials.algorithm.message_format_version == 0x02:
             version = SerializationVersion.V2
 
+        # If the underlying materials_provider provided required_encryption_context_keys
+        # (ex. if the materials_provider is a required encryption context CMM),
+        # then partition the encryption context based on those keys.
+        if hasattr(self._encryption_materials, "required_encryption_context_keys"):
+            self._required_encryption_context = {}
+            self._stored_encryption_context = {}
+            for (key, value) in self._encryption_materials.encryption_context.items():
+                if key in self._encryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[key] = value
+                else:
+                    self._stored_encryption_context[key] = value
+        # Otherwise, store all encryption context with the message.
+        else:
+            self._stored_encryption_context = self._encryption_materials.encryption_context
+            self._required_encryption_context = None
+
         kwargs = dict(
             version=version,
             algorithm=self._encryption_materials.algorithm,
             message_id=message_id,
-            encryption_context=self._encryption_materials.encryption_context,
+            encryption_context=self._stored_encryption_context,
             encrypted_data_keys=self._encryption_materials.encrypted_data_keys,
             content_type=self.content_type,
             frame_length=self.config.frame_length,
@@ -532,13 +657,31 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     def _write_header(self):
         """Builds the message header and writes it to the output stream."""
         self.output_buffer += serialize_header(header=self._header, signer=self.signer)
-        self.output_buffer += serialize_header_auth(
-            version=self._header.version,
-            algorithm=self._encryption_materials.algorithm,
-            header=self.output_buffer,
-            data_encryption_key=self._derived_data_key,
-            signer=self.signer,
-        )
+
+        # If there is _required_encryption_context,
+        # serialize it, then authenticate it
+        if hasattr(self, "_required_encryption_context"):
+            required_ec_serialized = \
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    self._required_encryption_context
+                )
+            self.output_buffer += serialize_header_auth(
+                version=self._header.version,
+                algorithm=self._encryption_materials.algorithm,
+                header=self.output_buffer,
+                data_encryption_key=self._derived_data_key,
+                signer=self.signer,
+                required_ec_bytes=required_ec_serialized,
+            )
+        # Otherwise, do not pass in any required encryption context
+        else:
+            self.output_buffer += serialize_header_auth(
+                version=self._header.version,
+                algorithm=self._encryption_materials.algorithm,
+                header=self.output_buffer,
+                data_encryption_key=self._derived_data_key,
+                signer=self.signer,
+            )
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
@@ -719,11 +862,15 @@ class DecryptorConfig(_ClientConfig):
     :param source: Source data to encrypt or decrypt
     :type source: str, bytes, io.IOBase, or file
     :param materials_manager: `CryptoMaterialsManager` from which to obtain cryptographic materials
-        (either `materials_manager` or `key_provider` required)
+        (either `keyring`, `materials_manager` or `key_provider` required)
     :type materials_manager: aws_encryption_sdk.materials_managers.base.CryptoMaterialsManager
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
-        (either `materials_manager` or `key_provider` required)
+        (either `keyring`, `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -732,10 +879,18 @@ class DecryptorConfig(_ClientConfig):
 
     :param int max_body_length: Maximum frame size (or content length for non-framed messages)
         in bytes to read from ciphertext message.
+    :param dict encryption_context: Dictionary defining encryption context to validate
+            on decrypt. This is ONLY validated on decrypt if using a CMM
+            from the aws-cryptographic-material-providers library.
     """
 
     max_body_length = attr.ib(
         hash=True, default=None, validator=attr.validators.optional(attr.validators.instance_of(six.integer_types))
+    )
+    encryption_context = attr.ib(
+        hash=False,  # dictionaries are not hashable
+        default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(dict)),
     )
 
 
@@ -760,6 +915,10 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
     :param key_provider: `MasterKeyProvider` from which to obtain data keys for decryption
         (either `materials_manager` or `key_provider` required)
     :type key_provider: aws_encryption_sdk.key_providers.base.MasterKeyProvider
+    :param keyring: `IKeyring` from the aws_cryptographic_material_providers library
+        which handles encryption and decryption
+    :type keyring:
+        aws_cryptographic_material_providers.mpl.references.IKeyring
     :param int source_length: Length of source data (optional)
 
         .. note::
@@ -784,6 +943,77 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         if self._header.content_type == ContentType.NO_FRAMING:
             self._prep_non_framed()
         self._message_prepped = True
+
+    def _create_decrypt_materials_request(self, header):
+        """
+        Create a DecryptionMaterialsRequest based on whether
+        the StreamDecryptor was provided encryption_context on decrypt
+        (i.e. expects to use a CMM from the MPL).
+        """
+        # If encryption_context is provided on decrypt,
+        # pass it to the DecryptionMaterialsRequest as reproduced_encryption_context
+        if hasattr(self.config, "encryption_context") \
+                and self.config.encryption_context is not None:
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                return DecryptionMaterialsRequest(
+                    encrypted_data_keys=header.encrypted_data_keys,
+                    algorithm=header.algorithm,
+                    encryption_context=header.encryption_context,
+                    commitment_policy=self.config.commitment_policy,
+                    reproduced_encryption_context=self.config.encryption_context
+                )
+            else:
+                raise TypeError("encryption_context on decrypt is only supported for CMMs and keyrings "
+                                "from the aws-cryptographic-material-providers library.")
+        return DecryptionMaterialsRequest(
+            encrypted_data_keys=header.encrypted_data_keys,
+            algorithm=header.algorithm,
+            encryption_context=header.encryption_context,
+            commitment_policy=self.config.commitment_policy,
+        )
+
+    def _validate_parsed_header(
+        self,
+        header,
+        header_auth,
+        raw_header,
+    ):
+        """
+        Pass arguments from this StreamDecryptor to validate_header based on whether
+        the StreamDecryptor has the _required_encryption_context attribute
+        (i.e. is using the required encryption context CMM from the MPL).
+        """
+        # If _required_encryption_context is present,
+        # serialize it and pass it to validate_header.
+        if hasattr(self, "_required_encryption_context") \
+                and self._required_encryption_context is not None:
+            # The authenticated only encryption context is all encryption context key-value pairs where the
+            # key exists in Required Encryption Context Keys. It is then serialized according to the
+            # message header Key Value Pairs.
+            required_ec_serialized = \
+                aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                    self._required_encryption_context
+                )
+
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                # When verifying the header, the AAD input to the authenticated encryption algorithm
+                # specified by the algorithm suite is the message header body and the serialized
+                # authenticated only encryption context.
+                raw_header=raw_header + required_ec_serialized,
+                data_key=self._derived_data_key
+            )
+        else:
+            validate_header(
+                header=header,
+                header_auth=header_auth,
+                raw_header=raw_header,
+                data_key=self._derived_data_key
+            )
+
+        return header, header_auth
 
     def _read_header(self):
         """Reads the message header from the input stream.
@@ -811,19 +1041,35 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                 )
             )
 
-        decrypt_materials_request = DecryptionMaterialsRequest(
-            encrypted_data_keys=header.encrypted_data_keys,
-            algorithm=header.algorithm,
-            encryption_context=header.encryption_context,
-            commitment_policy=self.config.commitment_policy,
-        )
+        decrypt_materials_request = self._create_decrypt_materials_request(header)
         decryption_materials = self.config.materials_manager.decrypt_materials(request=decrypt_materials_request)
+
+        # If the materials_manager passed required_encryption_context_keys,
+        # get the items out of the encryption_context with the keys.
+        # The items are used in header validation.
+        if hasattr(decryption_materials, "required_encryption_context_keys"):
+            self._required_encryption_context = {}
+            for (key, value) in decryption_materials.encryption_context.items():
+                if key in decryption_materials.required_encryption_context_keys:
+                    self._required_encryption_context[key] = value
+        else:
+            self._required_encryption_context = None
+
         if decryption_materials.verification_key is None:
             self.verifier = None
         else:
-            self.verifier = Verifier.from_key_bytes(
-                algorithm=header.algorithm, key_bytes=decryption_materials.verification_key
-            )
+            # MPL verification key is NOT key bytes; it is bytes of the compressed point.
+            # If the underlying CMM is from the MPL, load bytes from encoded point.
+            if (_HAS_MPL
+                    and isinstance(self.config.materials_manager, CryptoMaterialsManagerFromMPL)):
+                self.verifier = Verifier.from_encoded_point(
+                    algorithm=header.algorithm,
+                    encoded_point=base64.b64encode(decryption_materials.verification_key)
+                )
+            else:
+                self.verifier = Verifier.from_key_bytes(
+                    algorithm=header.algorithm, key_bytes=decryption_materials.verification_key
+                )
         if self.verifier is not None:
             self.verifier.update(raw_header)
 
@@ -847,9 +1093,11 @@ class StreamDecryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
                     "message. Halting processing of this message."
                 )
 
-        validate_header(header=header, header_auth=header_auth, raw_header=raw_header, data_key=self._derived_data_key)
-
-        return header, header_auth
+        return self._validate_parsed_header(
+            header=header,
+            header_auth=header_auth,
+            raw_header=raw_header,
+        )
 
     def _prep_non_framed(self):
         """Prepare the opening data for a non-framed message."""
