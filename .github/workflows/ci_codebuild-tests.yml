@@ -1,0 +1,48 @@
+name: AWS CodeBuild CI
+
+on:
+  pull_request:
+  push:
+  # Run once a day
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  codebuild-tests:
+    name: AWS CodeBuild CI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python:
+          - python_version: "38"
+            image: "aws/codebuild/standard:5.0"
+          - python_version: "39"
+            image: "aws/codebuild/standard:5.0"
+          - python_version: "310"
+            image: "aws/codebuild/standard:6.0"
+          - python_version: "311"
+            image: "aws/codebuild/standard:7.0"
+          - python_version: "312"
+            image: "aws/codebuild/standard:7.0"
+        codebuild_file_name:
+          - "awses_local.yml"
+          - "examples.yml"
+          - "integ.yml"
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 4200
+      - name: Run python-${{ matrix.python.python_version }} ${{ matrix.codebuild_file_name }}
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 70
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py${{ matrix.python.python_version }}/${{ matrix.codebuild_file_name }}
+          image-override: ${{ matrix.python.image }}
