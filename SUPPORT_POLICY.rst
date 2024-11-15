@@ -33,5 +33,9 @@ This table describes the current support status of each major version of the AWS
       - General Availability 
       -
       -
+    * - 4.x
+      - General Availability 
+      -
+      -
 
 .. _AWS SDKs and Tools Maintenance Policy: https://docs.aws.amazon.com/sdkref/latest/guide/maint-policy.html#version-life-cycle
