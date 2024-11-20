@@ -40,7 +40,7 @@ class HalfSigningCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFromMPL):
 
     wrapped_default_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManagerFromMPL))
 
-    def __init__(self, master_key_provider):
+    def __init__(self, master_key_provider):  # pylint: disable=super-init-not-called
         """Create a new CMM that wraps a the given CMM."""
         mpl = AwsCryptographicMaterialProviders(MaterialProvidersConfig())
         mpl_cmm = mpl.create_default_cryptographic_materials_manager(
@@ -89,7 +89,7 @@ class HalfSigningEncryptionMaterialsFromMPL(EncryptionMaterialsFromMPL):
 
     _underlying_materials: EncryptionMaterialsFromMPL
 
-    def __init__(self, underlying_materials):
+    def __init__(self, underlying_materials):  # pylint: disable=super-init-not-called
         """Create a HalfSigningEncryptionMaterialsFromMPL wrapper
         around underlying_materials.
         """
@@ -159,7 +159,7 @@ class ProviderInfoChangingCryptoMaterialsManagerFromMPL(CryptoMaterialsManagerFr
     wrapped_cmm = attr.ib(validator=attr.validators.instance_of(CryptoMaterialsManager))
     new_provider_info = attr.ib(validator=attr.validators.instance_of(six.string_types))
 
-    def __init__(self, materials_manager, new_provider_info):
+    def __init__(self, materials_manager, new_provider_info):  # pylint: disable=super-init-not-called
         """Create a new CMM that wraps a the given CMM."""
         self.wrapped_cmm = materials_manager
         self.new_provider_info = new_provider_info
