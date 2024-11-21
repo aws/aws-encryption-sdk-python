@@ -23,6 +23,8 @@ phases:
       python: 3.12
   build:
     commands:
+      # Build Python MPL TestVector runner from source      
+      - sh test_vector_handlers/scripts/install_mpl_test_vector_runner.sh
       - cd /root/.pyenv/plugins/python-build/../.. && git pull && cd -
       - pyenv install --skip-existing 3.12.0
       - pyenv local 3.12.0

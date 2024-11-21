@@ -1,1 +1,1 @@
-aws-cryptography-internal-mpl-testvectors @ git+https://github.com/aws/aws-cryptographic-material-providers-library.git@python-main-with-dafny-code#subdirectory=TestVectorsAwsCryptographicMaterialProviders/runtimes/python
+aws-cryptographic-material-providers==1.7.4

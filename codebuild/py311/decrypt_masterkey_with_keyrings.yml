@@ -18,6 +18,8 @@ phases:
       python: 3.11
   pre_build:
     commands:
+      # Build Python MPL TestVector runner from source      
+      - sh test_vector_handlers/scripts/install_mpl_test_vector_runner.sh
       # Download previously generated vectors
       - aws s3 cp s3://generated-vectors-artifacts-bucket/$CODEBUILD_RESOLVED_SOURCE_VERSION/311_masterkey.zip 311_masterkey.zip
       - unzip 311_masterkey.zip

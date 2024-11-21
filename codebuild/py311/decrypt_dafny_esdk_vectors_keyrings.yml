@@ -22,6 +22,8 @@ phases:
       python: 3.11
   pre_build:
     commands:
+      # Build Python MPL TestVector runner from source      
+      - sh test_vector_handlers/scripts/install_mpl_test_vector_runner.sh
       # Fetch test vectors from Dafny ESDK's most recent run
       # (Assuming the first result is most recent; seems to be correct...)
       - |
