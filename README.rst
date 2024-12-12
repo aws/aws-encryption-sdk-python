@@ -48,7 +48,7 @@ Recommended Prerequisites
 Installation
 ============
 
-.. note::
+.. notes::
 
    If you have not already installed `cryptography`_, you might need to install additional prerequisites as
    detailed in the `cryptography installation guide`_ for your operating system.
