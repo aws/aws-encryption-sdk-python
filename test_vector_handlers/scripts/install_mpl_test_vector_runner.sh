@@ -22,4 +22,5 @@ export PATH="$PWD/dafny:$PATH"
 
 # Build MPL test vector runner from source
 cd aws-cryptographic-material-providers-library/TestVectorsAwsCryptographicMaterialProviders/
+sed -i 's/^\(requires = \["poetry-core"\]\)$/requires = \["poetry-core<2.0.0"\]/' runtimes/python/pyproject.toml
 make transpile_python
