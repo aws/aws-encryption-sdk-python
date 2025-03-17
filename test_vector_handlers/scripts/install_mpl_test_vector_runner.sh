@@ -11,8 +11,8 @@ cd "$(dirname "$0")"
 export mplVersion=$(grep 'aws-cryptographic-material-providers==' ../requirements_mpl.txt | sed -E 's/.*==(.+)/\1/')
 
 # Clone MPL repo to get test vectors runner source code and the Dafny version to use
-git clone --branch v$mplVersion --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
-# git clone --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
+# git clone --branch v$mplVersion --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
+git clone --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
 
 # Download Dafny to build the test vector runner; get Dafny version from ESDK's project.properties file
 export dafnyVersion=$(grep '^dafnyVersion=' aws-cryptographic-material-providers-library/project.properties | cut -d '=' -f 2)
@@ -22,6 +22,4 @@ export PATH="$PWD/dafny:$PATH"
 
 # Build MPL test vector runner from source
 cd aws-cryptographic-material-providers-library/TestVectorsAwsCryptographicMaterialProviders/
-sed -i 's/{ path .*}.*/"1.7.4"/' runtimes/python/pyproject.toml
-sed -i 's/^\(requires = \["poetry-core"\]\)$/requires = \["poetry-core<2.0.0"\]/' runtimes/python/pyproject.toml
 make transpile_python
