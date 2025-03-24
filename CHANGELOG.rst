@@ -2,6 +2,22 @@
 Changelog
 *********
 
+4.0.1 -- 2025-03-XX
+
+Fixes
+-----------
+* fix: Improve header serialization
+  `#TODO <https://github.com/aws/aws-encryption-sdk-python/pull/TODO>`_
+  ESDK-Python <4.0.1 would truncate non-ASCII key provider IDs it wrote to message headers.
+  If a Raw or Custom MasterKeyProvider or Keyring supplied a non-ASCII key provider ID / key namespace, 
+  ESDK-Python would truncate the the key provider ID it wrote to the message's header.
+  The message can be decrypted by replacing the truncated provider ID with the expected provider ID in decryption code.
+  Contact AWS for any questions about this approach.
+
+Maintenance
+-----------
+* deps: Extend supported `MPL`_ version to include 1.9.1
+
 4.0.0 -- 2024-10-29
 ===================
 
@@ -425,6 +441,7 @@ Minor
 ===================
 * Initial public release
 
+.. _MPL: https://github.com/aws/aws-cryptographic-material-providers-library
 .. _breaking changes in attrs 17.1.0: https://attrs.readthedocs.io/en/stable/changelog.html
 .. _tox: https://tox.readthedocs.io/en/latest/
 .. _pylint: https://www.pylint.org/

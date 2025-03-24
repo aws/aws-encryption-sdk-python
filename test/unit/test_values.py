@@ -230,6 +230,49 @@ VALUES["serialized_final_frame"] = b"".join(
         VALUES["final_frame_base"].tag,
     ]
 )
+# This is a valid frame from a ESDK-.NET-encrypted message.
+# ESDK Python versions before v4.0.0 would raise a SerializationError when deserializing this frame
+# because its frame length (512; the b"\x00\x00\x02\x00" string)
+# equals the configured frame length.
+# In other ESDK implementations, the final frame length would never equal the frame length
+# because they would append an empty final frame.
+# Both are valid implementations of the ESDK specification,
+# and the ESDK-Python must support this case.
+VALUES["serialized_final_frame_512_length"] = b"".join(
+    [
+        b"\xff\xff\xff\xff",
+        b"\x00\x00\x00\x14",
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14',
+        b"\x00\x00\x02\x00",
+        b'''\x87r+k7 \xc7\xc3\xbf)T.8,}\xc5a.H]\x16/08k2
+        )\xb5QB\xccP\xc2\xc6\xeanf\x06Z7\xbb\xcd\x87L\xa6
+        ~~\xdc\xab~\x0e\xf6\x05\n\xa9\x94X[\xb8En?x$\x11
+        \x10\x84g0i\xeai\xf9\x8c\xe6}\xc3\xa1Gig\xbdA\x1an
+        \x1b\x9d\xf1\rW\xc8\xad|\x04hSt\x10\xc7\x0e\'\x8f
+        \xe8\x94\x9d\xdb\x82\xdb"\x95\xbc\xf5\xc5\xd0\xddQ
+        \xba\xaa\xbf6\x1e\xd8\xffB\xed\xee\xda1\x15\xf6=x
+        \xe14\xe7\xf5\xb7t\x10\x11\xa4!,!\xfa\xc7\xf1\t\xf7
+        \xc3X?eI\xcdk\xf3\xb5\x80b\xdd;*\xe9\x9c\xd5\x83[\xc4c
+        \xe4[mA\x87\xd9\x94g\xd6\\<\xd1\xff\xcc<\xef\xe2\xbc\xda>
+        \xda|\xa1L\xd1\xf4u\x07Y\x13\xa3\xd4\x15\x1fS\x98\x00^
+        \x1d^\xcdu\x17\xc8.\xfb\x9d\xaaU\xbf\x8f\xa96%YPX\xe6
+        \xf5\\\x141\xe5\xdd\x9a,\xc7d\xca\xffQ\x02:\xd87s:\x9a
+        \xdf\xd5\'\xf0!\x13\xafuU\xf7w\x15\xbd\xecS \xf2h\xa4
+        \xdd\xfb9\xbb\xb3\xd7?3\xc0\xeed\x0e\x17\x1b\xccN\xf9)s
+        \xd1\x97\x84\xb6\xce5\xca\x9b\xde\xa9\x0e$>x\xd9\x9cD=
+        \xd5\xa3\xa1qb#\x8c\xc1\x81Nv\x8dA0\'{~\x1c\xf1?\n\x7fAX\x9f,
+        \xe1\xe6d\xc5\xed\x9e\xa9o\x1bpp\xac\x1b\x03P\xd8\xae\xd6\xf6
+        \xaca;N\xd6C\x08\x99!\x0bU8\x85(g\xe6\x8fD\xf7\x19\xb0]4
+        \x19hB\x15\xa7\xee\xd8\xc0\xe9D\x850\xb6\x05\xd1\xa3`%\xcb
+        \xfb\x88&"\xdfnm\xa6\xf1X\xc4\x84\x1c\xc3\xe8]\x05mh$\xff]=
+        \xab\xa2p\x8e\x82:U\xef\xf3\x86X\xe16\x1f\xc7\x7f\x8dv\x1a
+        \xe4\r5\x8a\xea\x90\xb2\x1cA(\x9b\xedyT0\xd4h\tJ\xa4<\x07C9
+        \xa3a]\x7f\x17Ak\x1d\xb9gA\x04\xbaq\xe5(y-\xc4!\x87\xa83
+        \xdd\xf3\xea\xa7\x12X\xb6l\x98\xdf,\xc8\xe6\x9f7\xb0\xcd
+        \xb3\x9a\xf4\xe7a"H\xd9L\xd7.\x0f\x7f1W''',
+        b'XK#8\xb3\xab\x07\x11\x94\xf7\xac\xea\xd0g\x9b#',
+    ]
+)
 VALUES["serialized_final_frame_bad_length"] = b"".join(
     [
         b"\xff\xff\xff\xff",
@@ -360,6 +403,25 @@ VALUES["deserialized_header_frame_huge_frame"] = MessageHeader(
     content_aad_length=0,
     header_iv_length=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384.iv_len,
     frame_length=2 ** 16,
+)
+VALUES["deserialized_header_frame_512_frame"] = MessageHeader(
+    version=SerializationVersion.V1,
+    type=ObjectType.CUSTOMER_AE_DATA,
+    algorithm=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,
+    message_id=VALUES["message_id"],
+    encryption_context=VALUES["updated_encryption_context"],
+    encrypted_data_keys=set(
+        [
+            EncryptedDataKey(
+                key_provider=VALUES["data_keys"][0].key_provider,
+                encrypted_data_key=VALUES["data_keys"][0].encrypted_data_key,
+            )
+        ]
+    ),
+    content_type=ContentType.FRAMED_DATA,
+    content_aad_length=0,
+    header_iv_length=Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384.iv_len,
+    frame_length=512,
 )
 VALUES["deserialized_header_small_frame"] = MessageHeader(
     version=SerializationVersion.V1,

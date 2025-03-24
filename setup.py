@@ -39,11 +39,8 @@ setup(
     keywords="aws-encryption-sdk aws kms encryption",
     license="Apache License 2.0",
     install_requires=get_requirements(),
-    # pylint: disable=fixme
-    # TODO-MPL: Point at PyPI once MPL is released.
-    # This blocks releasing ESDK-Python MPL integration.
     extras_require={
-        "MPL": ["aws-cryptographic-material-providers==1.7.4"],
+        "MPL": ["aws-cryptographic-material-providers<=1.9.1"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
