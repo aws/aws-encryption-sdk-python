@@ -36,7 +36,7 @@ phases:
         MOST_RECENT_RUN_DOWNLOAD_URL=$(curl -H "Accept: application/vnd.github+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          "https://api.github.com/repos/aws/aws-encryption-sdk/actions/runs/$MOST_RECENT_RUN_ID/artifacts?name=ubuntu-22.04_latest_vector_artifact" \
+          "https://api.github.com/repos/aws/aws-encryption-sdk/actions/runs/$MOST_RECENT_RUN_ID/artifacts?name=ubuntu-22.04_vector_artifact" \
           | jq '.artifacts[0].archive_download_url')
       - |
         echo "DEBUG: Fetching artifact at $MOST_RECENT_RUN_DOWNLOAD_URL"
@@ -44,9 +44,9 @@ phases:
         curl -L -H "Accept: application/vnd.github+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          $(echo $MOST_RECENT_RUN_DOWNLOAD_URL | tr -d '"') -o ubuntu-22.04_latest_vector_artifact.zip
+          $(echo $MOST_RECENT_RUN_DOWNLOAD_URL | tr -d '"') -o ubuntu-22.04_vector_artifact.zip
       # This unzips to `net41.zip`.
-      - unzip ubuntu-22.04_latest_vector_artifact
+      - unzip ubuntu-22.04_vector_artifact
       # This unzips to `net41/`.
       - unzip net41.zip -d net41
   build:
