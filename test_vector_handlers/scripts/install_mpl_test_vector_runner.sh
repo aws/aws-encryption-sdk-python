@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 export mplVersion=$(grep 'aws-cryptographic-material-providers==' ../requirements_mpl.txt | sed -E 's/.*==(.+)/\1/')
 
 # Clone MPL repo to get test vectors runner source code and the Dafny version to use
-# git clone --branch v$mplVersion --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git 
+# git clone --branch v$mplVersion --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
 git clone --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
 
 # Download Dafny to build the test vector runner; get Dafny version from ESDK's project.properties file
