@@ -18,7 +18,7 @@ Fixes
 
 Maintenance
 -----------
-* deps: Extend supported `MPL`_ version to include 1.10.0
+* deps: Extend supported `MPL`_ versions to include 1.10.0
 
 4.0.0 -- 2024-10-29
 ===================
