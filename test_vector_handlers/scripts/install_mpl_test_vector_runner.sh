@@ -8,7 +8,7 @@
 cd "$(dirname "$0")"
 
 # Get highest MPL version specified in requirements.txt
-export mplVersion=$(grep 'aws-cryptographic-material-providers==' ../requirements_mpl.txt | sed -E 's/.*==//' | tr ',' '\n' | sed -E 's/^[^0-9]*//' | sort -V | tail -n1)
+export mplVersionMax=$(grep 'aws-cryptographic-material-providers' ../requirements_mpl.txt | tr ',' '\n' | grep '<=' | sed -E 's/[^0-9]*//')
 
 # Clone MPL repo to get test vectors runner source code and the Dafny version to use
 git clone --branch v$mplVersion --recurse-submodules https://github.com/aws/aws-cryptographic-material-providers-library.git
