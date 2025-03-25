@@ -246,7 +246,7 @@ sharing entries in that cache across threads needs to be done carefully
 
 **Important:** Components from the `AWS Cryptographic Material Providers Library (MPL)`_
 have separate thread safety considerations.
-For more information, see the note on thread safety in that project's README (TODO-MPL: link)
+For more information, see the note on thread safety in that project's `README <https://github.com/aws/aws-cryptographic-material-providers-library/blob/main/AwsCryptographicMaterialProviders/runtimes/python/README.rst#thread-safety>`_.
 
 
 .. _AWS Encryption SDK: https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/introduction.html
