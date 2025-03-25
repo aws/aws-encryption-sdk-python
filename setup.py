@@ -40,7 +40,7 @@ setup(
     license="Apache License 2.0",
     install_requires=get_requirements(),
     extras_require={
-        "MPL": ["aws-cryptographic-material-providers<=1.9.1"],
+        "MPL": ["aws-cryptographic-material-providers<=1.10.0"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",

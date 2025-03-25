@@ -16,7 +16,7 @@ Fixes
 
 Maintenance
 -----------
-* deps: Extend supported `MPL`_ version to include 1.9.1
+* deps: Extend supported `MPL`_ version to include 1.10.0
 
 4.0.0 -- 2024-10-29
 ===================
@@ -39,6 +39,7 @@ Breaking Changes
   However, messages that are constructed with the required EC CMM are not backward compatible with ESDK <4.0.0,
   as no version of ESDK <4.0.0 supports reading messages encrypted with the required EC CMM.
   A message that is encrypted with the required EC CMM from the MPL must be decrypted with a CMM from the MPL.
+  For more information on using the required EC CMM, see `AWS Documentation https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/configure.html#config-required-encryption-context-cmm`_.
 
 Fixes
 -----------
