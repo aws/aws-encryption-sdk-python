@@ -2,12 +2,12 @@
 Changelog
 *********
 
-4.0.1 -- 2025-03-XX
+4.0.1 -- 2025-03-26
 
 Fixes
 -----------
 * fix: Improve header serialization
-  `#TODO <https://github.com/aws/aws-encryption-sdk-python/pull/TODO>`_
+  `#747 <https://github.com/aws/aws-encryption-sdk-python/pull/747>`_
   ESDK-Python <4.0.1 would truncate non-ASCII key provider IDs it wrote to message headers.
   If a Raw or Custom MasterKeyProvider or Keyring supplied a non-ASCII key provider ID / key namespace, 
   ESDK-Python would truncate the the key provider ID it wrote to the message's header.

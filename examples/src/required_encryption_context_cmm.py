@@ -99,7 +99,7 @@ def encrypt_and_decrypt_with_keyring(
     #    Required Encryption Context CMM.
     reproduced_encryption_context: Dict[str, str] = {
         "requiredKey1": "requiredValue1",
-        "requiredKey2": "requiredValue1",
+        "requiredKey2": "requiredValue2",
     }
 
     # 8. Decrypt the data
