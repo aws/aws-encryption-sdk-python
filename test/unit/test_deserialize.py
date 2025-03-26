@@ -265,6 +265,16 @@ class TestDeserialize(object):
         assert test_body == VALUES["deserialized_body_final_frame_single"]
         assert test_final
 
+    def test_GIVEN_final_frame_content_length_equals_header_frame_length_WHEN_deserialize_header_THEN_no_error(self):
+        """Validate that the deserialize_body_frame function
+        behaves as expected for a valid final body frame
+        where the final frame length equals the header frame length.
+        """
+        stream = io.BytesIO(VALUES["serialized_final_frame_512_length"])
+        aws_encryption_sdk.internal.formatting.deserialize.deserialize_frame(
+            stream=stream, header=VALUES["deserialized_header_frame_512_frame"]
+        )
+
     def test_deserialize_body_frame_final_invalid_final_frame_length(self):
         """Validate that the deserialize_body_frame function
         behaves as expected for a valid final body frame.

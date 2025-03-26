@@ -35,16 +35,30 @@ def serialize_encrypted_data_key(encrypted_data_key):
         "H"  # encrypted data key length
         "{enc_data_key_len}s"  # encrypted data key
     )
+    # ESDK-Python <4.0.1 incorrectly computed len_key_provider_id_bytes for non-ASCII key provider IDs.
+    # len_key_provider_id_bytes was computed as the length of the key provider ID as a string instead of
+    #   the length of the key provider ID as UTF-8 bytes.
+    # If a non-ASCII key provider ID were supplied, the key provider ID as UTF-8 bytes written to the header
+    #   would be truncated, and attempting to decrypt the message would result in a deserialization error.
+    # The message can be decrypted by replacing the truncated provider ID with the expected provider ID
+    #   in decryption code.
+    # Contact AWS for any questions about this approach.
+    # ESDK-Python >=4.0.1 corrects the serialization logic and writes the correct length and expected bytes
+    #   to the message header.
+    key_provider_id_bytes = to_bytes(encrypted_data_key.key_provider.provider_id)
+    len_key_provider_id_bytes = len(key_provider_id_bytes)
+    key_info_bytes = to_bytes(encrypted_data_key.key_provider.key_info)
+    len_key_info_bytes = len(key_info_bytes)
     return struct.pack(
         encrypted_data_key_format.format(
-            provider_id_len=len(encrypted_data_key.key_provider.provider_id),
-            provider_info_len=len(encrypted_data_key.key_provider.key_info),
+            provider_id_len=len_key_provider_id_bytes,
+            provider_info_len=len_key_info_bytes,
             enc_data_key_len=len(encrypted_data_key.encrypted_data_key),
         ),
-        len(encrypted_data_key.key_provider.provider_id),
-        to_bytes(encrypted_data_key.key_provider.provider_id),
-        len(encrypted_data_key.key_provider.key_info),
-        to_bytes(encrypted_data_key.key_provider.key_info),
+        len_key_provider_id_bytes,
+        key_provider_id_bytes,
+        len_key_info_bytes,
+        key_info_bytes,
         len(encrypted_data_key.encrypted_data_key),
         encrypted_data_key.encrypted_data_key,
     )
