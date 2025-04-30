@@ -18,6 +18,8 @@ phases:
       python: 3.12
   pre_build:
     commands:
+      # Build Python MPL TestVector runner from source      
+      - sh test_vector_handlers/scripts/install_mpl_test_vector_runner.sh
       # Download "golden manifest"
       - curl -L -o python-2.3.0.zip https://github.com/awslabs/aws-encryption-sdk-test-vectors/raw/master/vectors/awses-decrypt/python-2.3.0.zip
       - unzip python-2.3.0.zip -d python-2.3.0

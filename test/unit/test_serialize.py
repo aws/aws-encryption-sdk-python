@@ -1,9 +1,13 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for aws_encryption_sdk.internal.formatting.serialize"""
+import io
+import struct
+
 import pytest
 from mock import MagicMock, patch, sentinel
 
+import aws_encryption_sdk.internal.formatting.deserialize
 import aws_encryption_sdk.internal.formatting.serialize
 from aws_encryption_sdk.exceptions import SerializationError
 from aws_encryption_sdk.identifiers import ContentAADString, SerializationVersion
@@ -14,6 +18,8 @@ from aws_encryption_sdk.structures import EncryptedDataKey, MasterKeyInfo
 from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
+
+provider_input_strings = ["", "abc", "𐀂", "abc𐀂", "𐀂abc", "秘密代码", "abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
 
 
 @pytest.mark.parametrize(
@@ -79,6 +85,146 @@ class TestSerialize(object):
         self.mock_serialize_acc_patcher.stop()
         self.mock_encrypt_patcher.stop()
         self.mock_valid_frame_length_patcher.stop()
+
+    @pytest.mark.parametrize("provider_id", provider_input_strings)
+    @pytest.mark.parametrize("provider_info", provider_input_strings)
+    def test_GIVEN_valid_encrypted_data_key_WHEN_serialize_encrypted_data_key_THEN_deserialize_equals_input(
+        self,
+        provider_id,
+        provider_info,
+    ):
+        # Given: Some valid encrypted data key
+        key_provider = MasterKeyInfo(provider_id=provider_id, key_info=provider_info)
+        encrypted_data_key = EncryptedDataKey(
+            key_provider=key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+        )
+
+        # When: serialize_encrypted_data_key
+        serialized_edk = aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+            encrypted_data_key=encrypted_data_key
+        )
+
+        # Then: Can deserialize the value
+        serialized_edks = bytes()
+        # Hardcode to have only 1 EDK
+        serialized_edks += struct.pack(">H", 1)
+        serialized_edks += serialized_edk
+        # Deserialization must not raise exception
+        deserialized = aws_encryption_sdk.internal.formatting.deserialize.deserialize_encrypted_data_keys(
+            stream=io.BytesIO(serialized_edks)
+        )
+        assert deserialized == {encrypted_data_key}
+        assert len(deserialized) == 1
+        deserialized_edk = list(deserialized)[0]
+        assert deserialized_edk.key_provider == encrypted_data_key.key_provider
+        assert deserialized_edk.key_provider.provider_id == encrypted_data_key.key_provider.provider_id
+        assert deserialized_edk.key_provider.key_info == encrypted_data_key.key_provider.key_info
+        assert deserialized_edk.encrypted_data_key == encrypted_data_key.encrypted_data_key
+
+    @pytest.mark.parametrize("edk_1_provider_id", provider_input_strings)
+    @pytest.mark.parametrize("edk_1_provider_info", provider_input_strings)
+    @pytest.mark.parametrize("edk_2_provider_id", provider_input_strings)
+    @pytest.mark.parametrize("edk_2_provider_info", provider_input_strings)
+    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(  # noqa pylint: disable=line-too-long
+        self,
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info,
+    ):
+        # pylint: disable=too-many-locals
+        # Given: Two distinct valid encrypted data keys
+        edk_1_key_provider = MasterKeyInfo(provider_id=edk_1_provider_id, key_info=edk_1_provider_info)
+        encrypted_data_key_1 = EncryptedDataKey(
+            key_provider=edk_1_key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+        )
+
+        edk_2_key_provider = MasterKeyInfo(provider_id=edk_2_provider_id, key_info=edk_2_provider_info)
+        encrypted_data_key_2 = EncryptedDataKey(
+            key_provider=edk_2_key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+        )
+
+        # Must be distinct
+        if encrypted_data_key_1 == encrypted_data_key_2:
+            return
+
+        # When: serialize_encrypted_data_key
+        serialized_edk_1 = aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+            encrypted_data_key=encrypted_data_key_1
+        )
+        serialized_edk_2 = aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+            encrypted_data_key=encrypted_data_key_2
+        )
+
+        # Then: Can deserialize the value
+        serialized_edks = bytes()
+        # Hardcode to have only 2 EDKs
+        serialized_edks += struct.pack(">H", 2)
+        serialized_edks += serialized_edk_1
+        serialized_edks += serialized_edk_2
+        # Deserialization must not raise exception
+        deserialized = aws_encryption_sdk.internal.formatting.deserialize.deserialize_encrypted_data_keys(
+            stream=io.BytesIO(serialized_edks)
+        )
+        assert deserialized == {encrypted_data_key_1, encrypted_data_key_2}
+        assert len(deserialized) == 2
+        deserialized_edk_list = list(deserialized)
+
+        deserialized_edk_some = deserialized_edk_list[0]
+        deserialized_edk_other = deserialized_edk_list[1]
+
+        assert (
+            (deserialized_edk_some == encrypted_data_key_1 and deserialized_edk_other == encrypted_data_key_2)
+            or (deserialized_edk_some == encrypted_data_key_2 and deserialized_edk_other == encrypted_data_key_1)
+        )
+
+    def test_GIVEN_invalid_encrypted_data_key_WHEN_serialize_THEN_raises_UnicodeEncodeError(
+        self,
+    ):
+        # Given: Some invalid encrypted data key
+
+        # This is invalid because "\ud800\udc02" cannot be encoded to UTF-8.
+        # This value MUST be able to be encoded to UTF-8, or serialization will fail.
+        invalid_provider_string = "\ud800\udc02"
+
+        # Then: raises UnicodeEncodeError
+        with pytest.raises(UnicodeEncodeError):
+            key_provider = MasterKeyInfo(provider_id=invalid_provider_string, key_info=invalid_provider_string)
+
+            encrypted_data_key = EncryptedDataKey(
+                key_provider=key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+            )
+
+            # When: serialize_encrypted_data_key
+            aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+                encrypted_data_key=encrypted_data_key
+            )
+
+        # Then: raises UnicodeEncodeError
+        with pytest.raises(UnicodeEncodeError):
+            key_provider = MasterKeyInfo(provider_id=invalid_provider_string, key_info="abc")
+
+            encrypted_data_key = EncryptedDataKey(
+                key_provider=key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+            )
+
+            # When: serialize_encrypted_data_key
+            aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+                encrypted_data_key=encrypted_data_key
+            )
+
+        # Then: raises UnicodeEncodeError
+        with pytest.raises(UnicodeEncodeError):
+            key_provider = MasterKeyInfo(provider_id="abc", key_info=invalid_provider_string)
+
+            encrypted_data_key = EncryptedDataKey(
+                key_provider=key_provider, encrypted_data_key=VALUES["encrypted_data_key"]
+            )
+
+            # When: serialize_encrypted_data_key
+            aws_encryption_sdk.internal.formatting.serialize.serialize_encrypted_data_key(
+                encrypted_data_key=encrypted_data_key
+            )
 
     def test_serialize_header_v1(self):
         """Validate that the _serialize_header function

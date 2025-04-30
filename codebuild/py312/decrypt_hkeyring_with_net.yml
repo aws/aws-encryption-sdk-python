@@ -25,15 +25,15 @@ phases:
       - export DAFNY_AWS_ESDK_TEST_VECTOR_MANIFEST_PATH="${PWD}/312_hkeyring_reccmm_manifest/manifest.json"
       
       # Clone SDK-Dafny repo to get test vectors runner source code and the Dafny version to use
-      - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk-dafny.git
+      - git clone --recurse-submodules https://github.com/aws/aws-encryption-sdk.git
       # Download Dafny to build the test vector runner; get Dafny version from ESDK's project.properties file
-      - export dafnyVersion=$(grep '^dafnyVersion=' aws-encryption-sdk-dafny/AwsEncryptionSDK/project.properties | cut -d '=' -f 2)
+      - export dafnyVersion=$(grep '^dafnyVersion=' aws-encryption-sdk/project.properties | cut -d '=' -f 2)
       - curl https://github.com/dafny-lang/dafny/releases/download/v$dafnyVersion/dafny-$dafnyVersion-x64-ubuntu-20.04.zip  -L -o dafny.zip
       - unzip -qq dafny.zip && rm dafny.zip
       - export PATH="$PWD/dafny:$PATH"
 
       # Build MPL test vector runner from source
-      - cd aws-encryption-sdk-dafny/mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - cd aws-encryption-sdk/mpl/TestVectorsAwsCryptographicMaterialProviders/
       - make transpile_net
 
       # Change ESDK TestVectors project to reference the published .NET ESDK

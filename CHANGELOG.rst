@@ -2,6 +2,24 @@
 Changelog
 *********
 
+4.0.1 -- 2025-03-26
+===================
+
+Fixes
+-----------
+* fix: Improve header serialization
+  `#747 <https://github.com/aws/aws-encryption-sdk-python/pull/747>`_
+
+  ESDK-Python <4.0.1 would truncate non-ASCII key provider IDs it wrote to message headers.
+  If a Raw or Custom MasterKeyProvider or Keyring supplied a non-ASCII key provider ID / key namespace,
+  ESDK-Python would truncate the the key provider ID it wrote to the message's header.
+  The message can be decrypted by replacing the truncated provider ID with the expected provider ID in decryption code.
+  Contact AWS for any questions about this approach.
+
+Maintenance
+-----------
+* deps: Extend supported `MPL`_ versions to include v1.10.0
+
 4.0.0 -- 2024-10-29
 ===================
 
@@ -23,6 +41,7 @@ Breaking Changes
   However, messages that are constructed with the required EC CMM are not backward compatible with ESDK <4.0.0,
   as no version of ESDK <4.0.0 supports reading messages encrypted with the required EC CMM.
   A message that is encrypted with the required EC CMM from the MPL must be decrypted with a CMM from the MPL.
+  For more information on using the required EC CMM, see `AWS Documentation <https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/configure.html#config-required-encryption-context-cmm>`_.
 
 Fixes
 -----------
@@ -425,6 +444,7 @@ Minor
 ===================
 * Initial public release
 
+.. _MPL: https://github.com/aws/aws-cryptographic-material-providers-library
 .. _breaking changes in attrs 17.1.0: https://attrs.readthedocs.io/en/stable/changelog.html
 .. _tox: https://tox.readthedocs.io/en/latest/
 .. _pylint: https://www.pylint.org/
