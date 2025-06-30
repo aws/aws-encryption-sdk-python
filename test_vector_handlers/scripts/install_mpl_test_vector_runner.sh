@@ -20,5 +20,7 @@ unzip -qq dafny.zip && rm dafny.zip
 export PATH="$PWD/dafny:$PATH"
 
 # Build MPL test vector runner from source
-cd aws-cryptographic-material-providers-library/TestVectorsAwsCryptographicMaterialProviders/
+cd aws-cryptographic-material-providers-library/
+make -C StandardLibrary setup_net # Without this the if-dafny-at-least command includes "Downloading ..." output
+cd TestVectorsAwsCryptographicMaterialProviders/
 make transpile_python
