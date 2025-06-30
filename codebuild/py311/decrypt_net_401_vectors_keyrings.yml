@@ -19,7 +19,7 @@ phases:
       python: 3.11
   pre_build:
     commands:
-      # Build Python MPL TestVector runner from source      
+      # Build Python MPL TestVector runner from source
       - sh test_vector_handlers/scripts/install_mpl_test_vector_runner.sh
       # Fetch ESDK .NET v4.0.1 Test Vectors
       - VECTOR_ZIP=$CODEBUILD_SRC_DIR/v4-Net-4.0.1.zip
