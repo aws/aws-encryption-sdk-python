@@ -9,7 +9,7 @@ Maintenance
 -----------
 * deps: Extend supported `MPL`_ versions to include v1.11.0
   `#763 <https://github.com/aws/aws-encryption-sdk-python/pull/763>`_
-  - v1.11.0 contains performance improvements for the hierarchical keyring and extends the range of supported `cryptography` versions.
+  * v1.11.0 contains performance improvements for the hierarchical keyring and extends the range of supported `cryptography` versions.
 
 4.0.1 -- 2025-03-26
 ===================
