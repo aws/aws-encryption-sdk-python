@@ -1,0 +1,45 @@
+name: Pull Request Workflow
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # Call each workflow with appropriate parameters
+  codebuild_batch:
+    uses: ./.github/workflows/ci_codebuild_batch.yml
+    secrets:
+      CI_AWS_ROLE_ARN: ${{ secrets.CI_AWS_ROLE_ARN }}
+  codebuild_tests:
+    uses: ./.github/workflows/ci_codebuild-tests.yml
+    secrets:
+      CI_AWS_ROLE_ARN: ${{ secrets.CI_AWS_ROLE_ARN }}
+  decrypt_oracle:
+    uses: ./.github/workflows/ci_decrypt-oracle.yaml
+  static_analysis:
+    uses: ./.github/workflows/ci_static-analysis.yaml
+  test_vector_handler:
+    uses: ./.github/workflows/ci_test-vector-handler.yaml
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
+      INTEG_AWS_SECRET_ACCESS_KEY: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
+  tests:
+    uses: ./.github/workflows/ci_tests.yaml
+  pr-ci-all-required:
+    if: always()
+    needs:
+      - codebuild_batch 
+      - codebuild_tests
+      - decrypt_oracle
+      - static_analysis
+      - test_vector_handler
+      - tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Verify all required jobs passed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

@@ -6,6 +6,12 @@ on:
   # Run once a day
   schedule:
     - cron: "0 0 * * *"
+  # Add workflow_call trigger
+  workflow_call:
+    # Define any secrets that need to be passed from the caller
+    secrets:
+      CI_AWS_ROLE_ARN:
+        required: true
 
 permissions:
   id-token: write

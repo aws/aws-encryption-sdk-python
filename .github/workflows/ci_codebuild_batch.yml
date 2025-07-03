@@ -1,11 +1,11 @@
 name: AWS CodeBuild Batch Workflow
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_call:
+    # Define any secrets that need to be passed from the caller
+    secrets:
+      CI_AWS_ROLE_ARN:
+        required: true
 
 permissions:
   id-token: write
