@@ -1,0 +1,73 @@
+version: 0.2
+
+env:
+  variables:
+    # Default VERSION if not provided externally
+    VERSION: 4.0.2
+    REGION: "us-west-2"
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: >-
+      arn:aws:kms:us-west-2:658956600833:key/b3537ef1-d8dc-4780-9f5a-55776cbb2f7f
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID_2: >-
+      arn:aws:kms:eu-central-1:658956600833:key/75414c93-5285-4b57-99c9-30c1cf0a22c2
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_1: >-
+      arn:aws:kms:us-west-2:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+    AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_MRK_KEY_ID_2: >-
+      arn:aws:kms:us-east-1:658956600833:key/mrk-80bd8ecdcd4342aebd84b7dc9da498a7
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - pip install "tox < 4.0"
+      - pip install --upgrade pip
+  build:
+    commands:
+      # Set initial retry count
+      - NUM_RETRIES=3
+      
+      # Run non-MPL-specific tests with the MPL installed
+      - |
+        while [ $NUM_RETRIES -gt 0 ]
+        do
+          VERSION=$VERSION tox -e validate-pypi-release
+          if [ $? -eq 0 ]; then
+            echo "Standard examples successful"
+            break
+          fi
+          NUM_RETRIES=$((NUM_RETRIES-1))
+          if [ $NUM_RETRIES -eq 0 ]; then
+            echo "All standard example attempts failed, stopping"
+            exit 1
+          else
+            echo "Standard examples failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
+          fi
+        done
+      
+      # Assume special role for MPL-specific tests
+      - echo "Running tests with special role for MPL features"
+      - TMP_ROLE=$(aws sts assume-role --role-arn "arn:aws:iam::370957321024:role/GitHub-CI-Public-ESDK-Python-Role-us-west-2" --role-session-name "CB-ValidateReleased")
+      - export TMP_ROLE
+      - export AWS_ACCESS_KEY_ID=$(echo "${TMP_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${TMP_ROLE}" | jq -r '.Credentials.SessionToken')
+      - aws sts get-caller-identity
+      
+      # Run MPL examples with a fresh retry count
+      - NUM_RETRIES=3
+      - |
+        while [ $NUM_RETRIES -gt 0 ]
+        do
+          VERSION=$VERSION tox -e validate-pypi-release-mpl
+          if [ $? -eq 0 ]; then
+            echo "MPL examples successful"
+            break
+          fi
+          NUM_RETRIES=$((NUM_RETRIES-1))
+          if [ $NUM_RETRIES -eq 0 ]; then
+            echo "All MPL example attempts failed, stopping"
+            exit 1
+          else
+            echo "MPL examples failed, retrying in 60 seconds; will retry $NUM_RETRIES more times" && sleep 60
+          fi
+        done

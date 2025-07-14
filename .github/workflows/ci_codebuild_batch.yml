@@ -1298,6 +1298,25 @@ jobs:
           buildspec-override: codebuild/py312/decrypt_golden_manifest_with_masterkey.yml
           image-override: aws/codebuild/standard:7.0
 
+  # Python Release Validation with examples as alternate
+  python_release_examples_validation:
+    name: Python Release Validation with Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/release/validate_with_examples.yml
+          image-override: aws/codebuild/standard:7.0
+
   # Code Coverage and Compliance jobs
   code_coverage:
     name: Code Coverage
