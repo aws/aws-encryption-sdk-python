@@ -17,6 +17,7 @@ phases:
   install:
     runtime-versions:
       python: 3.12
+      dotnet: 6.0
   pre_build:
     commands:
       # Build Python MPL TestVector runner from source      

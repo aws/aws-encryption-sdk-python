@@ -25,7 +25,6 @@ phases:
         fi
   build:
     commands:
-      - tox -e park
       - tox -e release
 
 batch:

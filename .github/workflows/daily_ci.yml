@@ -1,0 +1,39 @@
+# This workflow runs every weekday at 15:00 UTC (8AM PDT)
+name: Daily CI
+
+on:
+  schedule:
+    - cron: "00 15 * * 1-5"
+
+jobs:
+  codebuild_batch:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_codebuild_batch.yml
+    secrets:
+      CI_AWS_ROLE_ARN: ${{ secrets.CI_AWS_ROLE_ARN }}
+  codebuild_tests:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_codebuild-tests.yml
+    secrets:
+      CI_AWS_ROLE_ARN: ${{ secrets.CI_AWS_ROLE_ARN }}
+  decrypt_oracle:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_decrypt-oracle.yaml
+  static_analysis:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_static-analysis.yaml
+  test_vector_handler:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_test-vector-handler.yaml
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
+      INTEG_AWS_SECRET_ACCESS_KEY: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
+  tests:
+    # Don't run the cron builds on forks
+    if: github.event_name != 'schedule' || github.repository_owner == 'aws'
+    uses: ./.github/workflows/ci_tests.yaml

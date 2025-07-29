@@ -1,11 +1,11 @@
 name: AWS CodeBuild Batch Workflow
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_call:
+    # Define any secrets that need to be passed from the caller
+    secrets:
+      CI_AWS_ROLE_ARN:
+        required: true
 
 permissions:
   id-token: write
@@ -22,10 +22,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/integ.yml
@@ -40,10 +40,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/examples.yml
@@ -58,10 +58,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/decrypt_dafny_esdk_vectors.yml
@@ -76,10 +76,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/decrypt_net_401_vectors.yml
@@ -94,10 +94,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/encrypt_masterkey.yml
@@ -112,10 +112,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/generate_decrypt_vectors_masterkey.yml
@@ -131,10 +131,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/decrypt_masterkey_with_masterkey.yml
@@ -150,10 +150,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py38/decrypt_masterkey_with_js.yml
@@ -169,10 +169,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/integ.yml
@@ -187,10 +187,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/examples.yml
@@ -205,10 +205,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/decrypt_dafny_esdk_vectors.yml
@@ -223,10 +223,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/decrypt_net_401_vectors.yml
@@ -241,10 +241,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/encrypt_masterkey.yml
@@ -259,10 +259,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/generate_decrypt_vectors_masterkey.yml
@@ -278,10 +278,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/decrypt_masterkey_with_masterkey.yml
@@ -297,10 +297,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py39/decrypt_masterkey_with_js.yml
@@ -316,10 +316,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/integ.yml
@@ -334,10 +334,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/examples.yml
@@ -352,10 +352,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/decrypt_dafny_esdk_vectors.yml
@@ -370,10 +370,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/decrypt_net_401_vectors.yml
@@ -388,10 +388,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/encrypt_masterkey.yml
@@ -406,10 +406,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/generate_decrypt_vectors_masterkey.yml
@@ -425,10 +425,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/decrypt_masterkey_with_masterkey.yml
@@ -444,10 +444,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py310/decrypt_masterkey_with_js.yml
@@ -463,10 +463,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/integ.yml
@@ -481,10 +481,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/integ_mpl.yml
@@ -499,10 +499,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/performance_tests_mpl.yml
@@ -517,10 +517,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/examples.yml
@@ -535,10 +535,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/examples_mpl.yml
@@ -553,10 +553,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_dafny_esdk_vectors_masterkey.yml
@@ -571,10 +571,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_dafny_esdk_vectors_keyrings.yml
@@ -589,10 +589,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_net_401_vectors_masterkey.yml
@@ -607,10 +607,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_net_401_vectors_keyrings.yml
@@ -625,10 +625,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/encrypt_masterkey.yml
@@ -643,10 +643,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/encrypt_keyrings.yml
@@ -661,10 +661,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/generate_decrypt_vectors_masterkey.yml
@@ -680,10 +680,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_masterkey_with_masterkey.yml
@@ -699,10 +699,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_masterkey_with_keyrings.yml
@@ -718,10 +718,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_masterkey_with_js.yml
@@ -736,10 +736,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/generate_decrypt_vectors_keyrings.yml
@@ -755,10 +755,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_keyrings_with_masterkey.yml
@@ -774,10 +774,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_keyrings_with_keyrings.yml
@@ -793,10 +793,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_keyrings_with_js.yml
@@ -811,10 +811,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_golden_manifest_with_keyrings.yml
@@ -829,10 +829,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py311/decrypt_golden_manifest_with_masterkey.yml
@@ -848,10 +848,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/integ.yml
@@ -866,10 +866,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/integ_mpl.yml
@@ -884,10 +884,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/performance_tests_mpl.yml
@@ -902,10 +902,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/examples.yml
@@ -920,10 +920,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/examples_mpl.yml
@@ -938,10 +938,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_dafny_esdk_vectors_masterkey.yml
@@ -956,10 +956,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_dafny_esdk_vectors_keyrings.yml
@@ -974,10 +974,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_net_401_vectors_masterkey.yml
@@ -992,10 +992,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_net_401_vectors_keyrings.yml
@@ -1010,10 +1010,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/encrypt_masterkey.yml
@@ -1028,10 +1028,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/encrypt_keyrings.yml
@@ -1046,10 +1046,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/generate_decrypt_vectors_masterkey.yml
@@ -1065,10 +1065,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_masterkey_with_masterkey.yml
@@ -1084,10 +1084,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_masterkey_with_keyrings.yml
@@ -1103,10 +1103,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_masterkey_with_js.yml
@@ -1121,10 +1121,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/generate_decrypt_vectors_keyrings.yml
@@ -1140,10 +1140,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_keyrings_with_masterkey.yml
@@ -1159,10 +1159,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_keyrings_with_keyrings.yml
@@ -1178,10 +1178,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_keyrings_with_js.yml
@@ -1196,10 +1196,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/generate_hkeyring_decrypt_vectors.yml
@@ -1215,10 +1215,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_hkeyring_with_masterkey.yml
@@ -1234,10 +1234,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_hkeyring_with_keyrings.yml
@@ -1253,10 +1253,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_hkeyring_with_net.yml
@@ -1271,10 +1271,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_golden_manifest_with_keyrings.yml
@@ -1289,10 +1289,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py312/decrypt_golden_manifest_with_masterkey.yml
@@ -1308,10 +1308,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/coverage/coverage.yml
@@ -1325,10 +1325,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/coverage/coverage_mpl.yml
@@ -1343,10 +1343,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
           aws-region: us-west-2
-          role-duration-seconds: 4200
+          role-duration-seconds: 7200
       - name: Run CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 70
+        timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/compliance/compliance.yml
