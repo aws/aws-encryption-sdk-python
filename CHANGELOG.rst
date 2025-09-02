@@ -8,7 +8,7 @@ Changelog
 Maintenance
 -----------
 * deps: Extend supported `MPL`_ versions to include v1.11.1
-  `#763 <https://github.com/aws/aws-encryption-sdk-python/pull/763>`_
+  `#770 <https://github.com/aws/aws-encryption-sdk-python/pull/770>`_
 
   MPL v1.11.1 updates pytz version range to include 2025 releases.
 
