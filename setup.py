@@ -1,4 +1,5 @@
 """AWS Encryption SDK for Python."""
+
 import os
 import re
 
@@ -10,7 +11,9 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def read(*args):
     """Reads complete file contents."""
-    return open(os.path.join(HERE, *args), encoding="utf-8").read()  # pylint: disable=consider-using-with
+    return open(
+        os.path.join(HERE, *args), encoding="utf-8"
+    ).read()  # pylint: disable=consider-using-with
 
 
 def get_version():
@@ -40,7 +43,7 @@ setup(
     license="Apache License 2.0",
     install_requires=get_requirements(),
     extras_require={
-        "MPL": ["aws-cryptographic-material-providers>=1.7.4,<=1.11.0"],
+        "MPL": ["aws-cryptographic-material-providers>=1.7.4,<=1.11.1"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
