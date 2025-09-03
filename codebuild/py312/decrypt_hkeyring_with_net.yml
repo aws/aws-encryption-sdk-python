@@ -34,6 +34,7 @@ phases:
 
       # Build MPL test vector runner from source
       - cd aws-encryption-sdk/mpl/TestVectorsAwsCryptographicMaterialProviders/
+      - make setup_net
       - make transpile_net
 
       # Change ESDK TestVectors project to reference the published .NET ESDK
