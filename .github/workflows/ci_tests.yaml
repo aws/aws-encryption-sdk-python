@@ -71,7 +71,7 @@ jobs:
           git config --global core.longpaths true
 
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.architecture }}
@@ -92,7 +92,7 @@ jobs:
           - test-upstream-requirements-py311
     steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v6
           with:
             python-version: "3.11"
         - run: |
