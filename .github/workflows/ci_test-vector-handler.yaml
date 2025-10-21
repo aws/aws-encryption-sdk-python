@@ -9,6 +9,9 @@ on:
       INTEG_AWS_SECRET_ACCESS_KEY:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     # Leaving this defined but disabled
