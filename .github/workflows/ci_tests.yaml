@@ -22,7 +22,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-13
+          - macos-latest
         python:
           - 3.8
           - 3.9
@@ -50,7 +50,7 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-13
+          - os: macos-latest
             architecture: x86
           # MPL is not supported on <3.11
           - python: 3.7
