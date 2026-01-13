@@ -3,6 +3,7 @@
 
 import warnings
 import sys
+import pytest
 
 def test_unicode_warning():
     """Test that triggers Unicode in warnings system - matches actual test behavior"""
@@ -19,11 +20,12 @@ def test_unicode_warning():
     decoded = result.decode('utf-8')
     assert decoded == unicode_string
     
-    # Trigger a warning with Unicode content (this is what causes the crash)
+    # Trigger a warning with Unicode content (this is what causes the crash in pytest)
     warnings.warn(f"Test warning: {unicode_string}")
     
     print("Test completed successfully")
 
 if __name__ == "__main__":
-    test_unicode_warning()
+    # Run through pytest to trigger the actual crash
+    pytest.main([__file__, "-v"])
 
