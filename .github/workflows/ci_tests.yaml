@@ -73,9 +73,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install gettext (macOS Python 3.8 fix)
-        if: runner.os == 'macOS' && matrix.python == '3.8'
+        if: runner.os == 'macOS'
         run: brew install gettext
-        
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
