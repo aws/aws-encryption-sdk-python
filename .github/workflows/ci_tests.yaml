@@ -94,7 +94,7 @@ jobs:
       - name: run test
         env:
           TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
-        run: tox -- -vv
+        run: tox -- --tb=short
   upstream-py311:
     runs-on: ubuntu-latest
     strategy:
