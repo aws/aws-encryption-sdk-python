@@ -18,10 +18,8 @@ jobs:
           python-version: ${{ matrix.python }}
           architecture: ${{ matrix.architecture }}
       
+      - name: Install pytest
+        run: pip install pytest
+      
       - name: Run minimal Unicode test
         run: python debug_unicode.py
-      
-      - name: Run with pytest
-        run: |
-          pip install pytest
-          pytest debug_unicode.py -v
