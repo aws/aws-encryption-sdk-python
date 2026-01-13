@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python: ["3.14"]
-        architecture: [x86, x64]
+        architecture: [x86]
     steps:
       - uses: actions/checkout@v4
       
