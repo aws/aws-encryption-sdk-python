@@ -5,6 +5,7 @@ import sys
 
 import mock
 import pytest
+import warnings
 
 from aws_encryption_sdk.compatability import _warn_deprecated_python
 
@@ -16,7 +17,8 @@ class TestWarnDeprecatedPython:
         with mock.patch.object(sys, "version_info") as v_info:
             v_info.major = 3
             v_info.minor = 6
-            with pytest.warns(None) as record:
+            with warnings.catch_warnings(record=True) as record:
+                warnings.simplefilter("always")
                 _warn_deprecated_python()
             assert len(record) == 0
 
