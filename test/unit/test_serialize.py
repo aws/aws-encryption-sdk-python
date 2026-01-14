@@ -19,7 +19,10 @@ from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
-provider_input_strings = ["abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
+provider_input_strings = ["", "abc", "𐀂", "abc𐀂", "𐀂abc", "秘密代码", "abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
+
+provider_input_strings_batch1 = ["", "abc", "𐀂", "abc𐀂", "𐀂abc"]
+provider_input_strings_batch2 = ["秘密代码", "abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
 
 
 @pytest.mark.parametrize(
@@ -121,12 +124,58 @@ class TestSerialize(object):
         assert deserialized_edk.key_provider.key_info == encrypted_data_key.key_provider.key_info
         assert deserialized_edk.encrypted_data_key == encrypted_data_key.encrypted_data_key
 
-    @pytest.mark.parametrize("edk_1_provider_id", provider_input_strings)
-    @pytest.mark.parametrize("edk_1_provider_info", provider_input_strings)
-    @pytest.mark.parametrize("edk_2_provider_id", provider_input_strings)
-    @pytest.mark.parametrize("edk_2_provider_info", provider_input_strings)
-    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(  # noqa pylint: disable=line-too-long
+    @pytest.mark.parametrize("edk_1_provider_id", provider_input_strings_batch1)
+    @pytest.mark.parametrize("edk_1_provider_info", provider_input_strings_batch1)
+    @pytest.mark.parametrize("edk_2_provider_id", provider_input_strings_batch1)
+    @pytest.mark.parametrize("edk_2_provider_info", provider_input_strings_batch1)
+    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs_batch1(
         self,
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info,
+    ):
+        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info)
+        
+    @pytest.mark.parametrize("edk_1_provider_id", provider_input_strings_batch2)
+    @pytest.mark.parametrize("edk_1_provider_info", provider_input_strings_batch2)
+    @pytest.mark.parametrize("edk_2_provider_id", provider_input_strings_batch2)
+    @pytest.mark.parametrize("edk_2_provider_info", provider_input_strings_batch2)        
+    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs_batch2(
+        self,
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info,
+    ):
+        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info)
+
+    @pytest.mark.parametrize("edk_1_provider_id", provider_input_strings_batch1)
+    @pytest.mark.parametrize("edk_1_provider_info", provider_input_strings_batch1)
+    @pytest.mark.parametrize("edk_2_provider_id", provider_input_strings_batch2)
+    @pytest.mark.parametrize("edk_2_provider_info", provider_input_strings_batch2)
+    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs_batch3(
+        self,
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info,
+    ):
+        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        edk_1_provider_id,
+        edk_1_provider_info,
+        edk_2_provider_id,
+        edk_2_provider_info)
+
+    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(  # noqa pylint: disable=line-too-long
         edk_1_provider_id,
         edk_1_provider_info,
         edk_2_provider_id,
