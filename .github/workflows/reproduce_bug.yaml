@@ -25,6 +25,6 @@ jobs:
       - name: Run single parametrized test case
         env:
           TOXENV: local
-        run: tox -- --tb=short "test/unit/test_serialize.py::TestSerialize::test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs[\U00010002abc--\U00010002-]" -vv
+        run: tox -- --tb=short -n 1 test/unit/test_serialize.py::TestSerialize::test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs -vv
       
       
