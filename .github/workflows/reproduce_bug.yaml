@@ -43,4 +43,4 @@ jobs:
         run: pip install pytest==8.0.0
       
       - name: Run all tests (will crash)
-        run: pytest . -vv -k "test_unicode"
+        run: pytest test_*.py -vv
