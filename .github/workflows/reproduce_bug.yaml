@@ -19,12 +19,23 @@ jobs:
           python-version: "3.14"
           architecture: x86
       
-      - name: Install dependencies
+      - name: Create standalone test file
         run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade -r dev_requirements/ci-requirements.txt
+          @"
+          import pytest
+          
+          @pytest.mark.parametrize('key1,key2', [
+              ('\U00010002abc', 'abc\u79d8\u5bc6\u4ee3\u7801'),
+              ('test1', 'test2'),
+              ('\U00010002', '\u79d8\u5bc6'),
+          ])
+          def test_unicode_params(key1, key2):
+              assert len(key1) > 0
+              assert len(key2) > 0
+          "@ | Out-File -FilePath test_standalone.py -Encoding utf8
       
-      - name: Run actual failing test
-        env:
-          TOXENV: local
-        run: tox -- --tb=short test/unit/test_serialize.py::TestSerialize::test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs -vv
+      - name: Install pytest
+        run: pip install pytest==8.0.0
+      
+      - name: Run standalone test (will crash)
+        run: pytest test_standalone.py -vv
