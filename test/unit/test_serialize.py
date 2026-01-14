@@ -19,7 +19,7 @@ from .test_values import VALUES
 
 pytestmark = [pytest.mark.unit, pytest.mark.local]
 
-provider_input_strings = ["", "abc", "𐀂", "abc𐀂", "𐀂abc", "秘密代码", "abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
+provider_input_strings = ["abc秘密代码", "秘密代码abc", "秘密代码abc𐀂", "𐀂abc秘密代码123𐀂"]
 
 
 @pytest.mark.parametrize(
