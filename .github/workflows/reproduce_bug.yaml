@@ -19,19 +19,12 @@ jobs:
           python-version: "3.14"
           architecture: x86
       
-      - name: Create test file
+      - name: Install dependencies
         run: |
-          echo 'import pytest' > test_bug.py
-          echo '' >> test_bug.py
-          echo '@pytest.mark.parametrize("value", [' >> test_bug.py
-          echo '    "\U00010002abc",' >> test_bug.py
-          echo '    "abc\u79d8\u5bc6\u4ee3\u7801",' >> test_bug.py
-          echo '])' >> test_bug.py
-          echo 'def test_unicode(value):' >> test_bug.py
-          echo '    assert len(value) > 0' >> test_bug.py
+          python -m pip install --upgrade pip
+          pip install --upgrade -r dev_requirements/ci-requirements.txt
       
-      - name: Install pytest
-        run: pip install pytest==8.0.0 pytest-cov==4.0.0 pytest-mock==3.6.1
-      
-      - name: Run test (will crash)
-        run: pytest test_bug.py -vv
+      - name: Run actual failing test
+        env:
+          TOXENV: local
+        run: tox -- --tb=short test/unit/test_serialize.py::TestSerialize::test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs -vv
