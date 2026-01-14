@@ -135,7 +135,7 @@ class TestSerialize(object):
         edk_2_provider_id,
         edk_2_provider_info,
     ):
-        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        self._helper_test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
         edk_1_provider_id,
         edk_1_provider_info,
         edk_2_provider_id,
@@ -152,7 +152,7 @@ class TestSerialize(object):
         edk_2_provider_id,
         edk_2_provider_info,
     ):
-        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        self._helper_test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
         edk_1_provider_id,
         edk_1_provider_info,
         edk_2_provider_id,
@@ -169,13 +169,13 @@ class TestSerialize(object):
         edk_2_provider_id,
         edk_2_provider_info,
     ):
-        self.test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+        self._helper_test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
         edk_1_provider_id,
         edk_1_provider_info,
         edk_2_provider_id,
         edk_2_provider_info)
 
-    def test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
+    def _helper_test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs(
         self,  # noqa pylint: disable=line-too-long
         edk_1_provider_id,
         edk_1_provider_info,
