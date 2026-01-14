@@ -1,0 +1,37 @@
+name: 🐛 Reproduce Python 3.14.2 x86 Bug
+
+on:
+  push:
+    paths:
+      - '.github/workflows/reproduce_bug.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          architecture: x86
+      
+      - name: Create test file
+        run: |
+          echo 'import pytest' > test_bug.py
+          echo '' >> test_bug.py
+          echo '@pytest.mark.parametrize("value", [' >> test_bug.py
+          echo '    "\U00010002abc",' >> test_bug.py
+          echo '    "abc\u79d8\u5bc6\u4ee3\u7801",' >> test_bug.py
+          echo '])' >> test_bug.py
+          echo 'def test_unicode(value):' >> test_bug.py
+          echo '    assert len(value) > 0' >> test_bug.py
+      
+      - name: Install pytest
+        run: pip install pytest==8.0.0 pytest-cov==4.0.0 pytest-mock==3.6.1
+      
+      - name: Run test (will crash)
+        run: pytest test_bug.py -vv
