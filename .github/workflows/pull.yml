@@ -3,7 +3,9 @@ name: Pull Request Workflow
 on:
   pull_request:
 
-concurrency:
+# Concurrency control helps avoid CodeBuild throttling.
+# When new commits are pushed, the previous workflow run is cancelled.
+concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
   

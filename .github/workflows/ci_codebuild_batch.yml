@@ -7,10 +7,6 @@ on:
       CI_AWS_ROLE_ARN:
         required: true
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   id-token: write
   contents: read
