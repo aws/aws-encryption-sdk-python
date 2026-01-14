@@ -40,5 +40,5 @@ jobs:
       - name: Install pytest
         run: pip install pytest==8.0.0
       
-      - name: Run all tests (will crash)
-        run: pytest test_1.py -vv
+      - name: Run all test files
+        run: pytest (Get-ChildItem test_*.py).Name -vv
