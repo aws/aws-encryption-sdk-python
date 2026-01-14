@@ -4,6 +4,9 @@ name: Daily CI
 on:
   schedule:
     - cron: "00 15 * * 1-5"
+  pull_request:
+    paths:
+      - ".github/workflows/daily_ci.yml" # To test this workflow on PR stage only when there is a change.
 
 jobs:
   codebuild_batch:
