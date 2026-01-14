@@ -47,7 +47,7 @@ jobs:
           role-duration-seconds: 7200
       - name: Run python-${{ matrix.python.python_version }} ${{ matrix.codebuild_file_name }}
         uses: aws-actions/aws-codebuild-run-build@v1
-        timeout-minutes: 120
+        timeout-minutes: 180
         with:
           project-name: python-esdk
           buildspec-override: codebuild/py${{ matrix.python.python_version }}/${{ matrix.codebuild_file_name }}
