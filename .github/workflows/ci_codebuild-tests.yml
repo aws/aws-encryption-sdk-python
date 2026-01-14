@@ -1,7 +1,6 @@
 name: AWS CodeBuild CI
 
 on:
-  pull_request:
   push:
   # Run once a day
   schedule:
