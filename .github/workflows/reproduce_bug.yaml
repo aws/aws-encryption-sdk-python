@@ -16,29 +16,15 @@ jobs:
         with:
           python-version: "3.14"
           architecture: x86
-      
-      - name: Create multiple test files
+
+      - name: Install dependencies
         run: |
-          # Create 50 test files with Unicode parameters
-          for ($i=1; $i -le 500; $i++) {
-            @"
-          import pytest
-          
-          @pytest.mark.parametrize('key1,key2', [
-              ('\U00010002abc$i', 'abc\u79d8\u5bc6\u4ee3\u7801$i'),
-              ('test1_$i', 'test2_$i'),
-              ('\U00010002_$i', '\u79d8\u5bc6\u4ee3\u7801-abc\U00010002-\U00010002abc\u79d8\u5bc6\u4ee3\u7801123\U00010002-\u79d8\u5bc6\u4ee3\u7801abc\U00010002'),
-          ])
-          def test_unicode_params_$i(key1, key2):
-              assert len(key1) > 0
-              assert len(key2) > 0
-              import warnings
-              warnings.warn(f'Test warning {key1} {key2}')
-          "@ | Out-File -FilePath "test_$i.py" -Encoding utf8
-          }
+          python -m pip install --upgrade pip
+          pip install --upgrade -r dev_requirements/ci-requirements.txt
       
-      - name: Install pytest
-        run: pip install pytest==8.0.0
+      - name: Run actual failing test
+        env:
+          TOXENV: local
+        run: tox -- --tb=short test/unit/test_serialize.py::TestSerialize::test_GIVEN_two_distinct_valid_encrypted_data_keys_WHEN_serialize_encrypted_data_keys_THEN_deserialize_equals_inputs -vv
       
-      - name: Run all test files
-        run: pytest (Get-ChildItem test_*.py).Name -vv
+      
