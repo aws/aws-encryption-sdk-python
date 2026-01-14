@@ -29,7 +29,7 @@ jobs:
           @pytest.mark.parametrize('key1,key2', [
               ('\U00010002abc$i', 'abc\u79d8\u5bc6\u4ee3\u7801$i'),
               ('test1_$i', 'test2_$i'),
-              ('\U00010002_$i', '\u79d8\u5bc6_$i'),
+              ('\U00010002_$i', '\u79d8\u5bc6\u4ee3\u7801-abc\U00010002-\U00010002abc\u79d8\u5bc6\u4ee3\u7801123\U00010002-\u79d8\u5bc6\u4ee3\u7801abc\U00010002'),
           ])
           def test_unicode_params_$i(key1, key2):
               assert len(key1) > 0
