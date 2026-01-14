@@ -20,7 +20,7 @@ jobs:
       - name: Create multiple test files
         run: |
           # Create 50 test files with Unicode parameters
-          for ($i=1; $i -le 50; $i++) {
+          for ($i=1; $i -le 500; $i++) {
             @"
           import pytest
           
