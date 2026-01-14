@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for aws_encryption_sdk.compatability"""
 import sys
+import warnings
 
 import mock
 import pytest
-import warnings
 
 from aws_encryption_sdk.compatability import _warn_deprecated_python
 
