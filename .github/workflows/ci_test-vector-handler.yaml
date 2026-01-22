@@ -22,6 +22,7 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
+          # runs on macos-15-intel as macos-latest does not work in all python versions. 
           - macos-15-intel
         python:
           - 3.8
