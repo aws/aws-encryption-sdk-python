@@ -3,6 +3,9 @@ name: Continuous Integration tests for the decrypt oracle
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest
