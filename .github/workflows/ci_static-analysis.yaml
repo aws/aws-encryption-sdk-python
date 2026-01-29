@@ -3,6 +3,9 @@ name: Static analysis checks
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   analysis:
     runs-on: ubuntu-latest
