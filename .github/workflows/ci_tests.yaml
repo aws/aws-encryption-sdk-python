@@ -25,7 +25,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-13
+          - macos-latest
         python:
           - 3.8
           - 3.9
@@ -50,11 +50,23 @@ jobs:
           - ""
           - -mpl
         exclude:
+          # Python <3.11 incompatible with macOS ARM64 runners
+          # https://github.com/actions/setup-python/issues/948
+          - python: 3.7
+            os: macos-latest
+          - python: 3.8
+            os: macos-latest
+          - python: 3.9
+            os: macos-latest
+          - python: 3.10
+            os: macos-latest
+
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-13
+          - os: macos-latest
             architecture: x86
+
           # MPL is not supported on <3.11
           - python: 3.7
             optional_mpl_dependency: -mpl
@@ -74,6 +86,7 @@ jobs:
           git config --global core.longpaths true
 
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}

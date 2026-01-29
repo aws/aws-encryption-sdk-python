@@ -24,7 +24,9 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-13
+          - macos-latest
+          # runs on macos-15-intel as macos-latest does not work in all python versions. 
+          - macos-15-intel
         python:
           - 3.8
           - 3.x
@@ -39,7 +41,7 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-13
+          - os: macos-latest
             architecture: x86
     steps:
       - uses: aws-actions/configure-aws-credentials@v4

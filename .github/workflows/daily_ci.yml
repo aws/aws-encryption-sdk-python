@@ -4,9 +4,13 @@ name: Daily CI
 on:
   schedule:
     - cron: "00 15 * * 1-5"
+  pull_request:
+    paths:
+      .github/workflows/daily_ci.yml
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   codebuild_batch:
