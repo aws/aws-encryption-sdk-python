@@ -49,7 +49,7 @@ Required Prerequisites
 Recommended Prerequisites
 =========================
 
-* aws-cryptographic-material-providers: == 1.11.1
+* aws-cryptographic-material-providers: == 1.11.2
   * Requires Python 3.11+.
 
 *****
