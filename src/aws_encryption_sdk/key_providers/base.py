@@ -482,7 +482,7 @@ class MasterKey(MasterKeyProvider):
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
-        _LOGGER.info("encrypting data key with encryption context: %s", encryption_context)
+        _LOGGER.debug("encrypting data key with encryption context: %s", encryption_context)
         return self._encrypt_data_key(data_key=data_key, algorithm=algorithm, encryption_context=encryption_context)
 
     @abc.abstractmethod
@@ -515,7 +515,7 @@ class MasterKey(MasterKeyProvider):
         :rtype: aws_encryption_sdk.structures.DataKey
         :raises IncorrectMasterKeyError: if Data Key's key provider does not match this Master Key
         """
-        _LOGGER.info("decrypting data key with encryption context: %s", encryption_context)
+        _LOGGER.debug("decrypting data key with encryption context: %s", encryption_context)
         self._key_check(encrypted_data_key)
         decrypted_data_key = self._decrypt_data_key(
             encrypted_data_key=encrypted_data_key, algorithm=algorithm, encryption_context=encryption_context
