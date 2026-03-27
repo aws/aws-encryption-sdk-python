@@ -225,3 +225,33 @@ def test_encrypt_with_uncommitting_algorithm_require_decrypt():
     with pytest.raises(ActionNotAllowedError) as excinfo:
         decrypting_client.decrypt(source=ciphertext, key_provider=key_provider)
     excinfo.match("Configuration conflict. Cannot decrypt due to .* requiring only committed messages")
+
+
+def test_encrypt_with_different_kc_clients_sharing_materials_yield_error():
+    """Tests that when two different client configured with CommitmentPolicy REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    and FORBID_ENCRYPT_ALLOW_DECRYPT share encryption materials client errors out due to conflicting commitment policies."""
+    forbid_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+    required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
+        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    )
+    
+    provider = StaticRawMasterKeyProvider(
+        wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
+        encryption_key_type=EncryptionKeyType.SYMMETRIC,
+        key_bytes=b"\00" * 32,
+    )
+    provider.add_master_key("KeyId")
+    cache = aws_encryption_sdk.LocalCryptoMaterialsCache(capacity=10)
+    ccmm = aws_encryption_sdk.CachingCryptoMaterialsManager(
+        master_key_provider=provider, cache=cache, max_age=3600.0, max_messages_encrypted=5
+    )
+    plaintext = b"Yellow Submarine"
+
+    ciphertext, _ = forbid_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
+    ciphertext2, _ = required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
+    with pytest.raises(ActionNotAllowedError) as excinfo:
+        required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
+    excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only committed messages")
+
