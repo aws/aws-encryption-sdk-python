@@ -234,7 +234,7 @@ def test_encrypt_with_different_kc_clients_sharing_materials_yield_error():
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
     )
     required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
-        commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+        commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
     
     provider = StaticRawMasterKeyProvider(
@@ -250,7 +250,6 @@ def test_encrypt_with_different_kc_clients_sharing_materials_yield_error():
     plaintext = b"Yellow Submarine"
 
     ciphertext, _ = forbid_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
-    ciphertext2, _ = required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     with pytest.raises(ActionNotAllowedError) as excinfo:
         required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only committed messages")
