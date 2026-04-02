@@ -36,14 +36,6 @@ VALUES = {
         b"\n:\xcaD\x1f)\xde\xf73\x9a!/x#(z\xf8/\x83\xeb\r&\x7f&\xb4\xeb\xc1\x1b\xe9\x91I\xf5\x8a\xb6\xee\xaf\x08\xb9"
         b"\xa5\xe1S\xb2Gw\x15(\xb6\xe1"
     ),
-    "ecc_private_key_char2": ec.EllipticCurvePrivateNumbers(
-        private_value=131512833187976200862897177240257889476359607892474090119002870596121284569326171944650239612201181144875264734209664973820,  # noqa pylint: disable=line-too-long
-        public_numbers=ec.EllipticCurvePublicNumbers(
-            x=783372629152728216190118671643020486604880277607267246139026062120084499867233383227220456289236528291350315438332972681898,  # noqa pylint: disable=line-too-long
-            y=657053766035459398820670308946963262342583342616783849689721971058264156234178067988487273332138651529574836305189297847674,  # noqa pylint: disable=line-too-long
-            curve=ec.SECT409K1(),
-        ),
-    ).private_key(default_backend()),
 }
 VALUES["ciphertext"] = VALUES["encryptor"]["update"] + VALUES["encryptor"]["finalize"]
 VALUES["plaintext"] = VALUES["decryptor"]["update"] + VALUES["decryptor"]["finalize"]

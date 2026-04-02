@@ -2,6 +2,16 @@
 Changelog
 *********
 
+4.0.4 -- 2025-09-03
+===================
+
+Maintenance
+-----------
+* deps: Extend supported `MPL`_ versions to include v1.11.2
+  `#788 <https://github.com/aws/aws-encryption-sdk-python/pull/788>`_
+
+  MPL v1.11.2 fixes de-serializing Error_OpaqueWithText
+
 4.0.3 -- 2025-09-03
 ===================
 

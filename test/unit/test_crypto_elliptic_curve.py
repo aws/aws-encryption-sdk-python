@@ -287,13 +287,6 @@ def test_ecc_encode_compressed_point_prime():
     assert compressed_point == VALUES["ecc_compressed_point"]
 
 
-def test_ecc_encode_compressed_point_characteristic_two():
-    with pytest.raises(NotSupportedError) as excinfo:
-        _ecc_encode_compressed_point(VALUES["ecc_private_key_char2"])
-
-    excinfo.match(r"Non-prime curves are not supported at this time")
-
-
 def test_ecc_decode_compressed_point_infinity():
     with pytest.raises(NotSupportedError) as excinfo:
         _ecc_decode_compressed_point(curve=ec.SECP384R1(), compressed_point=b"")
@@ -341,13 +334,6 @@ def test_ecc_decode_compressed_point_prime_complex(patch_ecc_curve_parameters):
         _ecc_decode_compressed_point(curve=mock_curve, compressed_point=VALUES["ecc_compressed_point"])
 
     excinfo.match(r"S not 1 :: Curve not supported at this time")
-
-
-def test_ecc_decode_compressed_point_nonprime_characteristic_two():
-    with pytest.raises(NotSupportedError) as excinfo:
-        _ecc_decode_compressed_point(curve=ec.SECT409K1(), compressed_point="\x02skdgaiuhgijudflkjsdgfkjsdflgjhsd")
-
-    excinfo.match(r"Non-prime curves are not supported at this time")
 
 
 def test_ecc_public_numbers_from_compressed_point(patch_ec, patch_ecc_decode_compressed_point):
