@@ -4,6 +4,7 @@
 import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
+from cryptography.hazmat.primitives.asymmetric import ec
 
 import aws_encryption_sdk.internal.crypto.authentication
 from aws_encryption_sdk.exceptions import NotSupportedError
@@ -56,12 +57,19 @@ def test_init(patch_set_signature_type, patch_build_hasher):
 def test_set_signature_type_elliptic_curve(
     patch_build_hasher, patch_cryptography_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_cryptography_ec.EllipticCurve = ec.EllipticCurve
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     assert test._signature_type is patch_cryptography_ec.EllipticCurve
 
+def test_set_signature_type_elliptic_curve_known_value(patch_build_hasher):
+    from cryptography.hazmat.primitives.asymmetric import ec as real_ec
+
+    mock_algorithm = MagicMock(signing_algorithm_info=real_ec.SECP384R1)
+    test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
+
+    assert test._signature_type is real_ec.EllipticCurve
 
 def test_set_signature_type_unknown(
     patch_build_hasher, patch_cryptography_ec
