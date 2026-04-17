@@ -236,7 +236,7 @@ def test_encrypt_with_require_policy_fail_when_retrieving_invalid_cmm_materials(
     required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
-  
+
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
@@ -264,7 +264,7 @@ def test_encrypt_with_forbid_policy_fail_when_retrieving_invalid_cmm_materials()
     required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
-  
+
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
