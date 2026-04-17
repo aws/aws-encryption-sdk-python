@@ -236,7 +236,7 @@ def test_encrypt_with_require_policy_fail_when_retrieving_invalid_cmm_materials(
     required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
-    
+ 
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
@@ -249,7 +249,7 @@ def test_encrypt_with_require_policy_fail_when_retrieving_invalid_cmm_materials(
     )
     plaintext = b"Yellow Submarine"
 
-    ciphertext, _ = forbid_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
+    _, _ = forbid_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     with pytest.raises(ActionNotAllowedError) as excinfo:
         required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only committed messages")
@@ -264,7 +264,7 @@ def test_encrypt_with_forbid_policy_fail_when_retrieving_invalid_cmm_materials()
     required_encrypting_client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
     )
-    
+
     provider = StaticRawMasterKeyProvider(
         wrapping_algorithm=WrappingAlgorithm.AES_256_GCM_IV12_TAG16_NO_PADDING,
         encryption_key_type=EncryptionKeyType.SYMMETRIC,
@@ -277,7 +277,7 @@ def test_encrypt_with_forbid_policy_fail_when_retrieving_invalid_cmm_materials()
     )
     plaintext = b"Yellow Submarine"
 
-    ciphertext, _ = required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
+    _, _ = required_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     with pytest.raises(ActionNotAllowedError) as excinfo:
         forbid_encrypting_client.encrypt(source=plaintext, materials_manager=ccmm)
     excinfo.match("Configuration conflict. Cannot encrypt due to .* requiring only non-committed messages.")
