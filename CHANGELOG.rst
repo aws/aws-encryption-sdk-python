@@ -2,6 +2,14 @@
 Changelog
 *********
 
+3.3.1 -- 2026-04-20
+===================
+
+Fixes
+-----------
+* fix: validate encryption materials from cmm are compatible with key commitment policy
+  `#796 <https://github.com/aws/aws-encryption-sdk-python/pull/796>`_
+
 3.3.0 -- 2024-05-20
 ===================
 
