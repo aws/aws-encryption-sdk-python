@@ -1,11 +1,13 @@
 name: Continuous Integration tests for the test vector handler
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: '0 0 * * *'
+  workflow_call:
+    # Define any secrets that need to be passed from the caller
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID:
+        required: true
+      INTEG_AWS_SECRET_ACCESS_KEY:
+        required: true
 
 jobs:
   tests:
@@ -19,10 +21,10 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-12
+          - macos-latest
         python:
           - 3.8
-          - 3.x
+          - "3.12"
         architecture:
           - x64
           - x86
@@ -34,8 +36,10 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-12
+          - os: macos-latest
             architecture: x86
+          - os: macos-latest
+            python: 3.8
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:

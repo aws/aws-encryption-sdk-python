@@ -1,11 +1,7 @@
 name: Continuous Integration tests
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: '0 0 * * *'
+  workflow_call:
 
 env:
   AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: |
@@ -26,14 +22,13 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-12
+          - macos-latest
         python:
           - 3.8
           - 3.9
           - "3.10"
           - "3.11"
           - "3.12"
-          - 3.x
         architecture:
           - x64
           - x86
@@ -48,8 +43,15 @@ jobs:
           # x86 builds are only meaningful for Windows
           - os: ubuntu-latest
             architecture: x86
-          - os: macos-12
+          - os: macos-latest
             architecture: x86
+          # Skip older Python versions on macOS
+          - os: macos-latest
+            python: 3.8
+          - os: macos-latest
+            python: 3.9
+          - os: macos-latest
+            python: "3.10"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
