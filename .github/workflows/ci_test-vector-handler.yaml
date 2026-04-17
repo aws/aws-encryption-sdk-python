@@ -36,6 +36,8 @@ jobs:
             architecture: x86
           - os: macos-latest
             architecture: x86
+          - os: macos-latest
+            python: 3.8
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
