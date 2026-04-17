@@ -1,11 +1,13 @@
 name: Continuous Integration tests for the test vector handler
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: '0 0 * * *'
+  workflow_call:
+    # Define any secrets that need to be passed from the caller
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID:
+        required: true
+      INTEG_AWS_SECRET_ACCESS_KEY:
+        required: true
 
 jobs:
   tests:

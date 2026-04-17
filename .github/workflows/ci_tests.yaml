@@ -1,11 +1,7 @@
 name: Continuous Integration tests
 
 on:
-  pull_request:
-  push:
-  # Run once a day
-  schedule:
-    - cron: '0 0 * * *'
+  workflow_call:
 
 env:
   AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: |

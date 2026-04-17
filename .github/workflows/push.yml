@@ -1,0 +1,25 @@
+name: Push Workflow
+
+on:
+  push:
+    branches: master
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  decrypt_oracle:
+    uses: ./.github/workflows/ci_decrypt-oracle.yaml
+  
+  static_analysis:
+    uses: ./.github/workflows/ci_static-analysis.yaml
+  
+  test_vector_handler:
+    uses: ./.github/workflows/ci_test-vector-handler.yaml
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
+      INTEG_AWS_SECRET_ACCESS_KEY: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
+  
+  tests:
+    uses: ./.github/workflows/ci_tests.yaml
