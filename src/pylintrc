@@ -10,6 +10,7 @@ disable =
     attribute-defined-outside-init,  # breaks with attrs_post_init
     abstract-method,  # throws false positives on io.BaseIO grandchildren
     redefined-outer-name,  # we do this on purpose in multiple places
+    too-many-positional-arguments, # on 2026-04-17 aws_encryption_sdk_decrypt_oracle started failing because of this
     # All below are disabled because we need to support Python 2
     useless-object-inheritance,
     raise-missing-from,

@@ -6,6 +6,7 @@ flake8-bugbear==22.9.11
 flake8-docstrings==1.7.0
 flake8-print==5.0.0
 isort==5.11.4
+pbr==2.0.0 # needed due to to bandit
 pyflakes==2.4.0
 pylint==2.13.5
 readme_renderer==37.3

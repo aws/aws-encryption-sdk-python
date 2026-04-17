@@ -454,7 +454,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
         )
 
         validate_commitment_policy_on_encrypt(self.config.commitment_policy, self._encryption_materials.algorithm)
-        
+    
         if self.config.algorithm is not None and self._encryption_materials.algorithm != self.config.algorithm:
             raise ActionNotAllowedError(
                 (
