@@ -36,7 +36,10 @@ class _PrehashingAuthenticator(object):
 
     def _set_signature_type(self):
         """Ensures that the algorithm signature type is a known type and sets a reference value."""
-        if not isinstance(self.algorithm.signing_algorithm_info, type(ec.EllipticCurve)):
+        try:
+            if not issubclass(self.algorithm.signing_algorithm_info, ec.EllipticCurve):
+                raise NotSupportedError("Unsupported signing algorithm info")
+        except TypeError:
             raise NotSupportedError("Unsupported signing algorithm info")
         return ec.EllipticCurve
 

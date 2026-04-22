@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Verifier``."""
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -85,23 +86,23 @@ def test_verifier_from_encoded_point(
     mock_point_instance.public_key.return_value = sentinel.public_key
     patch_ecc_public_numbers_from_compressed_point.return_value = mock_point_instance
     patch_base64.b64decode.return_value = sentinel.compressed_point
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
+    patch_ec.EllipticCurve = ec.EllipticCurve
 
     verifier = Verifier.from_encoded_point(algorithm=mock_algorithm, encoded_point=sentinel.encoded_point)
 
     patch_base64.b64decode.assert_called_once_with(sentinel.encoded_point)
-    mock_algorithm.signing_algorithm_info.assert_called_once_with()
-    patch_ecc_public_numbers_from_compressed_point.assert_called_once_with(
-        curve=mock_algorithm.signing_algorithm_info.return_value, compressed_point=sentinel.compressed_point
-    )
+    patch_ecc_public_numbers_from_compressed_point.assert_called_once()
+    call_kwargs = patch_ecc_public_numbers_from_compressed_point.call_args
+    assert isinstance(call_kwargs[1]["curve"], ec.SECP256R1)
+    assert call_kwargs[1]["compressed_point"] is sentinel.compressed_point
     mock_point_instance.public_key.assert_called_once_with(patch_default_backend.return_value)
     assert isinstance(verifier, Verifier)
 
 
 def test_verifier_update(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     verifier = Verifier(algorithm=mock_algorithm, key=MagicMock())
     verifier.update(sentinel.data)
     verifier._hasher.update.assert_called_once_with(sentinel.data)

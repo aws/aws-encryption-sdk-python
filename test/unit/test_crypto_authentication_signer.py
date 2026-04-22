@@ -3,6 +3,7 @@
 """Unit test suite for ``aws_encryption_sdk.internal.crypto.authentication.Signer``."""
 import cryptography.hazmat.primitives.serialization
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock, patch, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -73,8 +74,8 @@ def test_GIVEN_no_encoding_WHEN_signer_from_key_bytes_THEN_load_der_private_key(
     patch_build_hasher,
     patch_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    _algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
 
     # Make a new patched serialization module for this test.
     # The default patch introduces serialization as `serialization.Encoding.DER`
@@ -106,8 +107,8 @@ def test_GIVEN_PEM_encoding_WHEN_signer_from_key_bytes_THEN_load_pem_private_key
     patch_build_hasher,
     patch_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    _algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
 
     # When: from_key_bytes
     signer = Signer.from_key_bytes(
@@ -132,8 +133,8 @@ def test_GIVEN_unrecognized_encoding_WHEN_signer_from_key_bytes_THEN_raise_Value
     patch_build_hasher,
     patch_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    _algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    _algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
 
     # Then: Raises ValueError
     with pytest.raises(ValueError):
@@ -147,8 +148,8 @@ def test_GIVEN_unrecognized_encoding_WHEN_signer_from_key_bytes_THEN_raise_Value
 
 
 def test_signer_key_bytes(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     private_key = MagicMock()
     signer = Signer(algorithm, key=private_key)
 
@@ -174,8 +175,8 @@ def test_signer_encoded_public_key(
     patch_base64.b64encode.return_value = sentinel.encoded_point
     private_key = MagicMock()
 
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
 
     signer = Signer(algorithm, key=private_key)
     test_key = signer.encoded_public_key()
@@ -186,8 +187,8 @@ def test_signer_encoded_public_key(
 
 
 def test_signer_update(patch_default_backend, patch_serialization, patch_build_hasher, patch_ec):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     signer = Signer(algorithm, key=MagicMock())
     signer.update(sentinel.data)
     patch_build_hasher.return_value.update.assert_called_once_with(sentinel.data)
@@ -196,8 +197,8 @@ def test_signer_update(patch_default_backend, patch_serialization, patch_build_h
 def test_signer_finalize(
     patch_default_backend, patch_serialization, patch_build_hasher, patch_ecc_static_length_signature, patch_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_ec.EllipticCurve = ec.EllipticCurve
+    algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     private_key = MagicMock()
 
     signer = Signer(algorithm, key=private_key)
