@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for ``aws_encryption_sdk.internal.crypto._PrehashingAuthenticater``."""
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
 
@@ -56,11 +57,18 @@ def test_init(patch_set_signature_type, patch_build_hasher):
 def test_set_signature_type_elliptic_curve(
     patch_build_hasher, patch_cryptography_ec
 ):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_cryptography_ec.EllipticCurve)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    patch_cryptography_ec.EllipticCurve = ec.EllipticCurve
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP256R1)
     test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
 
     assert test._signature_type is patch_cryptography_ec.EllipticCurve
+
+
+def test_set_signature_type_elliptic_curve_known_value(patch_build_hasher):
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP384R1)
+    test = _PrehashingAuthenticator(algorithm=mock_algorithm, key=sentinel.key)
+
+    assert test._signature_type is ec.EllipticCurve
 
 
 def test_set_signature_type_unknown(
