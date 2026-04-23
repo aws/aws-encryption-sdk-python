@@ -40,6 +40,8 @@ class _PrehashingAuthenticator(object):
             if not issubclass(self.algorithm.signing_algorithm_info, ec.EllipticCurve):
                 raise NotSupportedError("Unsupported signing algorithm info")
         except TypeError:
+            raise NotSupportedError("Unsupported signing algorithm info")
+    
     def _build_hasher(self):
         """Builds the hasher instance which will calculate the digest of all passed data.
 
