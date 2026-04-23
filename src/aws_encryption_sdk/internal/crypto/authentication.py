@@ -41,7 +41,7 @@ class _PrehashingAuthenticator(object):
                 raise NotSupportedError("Unsupported signing algorithm info")
         except TypeError:
             raise NotSupportedError("Unsupported signing algorithm info")
-    
+
     def _build_hasher(self):
         """Builds the hasher instance which will calculate the digest of all passed data.
 
