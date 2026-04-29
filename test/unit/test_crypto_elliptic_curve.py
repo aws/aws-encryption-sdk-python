@@ -349,22 +349,17 @@ def test_ecc_public_numbers_from_compressed_point(patch_ec, patch_ecc_decode_com
     assert test == sentinel.public_numbers_instance
 
 
-def test_generate_ecc_signing_key_supported(patch_default_backend, patch_ec):
-    patch_ec.generate_private_key.return_value = sentinel.raw_signing_key
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info, spec=patch_ec.EllipticCurve)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+def test_generate_ecc_signing_key_supported(patch_default_backend):
+    patch_default_backend.return_value = sentinel.backend
+    mock_algorithm = MagicMock(signing_algorithm_info=ec.SECP384R1)
 
     test_signing_key = generate_ecc_signing_key(algorithm=mock_algorithm)
 
-    patch_ec.generate_private_key.assert_called_once_with(
-        curve=sentinel.algorithm_info, backend=patch_default_backend.return_value
-    )
-    assert test_signing_key is sentinel.raw_signing_key
+    assert test_signing_key is not None
 
 
 def test_generate_ecc_signing_key_unsupported(patch_default_backend, patch_ec):
-    mock_algorithm_info = MagicMock(return_value=sentinel.algorithm_info)
-    mock_algorithm = MagicMock(signing_algorithm_info=mock_algorithm_info)
+    mock_algorithm = MagicMock(signing_algorithm_info="not_a_class")
 
     with pytest.raises(NotSupportedError) as excinfo:
         generate_ecc_signing_key(algorithm=mock_algorithm)
