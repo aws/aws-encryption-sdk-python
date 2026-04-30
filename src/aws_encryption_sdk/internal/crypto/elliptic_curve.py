@@ -171,6 +171,9 @@ def generate_ecc_signing_key(algorithm):
     :returns: Generated signing key
     :raises NotSupportedError: if signing algorithm is not supported on this platform
     """
-    if not isinstance(algorithm.signing_algorithm_info, type(ec.EllipticCurve)):
+    try:
+        if not issubclass(algorithm.signing_algorithm_info, ec.EllipticCurve):
+            raise NotSupportedError("Unsupported signing algorithm info")
+    except TypeError:
         raise NotSupportedError("Unsupported signing algorithm info")
     return ec.generate_private_key(curve=algorithm.signing_algorithm_info(), backend=default_backend())
