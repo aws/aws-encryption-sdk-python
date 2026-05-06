@@ -2,6 +2,16 @@
 Changelog
 *********
 
+4.0.6 -- 2026-05-07
+===================
+
+Fixes
+-----------
+* fix: Replace isinstance metaclass check with issubclass in generate_ecc_signing_key (#802)
+  `#802 <https://github.com/aws/aws-encryption-sdk-python/pull/802>`_
+* fix: use issubclass instead of isinstance in _set_signature_type (#800)
+  `#800 <https://github.com/aws/aws-encryption-sdk-python/pull/800>`_
+
 4.0.5 -- 2026-04-20
 ===================
 
