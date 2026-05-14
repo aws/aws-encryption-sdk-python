@@ -18,7 +18,7 @@ phases:
         while [ $NUM_RETRIES -gt 0 ]
         do
           # basic usability smoke test
-          pip install "aws-encryption-sdk==$VERSION" && python -c "import aws_encryption_sdk; from aws_encryption_sdk import StrictAwsKmsMasterKeyProvider"
+          pip install --force-reinstall "aws-encryption-sdk==$VERSION" && python -c "import aws_encryption_sdk; from aws_encryption_sdk import StrictAwsKmsMasterKeyProvider"
           if [ $? -eq 0 ]; then
             break
           fi
