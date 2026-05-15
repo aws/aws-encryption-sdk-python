@@ -16,7 +16,7 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
-      - n 16
+      - n 22
       # Install the Javascript ESDK run test vectors
       - npm install -g @aws-crypto/integration-node
 
