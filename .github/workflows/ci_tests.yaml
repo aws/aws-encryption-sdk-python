@@ -73,13 +73,16 @@ jobs:
           # (Rust/PyO3). That build fails on the hosted windows-latest
           # runner because only the x86_64 Rust target is installed while
           # the interpreter reports platform `win32` (i686), so maturin
-          # refuses to use it. Until a host-side toolchain workaround
-          # exists, omit pre-3.11 Python from x86 testing entirely.
-          - python: 3.8
+          # refuses to use it. Drop pre-3.11 x86 on Windows only; non-
+          # Windows x86 (if ever enabled) is unaffected by this issue.
+          - os: windows-latest
+            python: 3.8
             architecture: x86
-          - python: 3.9
+          - os: windows-latest
+            python: 3.9
             architecture: x86
-          - python: "3.10"
+          - os: windows-latest
+            python: "3.10"
             architecture: x86
 
           # MPL is not supported on <3.11
