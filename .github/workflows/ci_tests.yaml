@@ -67,6 +67,17 @@ jobs:
           - os: macos-latest
             architecture: x86
 
+          # `cryptography` no longer publishes 32-bit Windows wheels for
+          # Python 3.9, so pip falls back to building from sdist. That build
+          # is Rust/maturin-based and fails on the hosted runner because the
+          # installed Rust target is x86_64 while the interpreter reports
+          # win32 (i686), so maturin refuses to use it. The job is therefore
+          # unbuildable on GitHub-hosted runners until a host-side toolchain
+          # workaround exists; drop the combination from the matrix.
+          - os: windows-latest
+            python: 3.9
+            architecture: x86
+
           # MPL is not supported on <3.11
           - python: 3.7
             optional_mpl_dependency: -mpl
