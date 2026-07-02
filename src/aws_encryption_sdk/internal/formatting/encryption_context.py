@@ -16,6 +16,14 @@ from aws_encryption_sdk.exceptions import SerializationError
 _LOGGER = logging.getLogger(__name__)
 
 
+def _validate_encryption_context_entry(key, value):
+    max_entry_length = aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE
+    if len(key) > max_entry_length:
+        raise SerializationError("The encryption context contains a key that is too large.")
+    if len(value) > max_entry_length:
+        raise SerializationError("The encryption context contains a value that is too large.")
+
+
 def assemble_content_aad(message_id, aad_content_string, seq_num, length):
     """Assembles the Body AAD string for a message body structure.
 
@@ -71,12 +79,8 @@ def serialize_encryption_context(encryption_context):
                 "Cannot encode dictionary key or value using {}.".format(aws_encryption_sdk.internal.defaults.ENCODING)
             )
 
-    max_value_length = aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE
     for key, value in sorted(encryption_context_list, key=lambda x: x[0]):
-        if len(key) > max_value_length:
-            raise SerializationError("The encryption context contains a key that is too large.")
-        if len(value) > max_value_length:
-            raise SerializationError("The encryption context contains a value that is too large.")
+        _validate_encryption_context_entry(key, value)
         serialized_context.extend(
             struct.pack(
                 ">H{key_size}sH{value_size}s".format(key_size=len(key), value_size=len(value)),
