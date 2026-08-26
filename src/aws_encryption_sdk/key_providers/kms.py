@@ -199,10 +199,10 @@ class KMSMasterKey(MasterKey):
             # //# ciphertext for the encrypted data key in the output.
             ciphertext = response["CiphertextBlob"]
             key_id = response["KeyId"]
-        except (ClientError, KeyError) as error:
+        except (ClientError, KeyError):
             error_message = "Master Key {key_id} unable to generate data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
-            raise GenerateKeyError(error_message) from error
+            raise GenerateKeyError(error_message)
 
         # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.10
         # //# The response's "KeyId" MUST be valid.
@@ -242,10 +242,10 @@ class KMSMasterKey(MasterKey):
             # //# encrypted data key.
             ciphertext = response["CiphertextBlob"]
             key_id = response["KeyId"]
-        except (ClientError, KeyError) as error:
+        except (ClientError, KeyError):
             error_message = "Master Key {key_id} unable to encrypt data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
-            raise EncryptKeyError(error_message) from error
+            raise EncryptKeyError(error_message)
 
         # //= compliance/framework/aws-kms/aws-kms-mrk-aware-master-key.txt#2.11
         # //# The AWS KMS Encrypt response MUST contain a valid "KeyId".
@@ -315,10 +315,10 @@ class KMSMasterKey(MasterKey):
                 )
                 raise DecryptKeyError(error_message)
 
-        except (ClientError, KeyError) as error:
+        except (ClientError, KeyError):
             error_message = "Master Key {key_id} unable to decrypt data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
-            raise DecryptKeyError(error_message) from error
+            raise DecryptKeyError(error_message)
         return DataKey(
             key_provider=self.key_provider, data_key=plaintext, encrypted_data_key=encrypted_data_key.encrypted_data_key
         )

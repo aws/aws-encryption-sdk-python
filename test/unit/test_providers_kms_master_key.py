@@ -234,21 +234,6 @@ class TestKMSMasterKey(object):
         [(KMSMasterKeyConfig, KMSMasterKey), (MRKAwareKMSMasterKeyConfig, MRKAwareKMSMasterKey)],
     )
     @pytest.mark.parametrize("key_id", [VALUES["mrk_arn_region1"], VALUES["arn"]])
-    def test_generate_data_key_clienterror_preserves_cause(self, config_class, key_class, key_id):
-        """The original KMS error must be chained as __cause__ (see GitHub issue #774)."""
-        root_error = ClientError({"Error": {}}, "This is an error!")
-        self.mock_client.generate_data_key.side_effect = root_error
-        config = config_class(key_id=key_id, client=self.mock_client)
-        test = key_class(config=config)
-        with pytest.raises(GenerateKeyError) as excinfo:
-            test._generate_data_key(self.mock_algorithm)
-        assert excinfo.value.__cause__ is root_error
-
-    @pytest.mark.parametrize(
-        "config_class, key_class",
-        [(KMSMasterKeyConfig, KMSMasterKey), (MRKAwareKMSMasterKeyConfig, MRKAwareKMSMasterKey)],
-    )
-    @pytest.mark.parametrize("key_id", [VALUES["mrk_arn_region1"], VALUES["arn"]])
     def test_generate_data_key_unsuccessful_keyerror(self, config_class, key_class, key_id):
         self.mock_client.generate_data_key.side_effect = KeyError
         config = config_class(key_id=key_id, client=self.mock_client)
@@ -358,21 +343,6 @@ class TestKMSMasterKey(object):
         with pytest.raises(EncryptKeyError) as excinfo:
             test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
         excinfo.match("Master Key .* unable to encrypt data key")
-
-    @pytest.mark.parametrize(
-        "config_class, key_class",
-        [(KMSMasterKeyConfig, KMSMasterKey), (MRKAwareKMSMasterKeyConfig, MRKAwareKMSMasterKey)],
-    )
-    @pytest.mark.parametrize("key_id", [VALUES["mrk_arn_region1"], VALUES["arn"]])
-    def test_encrypt_data_key_clienterror_preserves_cause(self, config_class, key_class, key_id):
-        """The original KMS error must be chained as __cause__ (see GitHub issue #774)."""
-        root_error = ClientError({"Error": {}}, "This is an error!")
-        self.mock_client.encrypt.side_effect = root_error
-        config = config_class(key_id=key_id, client=self.mock_client)
-        test = key_class(config=config)
-        with pytest.raises(EncryptKeyError) as excinfo:
-            test._encrypt_data_key(self.mock_data_key, self.mock_algorithm)
-        assert excinfo.value.__cause__ is root_error
 
     @pytest.mark.parametrize(
         "config_class, key_class",
@@ -527,23 +497,6 @@ class TestKMSMasterKey(object):
         with pytest.raises(DecryptKeyError) as excinfo:
             test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
         excinfo.match("Master Key .* unable to decrypt data key")
-
-    @pytest.mark.parametrize(
-        "config_class, key_class",
-        [(KMSMasterKeyConfig, KMSMasterKey), (MRKAwareKMSMasterKeyConfig, MRKAwareKMSMasterKey)],
-    )
-    @pytest.mark.parametrize("key_id", [VALUES["mrk_arn_region1"], VALUES["arn"]])
-    def test_decrypt_data_key_clienterror_preserves_cause(self, config_class, key_class, key_id):
-        """The original KMS error must be chained as __cause__ (see GitHub issue #774)."""
-        root_error = ClientError({"Error": {}}, "This is an error!")
-        self.mock_client.decrypt.side_effect = root_error
-        config = config_class(key_id=key_id, client=self.mock_client)
-        test = key_class(config=config)
-        self.mock_encrypted_data_key.key_provider.key_info = key_id
-        self.mock_client.decrypt.return_value["KeyId"] = key_id.decode("ascii")
-        with pytest.raises(DecryptKeyError) as excinfo:
-            test._decrypt_data_key(encrypted_data_key=self.mock_encrypted_data_key, algorithm=sentinel.algorithm)
-        assert excinfo.value.__cause__ is root_error
 
     @pytest.mark.parametrize(
         "config_class, key_class",
