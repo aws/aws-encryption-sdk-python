@@ -64,6 +64,22 @@ class TestEncryptionContext(object):
             )
         excinfo.match("The serialized context is too large")
 
+    def test_serialize_encryption_context_key_too_large(self):
+        oversized_key = "a" * (aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE + 1)
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                {oversized_key: "value"}
+            )
+        excinfo.match("The encryption context contains a key that is too large.")
+
+    def test_serialize_encryption_context_value_too_large(self):
+        oversized_value = "a" * (aws_encryption_sdk.internal.defaults.MAX_BYTE_ARRAY_SIZE + 1)
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.serialize_encryption_context(
+                {"key": oversized_value}
+            )
+        excinfo.match("The encryption context contains a value that is too large.")
+
     def test_serialize_encryption_context_unencodable(self):
         """Validate that the serialize_encryption_context
         function behaves as expected when presented
