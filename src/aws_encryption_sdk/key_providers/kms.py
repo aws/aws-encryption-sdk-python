@@ -199,7 +199,7 @@ class KMSMasterKey(MasterKey):
             # //# ciphertext for the encrypted data key in the output.
             ciphertext = response["CiphertextBlob"]
             key_id = response["KeyId"]
-        except (ClientError, KeyError): 
+        except (ClientError, KeyError):
             error_message = "Master Key {key_id} unable to generate data key".format(key_id=self._key_id)
             _LOGGER.exception(error_message)
             raise GenerateKeyError(error_message)
