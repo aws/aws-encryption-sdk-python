@@ -2,6 +2,16 @@
 Changelog
 *********
 
+4.0.7 -- 2026-08-31
+===================
+
+Fixes
+-----------
+* fix: validate encryption context entry lengths (#805)
+  `#805 <https://github.com/aws/aws-encryption-sdk-python/pull/805>`_
+* fix: preserve root-cause errors in KMSMasterKey exception chaining (#815)
+  `#815 <https://github.com/aws/aws-encryption-sdk-python/pull/815>`_
+
 4.0.6 -- 2026-05-07
 ===================
 
