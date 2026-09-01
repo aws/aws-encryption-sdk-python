@@ -10,7 +10,7 @@ Fixes
 * fix: validate encryption context entry lengths (#813)
   `#813 <https://github.com/aws/aws-encryption-sdk-python/pull/813>`_
 
-  Thanks to `@kiwigitops <https://github.com/kiwigitops>`_ for the contribution.
+  Thanks to kiwigitops for the contribution.
 * fix: preserve root-cause errors in KMSMasterKey exception chaining (#815)
   `#815 <https://github.com/aws/aws-encryption-sdk-python/pull/815>`_
 
