@@ -9,8 +9,17 @@ Fixes
 -----------
 * fix: validate encryption context entry lengths (#805)
   `#805 <https://github.com/aws/aws-encryption-sdk-python/pull/805>`_
+
+  Thanks to `@kiwigitops <https://github.com/kiwigitops>`_ for the contribution.
 * fix: preserve root-cause errors in KMSMasterKey exception chaining (#815)
   `#815 <https://github.com/aws/aws-encryption-sdk-python/pull/815>`_
+
+  Thanks to `@arpitjain099 <https://github.com/arpitjain099>`_ for the contribution.
+
+Maintenance
+-----------
+* deps: Extend supported `MPL`_ versions to include v1.11.3
+  `#816 <https://github.com/aws/aws-encryption-sdk-python/pull/816>`_
 
 4.0.6 -- 2026-05-07
 ===================
