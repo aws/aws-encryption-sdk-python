@@ -3,7 +3,7 @@ boto3==1.26.54
 botocore==1.29.54
 cffi==1.15.1
 coverage==7.0.5
-cryptography==42.0.4
+cryptography==44.0.1
 iniconfig==2.0.0
 jmespath==1.0.1
 mock==4.0.3
