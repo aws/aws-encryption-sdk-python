@@ -3,6 +3,7 @@
 """Caching crypto material manager."""
 import logging
 import uuid
+from threading import RLock
 
 import attr
 import six
@@ -109,6 +110,8 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         if self.partition_name is None:
             self.partition_name = to_bytes(str(uuid.uuid4()))
 
+        self._cache_lock = RLock()
+
     def _cache_entry_has_encrypted_too_many_bytes(self, entry):
         """Determines if a cache entry has exceeded the max allowed bytes encrypted.
 
@@ -188,32 +191,33 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         )
         cache_key = build_encryption_materials_cache_key(partition=self.partition_name, request=inner_request)
 
-        # Attempt to retrieve from cache
-        try:
-            cache_entry = self.cache.get_encryption_materials(
-                cache_key=cache_key, plaintext_length=request.plaintext_length
-            )
-        except CacheKeyError:
-            pass
-        else:
-            if self._cache_entry_has_exceeded_limits(cache_entry):
-                self.cache.remove(cache_entry)
+        with self._cache_lock:
+            # Attempt to retrieve from cache
+            try:
+                cache_entry = self.cache.get_encryption_materials(
+                    cache_key=cache_key, plaintext_length=request.plaintext_length
+                )
+            except CacheKeyError:
+                pass
             else:
-                return cache_entry.value
+                if self._cache_entry_has_exceeded_limits(cache_entry):
+                    self.cache.remove(cache_entry)
+                else:
+                    return cache_entry.value
 
-        # Nothing found in cache: try the material manager
-        new_result = self.backing_materials_manager.get_encryption_materials(inner_request)
+            # Nothing found in cache: try the material manager
+            new_result = self.backing_materials_manager.get_encryption_materials(inner_request)
 
-        if not new_result.algorithm.safe_to_cache() or request.plaintext_length >= self.max_bytes_encrypted:
-            return new_result
+            if not new_result.algorithm.safe_to_cache() or request.plaintext_length >= self.max_bytes_encrypted:
+                return new_result
 
-        # Add results into cache
-        self.cache.put_encryption_materials(
-            cache_key=cache_key,
-            encryption_materials=new_result,
-            plaintext_length=request.plaintext_length,
-            entry_hints=CryptoMaterialsCacheEntryHints(lifetime=self.max_age),
-        )
+            # Add results into cache
+            self.cache.put_encryption_materials(
+                cache_key=cache_key,
+                encryption_materials=new_result,
+                plaintext_length=request.plaintext_length,
+                entry_hints=CryptoMaterialsCacheEntryHints(lifetime=self.max_age),
+            )
         return new_result
 
     def decrypt_materials(self, request):
@@ -225,21 +229,21 @@ class CachingCryptoMaterialsManager(CryptoMaterialsManager):
         :rtype: aws_encryption_sdk.materials_managers.DecryptionMaterials
         """
         cache_key = build_decryption_materials_cache_key(partition=self.partition_name, request=request)
-
-        # Attempt to retrieve from cache
-        try:
-            cache_entry = self.cache.get_decryption_materials(cache_key)
-        except CacheKeyError:
-            pass
-        else:
-            if self._cache_entry_is_too_old(cache_entry):
-                self.cache.remove(cache_entry)
+        with self._cache_lock:
+            # Attempt to retrieve from cache
+            try:
+                cache_entry = self.cache.get_decryption_materials(cache_key)
+            except CacheKeyError:
+                pass
             else:
-                return cache_entry.value
+                if self._cache_entry_is_too_old(cache_entry):
+                    self.cache.remove(cache_entry)
+                else:
+                    return cache_entry.value
 
-        # Nothing found in cache: try the material manager
-        new_result = self.backing_materials_manager.decrypt_materials(request)
+            # Nothing found in cache: try the material manager
+            new_result = self.backing_materials_manager.decrypt_materials(request)
 
-        # Add results into cache
-        self.cache.put_decryption_materials(cache_key=cache_key, decryption_materials=new_result)
+            # Add results into cache
+            self.cache.put_decryption_materials(cache_key=cache_key, decryption_materials=new_result)
         return new_result
