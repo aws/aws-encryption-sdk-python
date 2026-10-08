@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   tests:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: true
       matrix:
@@ -92,6 +92,13 @@ jobs:
           # mpllocal requires the MPL to be installed
           - category: mpllocal
             optional_mpl_dependency: ""
+        include:
+          - os: ubuntu-latest
+            runner: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+          - os: windows-latest
+            runner: windows-latest
+          - os: macos-latest
+            runner: macos-latest
     steps:
       # Support long Dafny filenames (used in MPL and DBESDK repos)
       - name: Support longpaths
@@ -112,7 +119,7 @@ jobs:
           TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
         run: tox -- -vv
   upstream-py311:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: true
       matrix:

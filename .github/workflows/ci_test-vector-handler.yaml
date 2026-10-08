@@ -17,7 +17,7 @@ jobs:
     # Leaving this defined but disabled
     # until we address the credentials problem.
     if: 1 == 0
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: true
       matrix:
@@ -43,6 +43,15 @@ jobs:
             architecture: x86
           - os: macos-latest
             architecture: x86
+        include:
+          - os: ubuntu-latest
+            runner: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+          - os: windows-latest
+            runner: windows-latest
+          - os: macos-latest
+            runner: macos-latest
+          - os: macos-15-intel
+            runner: macos-15-intel
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -64,7 +73,7 @@ jobs:
           cd test_vector_handlers
           tox -- -vv
   static-analysis:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: false
       matrix:
