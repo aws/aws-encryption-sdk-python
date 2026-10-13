@@ -32,6 +32,7 @@ setup(
     name="aws-encryption-sdk",
     packages=find_packages("src"),
     package_dir={"": "src"},
+    package_data={"aws_encryption_sdk": ["py.typed", "*.pyi", "*/*.pyi"]},
     version=get_version(),
     author="Amazon Web Services",
     maintainer="Amazon Web Services",

@@ -3,6 +3,7 @@ include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
 include requirements.txt
+recursive-include src/aws_encryption_sdk *.pyi py.typed
 
 recursive-include doc *
 recursive-include test *.py

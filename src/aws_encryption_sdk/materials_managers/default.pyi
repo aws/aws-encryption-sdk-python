@@ -1,0 +1,9 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+from typing import Any, Optional
+from aws_encryption_sdk.materials_managers.base import CryptoMaterialsManager
+
+class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
+    def __init__(self, master_key_provider: Optional[Any] = ...) -> None: ...
+    def get_encryption_materials(self, request: Any) -> Any: ...
+    def decrypt_materials(self, request: Any) -> Any: ...
