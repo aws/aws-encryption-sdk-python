@@ -163,6 +163,10 @@ def _make_handler(registry):
         # each response (the HTTP/1.0 default, which caused intermittent
         # "received no bytes" transport errors on reused connections).
         protocol_version = "HTTP/1.1"
+        # Send each response as soon as it is written. The handler writes the headers
+        # and body separately, and with Nagle on the body waits ~50 ms for the
+        # client to ACK the headers.
+        disable_nagle_algorithm = True
 
         # Quiet the default per-request stderr logging.
         def log_message(self, *args):  # noqa: D401
