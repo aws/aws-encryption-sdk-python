@@ -8,6 +8,11 @@ on:
         required: true
       INTEG_AWS_SECRET_ACCESS_KEY:
         required: true
+    inputs:
+      os:
+        type: string
+        # runs on macos-15-intel as macos-latest does not work in all python versions. 
+        default: '["ubuntu-latest", "windows-latest", "macos-latest", "macos-15-intel"]'
 
 permissions:
   contents: read
@@ -17,16 +22,11 @@ jobs:
     # Leaving this defined but disabled
     # until we address the credentials problem.
     if: 1 == 0
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && format('codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-{0}-{1}', github.run_id, github.run_attempt) || matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-          # runs on macos-15-intel as macos-latest does not work in all python versions. 
-          - macos-15-intel
+        os: ${{ fromJSON(inputs.os) }}
         python:
           - 3.8
           - 3.x
@@ -43,15 +43,6 @@ jobs:
             architecture: x86
           - os: macos-latest
             architecture: x86
-        include:
-          - os: ubuntu-latest
-            runner: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
-          - os: windows-latest
-            runner: windows-latest
-          - os: macos-latest
-            runner: macos-latest
-          - os: macos-15-intel
-            runner: macos-15-intel
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -73,6 +64,7 @@ jobs:
           cd test_vector_handlers
           tox -- -vv
   static-analysis:
+    if: contains(fromJSON(inputs.os), 'ubuntu-latest')
     runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: false
