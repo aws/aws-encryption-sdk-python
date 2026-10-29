@@ -3,9 +3,12 @@ name: Continuous Integration tests
 on:
   workflow_call:
     inputs:
-      os:
+      platforms:
         type: string
-        default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+        default: >-
+          [{"os": "ubuntu-latest", "runner": "codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}"},
+           {"os": "windows-latest", "runner": "windows-latest"},
+           {"os": "macos-latest", "runner": "macos-latest"}]
 
 env:
   AWS_ENCRYPTION_SDK_PYTHON_INTEGRATION_TEST_AWS_KMS_KEY_ID: |
@@ -22,11 +25,11 @@ permissions:
 
 jobs:
   tests:
-    runs-on: ${{ matrix.os == 'ubuntu-latest' && format('codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-{0}-{1}', github.run_id, github.run_attempt) || matrix.os }}
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.os) }}
+        platform: ${{ fromJSON(inputs.platforms) }}
         python:
           - 3.8
           - 3.9
@@ -54,18 +57,24 @@ jobs:
           # Python <3.11 incompatible with macOS ARM64 runners
           # https://github.com/actions/setup-python/issues/948
           - python: 3.7
-            os: macos-latest
+            platform:
+              os: macos-latest
           - python: 3.8
-            os: macos-latest
+            platform:
+              os: macos-latest
           - python: 3.9
-            os: macos-latest
+            platform:
+              os: macos-latest
           - python: 3.10
-            os: macos-latest
+            platform:
+              os: macos-latest
 
           # x86 builds are only meaningful for Windows
-          - os: ubuntu-latest
+          - platform:
+              os: ubuntu-latest
             architecture: x86
-          - os: macos-latest
+          - platform:
+              os: macos-latest
             architecture: x86
 
           # `cryptography` no longer publishes 32-bit Windows wheels for
@@ -78,7 +87,8 @@ jobs:
           # provisioning (i686 Rust target + 32-bit OpenSSL) per cell,
           # which isn't worth it for a configuration upstream no longer
           # supports.
-          - os: windows-latest
+          - platform:
+              os: windows-latest
             architecture: x86
 
           # MPL is not supported on <3.11
@@ -113,7 +123,7 @@ jobs:
           TOXENV: ${{ matrix.category }}${{ matrix.optional_mpl_dependency }}
         run: tox -- -vv
   upstream-py311:
-    if: contains(fromJSON(inputs.os), 'ubuntu-latest')
+    if: contains(fromJSON(inputs.platforms).*.os, 'ubuntu-latest')
     runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: true

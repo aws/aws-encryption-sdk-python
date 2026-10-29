@@ -9,10 +9,14 @@ on:
       INTEG_AWS_SECRET_ACCESS_KEY:
         required: true
     inputs:
-      os:
+      platforms:
         type: string
         # runs on macos-15-intel as macos-latest does not work in all python versions. 
-        default: '["ubuntu-latest", "windows-latest", "macos-latest", "macos-15-intel"]'
+        default: >-
+          [{"os": "ubuntu-latest", "runner": "codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}"},
+           {"os": "windows-latest", "runner": "windows-latest"},
+           {"os": "macos-latest", "runner": "macos-latest"},
+           {"os": "macos-15-intel", "runner": "macos-15-intel"}]
 
 permissions:
   contents: read
@@ -22,11 +26,11 @@ jobs:
     # Leaving this defined but disabled
     # until we address the credentials problem.
     if: 1 == 0
-    runs-on: ${{ matrix.os == 'ubuntu-latest' && format('codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-{0}-{1}', github.run_id, github.run_attempt) || matrix.os }}
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.os) }}
+        platform: ${{ fromJSON(inputs.platforms) }}
         python:
           - 3.8
           - 3.x
@@ -39,9 +43,11 @@ jobs:
           - awses_latest
         exclude:
           # x86 builds are only meaningful for Windows
-          - os: ubuntu-latest
+          - platform:
+              os: ubuntu-latest
             architecture: x86
-          - os: macos-latest
+          - platform:
+              os: macos-latest
             architecture: x86
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
@@ -64,7 +70,7 @@ jobs:
           cd test_vector_handlers
           tox -- -vv
   static-analysis:
-    if: contains(fromJSON(inputs.os), 'ubuntu-latest')
+    if: contains(fromJSON(inputs.platforms).*.os, 'ubuntu-latest')
     runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: false
