@@ -29,11 +29,35 @@ jobs:
     uses: ./.github/workflows/ci_static-analysis.yaml
   test_vector_handler:
     uses: ./.github/workflows/ci_test-vector-handler.yaml
+    with:
+      platforms: >-
+        [{"os": "ubuntu-latest", "runner": "codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}"}]
+    secrets:
+      INTEG_AWS_ACCESS_KEY_ID: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
+      INTEG_AWS_SECRET_ACCESS_KEY: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
+  test_vector_handler_macos_windows:
+    name: test_vector_handler (macOS, Windows)
+    uses: ./.github/workflows/ci_test-vector-handler.yaml
+    with:
+      platforms: >-
+        [{"os": "windows-latest", "runner": "windows-latest"},
+         {"os": "macos-latest", "runner": "macos-latest"},
+         {"os": "macos-15-intel", "runner": "macos-15-intel"}]
     secrets:
       INTEG_AWS_ACCESS_KEY_ID: ${{ secrets.INTEG_AWS_ACCESS_KEY_ID }}
       INTEG_AWS_SECRET_ACCESS_KEY: ${{ secrets.INTEG_AWS_SECRET_ACCESS_KEY }}
   tests:
     uses: ./.github/workflows/ci_tests.yaml
+    with:
+      platforms: >-
+        [{"os": "ubuntu-latest", "runner": "codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}"}]
+  tests_macos_windows:
+    name: tests (macOS, Windows)
+    uses: ./.github/workflows/ci_tests.yaml
+    with:
+      platforms: >-
+        [{"os": "windows-latest", "runner": "windows-latest"},
+         {"os": "macos-latest", "runner": "macos-latest"}]
   pr-ci-all-required:
     if: always()
     needs:
@@ -43,7 +67,7 @@ jobs:
       - static_analysis
       - test_vector_handler
       - tests
-    runs-on: ubuntu-22.04
+    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Verify all required jobs passed
         uses: re-actors/alls-green@release/v1
