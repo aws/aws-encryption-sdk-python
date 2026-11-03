@@ -49,7 +49,6 @@ This example also requires, for each tenant, credentials with the following acce
 - Decrypt
 """
 import hashlib
-from typing import Dict, Optional
 
 import boto3
 from aws_cryptographic_material_providers.keystore import KeyStore
@@ -67,6 +66,7 @@ from aws_cryptographic_material_providers.mpl.models import (
 )
 from aws_cryptographic_material_providers.mpl.references import IKeyring
 from botocore.credentials import Credentials
+from typing import Dict, Optional  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy

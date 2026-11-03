@@ -24,8 +24,6 @@ This example requires, for each tenant, credentials with the following access on
 - GenerateDataKey
 - Decrypt
 """
-from typing import Dict, Optional
-
 from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_material_providers.mpl.models import (
@@ -36,6 +34,7 @@ from aws_cryptographic_material_providers.mpl.models import (
 )
 from aws_cryptographic_material_providers.mpl.references import IClientSupplier, IKeyring
 from botocore.credentials import Credentials
+from typing import Dict, Optional  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
