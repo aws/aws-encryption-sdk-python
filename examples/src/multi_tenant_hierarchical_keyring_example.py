@@ -13,8 +13,10 @@ Every tenant's AWS KMS Key Store is given:
 
 Every tenant's Hierarchical Keyring is given one cache, shared by every tenant.
 The cache is a storm tracking cache, so its thundering herd mitigation
-(a cap on simultaneous refreshes of cached Branch Keys) applies across all tenants,
+(a cap on simultaneous fetches of Branch Keys) applies across all tenants,
 and one entry capacity bounds the memory of every tenant's cached Branch Keys.
+Every cache parameter is explicit and explained below;
+applications SHOULD tune them to their own usage pattern.
 Each keyring's Partition ID, derived from its tenant's credentials,
 additionally isolates tenants within the shared cache.
 
@@ -52,11 +54,12 @@ from aws_cryptographic_material_providers.keystore.models import CreateKeyInput,
 from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialProviders
 from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_material_providers.mpl.models import (
-    CacheTypeDefault,
     CacheTypeShared,
+    CacheTypeStormTracking,
     CreateAwsKmsHierarchicalKeyringInput,
     CreateCryptographicMaterialsCacheInput,
-    DefaultCache,
+    StormTrackingCache,
+    TimeUnits,
 )
 from aws_cryptographic_material_providers.mpl.references import IKeyring
 from botocore.credentials import Credentials
@@ -121,18 +124,57 @@ def encrypt_and_decrypt_with_keyring(
     ddb_client = boto3.client("dynamodb", region_name=ddb_region)
     transport = KmsTransport()
 
-    # 3. Create one cache, shared by every tenant's Hierarchical Keyring.
-    #    The Default cache is a storm tracking cache: as a cached Branch Key nears expiry,
-    #    one request refreshes it while the others keep using the cached entry,
-    #    rather than all calling DynamoDB and KMS; and its fan out caps how many refreshes run at once.
-    #    Sharing the cache applies that cap across every tenant, rather than per tenant.
-    #    Size entry_capacity for every tenant's Branch Keys, not one tenant's.
+    # 3. Create one storm tracking cache, shared by every tenant's Hierarchical Keyring.
+    #    As a cached Branch Key nears expiry, one request refreshes it while the others keep using
+    #    the cached entry, rather than all calling DynamoDB and KMS; and fan_out caps how many
+    #    distinct Branch Keys are fetched at once. Sharing the cache applies that cap across every tenant.
+    #
+    #    Every parameter is set explicitly, rather than using the MPL's DefaultCache,
+    #    as the defaults suit a cache per keyring; shared by every tenant, fan_out and in_flight_ttl need changing.
+    #    These values are illustrative. Applications SHOULD tune every one of them to their own usage pattern:
+    #    the number of tenants, how many tenants miss the cache at once, Branch Key TTLs,
+    #    and DynamoDB and KMS latency.
+    #
+    #    Requires aws-cryptographic-material-providers 1.11.3 or later; earlier Python releases sleep
+    #    sleep_milli seconds, not milliseconds, whenever fan_out is reached (MPL issue #1940).
     shared_cache = CacheTypeShared(
         value=mat_prov.create_cryptographic_materials_cache(
             input=CreateCryptographicMaterialsCacheInput(
-                cache=CacheTypeDefault(
-                    value=DefaultCache(
-                        entry_capacity=1000
+                cache=CacheTypeStormTracking(
+                    value=StormTrackingCache(
+                        # Maximum Branch Keys cached, across every tenant; not per tenant.
+                        # Size it for the number of tenants times the Branch Keys each has in use.
+                        # 1000 is the MPL default.
+                        entry_capacity=1000,
+                        # Entries evicted at a time when the cache is full. The MPL default.
+                        entry_pruning_tail_size=1,
+                        # Begin refreshing an entry this long before it expires;
+                        # until then, other requests keep using the cached entry.
+                        # The MPL default; short relative to the 600 second ttl_seconds of the keyrings below.
+                        grace_period=10_000,
+                        # Within the grace period, at most one request per interval is sent to refresh an entry.
+                        # The MPL default.
+                        grace_interval=1_000,
+                        # Maximum number of distinct Branch Keys being fetched at once, across every tenant.
+                        # Once it is reached, a caller whose Branch Key has no cached entry blocks.
+                        # The MPL default of 20 suits a cache per keyring; shared by every tenant,
+                        # it would serialize a burst of tenants missing the cache at once (e.g. at startup).
+                        fan_out=100,
+                        # How long a fetch counts against fan_out. The keyring only marks a fetch complete
+                        # when it succeeds, so a failed fetch holds its slot for this long.
+                        # Lowered from the MPL default of 10 seconds, so a tenant whose fetches fail
+                        # (e.g. revoked credentials) cannot hold slots the other tenants need for long.
+                        # SHOULD exceed a typical DynamoDB plus KMS fetch, including retries;
+                        # a fetch that takes longer may be duplicated by another request.
+                        in_flight_ttl=5_000,
+                        # How long a blocked caller sleeps before checking the cache again,
+                        # always in milliseconds. The MPL default.
+                        sleep_milli=20,
+                        # The unit of grace_period, grace_interval, and in_flight_ttl.
+                        # MUST be set: StormTrackingCache defaults to seconds,
+                        # unlike the MPL's DefaultCache, which uses milliseconds.
+                        # The MPL also requires grace_interval <= in_flight_ttl <= grace_period.
+                        time_units=TimeUnits.MILLISECONDS,
                     )
                 ),
             )

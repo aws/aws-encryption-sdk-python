@@ -659,15 +659,89 @@ Every Tenant's Hierarchical Keyring is given the same cache
 (`CacheTypeShared`, wrapping one `create_cryptographic_materials_cache`),
 rather than a cache per keyring.
 
-The MPL's Default cache is a storm tracking cache:
+The cache is a storm tracking cache:
 as a cached Branch Key nears expiry,
 one request refreshes it while the others keep using the cached entry,
-and its fan out caps how many refreshes run at once.
+and its fan out caps how many distinct Branch Keys are fetched at once.
 A cache per keyring applies that cap per Tenant;
 a shared cache applies it across all Tenants,
 which is where a thundering herd comes from.
 One entry capacity also bounds the memory of every Tenant's cached Branch Keys,
 rather than one bound per Tenant.
+
+### 10.1.1 Why not the MPL's `DefaultCache`?
+
+`DefaultCache` is a storm tracking cache with the MPL's default parameters
+(`StormTracker.DefaultStorm()`);
+those defaults suit a cache per keyring,
+and two of them do not suit a cache shared by every Tenant.
+
+**The fan out is now a process wide limit**:  
+Once fan out (default 20) distinct Branch Keys are being fetched,
+a caller whose Branch Key has no cached entry blocks.
+Shared by every Tenant,
+20 would serialize a burst of Tenants missing the cache at once,
+such as at startup,
+or when Branch Keys created together expire together.
+
+**A failing Tenant holds fan out slots**:  
+The Hierarchical Keyring only marks a fetch complete
+(`PutCacheEntry`)
+when the fetch succeeds;
+a failed fetch holds its fan out slot until the in flight TTL (default 10 seconds) expires.
+A Tenant whose fetches fail,
+such as with revoked credentials,
+would hold slots the other Tenants need.
+Sharing the cache made this a cross Tenant concern.
+
+**A units trap**:  
+`DefaultStorm()` uses milliseconds;
+a `StormTrackingCache` constructed by hand defaults to seconds.
+Copying the default values without also setting `time_units`
+turns a 10 second grace period into roughly 2.8 hours.
+
+Thus,
+the example sets every parameter explicitly,
+documenting why in the source:
+
+| Parameter                 | Example        | MPL default | Why                                                              |
+| ------------------------- | -------------- | ----------- | ---------------------------------------------------------------- |
+| `entry_capacity`          | 1000           | 1000        | Size for every Tenant's Branch Keys, not one Tenant's            |
+| `entry_pruning_tail_size` | 1              | 1           | Default                                                          |
+| `grace_period`            | 10,000 ms      | 10,000 ms   | Default; short relative to the keyrings' 600 second TTL          |
+| `grace_interval`          | 1,000 ms       | 1,000 ms    | Default                                                          |
+| `fan_out`                 | 100            | 20          | Do not serialize a burst of Tenants missing the cache at once    |
+| `in_flight_ttl`           | 5,000 ms       | 10,000 ms   | Release a failing Tenant's slots sooner                          |
+| `sleep_milli`             | 20 ms          | 20 ms       | Default                                                          |
+| `time_units`              | `MILLISECONDS` | seconds     | MUST be set explicitly; see the units trap                       |
+
+The MPL requires `grace_interval <= in_flight_ttl <= grace_period`.
+The in flight TTL SHOULD exceed a typical DynamoDB plus KMS fetch,
+including retries;
+a fetch that takes longer MAY be duplicated by another request.
+
+These values are illustrative.
+Applications SHOULD tune every one of them to their own usage pattern:
+the number of Tenants,
+how many Tenants miss the cache at once,
+Branch Key TTLs,
+and DynamoDB and KMS latency.
+
+_Note_: The MPL's specification
+(`changes/2023-06-19_thread_safe_cache/change.md`)
+gives the in flight TTL a default of 20 seconds;
+the implementation's default is 10 seconds.
+
+### 10.1.2 Requires MPL 1.11.3 or later
+
+The ESDK-Python allows `aws-cryptographic-material-providers` from 1.7.4.
+Before 1.11.3,
+the Python runtime's storm tracking cache passed `sleep_milli` to `time.sleep`,
+which takes seconds
+([aws-cryptographic-material-providers-library#1940](https://github.com/aws/aws-cryptographic-material-providers-library/issues/1940));
+with the defaults,
+a blocked caller slept 20 seconds per check, rather than 20 milliseconds.
+The example therefore requires 1.11.3 or later.
 
 Keyrings share cache entries only if their
 Partition ID,
