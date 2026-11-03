@@ -47,6 +47,12 @@ signs every request with SigV4,
 retries,
 and maps failures to botocore's exception types.
 
+## AWS KMS Key Store
+
+The MPL's `KeyStore`
+(`aws_cryptographic_material_providers.keystore`),
+which persists the Branch Keys used by the AWS KMS Hierarchical Keyring.
+
 ## Tenant KMS Client
 
 `TenantKmsClient`, defined in [tenant_kms_client.py](./tenant_kms_client.py).
@@ -62,13 +68,13 @@ the AWS Cryptographic Material Providers Library (MPL) use.
 
 ## KMS Operations in Scope
 
-| Operation                         | Used by                                                                      |
-| --------------------------------- | ---------------------------------------------------------------------------- |
-| `kms:GenerateDataKey`             | AWS KMS Keyring, KMS Master Keys (encrypt)                                   |
-| `kms:Encrypt`                     | AWS KMS Keyring, KMS Master Keys (encrypt, additional KMS Keys)              |
-| `kms:Decrypt`                     | AWS KMS Keyring, KMS Master Keys (decrypt), Key Store (`GetActiveBranchKey`) |
-| `kms:GenerateDataKeyWithoutPlaintext` | Key Store (`CreateKey`, `VersionKey`)                                    |
-| `kms:ReEncrypt`                   | Key Store (`CreateKey`, `VersionKey`)                                        |
+| Operation                             | Used by                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| `kms:GenerateDataKey`                 | AWS KMS Keyring, KMS Master Keys (encrypt)                                           |
+| `kms:Encrypt`                         | AWS KMS Keyring, KMS Master Keys (encrypt, additional KMS Keys)                      |
+| `kms:Decrypt`                         | AWS KMS Keyring, KMS Master Keys (decrypt), AWS KMS Key Store (`GetActiveBranchKey`) |
+| `kms:GenerateDataKeyWithoutPlaintext` | AWS KMS Key Store (`CreateKey`, `VersionKey`)                                        |
+| `kms:ReEncrypt`                       | AWS KMS Key Store (`CreateKey`, `VersionKey`)                                        |
 
 # Background
 
@@ -116,7 +122,7 @@ and one logger across all Tenants.
 
 4. The example MUST support:
    - the AWS KMS Keyring, including keyrings built with a Client Supplier
-   - the AWS KMS Hierarchical Keyring's Key Store
+   - the AWS KMS Hierarchical Keyring's AWS KMS Key Store
    - the Strict, Discovery, and MRK-aware KMS Master Key Providers
 
 5. The example MUST support the [KMS Operations in Scope](#kms-operations-in-scope).
@@ -144,7 +150,7 @@ and one logger across all Tenants.
   its KMS requests will fail to connect (or time out) rather than fail with a proxy error.
 - Sourcing Tenant Credentials (STS, credential caching);
   the example accepts any `botocore.credentials.Credentials`.
-- Per-Tenant DynamoDB credentials for the Key Store.
+- Per-Tenant DynamoDB credentials for the AWS KMS Key Store.
 - Changes to the ESDK-Python, the MPL, or boto3.
 
 ## Why not change the ESDK-Python or the MPL?
@@ -165,16 +171,52 @@ and its usage can inform such a feature.
 
 ## Why not per-Tenant DynamoDB credentials?
 
-UPDATE: The author decided a shared DynamoDB client is acceptable.
-
-The Key Store's isolation boundary is the Tenant's KMS Key;
+The AWS KMS Key Store's isolation boundary is the Tenant's KMS Key;
 a Branch Key Item is useless without `kms:Decrypt` on the KMS Key that protects it.
 
-Per-Tenant DynamoDB credentials would require
-either a boto3 DynamoDB client per Tenant,
-re-introducing the Heavy Objects this example exists to avoid,
-or a second transport that speaks DynamoDB's protocol.
-Neither is justified for an example.
+The AWS KMS Hierarchy Keyring is designed as a multi-tenant solution
+predicated on KMS being the isolation boundary, not DynamoDB.
+
+The Branch Keys of the AWS KMS Key Store are a shared resource between
+the tenants and the service/application protecting the tenants data under KMS.
+
+## Which non-public interfaces does the example depend on?
+
+**botocore**:  
+None.
+The Shared Transport and Tenant KMS Client use
+`botocore.auth.SigV4Auth`,
+`botocore.awsrequest.AWSRequest`,
+`botocore.credentials.Credentials.get_frozen_credentials`,
+and `botocore.exceptions`.
+botocore does not formally document a public API;
+these are the interfaces customers commonly use to sign their own requests,
+and they have been stable for many years.
+
+**MPL**:  
+None.
+However,
+the example relies on the MPL duck typing its `kms_client`
+([4.1](#41-keyrings-client-suppliers-and-the-aws-kms-key-store)),
+which is behavior rather than an interface.
+
+**ESDK-Python**:  
+Yes.
+The MKP subclasses override or use protected members of the KMS Master Key Providers:
+`_config_class`,
+`_regional_clients`,
+`_register_client`,
+and `_user_agent_adding_config`;
+and the MRK-aware Discovery MKP subclass overrides `_new_master_key_impl`
+and imports `aws_encryption_sdk.internal.arn`
+([4.2.2](#422-relax-the-validator-with-configuration-subclasses)).
+
+These members are from the legacy MKP code base,
+which is unlikely to be refactored,
+as Crypto Tools is moving to Keyrings everywhere
+being the only supported interface.
+Thus,
+the risk is accepted.
 
 # Design Questions
 
@@ -230,7 +272,7 @@ Every operation validates its parameters against the KMS service model;
 passing `aws_access_key_id=`, `credentials=`, `Credentials=`, or `config=`
 to an operation raises `botocore.exceptions.ParamValidationError`.
 
-There is no equivalent to Java's `overrideConfiguration`.
+There is no equivalent to Java's `overrideConfiguration` in boto3; however, the AWS SDK for Python v4 may introduce a solution.
 
 ### 2.2 The private `request_credentials` signing context
 
@@ -280,10 +322,21 @@ It remains a reasonable,
 if fragile,
 option for applications that already pin botocore.
 
+### 2.3 Author's conclusion
+
+boto3 has no public interface for per-request credentials
+([2.1](#21-public-interface));
+the only path is private
+([2.2](#22-the-private-request_credentials-signing-context)).
+
+Thus,
+the example pursues other options
+(see [Design Question 3](#3-where-do-we-inject-the-per-tenant-behavior)).
+
 ## 3 Where do we inject the per-Tenant behavior?
 
 The ESDK-Python's MKPs accept a `botocore.session.Session`;
-the MPL's Keyrings and Key Store accept a KMS client.
+the MPL's Keyrings and AWS KMS Key Store accept a KMS client.
 Neither accepts a connection pool.
 
 ### 3.1 A custom Master Key Provider and Keyring
@@ -303,11 +356,11 @@ in Python,
 unverified,
 to change only how KMS is called.
 
-**Con, the Hierarchical Keyring needs a custom Key Store too**:  
-The Hierarchical Keyring calls KMS through the Key Store,
+**Con, the Hierarchical Keyring needs a custom AWS KMS Key Store too**:  
+The Hierarchical Keyring calls KMS through the AWS KMS Key Store,
 not directly.
 A custom Keyring does nothing for it;
-this option also requires a custom Key Store,
+this option also requires a custom AWS KMS Key Store,
 which is one more component to write, test, and maintain,
 where [3.3](#33-a-lightweight-boto3-shaped-kms-client-over-a-shared-transport) requires none.
 
@@ -341,7 +394,7 @@ there would still be one per Tenant.
 
 Leave the MKPs,
 Keyrings,
-and Key Store alone.
+and AWS KMS Key Store alone.
 Replace only the KMS client they are given.
 
 The Shared Transport owns the connection pool,
@@ -354,13 +407,13 @@ that accept and return what boto3's methods accept and return.
 
 **Pro, nothing verified is re-implemented**:  
 Every Keyring,
-the Key Store,
+the AWS KMS Key Store,
 and every MKP behave exactly as they do with boto3.
 
 **Pro, one artifact serves both**:  
 The same Tenant KMS Client is handed to a Keyring,
 a Client Supplier,
-a Key Store,
+a AWS KMS Key Store,
 or an MKP.
 
 **Con, a small KMS client to maintain**:  
@@ -375,7 +428,7 @@ This is the cost of Requirements 1 and 2.
 
 ## 4 How does a Tenant KMS Client satisfy the ESDK-Python and the MPL?
 
-### 4.1 Keyrings, Client Suppliers, and the Key Store
+### 4.1 Keyrings, Client Suppliers, and the AWS KMS Key Store
 
 The MPL types `kms_client` as `botocore.client.BaseClient`;
 this is a type hint,
@@ -584,31 +637,31 @@ and the transport holds no other mutable state.
 The Tenant KMS Client is immutable,
 with one exception:
 the MPL appends its user agent to `meta.config.user_agent_extra`
-when a Keyring or Key Store is constructed.
+when a Keyring or AWS KMS Key Store is constructed.
 That is a check then append on a string;
 the worst case of a race is the suffix appearing twice.
 
 ## 10 The Hierarchical Keyring
 
-Each Tenant gets a Key Store,
+Each Tenant gets a AWS KMS Key Store,
 constructed with that Tenant's Tenant KMS Client
 and the shared DynamoDB client,
-and a Hierarchical Keyring on that Key Store.
+and a Hierarchical Keyring on that AWS KMS Key Store.
 
-The Key Store calls KMS only to create or version a Branch Key,
+The AWS KMS Key Store calls KMS only to create or version a Branch Key,
 and to decrypt a Branch Key on a cache miss;
 thus the KMS request rate per Tenant is low,
 but Requirement 2 still applies to every request.
 
 _Note_: If Tenants do not require distinct KMS credentials,
-one Key Store and a Branch Key ID Supplier
+one AWS KMS Key Store and a Branch Key ID Supplier
 (see [branch_key_id_supplier_example.py](../branch_key_id_supplier_example.py))
 is the simpler multi-tenant design,
 and this example is unnecessary.
 
 # Consequences
 
-- The keyring path depends on the MPL duck typing its `kms_client` ([4.1](#41-keyrings-client-suppliers-and-the-key-store)).
+- The keyring path depends on the MPL duck typing its `kms_client` ([4.1](#41-keyrings-client-suppliers-and-the-aws-kms-key-store)).
 - The MKP path depends on the ESDK-Python's `add_regional_client`, `_register_client`, `_regional_clients`, and `_user_agent_adding_config`;
   these are protected members,
   but are already used by the legacy custom KMS client example.
@@ -651,5 +704,5 @@ exactly as the existing `hierarchical_keyring_example.py` does with that identit
 | [kms_transport.py](./kms_transport.py)                                                                  | Shared Transport                                              |
 | [tenant_kms_client.py](./tenant_kms_client.py)                                                          | Tenant KMS Client                                             |
 | [../multi_tenant_kms_keyring_example.py](../multi_tenant_kms_keyring_example.py)                       | AWS KMS Keyring and MRK Discovery Multi-Keyring, per Tenant   |
-| [../multi_tenant_hierarchical_keyring_example.py](../multi_tenant_hierarchical_keyring_example.py)     | Key Store and Hierarchical Keyring, per Tenant                |
+| [../multi_tenant_hierarchical_keyring_example.py](../multi_tenant_hierarchical_keyring_example.py)     | AWS KMS Key Store and Hierarchical Keyring, per Tenant                |
 | [../legacy/multi_tenant_kms_master_key_provider.py](../legacy/multi_tenant_kms_master_key_provider.py) | MKP subclasses and example, per Tenant                        |

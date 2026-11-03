@@ -118,7 +118,12 @@ class KmsTransport(object):
         self.close()
 
     def close(self):
-        """Closes every pooled connection."""
+        """Closes every pooled connection.
+
+        The transport is shared by every tenant; close it only when the application shuts down.
+        In-flight requests complete, but no connection is re-used afterwards,
+        so closing it while tenants are still active costs every tenant a new TLS handshake.
+        """
         self._pool.clear()
 
     def call(  # pylint: disable=too-many-arguments

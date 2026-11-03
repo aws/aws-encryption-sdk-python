@@ -155,5 +155,9 @@ def encrypt_decrypt(tenant_key_arns, tenant_credentials, source_plaintext, botoc
                 for pair in encrypt_header.encryption_context.items()
             )
     finally:
-        # 4. Close the pool when the application shuts down.
+        # 4. Close the transport only when the application shuts down.
+        #    It is shared by every tenant; this example owns it, and every tenant is done with it here.
+        #    An application MUST NOT close it while any tenant's provider may still use it:
+        #    in-flight requests complete, but every pooled connection is dropped,
+        #    so every tenant pays a new TLS handshake on its next request.
         transport.close()

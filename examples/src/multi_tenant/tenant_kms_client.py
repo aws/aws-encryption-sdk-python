@@ -8,7 +8,7 @@ A ``TenantKmsClient`` holds a reference to a shared ``KmsTransport``,
 an AWS Region, and the tenant's credentials; nothing else.
 Construct as many as there are tenants; they share one connection pool.
 
-It implements the KMS operations used by the AWS KMS Keyring, the Hierarchical Keyring's Key Store,
+It implements the KMS operations used by the AWS KMS Keyring, the AWS KMS Key Store,
 and the KMS Master Key Providers, accepting and returning what boto3's KMS client accepts and returns:
 
 * ``generate_data_key``
