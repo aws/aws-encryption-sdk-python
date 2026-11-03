@@ -21,6 +21,7 @@ from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
 
 from ...src import multi_tenant_kms_keyring_example
 from ...src.multi_tenant import KmsTransport, TenantKmsClient
+from ...src.multi_tenant_hierarchical_keyring_example import tenant_partition_id
 from ...src.multi_tenant_kms_keyring_example import TenantClientSupplier
 from . import fake_kms
 
@@ -91,3 +92,18 @@ def test_discovery_keyring_cannot_decrypt_another_tenants_message(transport, kms
 
     assert kms.requests[-1]["operation"] == "Decrypt"
     assert kms.requests[-1]["access_key"] == "AKIATENANTB"
+
+
+def test_partition_id_is_a_digest_distinct_per_tenant_and_never_the_secret():
+    partition_a = tenant_partition_id(TENANT_A)
+    assert partition_a == tenant_partition_id(Credentials("AKIATENANTA", "secret-a"))  # deterministic
+    assert partition_a != tenant_partition_id(TENANT_B)
+    assert len(partition_a) == 96 and int(partition_a, 16) >= 0  # hex encoded SHA-384
+    assert TENANT_A.secret_key not in partition_a
+    assert TENANT_A.access_key not in partition_a
+
+
+def test_partition_id_changes_when_credentials_rotate():
+    # Refreshed credentials have a new secret access key; by design, a new keyring misses the cache once.
+    rotated = Credentials("AKIATENANTA", "secret-a-rotated")
+    assert tenant_partition_id(TENANT_A) != tenant_partition_id(rotated)

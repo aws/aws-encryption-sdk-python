@@ -653,6 +653,72 @@ and to decrypt a Branch Key on a cache miss;
 thus the KMS request rate per Tenant is low,
 but Requirement 2 still applies to every request.
 
+### 10.1 One shared cache
+
+Every Tenant's Hierarchical Keyring is given the same cache
+(`CacheTypeShared`, wrapping one `create_cryptographic_materials_cache`),
+rather than a cache per keyring.
+
+The MPL's Default cache is a storm tracking cache:
+as a cached Branch Key nears expiry,
+one request refreshes it while the others keep using the cached entry,
+and its fan out caps how many refreshes run at once.
+A cache per keyring applies that cap per Tenant;
+a shared cache applies it across all Tenants,
+which is where a thundering herd comes from.
+One entry capacity also bounds the memory of every Tenant's cached Branch Keys,
+rather than one bound per Tenant.
+
+Keyrings share cache entries only if their
+Partition ID,
+Logical Key Store Name,
+and Branch Key ID
+are all the same.
+Every Tenant's AWS KMS Key Store is an instance of the same physical Key Store,
+and so has the same Logical Key Store Name;
+Tenants are separated by their Branch Key IDs,
+and additionally by their Partition IDs.
+
+### 10.2 The Partition ID
+
+The Partition ID is the SHA-384 digest of the Tenant's secret access key.
+
+**It is distinct per Tenant**:  
+Different credentials have different secret access keys,
+so Tenants are isolated within the shared cache
+even if a Branch Key ID were ever reused or misconfigured.
+
+**It is not the secret**:  
+The MPL digests the Partition ID into every cache identifier;
+however,
+the Hierarchical Keyring keeps its Partition ID,
+unhashed,
+for its lifetime.
+Using the secret access key directly would leave another copy of the secret in memory.
+The example therefore digests it first;
+a digest of a high entropy secret discloses nothing useful.
+
+**It changes when credentials are refreshed**:  
+Refreshable Tenant Credentials (i.e: `sts:AssumeRole`) rotate the secret access key.
+A keyring created after a refresh has a different Partition ID,
+so it does not share cache entries with a keyring created before the refresh,
+and its first use of a Branch Key is a cache miss.
+
+This is intended;
+it ties a Tenant's cache usage to the lifetime of its credentials.
+A keyring created before a refresh keeps its Partition ID,
+and keeps using its cache entries until they expire;
+its cache misses are fetched with the refreshed credentials,
+as the Tenant KMS Client freezes credentials on every request.
+
+### 10.3 Shutdown
+
+The Shared Transport and the DynamoDB client are both shared by every Tenant;
+the example closes both,
+and an application MUST close them only when it shuts down.
+Closing either while a Tenant may still use it drops every pooled connection,
+and costs every Tenant a new TLS handshake.
+
 _Note_: If Tenants do not require distinct KMS credentials,
 one AWS KMS Key Store and a Branch Key ID Supplier
 (see [branch_key_id_supplier_example.py](../branch_key_id_supplier_example.py))

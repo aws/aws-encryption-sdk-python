@@ -11,6 +11,13 @@ Every tenant's AWS KMS Key Store is given:
   and one ``KmsTransport`` shared by the whole process, which owns the only connection pool
 - one DynamoDB client, shared by every tenant
 
+Every tenant's Hierarchical Keyring is given one cache, shared by every tenant.
+The cache is a storm tracking cache, so its thundering herd mitigation
+(a cap on simultaneous refreshes of cached Branch Keys) applies across all tenants,
+and one entry capacity bounds the memory of every tenant's cached Branch Keys.
+Each keyring's Partition ID, derived from its tenant's credentials,
+additionally isolates tenants within the shared cache.
+
 The AWS KMS Key Store calls AWS KMS to create a Branch Key
 (``GenerateDataKeyWithoutPlaintext`` and ``ReEncrypt``)
 and to decrypt a Branch Key on a cache miss (``Decrypt``);
@@ -35,6 +42,7 @@ This example also requires, for each tenant, credentials with the following acce
 - ReEncrypt
 - Decrypt
 """
+import hashlib
 from typing import Dict
 
 import boto3
@@ -45,7 +53,9 @@ from aws_cryptographic_material_providers.mpl import AwsCryptographicMaterialPro
 from aws_cryptographic_material_providers.mpl.config import MaterialProvidersConfig
 from aws_cryptographic_material_providers.mpl.models import (
     CacheTypeDefault,
+    CacheTypeShared,
     CreateAwsKmsHierarchicalKeyringInput,
+    CreateCryptographicMaterialsCacheInput,
     DefaultCache,
 )
 from aws_cryptographic_material_providers.mpl.references import IKeyring
@@ -61,6 +71,26 @@ EXAMPLE_DATA: bytes = b"Hello World"
 
 def _region(kms_key_arn: str) -> str:
     return kms_key_arn.split(":")[3]
+
+
+def tenant_partition_id(credentials: Credentials) -> str:
+    """Derives a shared cache Partition ID from a tenant's credentials.
+
+    The Partition ID is the SHA-384 digest of the tenant's secret access key:
+
+    - It is distinct for every set of credentials, so tenants are isolated within the shared cache,
+      in addition to being isolated by their Branch Key IDs.
+    - It is not the secret. A Hierarchical Keyring keeps its Partition ID, unhashed, for its lifetime;
+      a digest of a high entropy secret discloses nothing useful.
+    - It changes when refreshable credentials rotate. A keyring created after a refresh
+      does not share cache entries with one created before it, and will miss the cache once;
+      this ties a tenant's cache usage to the lifetime of its credentials.
+
+    :param credentials: The tenant's credentials
+    :returns: A hex encoded SHA-384 digest
+    """
+    secret_key = credentials.get_frozen_credentials().secret_key
+    return hashlib.sha384(secret_key.encode("utf-8")).hexdigest()
 
 
 def encrypt_and_decrypt_with_keyring(
@@ -91,9 +121,27 @@ def encrypt_and_decrypt_with_keyring(
     ddb_client = boto3.client("dynamodb", region_name=ddb_region)
     transport = KmsTransport()
 
+    # 3. Create one cache, shared by every tenant's Hierarchical Keyring.
+    #    The Default cache is a storm tracking cache: as a cached Branch Key nears expiry,
+    #    one request refreshes it while the others keep using the cached entry,
+    #    rather than all calling DynamoDB and KMS; and its fan out caps how many refreshes run at once.
+    #    Sharing the cache applies that cap across every tenant, rather than per tenant.
+    #    Size entry_capacity for every tenant's Branch Keys, not one tenant's.
+    shared_cache = CacheTypeShared(
+        value=mat_prov.create_cryptographic_materials_cache(
+            input=CreateCryptographicMaterialsCacheInput(
+                cache=CacheTypeDefault(
+                    value=DefaultCache(
+                        entry_capacity=1000
+                    )
+                ),
+            )
+        )
+    )
+
     try:
         for tenant, kms_key_id in tenant_kms_key_ids.items():
-            # 3. Create a KMS client for this tenant.
+            # 4. Create a KMS client for this tenant.
             #    This is a few references, not a boto3 client; construct as many as you have tenants.
             tenant_kms_client = TenantKmsClient(
                 transport=transport,
@@ -101,7 +149,7 @@ def encrypt_and_decrypt_with_keyring(
                 credentials=tenant_credentials[tenant],
             )
 
-            # 4. Create this tenant's AWS KMS Key Store.
+            # 5. Create this tenant's AWS KMS Key Store.
             #    Every KMS request it makes is signed with this tenant's credentials.
             key_store: KeyStore = KeyStore(
                 config=KeyStoreConfig(
@@ -115,29 +163,30 @@ def encrypt_and_decrypt_with_keyring(
                 )
             )
 
-            # 5. Create a Branch Key for this tenant.
+            # 6. Create a Branch Key for this tenant.
             #    This calls kms:GenerateDataKeyWithoutPlaintext and kms:ReEncrypt.
             #    Applications usually create a tenant's Branch Key once, when the tenant is onboarded,
             #    and persist the Branch Key ID.
             branch_key_id: str = key_store.create_key(input=CreateKeyInput()).branch_key_identifier
 
-            # 6. Create this tenant's Hierarchical Keyring.
-            #    Applications SHOULD cache keyrings per tenant, rather than create one per request,
-            #    so that the Branch Key cache is effective.
+            # 7. Create this tenant's Hierarchical Keyring, on the shared cache.
+            #    Keyrings share cache entries only if their Partition ID, Logical Key Store Name,
+            #    and Branch Key ID are all the same. Every tenant's AWS KMS Key Store has the same
+            #    Logical Key Store Name, as they are instances of the same physical Key Store;
+            #    the Partition ID, derived from the tenant's credentials, keeps tenants apart
+            #    even if a Branch Key ID were ever reused or misconfigured.
+            #    Applications SHOULD cache keyrings per tenant, rather than create one per request.
             hierarchical_keyring: IKeyring = mat_prov.create_aws_kms_hierarchical_keyring(
                 input=CreateAwsKmsHierarchicalKeyringInput(
                     key_store=key_store,
                     branch_key_id=branch_key_id,
                     ttl_seconds=600,
-                    cache=CacheTypeDefault(
-                        value=DefaultCache(
-                            entry_capacity=100
-                        )
-                    ),
+                    cache=shared_cache,
+                    partition_id=tenant_partition_id(tenant_credentials[tenant]),
                 )
             )
 
-            # 7. Encrypt and decrypt with the tenant's keyring.
+            # 8. Encrypt and decrypt with the tenant's keyring.
             #    On a Branch Key cache miss, the AWS KMS Key Store calls kms:Decrypt with the tenant's credentials.
             encryption_context: Dict[str, str] = {
                 "tenant": tenant,
@@ -160,9 +209,10 @@ def encrypt_and_decrypt_with_keyring(
             assert plaintext == EXAMPLE_DATA, \
                 "Decrypted plaintext should be identical to the original plaintext. Invalid decryption"
     finally:
-        # 8. Close the transport only when the application shuts down.
-        #    It is shared by every tenant; this example owns it, and every tenant is done with it here.
-        #    An application MUST NOT close it while any tenant's keyring may still use it:
+        # 9. Close the transport and the DynamoDB client only when the application shuts down.
+        #    Both are shared by every tenant; this example owns them, and every tenant is done with them here.
+        #    An application MUST NOT close either while any tenant's keyring may still use it:
         #    in-flight requests complete, but every pooled connection is dropped,
         #    so every tenant pays a new TLS handshake on its next request.
         transport.close()
+        ddb_client.close()
