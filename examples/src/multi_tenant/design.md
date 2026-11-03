@@ -413,7 +413,7 @@ and every MKP behave exactly as they do with boto3.
 **Pro, one artifact serves both**:  
 The same Tenant KMS Client is handed to a Keyring,
 a Client Supplier,
-a AWS KMS Key Store,
+an AWS KMS Key Store,
 or an MKP.
 
 **Con, a small KMS client to maintain**:  
@@ -643,7 +643,7 @@ the worst case of a race is the suffix appearing twice.
 
 ## 10 The Hierarchical Keyring
 
-Each Tenant gets a AWS KMS Key Store,
+Each Tenant gets an AWS KMS Key Store,
 constructed with that Tenant's Tenant KMS Client
 and the shared DynamoDB client,
 and a Hierarchical Keyring on that AWS KMS Key Store.

@@ -1,6 +1,6 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Offline tests for the multi-tenant KMS Master Key Provider example."""
+"""Offline tests for the multi-tenant KMS Master Key Providers example."""
 # pylint: disable=redefined-outer-name,protected-access
 import botocore.exceptions
 import botocore.session
@@ -10,16 +10,24 @@ from botocore.credentials import Credentials
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
-from aws_encryption_sdk.exceptions import GenerateKeyError
+from aws_encryption_sdk.exceptions import DecryptKeyError, GenerateKeyError
+from aws_encryption_sdk.key_providers.kms import DiscoveryFilter
 
 from ...src.legacy import multi_tenant_kms_master_key_provider as example
-from ...src.legacy.multi_tenant_kms_master_key_provider import TenantStrictAwsKmsMasterKeyProvider
+from ...src.legacy.multi_tenant_kms_master_key_provider import (
+    TenantDiscoveryAwsKmsMasterKeyProvider,
+    TenantMRKAwareDiscoveryAwsKmsMasterKeyProvider,
+    TenantMRKAwareStrictAwsKmsMasterKeyProvider,
+    TenantStrictAwsKmsMasterKeyProvider,
+)
 from ...src.multi_tenant import KmsTransport, TenantKmsClient
 from ..multi_tenant import fake_kms
 
 pytestmark = [pytest.mark.examples]
 
 KEY_A = "arn:aws:kms:us-west-2:111122223333:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+MRK_A = "arn:aws:kms:us-west-2:111122223333:key/mrk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+MRK_A_EAST = "arn:aws:kms:us-east-1:111122223333:key/mrk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 KEY_B = "arn:aws:kms:us-east-1:444455556666:key/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 TENANT_A = Credentials("AKIATENANTA", "secret-a")
 TENANT_B = Credentials("AKIATENANTB", "secret-b")
@@ -33,7 +41,8 @@ def transport():
 @pytest.fixture
 def kms(transport):
     fake = fake_kms.install(transport)
-    fake.add_key(KEY_A, TENANT_A.access_key)
+    for key in (KEY_A, MRK_A, MRK_A_EAST):
+        fake.add_key(key, TENANT_A.access_key)
     fake.add_key(KEY_B, TENANT_B.access_key)
     return fake
 
@@ -67,15 +76,63 @@ def test_example_signs_every_request_with_the_owning_tenant(monkeypatch, transpo
     assert all("AwsEncryptionSdkPython/" in request["user_agent"] for request in kms.requests)
 
 
-def test_provider_uses_tenant_kms_clients(transport, kms, session, esdk):
-    provider = TenantStrictAwsKmsMasterKeyProvider(
-        key_ids=[KEY_A], transport=transport, credentials=TENANT_A, botocore_session=session
-    )
+@pytest.mark.parametrize("provider_class, key", [
+    (TenantStrictAwsKmsMasterKeyProvider, KEY_A),
+    (TenantMRKAwareStrictAwsKmsMasterKeyProvider, MRK_A),
+])
+def test_strict_providers_use_tenant_kms_clients(transport, kms, session, esdk, provider_class, key):
+    provider = provider_class(key_ids=[key], transport=transport, credentials=TENANT_A, botocore_session=session)
     ciphertext, _ = esdk.encrypt(source=b"data", key_provider=provider)
     plaintext, _ = esdk.decrypt(source=ciphertext, key_provider=provider)
     assert plaintext == b"data"
     assert all(isinstance(client, TenantKmsClient) for client in provider._regional_clients.values())
     assert {request["access_key"] for request in kms.requests} == {"AKIATENANTA"}
+
+
+@pytest.mark.parametrize("provider_class, kwargs", [
+    (TenantDiscoveryAwsKmsMasterKeyProvider, {}),
+    (TenantMRKAwareDiscoveryAwsKmsMasterKeyProvider, {"discovery_region": "us-west-2"}),
+])
+def test_discovery_providers_enforce_tenant_credentials(transport, kms, session, esdk, provider_class, kwargs):
+    encrypt_a = TenantStrictAwsKmsMasterKeyProvider(
+        key_ids=[KEY_A], transport=transport, credentials=TENANT_A, botocore_session=session
+    )
+    ciphertext, _ = esdk.encrypt(source=b"tenant A data", key_provider=encrypt_a)
+
+    discovery_filter = DiscoveryFilter(account_ids=["111122223333"], partition="aws")
+    discovery_a = provider_class(
+        transport=transport, credentials=TENANT_A, botocore_session=session, discovery_filter=discovery_filter, **kwargs
+    )
+    plaintext, _ = esdk.decrypt(source=ciphertext, key_provider=discovery_a)
+    assert plaintext == b"tenant A data"
+
+    # Tenant B's provider trusts tenant A's account, but signs with tenant B's credentials.
+    discovery_b = provider_class(
+        transport=transport, credentials=TENANT_B, botocore_session=session, discovery_filter=discovery_filter, **kwargs
+    )
+    with pytest.raises(DecryptKeyError):
+        esdk.decrypt(source=ciphertext, key_provider=discovery_b)
+    assert kms.requests[-1]["access_key"] == "AKIATENANTB"
+
+
+def test_mrk_discovery_provider_decrypts_in_the_discovery_region(transport, kms, session, esdk):
+    encrypt_a = TenantMRKAwareStrictAwsKmsMasterKeyProvider(
+        key_ids=[MRK_A_EAST], transport=transport, credentials=TENANT_A, botocore_session=session
+    )
+    ciphertext, _ = esdk.encrypt(source=b"replicated", key_provider=encrypt_a)
+
+    discovery_a = TenantMRKAwareDiscoveryAwsKmsMasterKeyProvider(
+        transport=transport,
+        credentials=TENANT_A,
+        botocore_session=session,
+        discovery_filter=DiscoveryFilter(account_ids=["111122223333"], partition="aws"),
+        discovery_region="us-west-2",
+    )
+    plaintext, _ = esdk.decrypt(source=ciphertext, key_provider=discovery_a)
+    assert plaintext == b"replicated"
+    assert kms.requests[-1]["operation"] == "Decrypt"
+    assert kms.requests[-1]["region"] == "us-west-2"
+    assert kms.requests[-1]["body"]["KeyId"] == MRK_A
 
 
 def test_tenant_cannot_use_another_tenants_key(transport, kms, session, esdk):

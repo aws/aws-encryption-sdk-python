@@ -1,13 +1,13 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Example showing a KMS Master Key Provider that calls AWS KMS with per-tenant credentials over one connection pool.
+"""Example showing KMS Master Key Providers that call AWS KMS with per-tenant credentials over one connection pool.
 
 boto3 binds credentials to a client at construction,
 and the KMS Master Key Providers construct their clients from a botocore Session;
 so serving many tenants, each with their own credentials, normally means a Session and a KMS client per tenant.
 Both are heavy objects.
 
-The provider below instead constructs a ``TenantKmsClient`` per region:
+The providers below instead construct a ``TenantKmsClient`` per region:
 a few references to the tenant's credentials and one shared ``KmsTransport``,
 which owns the only connection pool in the process.
 
@@ -19,9 +19,15 @@ import six
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
+from aws_encryption_sdk.internal.arn import arn_from_str
 from aws_encryption_sdk.key_providers.kms import (
+    DiscoveryAwsKmsMasterKeyProvider,
     KMSMasterKeyConfig,
     KMSMasterKeyProviderConfig,
+    MRKAwareDiscoveryAwsKmsMasterKeyProvider,
+    MRKAwareKMSMasterKey,
+    MRKAwareKMSMasterKeyConfig,
+    MRKAwareStrictAwsKmsMasterKeyProvider,
     StrictAwsKmsMasterKeyProvider,
 )
 
@@ -66,6 +72,13 @@ class TenantKmsMasterKeyConfig(KMSMasterKeyConfig):
 
 
 @attr.s(hash=True)
+class TenantMRKAwareKmsMasterKeyConfig(MRKAwareKMSMasterKeyConfig):
+    """``MRKAwareKMSMasterKeyConfig`` that accepts a ``TenantKmsClient``."""
+
+    client = attr.ib(hash=True, default=None, validator=_is_kms_client)
+
+
+@attr.s(hash=True)
 class TenantKmsMasterKeyProviderConfig(KMSMasterKeyProviderConfig):
     """``KMSMasterKeyProviderConfig`` that also carries the shared transport and the tenant's credentials.
 
@@ -85,14 +98,10 @@ class TenantKmsMasterKeyProviderConfig(KMSMasterKeyProviderConfig):
     )
 
 
-class TenantStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
-    """``StrictAwsKmsMasterKeyProvider`` for one tenant, over a shared ``KmsTransport``.
-
-    Constructs a ``TenantKmsClient``, rather than a boto3 client, for each region.
-    """
+class _TenantKmsClientMixin(object):
+    """Constructs a ``TenantKmsClient``, rather than a boto3 client, for each region."""
 
     _config_class = TenantKmsMasterKeyProviderConfig
-    master_key_config_class = TenantKmsMasterKeyConfig
 
     def add_regional_client(self, region_name):
         """Adds a ``TenantKmsClient`` for the specified region if it does not already exist.
@@ -111,6 +120,48 @@ class TenantStrictAwsKmsMasterKeyProvider(StrictAwsKmsMasterKeyProvider):
             # removing this client from the cache if it raises a BotoCoreError.
             self._register_client(client, region_name)
             self._regional_clients[region_name] = client
+
+
+class TenantStrictAwsKmsMasterKeyProvider(_TenantKmsClientMixin, StrictAwsKmsMasterKeyProvider):
+    """``StrictAwsKmsMasterKeyProvider`` for one tenant, over a shared ``KmsTransport``."""
+
+    master_key_config_class = TenantKmsMasterKeyConfig
+
+
+class TenantMRKAwareStrictAwsKmsMasterKeyProvider(_TenantKmsClientMixin, MRKAwareStrictAwsKmsMasterKeyProvider):
+    """``MRKAwareStrictAwsKmsMasterKeyProvider`` for one tenant, over a shared ``KmsTransport``."""
+
+    master_key_config_class = TenantMRKAwareKmsMasterKeyConfig
+
+
+class TenantDiscoveryAwsKmsMasterKeyProvider(_TenantKmsClientMixin, DiscoveryAwsKmsMasterKeyProvider):
+    """``DiscoveryAwsKmsMasterKeyProvider`` for one tenant, over a shared ``KmsTransport``."""
+
+    master_key_config_class = TenantKmsMasterKeyConfig
+
+
+class TenantMRKAwareDiscoveryAwsKmsMasterKeyProvider(_TenantKmsClientMixin, MRKAwareDiscoveryAwsKmsMasterKeyProvider):
+    """``MRKAwareDiscoveryAwsKmsMasterKeyProvider`` for one tenant, over a shared ``KmsTransport``."""
+
+    master_key_config_class = TenantMRKAwareKmsMasterKeyConfig
+
+    def _new_master_key_impl(self, key_id):
+        """Same behavior as ``MRKAwareDiscoveryAwsKmsMasterKeyProvider._new_master_key_impl``.
+
+        The parent constructs ``MRKAwareKMSMasterKeyConfig`` directly, ignoring ``master_key_config_class``;
+        this override only substitutes the configuration class.
+        """
+        _key_id = key_id.decode("utf-8") if isinstance(key_id, bytes) else key_id
+        arn = arn_from_str(_key_id)
+        # A multi-Region key is used in the discovery region; any other key in the region of its ARN.
+        if arn.resource_id.startswith("mrk"):
+            arn.region = self.config.discovery_region
+            _key_id = arn.to_string()
+        return MRKAwareKMSMasterKey(
+            config=self.master_key_config_class(
+                key_id=_key_id, client=self._client(_key_id), grant_tokens=self.config.grant_tokens
+            )
+        )
 
 
 def encrypt_decrypt(tenant_key_arns, tenant_credentials, source_plaintext, botocore_session=None):
