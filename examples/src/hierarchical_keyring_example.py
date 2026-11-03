@@ -26,7 +26,7 @@ encrypt and decrypt data for two separate tenants.
 
 This example requires access to the DDB Table where you are storing the Branch Keys. This
 table must be configured with the following primary key configuration: - Partition key is named
-"partition_key" with type (S) - Sort key is named "sort_key" with type (S).
+"branch-key-id" with type (S) - Sort key is named "type" with type (S).
 
 This example also requires using a KMS Key. You need the following access on this key: -
 GenerateDataKeyWithoutPlaintext - Decrypt
@@ -46,7 +46,7 @@ from aws_cryptographic_material_providers.mpl.models import (
     DefaultCache,
 )
 from aws_cryptographic_material_providers.mpl.references import IBranchKeyIdSupplier, IKeyring
-from typing import Dict  # noqa pylint: disable=wrong-import-order
+from typing import Dict, Optional  # noqa pylint: disable=wrong-import-order
 
 import aws_encryption_sdk
 from aws_encryption_sdk import CommitmentPolicy
@@ -60,7 +60,8 @@ EXAMPLE_DATA: bytes = b"Hello World"
 def encrypt_and_decrypt_with_keyring(
     key_store_table_name: str,
     logical_key_store_name: str,
-    kms_key_id: str
+    kms_key_id: str,
+    branch_key_ids: Optional[Dict[str, str]] = None,
 ):
     """Creates a hierarchical keyring using the provided resources, then encrypts and decrypts a string with it."""
     # 1. Instantiate the encryption SDK client.
@@ -95,8 +96,15 @@ def encrypt_and_decrypt_with_keyring(
     )
 
     # 4. Call CreateKey to create two new active branch keys
+    #    Branch Keys SHOULD NOT be deleted in production: deleting a Branch Key cryptographically shreds
+    #    every message it protected. This example creates new Branch Keys on every run, so if the caller
+    #    passes branch_key_ids, each is recorded as soon as it is created, so the caller can delete them.
     branch_key_id_a: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
+    if branch_key_ids is not None:
+        branch_key_ids["tenant_a"] = branch_key_id_a
     branch_key_id_b: str = keystore.create_key(input=CreateKeyInput()).branch_key_identifier
+    if branch_key_ids is not None:
+        branch_key_ids["tenant_b"] = branch_key_id_b
 
     # 5. Create a branch key supplier that maps the branch key id to a more readable format
     branch_key_id_supplier: IBranchKeyIdSupplier = ExampleBranchKeyIdSupplier(

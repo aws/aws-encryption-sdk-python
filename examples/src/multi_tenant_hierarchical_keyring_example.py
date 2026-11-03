@@ -37,7 +37,11 @@ See ``multi_tenant/design.md`` for the options considered and the decisions made
 
 This example requires access to the DDB Table where you are storing the Branch Keys. This
 table must be configured with the following primary key configuration: - Partition key is named
-"partition_key" with type (S) - Sort key is named "sort_key" with type (S).
+"branch-key-id" with type (S) - Sort key is named "type" with type (S).
+
+This example creates a new Branch Key per tenant every time it runs, and returns their Branch Key IDs.
+Branch Keys SHOULD NOT be deleted in production: deleting a Branch Key cryptographically shreds
+every message it protected. This example's test deletes them only to keep the example table from growing.
 
 This example also requires, for each tenant, credentials with the following access on that tenant's KMS key:
 - GenerateDataKeyWithoutPlaintext
@@ -45,7 +49,7 @@ This example also requires, for each tenant, credentials with the following acce
 - Decrypt
 """
 import hashlib
-from typing import Dict
+from typing import Dict, Optional
 
 import boto3
 from aws_cryptographic_material_providers.keystore import KeyStore
@@ -102,7 +106,8 @@ def encrypt_and_decrypt_with_keyring(
     tenant_kms_key_ids: Dict[str, str],
     tenant_credentials: Dict[str, Credentials],
     ddb_region: str = "us-west-2",
-):
+    branch_key_ids: Optional[Dict[str, str]] = None,
+) -> Dict[str, str]:
     """Creates a Branch Key per tenant, then encrypts and decrypts a message for each tenant.
 
     :param key_store_table_name: Name of the DynamoDB table backing the AWS KMS Key Store
@@ -110,6 +115,9 @@ def encrypt_and_decrypt_with_keyring(
     :param tenant_kms_key_ids: Map of tenant name to the ARN of that tenant's KMS key
     :param tenant_credentials: Map of tenant name to that tenant's credentials
     :param ddb_region: Region of the DynamoDB table
+    :param branch_key_ids: If given, filled in with each tenant's Branch Key ID as soon as it is created,
+        so the caller can clean them up even if this function raises (optional)
+    :returns: Map of tenant name to the Branch Key ID created for that tenant
     """
     # 1. Instantiate the encryption SDK client and the material providers once, and share them.
     client = aws_encryption_sdk.EncryptionSDKClient(
@@ -181,6 +189,10 @@ def encrypt_and_decrypt_with_keyring(
         )
     )
 
+    # The Branch Key ID created for each tenant; filled in as each is created, so the caller can track them.
+    if branch_key_ids is None:
+        branch_key_ids = {}
+
     try:
         for tenant, kms_key_id in tenant_kms_key_ids.items():
             # 4. Create a KMS client for this tenant.
@@ -209,7 +221,11 @@ def encrypt_and_decrypt_with_keyring(
             #    This calls kms:GenerateDataKeyWithoutPlaintext and kms:ReEncrypt.
             #    Applications usually create a tenant's Branch Key once, when the tenant is onboarded,
             #    and persist the Branch Key ID.
+            #    Branch Keys SHOULD NOT be deleted in production: deleting a Branch Key
+            #    cryptographically shreds every message it protected. This example creates a new
+            #    Branch Key per tenant on every run, so its test deletes them, to keep the table from growing.
             branch_key_id: str = key_store.create_key(input=CreateKeyInput()).branch_key_identifier
+            branch_key_ids[tenant] = branch_key_id
 
             # 7. Create this tenant's Hierarchical Keyring, on the shared cache.
             #    Keyrings share cache entries only if their Partition ID, Logical Key Store Name,
@@ -258,3 +274,5 @@ def encrypt_and_decrypt_with_keyring(
         #    so every tenant pays a new TLS handshake on its next request.
         transport.close()
         ddb_client.close()
+
+    return branch_key_ids
