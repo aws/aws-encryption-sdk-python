@@ -1,7 +1,6 @@
 {
   "supportedFeatures": [
     "streaming",
-    "MPL",
     "hierarchical",
     "raw-aes",
     "raw-rsa",
