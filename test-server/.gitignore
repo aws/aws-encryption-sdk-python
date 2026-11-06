@@ -1,0 +1,9 @@
+# Cloned Python ESDK source (fetched by the orchestrator / Makefile at run time)
+.deps/
+# Python virtual environment
+.venv/
+# Python caches / build artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/

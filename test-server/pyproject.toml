@@ -1,0 +1,26 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "esdk-test-server-python"
+version = "0.0.0"
+description = "Hand-implemented Python Language_Server for the ESDK TestServer (rpcv2Cbor)"
+requires-python = ">=3.11"
+# The AWS Encryption SDK for Python and the Material Providers Library are NOT
+# pinned here: the orchestrator/Makefile installs the ESDK from the cloned
+# aws-encryption-sdk-python source (its repo URL is part of the Configuration),
+# via an editable relative-path install, so the server exercises live source.
+# Only the wire-protocol codec and AWS SDK client are declared as ordinary deps.
+dependencies = [
+    "cbor2>=5.6",
+    "boto3>=1.34",
+]
+
+[project.scripts]
+esdk-test-server-python = "esdk_test_server.__main__:main"
+
+[tool.setuptools]
+packages = ["esdk_test_server"]
