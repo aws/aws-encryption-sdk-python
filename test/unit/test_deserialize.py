@@ -1,6 +1,7 @@
 # Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for aws_encryption_sdk.deserialize"""
+import base64
 import io
 import struct
 
@@ -129,6 +130,29 @@ class TestDeserialize(object):
             stream = io.BytesIO(VALUES["serialized_header_invalid_version"])
             aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
         excinfo.match("Unsupported version *")
+        assert "base64" not in str(excinfo.value)
+
+    @pytest.mark.parametrize(
+        "serialized_header", (VALUES["serialized_header"], VALUES["serialized_header_v2_committing"])
+    )
+    def test_deserialize_header_base64_encoded(self, serialized_header):
+        """Validate that the deserialize_header function points at base64 encoding
+        as the likely cause when handed a message that was not decoded first.
+        """
+        with pytest.raises(NotSupportedError) as excinfo:
+            stream = io.BytesIO(base64.b64encode(serialized_header))
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(stream)
+        excinfo.match("Unsupported version 65: message may be base64 encoded")
+
+    @pytest.mark.parametrize("data", (b"A", b"AX", b"BAYA"))
+    def test_deserialize_header_without_base64_prefix(self, data):
+        """Validate that the deserialize_header function does not claim base64 encoding
+        unless both bytes of the expected base64 prefix match.
+        """
+        with pytest.raises(NotSupportedError) as excinfo:
+            aws_encryption_sdk.internal.formatting.deserialize.deserialize_header(io.BytesIO(data))
+        excinfo.match("Unsupported version *")
+        assert "base64" not in str(excinfo.value)
 
     @patch("aws_encryption_sdk.internal.formatting.deserialize.AlgorithmSuite.get_by_id")
     def test_deserialize_header_unsupported_data_encryption_algorithm(self, mock_algorithm_get):

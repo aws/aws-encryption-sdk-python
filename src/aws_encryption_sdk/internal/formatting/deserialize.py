@@ -344,6 +344,9 @@ def deserialize_header(stream, max_encrypted_data_keys=None):
     tee = io.BytesIO()
     tee_stream = TeeStream(stream, tee)
     (version_id,) = unpack_values(">B", tee_stream)
+    # A base64-encoded message starts with 0x41 0x59 (V1: 0x01 0x80) or 0x41 0x67 (V2: 0x02 0x04/0x05).
+    if version_id == 0x41 and tee_stream.read(1) in (b"\x59", b"\x67"):
+        raise NotSupportedError("Unsupported version {}: message may be base64 encoded".format(version_id))
     version = _verified_version_from_id(version_id)
     header = {}
     header["version"] = version
