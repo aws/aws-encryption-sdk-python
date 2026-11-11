@@ -626,7 +626,13 @@ def test_decrypt_oneshot_no_seek_input():
     assert decrypted == VALUES["plaintext_128"]
 
 
-@pytest.mark.parametrize("algorithm", Algorithm)
+@pytest.mark.parametrize(
+    "algorithm",
+    (
+        Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,  # message format version 1
+        Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384,  # message format version 2
+    ),
+)
 def test_decrypt_base64_encoded_message(algorithm):
     """Test that decrypt raises a specific error when given the Base64 encoding of a message."""
     commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
