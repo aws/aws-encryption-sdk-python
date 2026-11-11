@@ -32,7 +32,7 @@ jobs:
       matrix:
         platform: ${{ fromJSON(inputs.platforms) }}
         python:
-          - 3.8
+          - "3.10"
           - 3.x
         architecture:
           - x64
