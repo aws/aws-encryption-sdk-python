@@ -25,6 +25,7 @@ jobs:
           - pylint-examples
           - black-check
           - isort-check
+          - check-manifest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
