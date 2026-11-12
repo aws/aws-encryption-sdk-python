@@ -163,6 +163,15 @@ class TestEncryptionContext(object):
             )
         excinfo.match("Duplicate key in serialized context.")
 
+    def test_deserialize_encryption_context_zero_entries(self):
+        """Reject a nonempty serialized encryption context with zero entries."""
+        data = b"\x00\x00"
+        with pytest.raises(SerializationError) as excinfo:
+            aws_encryption_sdk.internal.formatting.encryption_context.deserialize_encryption_context(
+                serialized_encryption_context=data
+            )
+        excinfo.match("Formatting error: Serialized context contains no entries.")
+
     def test_deserialize_encryption_context_extra_data(self):
         """Validate that the deserialize_encryption_context
         function behaves as expected when it encounters
