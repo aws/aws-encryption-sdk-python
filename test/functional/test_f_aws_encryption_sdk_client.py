@@ -3,6 +3,7 @@
 """Functional test suite for aws_encryption_sdk.kms_thick_client"""
 from __future__ import division
 
+import base64
 import io
 import logging
 
@@ -18,7 +19,7 @@ from wrapt import ObjectProxy
 
 import aws_encryption_sdk
 from aws_encryption_sdk.caches import build_decryption_materials_cache_key, build_encryption_materials_cache_key
-from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded
+from aws_encryption_sdk.exceptions import CustomMaximumValueExceeded, NotSupportedError
 from aws_encryption_sdk.identifiers import Algorithm, CommitmentPolicy, EncryptionKeyType, WrappingAlgorithm
 from aws_encryption_sdk.internal.crypto.wrapping_keys import WrappingKey
 from aws_encryption_sdk.internal.defaults import LINE_LENGTH
@@ -623,6 +624,27 @@ def test_decrypt_oneshot_no_seek_input():
         source=ciphertext_no_seek, key_provider=key_provider
     )
     assert decrypted == VALUES["plaintext_128"]
+
+
+@pytest.mark.parametrize(
+    "algorithm",
+    (
+        Algorithm.AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384,  # message format version 1
+        Algorithm.AES_256_GCM_HKDF_SHA512_COMMIT_KEY_ECDSA_P384,  # message format version 2
+    ),
+)
+def test_decrypt_base64_encoded_message(algorithm):
+    """Test that decrypt raises a specific error when given the Base64 encoding of a message."""
+    commitment_policy = CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
+    if algorithm.is_committing():
+        commitment_policy = CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
+    client = aws_encryption_sdk.EncryptionSDKClient(commitment_policy=commitment_policy)
+    key_provider = fake_kms_key_provider(algorithm.kdf_input_len)
+    ciphertext, _header = client.encrypt(source=VALUES["plaintext_128"], key_provider=key_provider, algorithm=algorithm)
+
+    with pytest.raises(NotSupportedError) as excinfo:
+        client.decrypt(source=base64.b64encode(ciphertext), key_provider=key_provider)
+    excinfo.match("Message appears to be Base64 encoded, decode it before decrypting")
 
 
 def test_stream_encryptor_readable():

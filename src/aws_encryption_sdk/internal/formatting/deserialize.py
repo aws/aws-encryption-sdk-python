@@ -74,11 +74,15 @@ def validate_header(header, header_auth, raw_header, data_key):
         raise SerializationError("Header authorization failed")
 
 
-def _verified_version_from_id(version_id):
-    # type: (int) -> SerializationVersion
+def _verified_version_from_id(version_id, stream):
+    # type: (int, IO) -> SerializationVersion
     """Load a message :class:`SerializationVersion` for the specified version ID.
 
+    If the version ID is not supported, reads one more byte from ``stream`` to check
+    whether the message appears to be Base64 encoded.
+
     :param int version_id: Message format version ID
+    :param io.BytesIO stream: Source data stream
     :return: Message format version
     :rtype: SerializationVersion
     :raises NotSupportedError: if unsupported version ID is received
@@ -86,6 +90,13 @@ def _verified_version_from_id(version_id):
     try:
         return SerializationVersion(version_id)
     except ValueError as error:
+        # A common mistake is for users to attempt decryption on the Base64 encoding of the encrypted message.
+        # Detect this from the Base64 encoding of the first two bytes of each supported message format version:
+        #   V1: version 0x01, type 0x80 -> Base64 encoded as "AY"
+        #   V2: version 0x02, algorithm suite ID 0x04XX or 0x05XX -> Base64 encoded as "Ag"
+        prefix = struct.pack(">B", version_id) + stream.read(1)
+        if prefix in {b"AY", b"Ag"}:
+            raise NotSupportedError("Message appears to be Base64 encoded, decode it before decrypting") from error
         raise NotSupportedError("Unsupported version {}".format(version_id), error)
 
 
@@ -344,7 +355,7 @@ def deserialize_header(stream, max_encrypted_data_keys=None):
     tee = io.BytesIO()
     tee_stream = TeeStream(stream, tee)
     (version_id,) = unpack_values(">B", tee_stream)
-    version = _verified_version_from_id(version_id)
+    version = _verified_version_from_id(version_id, tee_stream)
     header = {}
     header["version"] = version
 
