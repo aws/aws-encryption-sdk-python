@@ -2,5 +2,6 @@
   "decrypt-accepts-trailing-bytes-commit-key",
   "decrypt-accepts-trailing-bytes-commit-key-ecdsa",
   "encrypt-accepts-reserved-prefix-encryption-context-key",
-  "raw-rsa-decrypt-reparses-private-key"
+  "raw-rsa-decrypt-reparses-private-key",
+  "encrypt-accepts-zero-frame-length"
 ]
