@@ -28,3 +28,11 @@ class TestWarnDeprecatedPython:
             v_info.minor = 7
             with pytest.warns(DeprecationWarning):
                 _warn_deprecated_python()
+
+    @pytest.mark.parametrize("minor", (8, 9))
+    def test_deprecated_py38_py39_warn(self, minor):
+        with mock.patch.object(sys, "version_info") as v_info:
+            v_info.major = 3
+            v_info.minor = minor
+            with pytest.warns(DeprecationWarning, match="upgrade to Python 3.10 or later"):
+                _warn_deprecated_python()

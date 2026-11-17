@@ -39,7 +39,7 @@ performance_tests directory.
 Required Prerequisites
 **********************
 
-* Python 3.8+
+* Python 3.10+
 * aws-encryption-sdk
 * boto3 >= 1.10.0
 * click
