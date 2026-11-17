@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   analysis:
-    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
