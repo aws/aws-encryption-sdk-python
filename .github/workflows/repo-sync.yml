@@ -11,7 +11,7 @@ jobs:
   repo-sync:
     name: Repo Sync
     environment: repo-sync
-    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: repo-sync/github-sync@v2

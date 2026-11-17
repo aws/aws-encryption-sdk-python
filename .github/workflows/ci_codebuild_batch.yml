@@ -12,10 +12,304 @@ permissions:
   contents: read
 
 jobs:
+  # Python 3.8 jobs
+  py38_integ:
+    name: Python 3.8 Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/integ.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_examples:
+    name: Python 3.8 Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/examples.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_decrypt_dafny_esdk_vectors:
+    name: Python 3.8 Decrypt Dafny ESDK Vectors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/decrypt_dafny_esdk_vectors.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_decrypt_net_401_vectors:
+    name: Python 3.8 Decrypt .NET 4.0.1 Vectors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/decrypt_net_401_vectors.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_encrypt_masterkey:
+    name: Python 3.8 Encrypt Masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/encrypt_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_generate_decrypt_vectors_masterkey:
+    name: Python 3.8 Generate Decrypt Vectors Masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/generate_decrypt_vectors_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_decrypt_masterkey_with_masterkey:
+    name: Python 3.8 Decrypt Masterkey with Masterkey
+    needs: py38_generate_decrypt_vectors_masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/decrypt_masterkey_with_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py38_decrypt_masterkey_with_js:
+    name: Python 3.8 Decrypt Masterkey with JS
+    needs: py38_generate_decrypt_vectors_masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py38/decrypt_masterkey_with_js.yml
+          image-override: aws/codebuild/standard:5.0
+
+  # Python 3.9 jobs
+  py39_integ:
+    name: Python 3.9 Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/integ.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_examples:
+    name: Python 3.9 Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/examples.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_decrypt_dafny_esdk_vectors:
+    name: Python 3.9 Decrypt Dafny ESDK Vectors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/decrypt_dafny_esdk_vectors.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_decrypt_net_401_vectors:
+    name: Python 3.9 Decrypt .NET 4.0.1 Vectors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/decrypt_net_401_vectors.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_encrypt_masterkey:
+    name: Python 3.9 Encrypt Masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/encrypt_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_generate_decrypt_vectors_masterkey:
+    name: Python 3.9 Generate Decrypt Vectors Masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/generate_decrypt_vectors_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_decrypt_masterkey_with_masterkey:
+    name: Python 3.9 Decrypt Masterkey with Masterkey
+    needs: py39_generate_decrypt_vectors_masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/decrypt_masterkey_with_masterkey.yml
+          image-override: aws/codebuild/standard:5.0
+
+  py39_decrypt_masterkey_with_js:
+    name: Python 3.9 Decrypt Masterkey with JS
+    needs: py39_generate_decrypt_vectors_masterkey
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.CI_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+          role-duration-seconds: 7200
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        timeout-minutes: 120
+        with:
+          project-name: python-esdk
+          buildspec-override: codebuild/py39/decrypt_masterkey_with_js.yml
+          image-override: aws/codebuild/standard:5.0
+
   # Python 3.10 jobs
   py310_integ:
     name: Python 3.10 Integration Tests
-    runs-on: &codebuild-linux codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -33,7 +327,7 @@ jobs:
 
   py310_examples:
     name: Python 3.10 Examples
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -51,7 +345,7 @@ jobs:
 
   py310_decrypt_dafny_esdk_vectors:
     name: Python 3.10 Decrypt Dafny ESDK Vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -69,7 +363,7 @@ jobs:
 
   py310_decrypt_net_401_vectors:
     name: Python 3.10 Decrypt .NET 4.0.1 Vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -87,7 +381,7 @@ jobs:
 
   py310_encrypt_masterkey:
     name: Python 3.10 Encrypt Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -105,7 +399,7 @@ jobs:
 
   py310_generate_decrypt_vectors_masterkey:
     name: Python 3.10 Generate Decrypt Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -124,7 +418,7 @@ jobs:
   py310_decrypt_masterkey_with_masterkey:
     name: Python 3.10 Decrypt Masterkey with Masterkey
     needs: py310_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -143,7 +437,7 @@ jobs:
   py310_decrypt_masterkey_with_js:
     name: Python 3.10 Decrypt Masterkey with JS
     needs: py310_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -162,7 +456,7 @@ jobs:
   # Python 3.11 jobs
   py311_integ:
     name: Python 3.11 Integration Tests
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -180,7 +474,7 @@ jobs:
 
   py311_integ_mpl:
     name: Python 3.11 Integration MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -198,7 +492,7 @@ jobs:
 
   py311_performance_tests_mpl:
     name: Python 3.11 Performance Tests MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -216,7 +510,7 @@ jobs:
 
   py311_examples:
     name: Python 3.11 Examples
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -234,7 +528,7 @@ jobs:
 
   py311_examples_mpl:
     name: Python 3.11 Examples MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -252,7 +546,7 @@ jobs:
 
   py311_decrypt_dafny_esdk_vectors_masterkey:
     name: Python 3.11 Decrypt Dafny ESDK Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -270,7 +564,7 @@ jobs:
 
   py311_decrypt_dafny_esdk_vectors_keyrings:
     name: Python 3.11 Decrypt Dafny ESDK Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -288,7 +582,7 @@ jobs:
 
   py311_decrypt_net_401_vectors_masterkey:
     name: Python 3.11 Decrypt .NET 4.0.1 Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -306,7 +600,7 @@ jobs:
 
   py311_decrypt_net_401_vectors_keyrings:
     name: Python 3.11 Decrypt .NET 4.0.1 Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -324,7 +618,7 @@ jobs:
 
   py311_encrypt_masterkey:
     name: Python 3.11 Encrypt Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -342,7 +636,7 @@ jobs:
 
   py311_encrypt_keyrings:
     name: Python 3.11 Encrypt Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -360,7 +654,7 @@ jobs:
 
   py311_generate_decrypt_vectors_masterkey:
     name: Python 3.11 Generate Decrypt Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -379,7 +673,7 @@ jobs:
   py311_decrypt_masterkey_with_masterkey:
     name: Python 3.11 Decrypt Masterkey with Masterkey
     needs: py311_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -398,7 +692,7 @@ jobs:
   py311_decrypt_masterkey_with_keyrings:
     name: Python 3.11 Decrypt Masterkey with Keyrings
     needs: py311_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -417,7 +711,7 @@ jobs:
   py311_decrypt_masterkey_with_js:
     name: Python 3.11 Decrypt Masterkey with JS
     needs: py311_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -435,7 +729,7 @@ jobs:
 
   py311_generate_decrypt_vectors_keyrings:
     name: Python 3.11 Generate Decrypt Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -454,7 +748,7 @@ jobs:
   py311_decrypt_keyrings_with_masterkey:
     name: Python 3.11 Decrypt Keyrings with Masterkey
     needs: py311_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -473,7 +767,7 @@ jobs:
   py311_decrypt_keyrings_with_keyrings:
     name: Python 3.11 Decrypt Keyrings with Keyrings
     needs: py311_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -492,7 +786,7 @@ jobs:
   py311_decrypt_keyrings_with_js:
     name: Python 3.11 Decrypt Keyrings with JS
     needs: py311_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -510,7 +804,7 @@ jobs:
 
   py311_decrypt_golden_manifest_with_keyrings:
     name: Python 3.11 Decrypt Golden Manifest with Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -528,7 +822,7 @@ jobs:
 
   py311_decrypt_golden_manifest_with_masterkey:
     name: Python 3.11 Decrypt Golden Manifest with Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -547,7 +841,7 @@ jobs:
   # Python 3.12 jobs
   py312_integ:
     name: Python 3.12 Integration Tests
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -565,7 +859,7 @@ jobs:
 
   py312_integ_mpl:
     name: Python 3.12 Integration MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -583,7 +877,7 @@ jobs:
 
   py312_performance_tests_mpl:
     name: Python 3.12 Performance Tests MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -601,7 +895,7 @@ jobs:
 
   py312_examples:
     name: Python 3.12 Examples
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -619,7 +913,7 @@ jobs:
 
   py312_examples_mpl:
     name: Python 3.12 Examples MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -637,7 +931,7 @@ jobs:
 
   py312_decrypt_dafny_esdk_vectors_masterkey:
     name: Python 3.12 Decrypt Dafny ESDK Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -655,7 +949,7 @@ jobs:
 
   py312_decrypt_dafny_esdk_vectors_keyrings:
     name: Python 3.12 Decrypt Dafny ESDK Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -673,7 +967,7 @@ jobs:
 
   py312_decrypt_net_401_vectors_masterkey:
     name: Python 3.12 Decrypt .NET 4.0.1 Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -691,7 +985,7 @@ jobs:
 
   py312_decrypt_net_401_vectors_keyrings:
     name: Python 3.12 Decrypt .NET 4.0.1 Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -709,7 +1003,7 @@ jobs:
 
   py312_encrypt_masterkey:
     name: Python 3.12 Encrypt Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -727,7 +1021,7 @@ jobs:
 
   py312_encrypt_keyrings:
     name: Python 3.12 Encrypt Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -745,7 +1039,7 @@ jobs:
 
   py312_generate_decrypt_vectors_masterkey:
     name: Python 3.12 Generate Decrypt Vectors Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -764,7 +1058,7 @@ jobs:
   py312_decrypt_masterkey_with_masterkey:
     name: Python 3.12 Decrypt Masterkey with Masterkey
     needs: py312_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -783,7 +1077,7 @@ jobs:
   py312_decrypt_masterkey_with_keyrings:
     name: Python 3.12 Decrypt Masterkey with Keyrings
     needs: py312_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -802,7 +1096,7 @@ jobs:
   py312_decrypt_masterkey_with_js:
     name: Python 3.12 Decrypt Masterkey with JS
     needs: py312_generate_decrypt_vectors_masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -820,7 +1114,7 @@ jobs:
 
   py312_generate_decrypt_vectors_keyrings:
     name: Python 3.12 Generate Decrypt Vectors Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -839,7 +1133,7 @@ jobs:
   py312_decrypt_keyrings_with_masterkey:
     name: Python 3.12 Decrypt Keyrings with Masterkey
     needs: py312_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -858,7 +1152,7 @@ jobs:
   py312_decrypt_keyrings_with_keyrings:
     name: Python 3.12 Decrypt Keyrings with Keyrings
     needs: py312_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -877,7 +1171,7 @@ jobs:
   py312_decrypt_keyrings_with_js:
     name: Python 3.12 Decrypt Keyrings with JS
     needs: py312_generate_decrypt_vectors_keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -895,7 +1189,7 @@ jobs:
 
   py312_generate_hkeyring_decrypt_vectors:
     name: Python 3.12 Generate HKeyring Decrypt Vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -914,7 +1208,7 @@ jobs:
   py312_decrypt_hkeyring_with_masterkey:
     name: Python 3.12 Decrypt HKeyring with Masterkey
     needs: py312_generate_hkeyring_decrypt_vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -933,7 +1227,7 @@ jobs:
   py312_decrypt_hkeyring_with_keyrings:
     name: Python 3.12 Decrypt HKeyring with Keyrings
     needs: py312_generate_hkeyring_decrypt_vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -952,7 +1246,7 @@ jobs:
   py312_decrypt_hkeyring_with_net:
     name: Python 3.12 Decrypt HKeyring with .NET
     needs: py312_generate_hkeyring_decrypt_vectors
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -970,7 +1264,7 @@ jobs:
 
   py312_decrypt_golden_manifest_with_keyrings:
     name: Python 3.12 Decrypt Golden Manifest with Keyrings
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -988,7 +1282,7 @@ jobs:
 
   py312_decrypt_golden_manifest_with_masterkey:
     name: Python 3.12 Decrypt Golden Manifest with Masterkey
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -1007,7 +1301,7 @@ jobs:
   # Code Coverage and Compliance jobs
   code_coverage:
     name: Code Coverage
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -1024,7 +1318,7 @@ jobs:
 
   code_coverage_mpl:
     name: Code Coverage MPL
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -1042,7 +1336,7 @@ jobs:
 
   compliance:
     name: Compliance
-    runs-on: *codebuild-linux
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
