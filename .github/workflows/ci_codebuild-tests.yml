@@ -19,10 +19,14 @@ permissions:
 jobs:
   codebuild-tests:
     name: AWS CodeBuild CI
-    runs-on: codebuild-CryptoToolsCI-linux-aws-encryption-sdk-python-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python:
+          - python_version: "38"
+            image: "aws/codebuild/standard:5.0"
+          - python_version: "39"
+            image: "aws/codebuild/standard:5.0"
           - python_version: "310"
             image: "aws/codebuild/standard:6.0"
           - python_version: "311"
