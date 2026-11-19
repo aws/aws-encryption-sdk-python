@@ -12,6 +12,9 @@ permissions:
   contents: read
   id-token: write
 
+permissions:
+  contents: read
+
 jobs:
   codebuild_batch:
     # Don't run the cron builds on forks

@@ -21,6 +21,9 @@ on:
 permissions:
   contents: read
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     # Leaving this defined but disabled
