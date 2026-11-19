@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Unit test suite for CachingCryptoMaterialsManager"""
 
+import concurrent.futures
+
 import pytest
 from mock import MagicMock, sentinel
 from pytest_mock import mocker  # noqa pylint: disable=unused-import
@@ -371,6 +373,26 @@ def test_get_encryption_materials_cache_miss_algorithm_not_safe_to_cache(
     assert test is ccmm.backing_materials_manager.get_encryption_materials.return_value
 
 
+def test_get_encryption_materials_cache_thread_safe(
+    patch_encryption_materials_request,
+    patch_should_cache_encryption_request,
+    patch_cache_entry_has_exceeded_limits,
+    patch_build_encryption_materials_cache_key,
+):
+    patch_cache_entry_has_exceeded_limits.return_value = False
+    mock_request = fake_encryption_request()
+    mock_request.plaintext_length = 10
+    ccmm = build_ccmm()
+    ccmm.cache.get_encryption_materials.side_effect = [CacheKeyError, MagicMock(), MagicMock()]
+    ccmm.backing_materials_manager.get_encryption_materials.return_value.algorithm.safe_to_cache.return_value = True
+
+    arguments = [mock_request, mock_request, mock_request]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        results = [item for item in executor.map(ccmm.get_encryption_materials, arguments)]
+
+    assert ccmm.backing_materials_manager.get_encryption_materials.call_count == 1
+
+
 @pytest.fixture
 def patch_build_decryption_materials_cache_key(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.caching, "build_decryption_materials_cache_key")
@@ -428,3 +450,15 @@ def test_decrypt_materials_cache_miss(patch_build_decryption_materials_cache_key
     assert not patch_cache_entry_is_too_old.called
     assert not ccmm.cache.remove.called
     assert test is ccmm.backing_materials_manager.decrypt_materials.return_value
+
+
+def test_decrypt_materials_cache_thread_safe(patch_build_decryption_materials_cache_key, patch_cache_entry_is_too_old):
+    patch_cache_entry_is_too_old.return_value = False
+    ccmm = build_ccmm()
+    ccmm.cache.get_decryption_materials.side_effect = [CacheKeyError, MagicMock(), MagicMock()]
+
+    arguments = [sentinel.request, sentinel.request, sentinel.request]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        results = [item for item in executor.map(ccmm.decrypt_materials, arguments)]
+
+    assert ccmm.backing_materials_manager.decrypt_materials.call_count == 1
