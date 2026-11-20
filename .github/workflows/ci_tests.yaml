@@ -31,8 +31,6 @@ jobs:
       matrix:
         platform: ${{ fromJSON(inputs.platforms) }}
         python:
-          - 3.8
-          - 3.9
           - "3.10"
           - "3.11"
           - "3.12"
@@ -56,15 +54,6 @@ jobs:
         exclude:
           # Python <3.11 incompatible with macOS ARM64 runners
           # https://github.com/actions/setup-python/issues/948
-          - python: 3.7
-            platform:
-              os: macos-latest
-          - python: 3.8
-            platform:
-              os: macos-latest
-          - python: 3.9
-            platform:
-              os: macos-latest
           - python: 3.10
             platform:
               os: macos-latest
@@ -92,12 +81,6 @@ jobs:
             architecture: x86
 
           # MPL is not supported on <3.11
-          - python: 3.7
-            optional_mpl_dependency: -mpl
-          - python: 3.8
-            optional_mpl_dependency: -mpl
-          - python: 3.9
-            optional_mpl_dependency: -mpl
           - python: 3.10
             optional_mpl_dependency: -mpl
           # mpllocal requires the MPL to be installed
