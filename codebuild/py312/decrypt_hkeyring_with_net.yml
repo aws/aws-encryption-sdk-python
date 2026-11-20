@@ -47,4 +47,5 @@ phases:
   
   build:
     commands:
-      - dotnet test --framework net6.0
+      # The .NET 6 runtime is no longer installable; run the net6.0 build on the newest installed runtime.
+      - DOTNET_ROLL_FORWARD=Major dotnet test --framework net6.0

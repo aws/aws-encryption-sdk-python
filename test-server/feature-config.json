@@ -1,7 +1,6 @@
 {
   "supportedFeatures": [
     "streaming",
-    "MPL",
     "hierarchical",
     "raw-aes",
     "raw-rsa",
@@ -13,7 +12,8 @@
     "aws-kms-mrk-multi",
     "aws-kms-mrk-discovery",
     "aws-kms-rsa",
-    "required-encryption-context"
+    "required-encryption-context",
+    "default-cmm-reproduced-encryption-context"
   ],
   "unsupportedFeatures": [
     "raw-ecdh",
