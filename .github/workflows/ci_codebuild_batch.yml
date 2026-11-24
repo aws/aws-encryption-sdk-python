@@ -1310,11 +1310,40 @@ jobs:
           aws-region: us-west-2
           role-duration-seconds: 7200
       - name: Run CodeBuild
+        id: codebuild
         uses: aws-actions/aws-codebuild-run-build@v1
         timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/coverage/coverage.yml
+      - name: Write the line coverage report
+        # The CodeBuild build prints its lcov report, gzipped and base64
+        # encoded, between two marker lines in its log.
+        if: ${{ !cancelled() && steps.codebuild.outputs.aws-build-id }}
+        env:
+          BUILD_ID: ${{ steps.codebuild.outputs.aws-build-id }}
+        run: |
+          read -r group stream < <(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+            --query 'builds[0].logs.[groupName,streamName]' --output text)
+          token=""
+          : > build.log
+          while :; do
+            page=$(aws logs get-log-events --log-group-name "$group" --log-stream-name "$stream" \
+              --start-from-head ${token:+--next-token "$token"} --output json)
+            jq -r '.events[].message' <<< "$page" >> build.log
+            next=$(jq -r '.nextForwardToken' <<< "$page")
+            [ "$next" = "$token" ] && break
+            token=$next
+          done
+          mkdir -p coverage
+          sed -n '/^LCOV-GZ-BASE64-BEGIN$/,/^LCOV-GZ-BASE64-END$/{//!p}' build.log | base64 -d | gunzip > coverage/esdk.lcov
+          grep -c '^SF:' coverage/esdk.lcov
+      - name: Upload the line coverage report
+        if: ${{ !cancelled() && steps.codebuild.outputs.aws-build-id }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-coverage-esdk
+          path: coverage/*.lcov
 
   code_coverage_mpl:
     name: Code Coverage MPL
@@ -1327,12 +1356,41 @@ jobs:
           aws-region: us-west-2
           role-duration-seconds: 7200
       - name: Run CodeBuild
+        id: codebuild
         uses: aws-actions/aws-codebuild-run-build@v1
         timeout-minutes: 120
         with:
           project-name: python-esdk
           buildspec-override: codebuild/coverage/coverage_mpl.yml
           image-override: aws/codebuild/standard:7.0
+      - name: Write the line coverage report
+        # The CodeBuild build prints its lcov report, gzipped and base64
+        # encoded, between two marker lines in its log.
+        if: ${{ !cancelled() && steps.codebuild.outputs.aws-build-id }}
+        env:
+          BUILD_ID: ${{ steps.codebuild.outputs.aws-build-id }}
+        run: |
+          read -r group stream < <(aws codebuild batch-get-builds --ids "$BUILD_ID" \
+            --query 'builds[0].logs.[groupName,streamName]' --output text)
+          token=""
+          : > build.log
+          while :; do
+            page=$(aws logs get-log-events --log-group-name "$group" --log-stream-name "$stream" \
+              --start-from-head ${token:+--next-token "$token"} --output json)
+            jq -r '.events[].message' <<< "$page" >> build.log
+            next=$(jq -r '.nextForwardToken' <<< "$page")
+            [ "$next" = "$token" ] && break
+            token=$next
+          done
+          mkdir -p coverage
+          sed -n '/^LCOV-GZ-BASE64-BEGIN$/,/^LCOV-GZ-BASE64-END$/{//!p}' build.log | base64 -d | gunzip > coverage/esdk-mpl.lcov
+          grep -c '^SF:' coverage/esdk-mpl.lcov
+      - name: Upload the line coverage report
+        if: ${{ !cancelled() && steps.codebuild.outputs.aws-build-id }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-coverage-esdk-mpl
+          path: coverage/*.lcov
 
   compliance:
     name: Compliance

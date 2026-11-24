@@ -12,3 +12,14 @@ phases:
     commands:
       - pip install "tox < 4.0"
       - tox
+  post_build:
+    commands:
+      # The GitHub workflow reads the line coverage report back out of this
+      # build's log and uploads it.
+      - |
+        cd "$CODEBUILD_SRC_DIR"
+        if [ -f .coverage ]; then
+          echo LCOV-GZ-BASE64-BEGIN
+          ".tox/$TOXENV/bin/coverage" lcov --fail-under=0 -q -o - | sed 's#^SF:.*/site-packages/#SF:src/#' | gzip | base64
+          echo LCOV-GZ-BASE64-END
+        fi
