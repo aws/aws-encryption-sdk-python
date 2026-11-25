@@ -37,7 +37,7 @@ def frame_iv(algorithm, sequence_number):
     """Builds the deterministic IV for a body frame.
 
     :param algorithm: Algorithm for which to build IV
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int sequence_number: Frame sequence number
     :returns: Generated IV
     :rtype: bytes
@@ -58,7 +58,7 @@ def non_framed_body_iv(algorithm):
     """Builds the deterministic IV for a non-framed body.
 
     :param algorithm: Algorithm for which to build IV
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :returns: Generated IV
     :rtype: bytes
     """
@@ -69,7 +69,7 @@ def header_auth_iv(algorithm):
     """Builds the deterministic IV for header authentication.
 
     :param algorithm: Algorithm for which to build IV
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :returns: Generated IV
     :rtype: bytes
     """

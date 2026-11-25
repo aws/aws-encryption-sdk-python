@@ -210,7 +210,7 @@ class MasterKeyProvider(object):
         :param encrypted_data_key: Encrypted data key to decrypt
         :type encrypted_data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -294,7 +294,7 @@ class MasterKeyProvider(object):
         :param encrypted_data_keys: List of encrypted data keys
         :type encrypted_data_keys: list of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -439,7 +439,7 @@ class MasterKey(MasterKeyProvider):
         """Generates and returns data key for use encrypting message.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -463,7 +463,7 @@ class MasterKey(MasterKeyProvider):
             Must be implemented by specific MasterKey implementations.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -476,7 +476,7 @@ class MasterKey(MasterKeyProvider):
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
             or :class:`aws_encryption_sdk.structures.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Data key containing encrypted data key
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
@@ -496,7 +496,7 @@ class MasterKey(MasterKeyProvider):
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
             or :class:`aws_encryption_sdk.structures.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
@@ -509,7 +509,7 @@ class MasterKey(MasterKeyProvider):
         :param encrypted_data_key: Encrypted data key
         :type encrypted_data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -535,7 +535,7 @@ class MasterKey(MasterKeyProvider):
         :param data_key: Encrypted data key
         :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey

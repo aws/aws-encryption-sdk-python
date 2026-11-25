@@ -50,7 +50,7 @@ class NullMasterKey(MasterKey):
         """Build the null data key of the correct length for the requested algorithm suite.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :returns: Null data key
         :rtype: bytes
         """
@@ -60,7 +60,7 @@ class NullMasterKey(MasterKey):
         """:class:`NullMasterKey` does not support generate_data_key
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :raises NotImplementedError: when called
         """
@@ -77,7 +77,7 @@ class NullMasterKey(MasterKey):
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
             or :class:`aws_encryption_sdk.structures.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :raises NotImplementedError: when called
         """
@@ -91,7 +91,7 @@ class NullMasterKey(MasterKey):
         :param data_key: Encrypted data key
         :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey

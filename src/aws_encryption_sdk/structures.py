@@ -18,7 +18,7 @@ class MessageHeader(object):
     :param type: Message content type, per spec
     :type type: aws_encryption_sdk.identifiers.ObjectType
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes message_id: Message ID
     :param dict encryption_context: Dictionary defining encryption context
     :param encrypted_data_keys: Encrypted data keys

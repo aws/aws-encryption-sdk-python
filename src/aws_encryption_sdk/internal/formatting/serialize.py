@@ -203,7 +203,7 @@ def _serialize_header_auth_v1(
     """Creates serialized header authentication data for messages in serialization version V1.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes header: Serialized message header
     :param bytes data_encryption_key: Data key with which to encrypt message
     :param signer: Cryptographic signer object (optional)
@@ -257,7 +257,7 @@ def _serialize_header_auth_v2(
     """Creates serialized header authentication data for messages in serialization version V2.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes header: Serialized message header
     :param bytes data_encryption_key: Data key with which to encrypt message
     :param signer: Cryptographic signer object (optional)
@@ -313,7 +313,7 @@ def serialize_header_auth(
     :param version: The serialization version of the message
     :type version: int
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes header: Serialized message header
     :param bytes data_encryption_key: Data key with which to encrypt message
     :param signer: Cryptographic signer object (optional)
@@ -342,7 +342,7 @@ def serialize_non_framed_open(algorithm, iv, plaintext_length, signer=None):
     """Serializes the opening block for a non-framed message body.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes iv: IV value used to encrypt body
     :param int plaintext_length: Length of plaintext (and thus ciphertext) in body
     :param signer: Cryptographic signer object (optional)
@@ -379,7 +379,7 @@ def serialize_frame(
     the frame, and returns the encrypted frame and the remaining plaintext.
 
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes plaintext: Source plaintext to encrypt and serialize
     :param bytes message_id: Message ID
     :param bytes data_encryption_key: Data key with which to encrypt message

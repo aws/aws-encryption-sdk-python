@@ -23,7 +23,7 @@ class _PrehashingAuthenticator(object):
     """Parent class for Signer/Verifier. Provides common behavior and interface.
 
     :param algorithm: Algorithm on which to base authenticator
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param key: Key with which to build authenticator
     """
 
@@ -55,7 +55,7 @@ class Signer(_PrehashingAuthenticator):
     """Abstract signing handler.
 
     :param algorithm: Algorithm on which to base signer
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param key: Private key from which a signer can be generated
     :type key: currently only Elliptic Curve Private Keys are supported
     """
@@ -65,7 +65,7 @@ class Signer(_PrehashingAuthenticator):
         """Builds a `Signer` from an algorithm suite and a raw signing key.
 
         :param algorithm: Algorithm on which to base signer
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes key_bytes: Raw signing key
         :rtype: aws_encryption_sdk.internal.crypto.Signer
         """
@@ -123,7 +123,7 @@ class Verifier(_PrehashingAuthenticator):
         For ECC curves, the signature must be DER encoded as specified in RFC 3279.
 
     :param algorithm: Algorithm on which to base verifier
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param public_key: Appropriate public key object for algorithm
     :type public_key: may vary
     """
@@ -133,7 +133,7 @@ class Verifier(_PrehashingAuthenticator):
         """Creates a Verifier object based on the supplied algorithm and encoded compressed ECC curve point.
 
         :param algorithm: Algorithm on which to base verifier
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes encoded_point: ECC public point compressed and encoded with _ecc_encode_compressed_point
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier
@@ -150,7 +150,7 @@ class Verifier(_PrehashingAuthenticator):
         """Creates a `Verifier` object based on the supplied algorithm and raw verification key.
 
         :param algorithm: Algorithm on which to base verifier
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param bytes encoded_point: Raw verification key
         :returns: Instance of Verifier generated from encoded point
         :rtype: aws_encryption_sdk.internal.crypto.Verifier

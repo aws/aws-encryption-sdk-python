@@ -143,7 +143,7 @@ class EncryptionSDKClient(object):
 
         :param dict encryption_context: Dictionary defining encryption context
         :param algorithm: Algorithm to use for encryption
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param int frame_length: Frame length in bytes
         :returns: Tuple containing the encrypted ciphertext and the message header object
         :rtype: tuple of bytes and :class:`aws_encryption_sdk.structures.MessageHeader`

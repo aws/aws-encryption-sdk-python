@@ -182,7 +182,7 @@ class KMSMasterKey(MasterKey):
         """Generates data key and returns plaintext and ciphertext of key.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to pass to KMS
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -267,7 +267,7 @@ class KMSMasterKey(MasterKey):
 
         :param data_key: Encrypted data key
         :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
-        :type algorithm: `aws_encryption_sdk.identifiers.Algorithm` (not used for KMS)
+        :type algorithm: `aws_encryption_sdk.identifiers.AlgorithmSuite` (not used for KMS)
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey

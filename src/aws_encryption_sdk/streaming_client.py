@@ -444,7 +444,7 @@ class EncryptorConfig(_ClientConfig):
 
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption (optional)
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int frame_length: Frame length in bytes (optional)
     """
 
@@ -499,7 +499,7 @@ class StreamEncryptor(_EncryptionStream):  # pylint: disable=too-many-instance-a
 
     :param dict encryption_context: Dictionary defining encryption context
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int frame_length: Frame length in bytes
     """
 

@@ -23,7 +23,7 @@ def derive_data_encryption_key(source_key, algorithm, message_id):
 
     :param bytes source_key: Raw source key
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes message_id: Message ID
     :returns: Derived data encryption key
     :rtype: bytes
@@ -54,7 +54,7 @@ def calculate_commitment_key(source_key, algorithm, message_id):
 
     :param bytes source_key: Raw source key
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes message_id: Message ID
     :returns: Derived data encryption key
     :rtype: bytes

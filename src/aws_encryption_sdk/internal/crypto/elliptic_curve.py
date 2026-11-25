@@ -47,7 +47,7 @@ def _ecc_static_length_signature(key, algorithm, digest):
     :param key: Elliptic curve private key
     :type key: cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
     :param algorithm: Master algorithm to use
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes digest: Pre-calculated hash digest
     :returns: Signature with required length
     :rtype: bytes
@@ -167,7 +167,7 @@ def generate_ecc_signing_key(algorithm):
     """Returns an ECC signing key.
 
     :param algorithm: Algorithm object which determines what signature to generate
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :returns: Generated signing key
     :raises NotSupportedError: if signing algorithm is not supported on this platform
     """

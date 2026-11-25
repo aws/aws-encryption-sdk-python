@@ -26,7 +26,7 @@ class EncryptionMaterialsRequest(object):
     :param plaintext_rostream: Source plaintext read-only stream (optional)
     :type plaintext_rostream: aws_encryption_sdk.internal.utils.streams.ROStream
     :param algorithm: Algorithm passed to underlying master key provider and master keys (optional)
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param int plaintext_length: Length of source plaintext (optional)
     """
 
@@ -52,7 +52,7 @@ class EncryptionMaterials(object):
     .. versionadded:: 1.3.0
 
     :param algorithm: Algorithm to use for encrypting message
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param data_encryption_key: Plaintext data key to use for encrypting message
     :type data_encryption_key: aws_encryption_sdk.structures.DataKey
     :param encrypted_data_keys: List of encrypted data keys
@@ -75,7 +75,7 @@ class DecryptionMaterialsRequest(object):
     .. versionadded:: 1.3.0
 
     :param algorithm: Algorithm to provide to master keys for underlying decrypt requests
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param encrypted_data_keys: Set of encrypted data keys
     :type encrypted_data_keys: set of `aws_encryption_sdk.structures.EncryptedDataKey`
     :param dict encryption_context: Encryption context to provide to master keys for underlying decrypt requests
