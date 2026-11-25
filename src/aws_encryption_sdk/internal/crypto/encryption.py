@@ -15,7 +15,7 @@ class Encryptor(object):
     """Abstract encryption handler.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Encryption key
     :param bytes associated_data: Associated Data to send to encryption subsystem
     :param bytes iv: IV to use when encrypting message
@@ -67,7 +67,7 @@ def encrypt(algorithm, key, plaintext, associated_data, iv):
     """Encrypts a frame body.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Encryption key
     :param bytes plaintext: Body plaintext
     :param bytes associated_data: Body AAD Data
@@ -84,7 +84,7 @@ class Decryptor(object):
     """Abstract decryption handler.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Raw source key
     :param bytes associated_data: Associated Data to send to decryption subsystem
     :param bytes iv: IV value with which to initialize decryption subsystem
@@ -126,7 +126,7 @@ def decrypt(algorithm, key, encrypted_data, associated_data):
     """Decrypts a frame body.
 
     :param algorithm: Algorithm used to encrypt this body
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param bytes key: Plaintext data key
     :param encrypted_data: EncryptedData containing body data
     :type encrypted_data: :class:`aws_encryption_sdk.internal.structures.EncryptedData`,

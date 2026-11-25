@@ -36,7 +36,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         """Generates a signing key based on the provided algorithm.
 
         :param algorithm: Algorithm for which to generate signing key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context from request
         :returns: Signing key bytes
         :rtype: bytes or None
@@ -107,7 +107,7 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         """Loads the verification key from the encryption context if used by algorithm suite.
 
         :param algorithm: Algorithm for which to generate signing key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context from request
         :returns: Raw verification key
         :rtype: bytes

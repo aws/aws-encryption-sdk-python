@@ -106,7 +106,7 @@ class RawMasterKey(MasterKey):
         """Generates data key and returns :class:`aws_encryption_sdk.structures.DataKey`.
 
         :param algorithm: Algorithm on which to base data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Generated data key
         :rtype: aws_encryption_sdk.structures.DataKey
@@ -130,7 +130,7 @@ class RawMasterKey(MasterKey):
         :type data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
             or :class:`aws_encryption_sdk.structures.DataKey`
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in encryption
         :returns: Decrypted data key
         :rtype: aws_encryption_sdk.structures.EncryptedDataKey
@@ -154,7 +154,7 @@ class RawMasterKey(MasterKey):
         :param data_key: Encrypted data key
         :type data_key: aws_encryption_sdk.structures.EncryptedDataKey
         :param algorithm: Algorithm object which directs how this Master Key will encrypt the data key
-        :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+        :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
         :param dict encryption_context: Encryption context to use in decryption
         :returns: Data key containing decrypted data key
         :rtype: aws_encryption_sdk.structures.DataKey

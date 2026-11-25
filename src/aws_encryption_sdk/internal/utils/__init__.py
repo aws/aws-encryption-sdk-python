@@ -36,7 +36,7 @@ def validate_frame_length(frame_length, algorithm):
 
     :param int frame_length: Frame size in bytes
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :raises SerializationError: if frame size is negative or not a multiple of the algorithm block size
     :raises SerializationError: if frame size is larger than the maximum allowed frame size
     """
@@ -96,7 +96,7 @@ def prepare_data_keys(primary_master_key, master_keys, algorithm, encryption_con
     :param master_keys: All master keys with which to encrypt data keys
     :type master_keys: list of :class:`aws_encryption_sdk.key_providers.base.MasterKey`
     :param algorithm: Algorithm to use for encryption
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :param dict encryption_context: Encryption context to use when generating data key
     :rtype: tuple containing :class:`aws_encryption_sdk.structures.DataKey`
         and set of :class:`aws_encryption_sdk.structures.EncryptedDataKey`
@@ -144,7 +144,7 @@ def source_data_key_length_check(source_data_key, algorithm):
     :type source_data_key: :class:`aws_encryption_sdk.structures.RawDataKey`
         or :class:`aws_encryption_sdk.structures.DataKey`
     :param algorithm: Algorithm object which directs how this data key will be used
-    :type algorithm: aws_encryption_sdk.identifiers.Algorithm
+    :type algorithm: aws_encryption_sdk.identifiers.AlgorithmSuite
     :raises InvalidDataKeyError: if data key length does not match required kdf input length
     """
     if len(source_data_key.data_key) != algorithm.kdf_input_len:
