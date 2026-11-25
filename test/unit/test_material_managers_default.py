@@ -70,6 +70,34 @@ def test_generate_signing_key_and_update_encryption_context_no_signer():
     assert test is None
 
 
+def test_generate_signing_key_and_update_encryption_context_reserved_key_signed_suite(mocker):
+    mock_signer_cls = mocker.patch.object(aws_encryption_sdk.materials_managers.default, "Signer")
+    mocker.patch.object(aws_encryption_sdk.materials_managers.default, "generate_ecc_signing_key")
+    cmm = build_cmm()
+    encryption_context = {ENCODED_SIGNER_KEY: "supplied by the caller"}
+
+    with pytest.raises(ActionNotAllowedError) as excinfo:
+        cmm._generate_signing_key_and_update_encryption_context(
+            algorithm=MagicMock(signing_algorithm_info=sentinel.eccurve), encryption_context=encryption_context
+        )
+
+    excinfo.match(ENCODED_SIGNER_KEY)
+    mock_signer_cls.assert_not_called()
+    assert encryption_context == {ENCODED_SIGNER_KEY: "supplied by the caller"}
+
+
+def test_generate_signing_key_and_update_encryption_context_reserved_key_unsigned_suite():
+    cmm = build_cmm()
+    encryption_context = {ENCODED_SIGNER_KEY: "left alone"}
+
+    test = cmm._generate_signing_key_and_update_encryption_context(
+        algorithm=MagicMock(signing_algorithm_info=None), encryption_context=encryption_context
+    )
+
+    assert test is None
+    assert encryption_context == {ENCODED_SIGNER_KEY: "left alone"}
+
+
 def test_generate_signing_key_and_update_encryption_context(mocker):
     mocker.patch.object(aws_encryption_sdk.materials_managers.default, "Signer")
     mock_signer = MagicMock()

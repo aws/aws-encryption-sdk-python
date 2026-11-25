@@ -5,7 +5,7 @@ import logging
 
 import attr
 
-from ..exceptions import MasterKeyProviderError, SerializationError
+from ..exceptions import ActionNotAllowedError, MasterKeyProviderError, SerializationError
 from ..identifiers import CommitmentPolicy
 from ..internal.crypto.authentication import Signer, Verifier
 from ..internal.crypto.elliptic_curve import generate_ecc_signing_key
@@ -40,10 +40,18 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :param dict encryption_context: Encryption context from request
         :returns: Signing key bytes
         :rtype: bytes or None
+        :raises ActionNotAllowedError: if the algorithm suite is signed and the encryption context
+            already contains the reserved signer key
         """
         _LOGGER.debug("Generating signing key")
         if algorithm.signing_algorithm_info is None:
             return None
+
+        if ENCODED_SIGNER_KEY in encryption_context:
+            raise ActionNotAllowedError(
+                "Encryption context contains reserved key {!r}, which is used for the message signature "
+                "verification key".format(ENCODED_SIGNER_KEY)
+            )
 
         signer = Signer(algorithm=algorithm, key=generate_ecc_signing_key(algorithm=algorithm))
         encryption_context[ENCODED_SIGNER_KEY] = to_str(signer.encoded_public_key())
@@ -56,6 +64,8 @@ class DefaultCryptoMaterialsManager(CryptoMaterialsManager):
         :type request: aws_encryption_sdk.materials_managers.EncryptionMaterialsRequest
         :returns: encryption materials
         :rtype: aws_encryption_sdk.materials_managers.EncryptionMaterials
+        :raises ActionNotAllowedError: if the algorithm suite is signed and the request's encryption context
+            already contains the reserved signer key
         :raises MasterKeyProviderError: if no master keys are available from the underlying master key provider
         :raises MasterKeyProviderError: if the primary master key provided by the underlying master key provider
             is not included in the full set of master keys provided by that provider
